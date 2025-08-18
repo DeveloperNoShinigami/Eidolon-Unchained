@@ -1,6 +1,7 @@
 package com.bluelotuscoding.eidolonunchained.integration;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
@@ -11,6 +12,10 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Constructor;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Converts JSON page definitions to Eidolon Page objects using the exact same structure as Eidolon.
@@ -18,12 +23,22 @@ import java.lang.reflect.Constructor;
  */
 public class EidolonPageConverter {
     private static final Logger LOGGER = LogUtils.getLogger();
+    private static Map<String, String> cachedTranslations = new HashMap<>();
+    private static boolean translationsLoaded = false;
 
     /**
      * Initialize the converter - for compatibility with EidolonCodexIntegration
      */
     public static void initialize() {
         LOGGER.info("EidolonPageConverter initialized - using direct Eidolon class constructors");
+        // Pre-load translations for better performance
+        loadTranslationsFromFile();
+        LOGGER.info("Translation cache loaded with {} entries", cachedTranslations.size());
+        
+        // Log some sample translations for debugging
+        String testKey = "eidolonunchained.codex.entry.crystal_rituals.title";
+        String testTranslation = getDirectTranslation(testKey);
+        LOGGER.info("Test translation for '{}': '{}'", testKey, testTranslation);
     }
 
     /**
@@ -114,38 +129,119 @@ public class EidolonPageConverter {
                 Component translated = Component.translatable(text);
                 String result = translated.getString();
                 
-                // If translation failed, the result will be the same as the input key
-                if (result.equals(text)) {
-                    LOGGER.warn("Translation key not found: {}, using fallback", text);
-                    // Try to create a fallback from the key structure
-                    String[] parts = text.split("\\.");
-                    if (parts.length > 0) {
-                        String lastPart = parts[parts.length - 1];
-                        // Convert from snake_case to Title Case
-                        String[] words = lastPart.split("_");
-                        StringBuilder titleCase = new StringBuilder();
-                        for (String word : words) {
-                            if (word.length() > 0) {
-                                titleCase.append(Character.toUpperCase(word.charAt(0)));
-                                if (word.length() > 1) {
-                                    titleCase.append(word.substring(1).toLowerCase());
-                                }
-                                titleCase.append(" ");
-                            }
-                        }
-                        return titleCase.toString().trim();
+                LOGGER.debug("Translation attempt: '{}' -> '{}'", text, result);
+                
+                // Check if translation actually occurred by looking at the component's resolved content
+                // If it's still the same as the input key or contains the key, translation failed
+                if (result.equals(text) || result.contains(text)) {
+                    LOGGER.warn("Component translation failed for: {}, trying direct translation", text);
+                    
+                    // Try direct translation from cached language file
+                    String directTranslation = getDirectTranslation(text);
+                    if (directTranslation != null) {
+                        LOGGER.info("Found direct translation for '{}': '{}'", text, directTranslation);
+                        return directTranslation;
                     }
-                    return text;
+                    
+                    // Last resort: create fallback
+                    LOGGER.warn("No translation found for key: {}, creating fallback", text);
+                    return createFallbackFromKey(text);
                 } else {
                     LOGGER.debug("Successfully translated: {} -> {}", text, result);
                     return result;
                 }
             } catch (Exception e) {
-                LOGGER.warn("Failed to translate key: {}, using as-is: {}", text, e.getMessage());
-                return text;
+                LOGGER.warn("Failed to translate key: {}, trying direct translation: {}", text, e.getMessage());
+                
+                // Try direct translation as backup
+                String directTranslation = getDirectTranslation(text);
+                if (directTranslation != null) {
+                    LOGGER.info("Found direct translation for '{}': '{}'", text, directTranslation);
+                    return directTranslation;
+                }
+                
+                return createFallbackFromKey(text);
             }
         }
         return text;
+    }
+    
+    /**
+     * Creates a human-readable fallback from a translation key
+     */
+    private static String createFallbackFromKey(String key) {
+        try {
+            // Extract the last part of the key (after the last dot)
+            String[] parts = key.split("\\.");
+            if (parts.length > 0) {
+                String lastPart = parts[parts.length - 1];
+                // Convert from snake_case to Title Case
+                String[] words = lastPart.split("_");
+                StringBuilder titleCase = new StringBuilder();
+                for (String word : words) {
+                    if (word.length() > 0) {
+                        titleCase.append(Character.toUpperCase(word.charAt(0)));
+                        if (word.length() > 1) {
+                            titleCase.append(word.substring(1).toLowerCase());
+                        }
+                        titleCase.append(" ");
+                    }
+                }
+                String fallback = titleCase.toString().trim();
+                LOGGER.info("Created fallback for key '{}': '{}'", key, fallback);
+                return fallback;
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to create fallback for key: {}", key, e);
+        }
+        
+        // Last resort: return the key as-is
+        return key;
+    }
+    
+    /**
+     * Load translations directly from the language file as a backup
+     */
+    private static void loadTranslationsFromFile() {
+        if (translationsLoaded) {
+            return;
+        }
+        
+        try {
+            // Try to load the language file directly
+            InputStream langStream = EidolonPageConverter.class.getResourceAsStream("/assets/eidolonunchained/lang/en_us.json");
+            if (langStream != null) {
+                JsonObject langJson = JsonParser.parseReader(new InputStreamReader(langStream)).getAsJsonObject();
+                
+                for (Map.Entry<String, com.google.gson.JsonElement> entry : langJson.entrySet()) {
+                    cachedTranslations.put(entry.getKey(), entry.getValue().getAsString());
+                }
+                
+                translationsLoaded = true;
+                LOGGER.info("Loaded {} translation keys from language file", cachedTranslations.size());
+                langStream.close();
+            } else {
+                LOGGER.warn("Could not find language file: /assets/eidolonunchained/lang/en_us.json");
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to load translations from file: {}", e.getMessage());
+        }
+    }
+    
+    /**
+     * Get translation from cached translations or fallback
+     */
+    private static String getDirectTranslation(String key) {
+        loadTranslationsFromFile();
+        
+        String translation = cachedTranslations.get(key);
+        if (translation != null) {
+            LOGGER.debug("Found direct translation for '{}': '{}'", key, translation);
+            return translation;
+        }
+        
+        LOGGER.debug("No direct translation found for '{}'", key);
+        return null;
     }
 
     /**
