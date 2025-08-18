@@ -12,10 +12,22 @@ The Eidolon Unchained mod provides a comprehensive system for extending Eidolon 
 
 ## File Structure
 ```
-data/
-  eidolonunchained/
-    codex/
-      your_entry_name.json
+src/main/resources/
+├── data/
+│   └── eidolonunchained/
+│       ├── codex_entries/           # Codex extension files
+│       │   ├── advanced_monsters.json
+│       │   ├── rare_monsters.json
+│       │   ├── crystal_rituals.json
+│       │   ├── advanced_summoning.json
+│       │   └── void_mastery.json
+│       └── research_entries/        # Research system files
+│           ├── ritual_master.json
+│           └── advanced_soul_manipulation.json
+└── assets/
+    └── eidolonunchained/
+        └── lang/
+            └── en_us.json          # Translation keys
 ```
 
 ## Supported Target Chapters

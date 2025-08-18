@@ -17,14 +17,20 @@ Your datapack should follow this structure:
 src/main/resources/
 ├── data/
 │   └── eidolonunchained/
-│       └── codex_entries/
-│           ├── advanced_monsters.json
-│           ├── crystal_rituals.json
-│           └── [other_entries].json
+│       ├── codex_entries/           # Main codex extension files
+│       │   ├── advanced_monsters.json
+│       │   ├── crystal_rituals.json
+│       │   ├── rare_monsters.json
+│       │   ├── advanced_summoning.json
+│       │   ├── void_mastery.json
+│       │   └── [other_entries].json
+│       └── research_entries/        # Research system files (future expansion)
+│           ├── ritual_master.json
+│           └── advanced_soul_manipulation.json
 └── assets/
     └── eidolonunchained/
         └── lang/
-            └── en_us.json
+            └── en_us.json          # Translation keys for all entries
 ```
 
 ## JSON Entry Format
@@ -187,6 +193,15 @@ This is because:
 - **Section Separation**: Use separate pages for different topics
 - **Reasonable Length**: Keep individual text pages to 2-3 sentences
 
+### Debug Commands (Added in v0.3.8.16+)
+
+For testing and debugging translation issues, the following commands are available (requires operator permissions):
+
+- **`/eidolonunchained test_translations`**: Tests the translation system and shows results in chat and logs
+- **`/eidolonunchained reload_codex`**: Forces a reload of the codex integration system
+
+These commands help identify translation problems without needing full game restarts during development.
+
 ## Integration Details
 
 The system works by:
@@ -200,16 +215,39 @@ The system works by:
 ### Common Issues
 
 1. **Entries Not Appearing**: Check logs for loading errors, ensure integration succeeded
-2. **Text Not Translating**: Restart game after lang file changes
-3. **Format Errors**: Remove `\n` line breaks, use proper JSON structure
+2. **Text Shows Translation Keys** (e.g., "chapter.title"): Use debug commands to test, ensure full game restart after lang changes
+3. **Format Errors**: Remove `\n` line breaks, use proper JSON structure  
 4. **Missing Pages**: Verify page types are supported (title, text, entity, crafting)
+
+### Debug Commands (New!)
+
+Use these commands for troubleshooting (requires op/creative):
+
+```
+/eidolonunchained test_translations    # Test translation system
+/eidolonunchained reload_codex        # Force reload integration
+```
+
+The test command will show in chat whether translations are working and provide detailed logs.
 
 ### Debug Logs
 Look for these log messages:
 ```
 [INFO] CodexDataManager: Successfully loaded codex entry 'name' with X pages
 [INFO] EidolonCodexIntegration: ✓ Injecting X entries into chapter Y
+[INFO] EidolonPageConverter: Successfully translated: key -> text
+[WARN] EidolonPageConverter: Translation key not found, using fallback
 ```
+
+### Translation Issues
+
+If you see raw translation keys instead of proper text:
+
+1. **Run `/eidolonunchained test_translations`** to identify the problem
+2. **Check the logs** for specific error messages  
+3. **Verify language file location**: `assets/eidolonunchained/lang/en_us.json`
+4. **Ensure full game restart** - language changes require complete restart, not `/reload`
+5. **Try `/eidolonunchained reload_codex`** as a last resort
 
 ## System Files Overview
 

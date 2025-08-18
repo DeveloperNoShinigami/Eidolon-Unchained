@@ -23,16 +23,22 @@ The **Eidolon Unchained Codex Extension System** is now **FULLY OPERATIONAL** an
 ## 📁 File Structure
 
 ```
-src/main/resources/data/eidolonunchained/
-├── codex_entries/           # Main codex extension files
-│   ├── advanced_monsters.json
-│   ├── rare_monsters.json
-│   ├── crystal_rituals.json
-│   ├── advanced_summoning.json
-│   └── void_mastery.json
-└── research_entries/        # Research system files (future)
-    ├── ritual_master.json
-    └── advanced_soul_manipulation.json
+src/main/resources/
+├── data/
+│   └── eidolonunchained/
+│       ├── codex_entries/           # Main codex extension files
+│       │   ├── advanced_monsters.json
+│       │   ├── rare_monsters.json
+│       │   ├── crystal_rituals.json
+│       │   ├── advanced_summoning.json
+│       │   └── void_mastery.json
+│       └── research_entries/        # Research system files (future)
+│           ├── ritual_master.json
+│           └── advanced_soul_manipulation.json
+└── assets/
+    └── eidolonunchained/
+        └── lang/
+            └── en_us.json          # Translation keys for all entries
 ```
 
 ## 🎨 Supported Visual Elements
@@ -294,6 +300,20 @@ Monitor `latest.log` for:
 - `EidolonCodexIntegration: ✓ Injecting X entries into chapter...` 
 - `EidolonPageConverter: No converter found for page type: X`
 
+## 🛠️ Debug Tools (NEW!)
+
+### Debug Commands
+For troubleshooting and development, these commands are available (requires operator permissions):
+
+- **`/eidolonunchained test_translations`**: Tests the translation system and shows results
+- **`/eidolonunchained reload_codex`**: Forces a reload of the codex integration
+
+### Translation System Features
+- **Multi-layer fallback**: Component translation → Direct file loading → Generated fallback
+- **Real-time testing**: Debug commands work without game restart
+- **Comprehensive logging**: Detailed translation attempt logs
+- **Automatic fallback**: Never shows raw translation keys to players
+
 ## 🎯 System Completeness
 
 ### ✅ Fully Implemented
@@ -303,6 +323,8 @@ Monitor `latest.log` for:
 - Icon and image positioning
 - Error handling and logging
 - Eidolon chapter integration
+- **Enhanced translation system with fallbacks**
+- **Debug commands for real-time testing**
 
 ### ⚠️ Partial Implementation
 - Crafting pages (fallback to text)
@@ -320,9 +342,10 @@ Monitor `latest.log` for:
 
 The **Eidolon Unchained Codex Extension System** is a complete, production-ready solution for extending Eidolon Repraised's codex with custom content. It provides rich visual elements, comprehensive formatting options, and professional-quality results that integrate seamlessly with the base mod.
 
-**Status**: ✅ **FULLY OPERATIONAL**
+**Status**: ✅ **FULLY OPERATIONAL** with enhanced debugging  
 **Files**: 5 JSON entries loading successfully  
 **Integration**: 4 Eidolon chapters extended
-**Compatibility**: Minecraft 1.20.1, Forge 47.1.0, Eidolon Repraised 0.3.8.15
+**Compatibility**: Minecraft 1.20.1, Forge 47.1.0, Eidolon Repraised 0.3.8.15+  
+**Debug Tools**: Translation testing and runtime reloading available
 
-The system is ready for users to create their own custom codex entries with all the visual richness and functionality demonstrated in the working examples.
+The system is ready for users to create their own custom codex entries with robust translation handling, comprehensive debugging tools, and all the visual richness demonstrated in the working examples.
