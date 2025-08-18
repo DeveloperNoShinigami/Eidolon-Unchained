@@ -1,0 +1,33 @@
+{
+  "target_research": "eidolon:soul_sorcery",
+  "research_id": "eidolonunchained:advanced_soul_manipulation",
+  "title": "Advanced Soul Manipulation",
+  "description": "Master the deepest secrets of soul manipulation.",
+  "required_stars": 5,
+  "special_tasks": [
+    "Perform 50 soul enchantments"
+  ],
+  "tasks": {
+    "tier_1": [
+      {
+        "type": "kill_entities",
+        "entity": "minecraft:zombie",
+        "count": 100
+      }
+    ],
+    "tier_2": [
+      {
+        "type": "craft_items", 
+        "item": "eidolon:soul_gem",
+        "count": 10
+      }
+    ],
+    "tier_3": [
+      {
+        "type": "use_ritual",
+        "ritual": "eidolon:summon_wraith", 
+        "count": 5
+      }
+    ]
+  }
+}

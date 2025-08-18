@@ -1,0 +1,220 @@
+{
+  "target_chapter": "SUMMON_RITUAL", 
+  "pages": [
+    {
+      "type": "title",
+      "title": "§5Advanced Wraith Summoning§r",
+      "subtitle": "§7Mastering Ethereal Bindings§r",
+      "icon": "eidolon:wraith_heart",
+      "background_color": "#2d1b3d",
+      "text_color": "#ffffff"
+    },
+    {
+      "type": "text",
+      "title": "§dWraith Binding Protocols§r",
+      "icon": "eidolon:unholy_symbol",
+      "content": [
+        "Advanced wraith summoning requires precise control and understanding",
+        "of §dspectral energies§r and ethereal manipulation.",
+        "",
+        "§l§5The binding process involves three critical phases:§r",
+        "",
+        "§61. §l§aPreparation Phase§r",
+        "   §7• Prepare the ethereal anchor§r",
+        "   §7• Establish protective wards§r", 
+        "   §7• Purify the ritual space§r",
+        "",
+        "§62. §l§bInvocation Phase§r",
+        "   §7• Call forth the wraith essence§r",
+        "   §7• Channel binding energies§r",
+        "   §7• Maintain spectral focus§r",
+        "",
+        "§63. §l§dBinding Phase§r",
+        "   §7• Establish the covenant§r",
+        "   §7• Seal the ethereal contract§r",
+        "   §7• Complete the binding ritual§r",
+        "",
+        "§l§4⚠ WARNING:§r Each phase must be completed with exact timing",
+        "to prevent the wraith from becoming hostile or escaping the",
+        "binding circle. §o§7Failure may result in permanent spectral",
+        "contamination.§r"
+      ],
+      "side_images": [
+        {
+          "item": "eidolon:soul_gem",
+          "x": 120,
+          "y": 40
+        },
+        {
+          "item": "eidolon:silver_ingot", 
+          "x": 130,
+          "y": 80
+        }
+      ]
+    },
+    {
+      "type": "entity",
+      "title": "§dBound Wraith§r",
+      "entity": "eidolon:wraith",
+      "description": [
+        "A §dBound Wraith§r is a spectral entity tethered to the summoner's",
+        "will through advanced binding rituals.",
+        "",
+        "§l§5Physical Manifestation:§r",
+        "§7• Translucent, shifting ethereal form§r",
+        "§7• Glowing purple essence core§r",
+        "§7• Leaves spectral frost trail§r",
+        "§7• Height: 2.5 blocks§r",
+        "",
+        "§l§bBinding Characteristics:§r", 
+        "§7• Duration: 7 days maximum§r",
+        "§7• Soul cost: 45 energy§r",
+        "§7• Loyalty: 85% (with proper binding)§r",
+        "§7• Communication: Telepathic§r"
+      ],
+      "spawn_conditions": [
+        "§l§6Summoning Requirements:§r",
+        "§7• Ritual circle in darkened area§r",
+        "§7• New moon or dark moon phase§r",
+        "§7• Temperature below 50°F§r",
+        "§7• No hostile entities within 32 blocks§r",
+        "",
+        "§l§cRisk Factors:§r",
+        "§7• 15% chance of binding failure§r",
+        "§7• 5% chance of wraith hostility§r",
+        "§7• Spectral contamination possible§r"
+      ],
+      "drops": [
+        {
+          "item": "eidolon:wraith_heart",
+          "chance": "100%",
+          "description": "Primary binding component (if banished)"
+        },
+        {
+          "item": "eidolon:soul_shard", 
+          "chance": "75%",
+          "description": "Residual soul energy fragments"
+        },
+        {
+          "item": "eidolon:tattered_cloth",
+          "chance": "50%",
+          "description": "Ethereal fabric remnants"
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "title": "§6Required Summoning Materials§r",
+      "icon": "minecraft:chest",
+      "items": [
+        {
+          "item": "eidolon:wraith_heart",
+          "count": 1,
+          "title": "§dWraith Heart§r",
+          "description": [
+            "Primary focus for the binding ritual",
+            "Must be harvested during new moon",
+            "§7Quality affects binding strength§r"
+          ]
+        },
+        {
+          "item": "eidolon:soul_gem",
+          "count": 4,
+          "title": "§bSoul Gems§r", 
+          "description": [
+            "Anchors for the ritual circle",
+            "Must be fully charged (100+ energy)",
+            "§7Place at cardinal directions§r"
+          ]
+        },
+        {
+          "item": "eidolon:silver_ingot",
+          "count": 8,
+          "title": "§fSilver Ingots§r",
+          "description": [
+            "Purified containment metal",
+            "Smelted under moonlight preferred",
+            "§7Used for protective barriers§r"
+          ]
+        },
+        {
+          "item": "minecraft:bone_block",
+          "count": 4,
+          "title": "§7Ancient Bone Blocks§r",
+          "description": [
+            "Structural components for ritual circle",
+            "From creatures over 100 years old",
+            "§7Found in deep caves or ruins§r"
+          ]
+        },
+        {
+          "item": "minecraft:ghast_tear",
+          "count": 2,
+          "title": "§eGhast Tears§r",
+          "description": [
+            "Ethereal catalyst for binding",
+            "Represents sorrow and binding", 
+            "§7Must be fresh (within 24 hours)§r"
+          ]
+        }
+      ],
+      "footer": [
+        "§l§6Total Soul Cost: §r§645 Energy",
+        "§l§bRitual Duration: §r§e15-20 minutes",
+        "§l§aSuccess Rate: §r§a85%§r with proper preparation",
+        "§l§cFailure Risk: §r§cSpectral contamination, hostile wraith"
+      ]
+    },
+    {
+      "type": "ritual",
+      "title": "§4Wraith Binding Ritual§r",
+      "icon": "eidolon:unholy_symbol",
+      "difficulty": "§l§4Advanced§r",
+      "soul_cost": 45,
+      "duration": "15-20 minutes",
+      "circle_layout": {
+        "center": "eidolon:brazier",
+        "inner_ring": [
+          {"item": "eidolon:soul_gem", "position": "north"},
+          {"item": "eidolon:soul_gem", "position": "south"},
+          {"item": "eidolon:soul_gem", "position": "east"},
+          {"item": "eidolon:soul_gem", "position": "west"}
+        ],
+        "outer_ring": [
+          {"item": "minecraft:bone_block", "position": "northeast"},
+          {"item": "minecraft:bone_block", "position": "northwest"},
+          {"item": "minecraft:bone_block", "position": "southeast"},
+          {"item": "minecraft:bone_block", "position": "southwest"}
+        ]
+      },
+      "ingredients": [
+        {"item": "eidolon:wraith_heart", "count": 1},
+        {"item": "eidolon:silver_ingot", "count": 8},
+        {"item": "minecraft:ghast_tear", "count": 2},
+        {"item": "eidolon:soul_shard", "count": 12}
+      ],
+      "steps": [
+        "§61.§r Place the brazier at the ritual center during new moon",
+        "§62.§r Arrange soul gems in cardinal directions (N, S, E, W)",
+        "§63.§r Position bone blocks at diagonal corners for stability",
+        "§64.§r Create silver barrier circle around outer perimeter",
+        "§65.§r Light the brazier with soul fire (not normal flame)",
+        "§66.§r Place wraith heart in the brazier while chanting",
+        "§67.§r Add soul shards one by one clockwise starting north",
+        "§68.§r Finally, add ghast tears to complete the binding",
+        "§69.§r Maintain focus for 3 minutes until binding solidifies"
+      ],
+      "warnings": [
+        "§l§4⚠ EXTREME DANGER:§r Wraiths become hostile if ritual fails",
+        "§l§6⚠ CAUTION:§r Ensure protective wards are active before starting",
+        "§l§e⚠ NOTE:§r Perform only during new moon for best results",
+        "§l§c⚠ SAFETY:§r Have banishment materials ready as backup",
+        "§l§5⚠ TIMING:§r Each step must be completed within 2 minutes"
+      ],
+      "result": {
+        "item": "eidolon:bound_wraith",
+        "description": "A wraith bound to your will for exactly 7 days. Can phase through walls, scout areas, and provide protection. Requires daily soul energy to maintain (5 energy/day)."
+      }
+    }
+  ]
+}

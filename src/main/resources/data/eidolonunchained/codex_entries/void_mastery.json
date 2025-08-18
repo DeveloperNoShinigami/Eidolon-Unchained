@@ -1,0 +1,25 @@
+{
+  "target_chapter": "VOID_AMULET",
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolonunchained.codex.entry.void_mastery.title"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.void_mastery.intro"
+    },
+    {
+      "type": "text", 
+      "text": "eidolonunchained.codex.entry.void_mastery.fundamentals"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.void_mastery.advanced"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.void_mastery.risks"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Specification-Title: eidolon
+Specification-Vendor: elucent
+Specification-Version: 1
+Implementation-Title: Eidolon-Repraised
+Implementation-Version: 0.3.8.15
+Implementation-Vendor: elucent
+Implementation-Timestamp: 2024-11-05T14:47:08+0000
+MixinConfigs: eidolon.mixins.json
+

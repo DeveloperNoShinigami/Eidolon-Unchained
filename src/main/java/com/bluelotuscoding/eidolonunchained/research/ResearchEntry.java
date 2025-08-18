@@ -1,0 +1,195 @@
+package com.bluelotuscoding.eidolonunchained.research;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+
+import java.util.List;
+import java.util.ArrayList;
+
+/**
+ * Represents a custom research entry that can be added to Eidolon's research system
+ * through datapacks. This allows for easy extension of the research tree.
+ */
+public class ResearchEntry {
+    private final ResourceLocation id;
+    private final Component title;
+    private final Component description;
+    private final ResourceLocation chapter;
+    private final ItemStack icon;
+    private final List<ResourceLocation> prerequisites;
+    private final List<ResourceLocation> unlocks;
+    private final int x;
+    private final int y;
+    private final ResearchType type;
+    private final JsonObject additionalData;
+
+    public enum ResearchType {
+        BASIC("basic"),
+        ADVANCED("advanced"),
+        FORBIDDEN("forbidden"),
+        RITUAL("ritual"),
+        CRAFTING("crafting");
+
+        private final String name;
+
+        ResearchType(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
+
+    public ResearchEntry(ResourceLocation id, Component title, Component description,
+                        ResourceLocation chapter, ItemStack icon, List<ResourceLocation> prerequisites,
+                        List<ResourceLocation> unlocks, int x, int y, ResearchType type,
+                        JsonObject additionalData) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.chapter = chapter;
+        this.icon = icon;
+        this.prerequisites = prerequisites != null ? prerequisites : new ArrayList<>();
+        this.unlocks = unlocks != null ? unlocks : new ArrayList<>();
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.additionalData = additionalData != null ? additionalData : new JsonObject();
+    }
+
+    // Getters
+    public ResourceLocation getId() { return id; }
+    public Component getTitle() { return title; }
+    public Component getDescription() { return description; }
+    public ResourceLocation getChapter() { return chapter; }
+    public ItemStack getIcon() { return icon; }
+    public List<ResourceLocation> getPrerequisites() { return prerequisites; }
+    public List<ResourceLocation> getUnlocks() { return unlocks; }
+    public int getX() { return x; }
+    public int getY() { return y; }
+    public ResearchType getType() { return type; }
+    public JsonObject getAdditionalData() { return additionalData; }
+
+    /**
+     * Converts this research entry to a JSON format for datapack generation
+     */
+    public JsonObject toJson() {
+        JsonObject json = new JsonObject();
+        
+        json.addProperty("id", id.toString());
+        json.addProperty("title", title.getString());
+        json.addProperty("description", description.getString());
+        json.addProperty("chapter", chapter.toString());
+        json.addProperty("type", type.getName());
+        json.addProperty("x", x);
+        json.addProperty("y", y);
+
+        // Icon data
+        JsonObject iconData = new JsonObject();
+        iconData.addProperty("item", icon.getItem().toString());
+        if (icon.getCount() > 1) {
+            iconData.addProperty("count", icon.getCount());
+        }
+        if (icon.hasTag()) {
+            iconData.addProperty("nbt", icon.getTag().toString());
+        }
+        json.add("icon", iconData);
+
+        // Prerequisites
+        if (!prerequisites.isEmpty()) {
+            JsonArray prereqArray = new JsonArray();
+            prerequisites.forEach(prereq -> prereqArray.add(prereq.toString()));
+            json.add("prerequisites", prereqArray);
+        }
+
+        // Unlocks
+        if (!unlocks.isEmpty()) {
+            JsonArray unlocksArray = new JsonArray();
+            unlocks.forEach(unlock -> unlocksArray.add(unlock.toString()));
+            json.add("unlocks", unlocksArray);
+        }
+
+        // Merge additional data
+        additionalData.entrySet().forEach(entry -> 
+            json.add(entry.getKey(), entry.getValue())
+        );
+
+        return json;
+    }
+
+    /**
+     * Builder pattern for easier research entry creation
+     */
+    public static class Builder {
+        private ResourceLocation id;
+        private Component title;
+        private Component description;
+        private ResourceLocation chapter;
+        private ItemStack icon;
+        private List<ResourceLocation> prerequisites = new ArrayList<>();
+        private List<ResourceLocation> unlocks = new ArrayList<>();
+        private int x = 0;
+        private int y = 0;
+        private ResearchType type = ResearchType.BASIC;
+        private JsonObject additionalData = new JsonObject();
+
+        public Builder(ResourceLocation id) {
+            this.id = id;
+        }
+
+        public Builder title(Component title) {
+            this.title = title;
+            return this;
+        }
+
+        public Builder description(Component description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder chapter(ResourceLocation chapter) {
+            this.chapter = chapter;
+            return this;
+        }
+
+        public Builder icon(ItemStack icon) {
+            this.icon = icon;
+            return this;
+        }
+
+        public Builder prerequisite(ResourceLocation prereq) {
+            this.prerequisites.add(prereq);
+            return this;
+        }
+
+        public Builder unlock(ResourceLocation unlock) {
+            this.unlocks.add(unlock);
+            return this;
+        }
+
+        public Builder position(int x, int y) {
+            this.x = x;
+            this.y = y;
+            return this;
+        }
+
+        public Builder type(ResearchType type) {
+            this.type = type;
+            return this;
+        }
+
+        public Builder additionalData(String key, String value) {
+            this.additionalData.addProperty(key, value);
+            return this;
+        }
+
+        public ResearchEntry build() {
+            return new ResearchEntry(id, title, description, chapter, icon, 
+                                   prerequisites, unlocks, x, y, type, additionalData);
+        }
+    }
+}

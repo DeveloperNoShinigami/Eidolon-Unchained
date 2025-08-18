@@ -1,0 +1,33 @@
+{
+  "target_chapter": "MONSTERS",
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolonunchained.codex.entry.advanced_monsters.title"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.advanced_monsters.intro"
+    },
+    {
+      "type": "entity",
+      "entity": "eidolon:necromancer"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.advanced_monsters.necromancer"
+    },
+    {
+      "type": "entity", 
+      "entity": "eidolon:wraith"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.advanced_monsters.wraith"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.advanced_monsters.behavior"
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+package com.bluelotuscoding.eidolonunchained.research;
+
+import com.google.gson.JsonObject;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+
+/**
+ * Represents a research chapter that can be added to Eidolon's research system.
+ * Chapters organize research entries into thematic groups.
+ */
+public class ResearchChapter {
+    private final ResourceLocation id;
+    private final Component title;
+    private final Component description;
+    private final ItemStack icon;
+    private final int sortOrder;
+    private final boolean isSecret;
+    private final ResourceLocation backgroundTexture;
+    private final JsonObject additionalData;
+
+    public ResearchChapter(ResourceLocation id, Component title, Component description,
+                          ItemStack icon, int sortOrder, boolean isSecret,
+                          ResourceLocation backgroundTexture, JsonObject additionalData) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.icon = icon;
+        this.sortOrder = sortOrder;
+        this.isSecret = isSecret;
+        this.backgroundTexture = backgroundTexture;
+        this.additionalData = additionalData != null ? additionalData : new JsonObject();
+    }
+
+    // Getters
+    public ResourceLocation getId() { return id; }
+    public Component getTitle() { return title; }
+    public Component getDescription() { return description; }
+    public ItemStack getIcon() { return icon; }
+    public int getSortOrder() { return sortOrder; }
+    public boolean isSecret() { return isSecret; }
+    public ResourceLocation getBackgroundTexture() { return backgroundTexture; }
+    public JsonObject getAdditionalData() { return additionalData; }
+
+    /**
+     * Converts this research chapter to JSON format for datapack generation
+     */
+    public JsonObject toJson() {
+        JsonObject json = new JsonObject();
+        
+        json.addProperty("id", id.toString());
+        json.addProperty("title", title.getString());
+        json.addProperty("description", description.getString());
+        json.addProperty("sort_order", sortOrder);
+        json.addProperty("secret", isSecret);
+
+        // Icon data
+        JsonObject iconData = new JsonObject();
+        iconData.addProperty("item", icon.getItem().toString());
+        if (icon.getCount() > 1) {
+            iconData.addProperty("count", icon.getCount());
+        }
+        if (icon.hasTag()) {
+            iconData.addProperty("nbt", icon.getTag().toString());
+        }
+        json.add("icon", iconData);
+
+        // Background texture
+        if (backgroundTexture != null) {
+            json.addProperty("background", backgroundTexture.toString());
+        }
+
+        // Merge additional data
+        additionalData.entrySet().forEach(entry -> 
+            json.add(entry.getKey(), entry.getValue())
+        );
+
+        return json;
+    }
+
+    /**
+     * Builder pattern for easier chapter creation
+     */
+    public static class Builder {
+        private ResourceLocation id;
+        private Component title;
+        private Component description;
+        private ItemStack icon;
+        private int sortOrder = 0;
+        private boolean isSecret = false;
+        private ResourceLocation backgroundTexture;
+        private JsonObject additionalData = new JsonObject();
+
+        public Builder(ResourceLocation id) {
+            this.id = id;
+        }
+
+        public Builder title(Component title) {
+            this.title = title;
+            return this;
+        }
+
+        public Builder description(Component description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder icon(ItemStack icon) {
+            this.icon = icon;
+            return this;
+        }
+
+        public Builder sortOrder(int sortOrder) {
+            this.sortOrder = sortOrder;
+            return this;
+        }
+
+        public Builder secret(boolean isSecret) {
+            this.isSecret = isSecret;
+            return this;
+        }
+
+        public Builder background(ResourceLocation backgroundTexture) {
+            this.backgroundTexture = backgroundTexture;
+            return this;
+        }
+
+        public Builder additionalData(String key, String value) {
+            this.additionalData.addProperty(key, value);
+            return this;
+        }
+
+        public ResearchChapter build() {
+            return new ResearchChapter(id, title, description, icon, sortOrder, 
+                                     isSecret, backgroundTexture, additionalData);
+        }
+    }
+}
