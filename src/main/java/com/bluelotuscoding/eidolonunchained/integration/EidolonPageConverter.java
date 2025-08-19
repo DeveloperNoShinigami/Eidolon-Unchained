@@ -1,15 +1,19 @@
 package com.bluelotuscoding.eidolonunchained.integration;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
 import elucent.eidolon.codex.CraftingPage;
 import elucent.eidolon.codex.CruciblePage;
 import elucent.eidolon.codex.EntityPage;
+import elucent.eidolon.codex.ListPage;
 import elucent.eidolon.codex.Page;
 import elucent.eidolon.codex.RitualPage;
+import elucent.eidolon.codex.SmeltingPage;
 import elucent.eidolon.codex.TextPage;
 import elucent.eidolon.codex.TitlePage;
+import elucent.eidolon.codex.WorktablePage;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
@@ -51,7 +55,7 @@ public class EidolonPageConverter {
      * Get list of supported page types - for compatibility with EidolonCodexIntegration
      */
     public static String[] getSupportedPageTypes() {
-        return new String[]{"text", "title", "entity", "crafting", "ritual", "crucible"};
+        return new String[]{"text", "title", "entity", "crafting", "ritual", "crucible", "list", "smelting", "workbench"};
     }
 
     /**
@@ -73,6 +77,12 @@ public class EidolonPageConverter {
                 return createRitualPage(pageJson);
             case "crucible":
                 return createCruciblePage(pageJson);
+            case "list":
+                return createListPage(pageJson);
+            case "smelting":
+                return createSmeltingPage(pageJson);
+            case "workbench":
+                return createWorkbenchPage(pageJson);
             default:
                 LOGGER.warn("Unknown page type: {}, falling back to text", type);
                 return createTextPage(pageJson);
@@ -385,6 +395,102 @@ public class EidolonPageConverter {
         }
 
         return new CruciblePage(new ItemStack(item), recipeResource);
+    }
+
+    /**
+     * Create a ListPage - takes a key and a list of entries with items
+     */
+    private static Page createListPage(JsonObject pageJson) {
+        if (!pageJson.has("entries") || !pageJson.get("entries").isJsonArray()) {
+            LOGGER.warn("List page missing entries array");
+            return createFallbackTextPage(pageJson);
+        }
+
+        JsonArray entriesArray = pageJson.getAsJsonArray("entries");
+        ListPage.ListEntry[] entries = new ListPage.ListEntry[entriesArray.size()];
+        for (int i = 0; i < entriesArray.size(); i++) {
+            JsonObject entryObj = entriesArray.get(i).getAsJsonObject();
+            String itemId = entryObj.has("item") ? entryObj.get("item").getAsString() : "";
+            Item item = null;
+            if (!itemId.isEmpty()) {
+                ResourceLocation itemRes = ResourceLocation.tryParse(itemId);
+                if (itemRes != null) {
+                    item = ForgeRegistries.ITEMS.getValue(itemRes);
+                }
+            }
+            ItemStack stack = item != null ? new ItemStack(item) : ItemStack.EMPTY;
+            String key = entryObj.has("text") ? entryObj.get("text").getAsString() : (item != null ? item.getDescriptionId() : "");
+            entries[i] = new ListPage.ListEntry(key, stack);
+        }
+
+        String text = pageJson.has("text") ? pageJson.get("text").getAsString() : "";
+        return new ListPage(text, entries);
+    }
+
+    /**
+     * Create a SmeltingPage - takes input and result items, optionally a recipe ID
+     */
+    private static Page createSmeltingPage(JsonObject pageJson) {
+        String inputId = pageJson.has("input") ? pageJson.get("input").getAsString() : "";
+        String resultId = pageJson.has("result") ? pageJson.get("result").getAsString() :
+                (pageJson.has("output") ? pageJson.get("output").getAsString() : "");
+        if (inputId.isEmpty() || resultId.isEmpty()) {
+            LOGGER.warn("Smelting page missing input or result");
+            return createFallbackTextPage(pageJson);
+        }
+
+        Item inputItem = ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(inputId));
+        Item resultItem = ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(resultId));
+        if (inputItem == null || resultItem == null) {
+            LOGGER.warn("Invalid smelting items: {} -> {}", inputId, resultId);
+            return createFallbackTextPage(pageJson);
+        }
+
+        ItemStack inStack = new ItemStack(inputItem);
+        ItemStack outStack = new ItemStack(resultItem);
+
+        if (pageJson.has("recipe")) {
+            ResourceLocation recipeRes = ResourceLocation.tryParse(pageJson.get("recipe").getAsString());
+            if (recipeRes != null) {
+                return new SmeltingPage(inStack, outStack, recipeRes);
+            }
+        }
+        return new SmeltingPage(inStack, outStack);
+    }
+
+    /**
+     * Create a WorkbenchPage (WorktablePage) - takes an item and optional recipe ID
+     */
+    private static Page createWorkbenchPage(JsonObject pageJson) {
+        String itemId = pageJson.has("item") ? pageJson.get("item").getAsString() : "";
+        String recipeId = pageJson.has("recipe") ? pageJson.get("recipe").getAsString() : "";
+
+        Item item = null;
+        if (!itemId.isEmpty()) {
+            ResourceLocation itemRes = ResourceLocation.tryParse(itemId);
+            if (itemRes != null) {
+                item = ForgeRegistries.ITEMS.getValue(itemRes);
+            }
+        } else if (!recipeId.isEmpty()) {
+            ResourceLocation recipeRes = ResourceLocation.tryParse(recipeId);
+            if (recipeRes != null) {
+                item = ForgeRegistries.ITEMS.getValue(recipeRes);
+            }
+        }
+
+        if (item == null) {
+            LOGGER.warn("Workbench page missing valid item or recipe");
+            return createFallbackTextPage(pageJson);
+        }
+
+        if (!recipeId.isEmpty()) {
+            ResourceLocation recipeRes = ResourceLocation.tryParse(recipeId);
+            if (recipeRes != null) {
+                return new WorktablePage(new ItemStack(item), recipeRes);
+            }
+        }
+
+        return new WorktablePage(new ItemStack(item));
     }
 
     /**

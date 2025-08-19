@@ -119,14 +119,33 @@ public class EidolonCodexIntegration {
      */
     private static void injectEntryIntoChapter(Chapter chapter, CodexEntry entry) {
         try {
-            // Only add pages from the JSON definition; do not always add a TitlePage
+            // Title and icon
+            if (entry.getTitle() != null && !entry.getTitle().getString().isEmpty()) {
+                TitlePage tp = entry.getIcon().isEmpty()
+                    ? new TitlePage(entry.getTitle().getString())
+                    : new TitlePage(entry.getTitle().getString(), entry.getIcon());
+                chapter.addPage(tp);
+            }
+
+            // Description
+            if (entry.getDescription() != null && !entry.getDescription().getString().isEmpty()) {
+                chapter.addPage(new TextPage(entry.getDescription().getString()));
+            }
+
+            // Additional pages
             for (JsonObject pageJson : entry.getPages()) {
                 Page eidolonPage = EidolonPageConverter.convertPage(pageJson);
                 if (eidolonPage != null) {
                     chapter.addPage(eidolonPage);
                 }
             }
-            LOGGER.debug("Successfully injected entry '{}' with {} pages", entry.getId(), entry.getPages().size());
+
+            // Log prerequisites (visibility gating could be implemented client-side)
+            if (!entry.getPrerequisites().isEmpty()) {
+                LOGGER.debug("Entry {} prerequisites: {}", entry.getId(), entry.getPrerequisites());
+            }
+
+            LOGGER.debug("Successfully injected entry '{}' with {} total pages", entry.getId(), chapter.size());
         } catch (Exception e) {
             LOGGER.error("Failed to inject entry '{}' into chapter", entry.getId(), e);
         }

@@ -2,6 +2,21 @@
 
 This document lists all features of the codex extension system.
 
+## Entry Metadata
+
+Each codex entry JSON supports the following top‑level fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | string | Display title for the entry. |
+| `description` | string | Optional introductory text shown before the pages. |
+| `icon` | object/string | Item to display on the title page. Accepts `{ "item": "mod:item", "count": n, "nbt": "..." }` or a simple item ID string. |
+| `prerequisites` | array | List of research IDs required to view the entry. |
+| `type` | string | Hint for the entry's primary content type (e.g. `text`, `ritual`). |
+| `pages` | array | Page definitions as described below. |
+
+Unknown custom fields are preserved and exposed through the API for addon use.
+
 ## Complete Page Types
 
 ### `title`
@@ -40,8 +55,23 @@ Top‑down ritual circle with ingredients and steps.
 ```
 Item lists or material checklists.
 
-### Other recipe pages
-The system also accepts `smelting`, `crucible`, and `workbench` page types for specialized recipes.
+### `smelting`
+```json
+{ "type": "smelting", "input": "minecraft:iron_ore", "result": "minecraft:iron_ingot" }
+```
+Shows a furnace recipe with input and output items.
+
+### `workbench`
+```json
+{ "type": "workbench", "item": "eidolon:wooden_altar" }
+```
+Displays an Eidolon workbench recipe.
+
+### `crucible`
+```json
+{ "type": "crucible", "recipe": "eidolon:arcane_gold_ingot" }
+```
+Specialized recipe page for crucible crafting.
 
 ## Advanced Formatting Codes
 

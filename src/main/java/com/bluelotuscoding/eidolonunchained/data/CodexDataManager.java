@@ -4,20 +4,25 @@ import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.codex.CodexEntry;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -184,11 +189,86 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
             }
             
             LOGGER.info("About to create CodexEntry...");
-            
-            // Create the CodexEntry object
-            String title = json.has("title") ? json.get("title").getAsString() : location.getPath();
-            CodexEntry entry = CodexEntry.fromDatapack(entryId, title, json.getAsJsonArray("pages"));
-            
+
+            // Basic fields
+            String titleStr = json.has("title") ? json.get("title").getAsString() : location.getPath();
+            Component title = Component.literal(titleStr);
+            Component description = json.has("description")
+                ? Component.literal(json.get("description").getAsString())
+                : Component.literal("");
+
+            // Icon parsing
+            ItemStack icon = ItemStack.EMPTY;
+            if (json.has("icon")) {
+                JsonElement iconElem = json.get("icon");
+                if (iconElem.isJsonPrimitive()) {
+                    ResourceLocation itemId = ResourceLocation.tryParse(iconElem.getAsString());
+                    if (itemId != null) {
+                        Item item = ForgeRegistries.ITEMS.getValue(itemId);
+                        if (item != null) icon = new ItemStack(item);
+                    }
+                } else if (iconElem.isJsonObject()) {
+                    JsonObject iconObj = iconElem.getAsJsonObject();
+                    if (iconObj.has("item")) {
+                        ResourceLocation itemId = ResourceLocation.tryParse(iconObj.get("item").getAsString());
+                        Item item = itemId != null ? ForgeRegistries.ITEMS.getValue(itemId) : null;
+                        if (item != null) {
+                            int count = iconObj.has("count") ? iconObj.get("count").getAsInt() : 1;
+                            icon = new ItemStack(item, count);
+                            if (iconObj.has("nbt")) {
+                                try {
+                                    CompoundTag tag = TagParser.parseTag(iconObj.get("nbt").getAsString());
+                                    icon.setTag(tag);
+                                } catch (Exception e) {
+                                    LOGGER.warn("Failed to parse icon NBT for {}: {}", entryId, e.getMessage());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Prerequisites
+            List<ResourceLocation> prerequisites = new ArrayList<>();
+            if (json.has("prerequisites")) {
+                JsonArray prereqArray = json.getAsJsonArray("prerequisites");
+                for (JsonElement elem : prereqArray) {
+                    ResourceLocation prereq = ResourceLocation.tryParse(elem.getAsString());
+                    if (prereq != null) prerequisites.add(prereq);
+                }
+            }
+
+            // Pages
+            List<JsonObject> pages = new ArrayList<>();
+            JsonArray pagesArray = json.getAsJsonArray("pages");
+            for (JsonElement elem : pagesArray) {
+                pages.add(elem.getAsJsonObject());
+            }
+
+            // Type
+            CodexEntry.EntryType type = CodexEntry.EntryType.TEXT;
+            if (json.has("type")) {
+                String typeStr = json.get("type").getAsString();
+                for (CodexEntry.EntryType t : CodexEntry.EntryType.values()) {
+                    if (t.getName().equalsIgnoreCase(typeStr)) {
+                        type = t;
+                        break;
+                    }
+                }
+            }
+
+            // Additional custom data (any unrecognized fields)
+            JsonObject additional = new JsonObject();
+            Set<String> known = Set.of("target_chapter", "pages", "title", "description", "icon", "prerequisites", "type");
+            for (Map.Entry<String, JsonElement> e : json.entrySet()) {
+                if (!known.contains(e.getKey())) {
+                    additional.add(e.getKey(), e.getValue());
+                }
+            }
+
+            CodexEntry entry = new CodexEntry(entryId, title, description, targetChapter, icon,
+                                              prerequisites, pages, type, additional);
+
             LOGGER.info("CodexEntry created successfully with {} pages", entry.getPages().size());
             
             // Store in both maps
