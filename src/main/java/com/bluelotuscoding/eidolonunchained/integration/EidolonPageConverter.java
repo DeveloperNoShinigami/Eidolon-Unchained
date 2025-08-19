@@ -58,30 +58,24 @@ public class EidolonPageConverter {
      * Convert a JSON page definition to an Eidolon Page object
      */
     public static Page convertPage(JsonObject pageJson) {
-        try {
-            String type = pageJson.has("type") ? pageJson.get("type").getAsString().toLowerCase() : "text";
-            
-            switch (type) {
-                case "text":
-                    return createTextPage(pageJson);
-                case "title":
-                    return createTitlePage(pageJson);
-                case "entity":
-                    return createEntityPage(pageJson);
-                case "crafting":
-                    return createCraftingPage(pageJson);
-                case "ritual":
-                    return createRitualPage(pageJson);
-                case "crucible":
-                    return createCruciblePage(pageJson);
-                default:
-                    LOGGER.warn("Unknown page type: {}, falling back to text", type);
-                    return createTextPage(pageJson);
-            }
-            
-        } catch (Exception e) {
-            LOGGER.error("Failed to convert page: {}", pageJson, e);
-            return createFallbackTextPage(pageJson);
+        String type = pageJson.has("type") ? pageJson.get("type").getAsString().toLowerCase() : "text";
+
+        switch (type) {
+            case "text":
+                return createTextPage(pageJson);
+            case "title":
+                return createTitlePage(pageJson);
+            case "entity":
+                return createEntityPage(pageJson);
+            case "crafting":
+                return createCraftingPage(pageJson);
+            case "ritual":
+                return createRitualPage(pageJson);
+            case "crucible":
+                return createCruciblePage(pageJson);
+            default:
+                LOGGER.warn("Unknown page type: {}, falling back to text", type);
+                return createTextPage(pageJson);
         }
     }
 
@@ -89,17 +83,11 @@ public class EidolonPageConverter {
      * Create a TextPage - takes just a String parameter
      */
     private static Page createTextPage(JsonObject pageJson) {
-        try {
-            String text = pageJson.has("text") ? pageJson.get("text").getAsString() : "";
-            // Translate the text if it's a translation key
-            String translatedText = translateText(text);
-            LOGGER.debug("TextPage: {} -> {}", text, translatedText);
-            return new TextPage(translatedText);
-
-        } catch (Exception e) {
-            LOGGER.error("Failed to create TextPage", e);
-            return createFallbackTextPage(pageJson);
-        }
+        String text = pageJson.has("text") ? pageJson.get("text").getAsString() : "";
+        // Translate the text if it's a translation key
+        String translatedText = translateText(text);
+        LOGGER.debug("TextPage: {} -> {}", text, translatedText);
+        return new TextPage(translatedText);
     }
 
     /**
@@ -108,20 +96,14 @@ public class EidolonPageConverter {
      * TitlePage will automatically append ".title" to get the title and use base key for content
      */
     private static Page createTitlePage(JsonObject pageJson) {
-        try {
-            String text = pageJson.has("text") ? pageJson.get("text").getAsString() : "";
+        String text = pageJson.has("text") ? pageJson.get("text").getAsString() : "";
 
-            // For TitlePage, we pass the RAW key, not translated text
-            // TitlePage will handle translation internally:
-            // - Uses base key for content
-            // - Automatically appends ".title" for title
-            LOGGER.debug("TitlePage using raw key: {}", text);
-            return new TitlePage(text);
-
-        } catch (Exception e) {
-            LOGGER.error("Failed to create TitlePage", e);
-            return createFallbackTextPage(pageJson);
-        }
+        // For TitlePage, we pass the RAW key, not translated text
+        // TitlePage will handle translation internally:
+        // - Uses base key for content
+        // - Automatically appends ".title" for title
+        LOGGER.debug("TitlePage using raw key: {}", text);
+        return new TitlePage(text);
     }
 
     /**
@@ -240,209 +222,179 @@ public class EidolonPageConverter {
      * Create an EntityPage - takes just an EntityType parameter
      */
     private static Page createEntityPage(JsonObject pageJson) {
-        try {
-            String entityId = pageJson.has("entity") ? pageJson.get("entity").getAsString() : "";
-            if (entityId.isEmpty()) {
-                LOGGER.warn("Entity page missing entity ID");
-                return createFallbackTextPage(pageJson);
-            }
-
-            // Get EntityType from registry
-            ResourceLocation entityResource = ResourceLocation.tryParse(entityId);
-            if (entityResource == null) {
-                LOGGER.warn("Invalid entity ID: {}", entityId);
-                return createFallbackTextPage(pageJson);
-            }
-
-            EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(entityResource);
-            if (entityType == null) {
-                LOGGER.warn("Entity type not found: {}", entityId);
-                return createFallbackTextPage(pageJson);
-            }
-
-            // Create EntityPage with EntityType parameter
-            return new EntityPage(entityType);
-
-        } catch (Exception e) {
-            LOGGER.error("Failed to create EntityPage for: {}", pageJson.get("entity"), e);
+        String entityId = pageJson.has("entity") ? pageJson.get("entity").getAsString() : "";
+        if (entityId.isEmpty()) {
+            LOGGER.warn("Entity page missing entity ID");
             return createFallbackTextPage(pageJson);
         }
+
+        // Get EntityType from registry
+        ResourceLocation entityResource = ResourceLocation.tryParse(entityId);
+        if (entityResource == null) {
+            LOGGER.warn("Invalid entity ID: {}", entityId);
+            return createFallbackTextPage(pageJson);
+        }
+
+        EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(entityResource);
+        if (entityType == null) {
+            LOGGER.warn("Entity type not found: {}", entityId);
+            return createFallbackTextPage(pageJson);
+        }
+
+        // Create EntityPage with EntityType parameter
+        return new EntityPage(entityType);
     }
 
     /**
      * Create a CraftingPage - takes an ItemStack parameter
      */
     private static Page createCraftingPage(JsonObject pageJson) {
-        try {
-            // Support both "recipe" and "item" properties
-            String itemId = "";
-            if (pageJson.has("recipe")) {
-                itemId = pageJson.get("recipe").getAsString();
-                LOGGER.info("Creating crafting page for recipe: {}", itemId);
-            } else if (pageJson.has("item")) {
-                itemId = pageJson.get("item").getAsString();
-                LOGGER.info("Creating crafting page for item: {}", itemId);
-            }
-            
-            if (itemId.isEmpty()) {
-                LOGGER.warn("Crafting page missing both 'recipe' and 'item' properties");
-                return createFallbackTextPage(pageJson);
-            }
-            
-            Item item = null;
-            
-            // Try to parse as direct item ID first
-            ResourceLocation itemResource = ResourceLocation.tryParse(itemId);
-            if (itemResource != null) {
-                item = ForgeRegistries.ITEMS.getValue(itemResource);
-                LOGGER.debug("Direct item lookup for {}: {}", itemId, item);
-            }
-            
-            // If direct lookup failed, try some common recipe->item mappings
-            if (item == null) {
-                LOGGER.info("Direct item lookup failed for {}, trying recipe mappings", itemId);
-                
-                // Common Eidolon recipe mappings
-                if (itemId.equals("eidolon:arcane_gold_ingot")) {
-                    // This is a regular crafting recipe that produces arcane gold ingots
-                    item = ForgeRegistries.ITEMS.getValue(new ResourceLocation("eidolon", "arcane_gold_ingot"));
-                    LOGGER.info("Mapped crafting recipe to result: {} -> eidolon:arcane_gold_ingot", itemId);
-                } else if (itemId.equals("eidolon:arcane_gold_ingot_alchemy")) {
-                    // This is a crucible recipe that produces arcane gold ingots
-                    item = ForgeRegistries.ITEMS.getValue(new ResourceLocation("eidolon", "arcane_gold_ingot"));
-                    LOGGER.info("Mapped crucible recipe to result: {} -> eidolon:arcane_gold_ingot", itemId);
-                } else if (itemId.equals("eidolon:crystallization")) {
-                    // Try several possible result items for crystallization
-                    String[] candidates = {
-                        "eidolon:arcane_gold_ingot",
-                        "eidolon:arcane_gold_block", 
-                        "eidolon:soul_gem",
-                        "eidolon:crystalized_void",
-                        "minecraft:gold_ingot"
-                    };
-                    
-                    for (String candidate : candidates) {
-                        ResourceLocation candidateResource = ResourceLocation.tryParse(candidate);
-                        if (candidateResource != null) {
-                            Item candidateItem = ForgeRegistries.ITEMS.getValue(candidateResource);
-                            if (candidateItem != null) {
-                                item = candidateItem;
-                                LOGGER.info("Found recipe result item: {} -> {}", itemId, candidate);
-                                break;
-                            }
+        // Support both "recipe" and "item" properties
+        String itemId = "";
+        if (pageJson.has("recipe")) {
+            itemId = pageJson.get("recipe").getAsString();
+            LOGGER.info("Creating crafting page for recipe: {}", itemId);
+        } else if (pageJson.has("item")) {
+            itemId = pageJson.get("item").getAsString();
+            LOGGER.info("Creating crafting page for item: {}", itemId);
+        }
+
+        if (itemId.isEmpty()) {
+            LOGGER.warn("Crafting page missing both 'recipe' and 'item' properties");
+            return createFallbackTextPage(pageJson);
+        }
+
+        Item item = null;
+
+        // Try to parse as direct item ID first
+        ResourceLocation itemResource = ResourceLocation.tryParse(itemId);
+        if (itemResource != null) {
+            item = ForgeRegistries.ITEMS.getValue(itemResource);
+            LOGGER.debug("Direct item lookup for {}: {}", itemId, item);
+        }
+
+        // If direct lookup failed, try some common recipe->item mappings
+        if (item == null) {
+            LOGGER.info("Direct item lookup failed for {}, trying recipe mappings", itemId);
+
+            // Common Eidolon recipe mappings
+            if (itemId.equals("eidolon:arcane_gold_ingot")) {
+                // This is a regular crafting recipe that produces arcane gold ingots
+                item = ForgeRegistries.ITEMS.getValue(new ResourceLocation("eidolon", "arcane_gold_ingot"));
+                LOGGER.info("Mapped crafting recipe to result: {} -> eidolon:arcane_gold_ingot", itemId);
+            } else if (itemId.equals("eidolon:arcane_gold_ingot_alchemy")) {
+                // This is a crucible recipe that produces arcane gold ingots
+                item = ForgeRegistries.ITEMS.getValue(new ResourceLocation("eidolon", "arcane_gold_ingot"));
+                LOGGER.info("Mapped crucible recipe to result: {} -> eidolon:arcane_gold_ingot", itemId);
+            } else if (itemId.equals("eidolon:crystallization")) {
+                // Try several possible result items for crystallization
+                String[] candidates = {
+                    "eidolon:arcane_gold_ingot",
+                    "eidolon:arcane_gold_block",
+                    "eidolon:soul_gem",
+                    "eidolon:crystalized_void",
+                    "minecraft:gold_ingot"
+                };
+
+                for (String candidate : candidates) {
+                    ResourceLocation candidateResource = ResourceLocation.tryParse(candidate);
+                    if (candidateResource != null) {
+                        Item candidateItem = ForgeRegistries.ITEMS.getValue(candidateResource);
+                        if (candidateItem != null) {
+                            item = candidateItem;
+                            LOGGER.info("Found recipe result item: {} -> {}", itemId, candidate);
+                            break;
                         }
                     }
-                } else if (itemId.startsWith("eidolon:")) {
-                    // For other eidolon recipes, try to guess the result item
-                    String recipeName = itemId.substring(8); // Remove "eidolon:" prefix
-                    String[] guesses = {
-                        "eidolon:" + recipeName,
-                        "eidolon:" + recipeName + "_ingot",
-                        "eidolon:" + recipeName + "_gem",
-                        "eidolon:" + recipeName + "_crystal"
-                    };
-                    
-                    for (String guess : guesses) {
-                        ResourceLocation guessResource = ResourceLocation.tryParse(guess);
-                        if (guessResource != null) {
-                            Item guessItem = ForgeRegistries.ITEMS.getValue(guessResource);
-                            if (guessItem != null) {
-                                item = guessItem;
-                                LOGGER.info("Guessed recipe result item: {} -> {}", itemId, guess);
-                                break;
-                            }
+                }
+            } else if (itemId.startsWith("eidolon:")) {
+                // For other eidolon recipes, try to guess the result item
+                String recipeName = itemId.substring(8); // Remove "eidolon:" prefix
+                String[] guesses = {
+                    "eidolon:" + recipeName,
+                    "eidolon:" + recipeName + "_ingot",
+                    "eidolon:" + recipeName + "_gem",
+                    "eidolon:" + recipeName + "_crystal"
+                };
+
+                for (String guess : guesses) {
+                    ResourceLocation guessResource = ResourceLocation.tryParse(guess);
+                    if (guessResource != null) {
+                        Item guessItem = ForgeRegistries.ITEMS.getValue(guessResource);
+                        if (guessItem != null) {
+                            item = guessItem;
+                            LOGGER.info("Guessed recipe result item: {} -> {}", itemId, guess);
+                            break;
                         }
                     }
                 }
             }
-            
-            if (item == null) {
-                LOGGER.warn("Could not resolve item for recipe/item: {}, using fallback", itemId);
-                return createFallbackTextPage(pageJson);
-            }
-            
-            // Create CraftingPage with ItemStack parameter
-            ItemStack itemStack = new ItemStack(item);
-            LOGGER.info("Successfully creating CraftingPage with item: {} ({})", item, itemStack);
-            return new CraftingPage(itemStack);
-            
-        } catch (Exception e) {
-            LOGGER.error("Failed to create CraftingPage for: {}", pageJson, e);
+        }
+
+        if (item == null) {
+            LOGGER.warn("Could not resolve item for recipe/item: {}, using fallback", itemId);
             return createFallbackTextPage(pageJson);
         }
+
+        // Create CraftingPage with ItemStack parameter
+        ItemStack itemStack = new ItemStack(item);
+        LOGGER.info("Successfully creating CraftingPage with item: {} ({})", item, itemStack);
+        return new CraftingPage(itemStack);
     }
 
     /**
      * Create a RitualPage - takes a ResourceLocation parameter
      */
     private static Page createRitualPage(JsonObject pageJson) {
-        try {
-            String ritualId = pageJson.has("ritual") ? pageJson.get("ritual").getAsString() : "";
-            if (ritualId.isEmpty()) {
-                LOGGER.warn("Ritual page missing ritual ID");
-                return createFallbackTextPage(pageJson);
-            }
-            
-            ResourceLocation ritualResource = ResourceLocation.tryParse(ritualId);
-            if (ritualResource == null) {
-                LOGGER.warn("Invalid ritual ID: {}", ritualId);
-                return createFallbackTextPage(pageJson);
-            }
-            
-            // Create RitualPage with ResourceLocation parameter
-            return new RitualPage(ritualResource);
-            
-        } catch (Exception e) {
-            LOGGER.error("Failed to create RitualPage for: {}", pageJson.get("ritual"), e);
+        String ritualId = pageJson.has("ritual") ? pageJson.get("ritual").getAsString() : "";
+        if (ritualId.isEmpty()) {
+            LOGGER.warn("Ritual page missing ritual ID");
             return createFallbackTextPage(pageJson);
         }
+
+        ResourceLocation ritualResource = ResourceLocation.tryParse(ritualId);
+        if (ritualResource == null) {
+            LOGGER.warn("Invalid ritual ID: {}", ritualId);
+            return createFallbackTextPage(pageJson);
+        }
+
+        // Create RitualPage with ResourceLocation parameter
+        return new RitualPage(ritualResource);
     }
 
     /**
      * Create a CruciblePage - takes a ResourceLocation parameter
      */
     private static Page createCruciblePage(JsonObject pageJson) {
-        try {
-            String recipeId = pageJson.has("recipe") ? pageJson.get("recipe").getAsString() : "";
-            if (recipeId.isEmpty()) {
-                LOGGER.warn("Crucible page missing recipe ID");
-                return createFallbackTextPage(pageJson);
-            }
-
-            ResourceLocation recipeResource = ResourceLocation.tryParse(recipeId);
-            if (recipeResource == null) {
-                LOGGER.warn("Invalid recipe ID: {}", recipeId);
-                return createFallbackTextPage(pageJson);
-            }
-
-            Item item = ForgeRegistries.ITEMS.getValue(recipeResource);
-            if (item == null) {
-                LOGGER.warn("Item not found for crucible recipe {}, using fallback", recipeId);
-                return createFallbackTextPage(pageJson);
-            }
-
-            return new CruciblePage(new ItemStack(item), recipeResource);
-
-        } catch (Exception e) {
-            LOGGER.error("Failed to create CruciblePage for: {}", pageJson.get("recipe"), e);
+        String recipeId = pageJson.has("recipe") ? pageJson.get("recipe").getAsString() : "";
+        if (recipeId.isEmpty()) {
+            LOGGER.warn("Crucible page missing recipe ID");
             return createFallbackTextPage(pageJson);
         }
+
+        ResourceLocation recipeResource = ResourceLocation.tryParse(recipeId);
+        if (recipeResource == null) {
+            LOGGER.warn("Invalid recipe ID: {}", recipeId);
+            return createFallbackTextPage(pageJson);
+        }
+
+        Item item = ForgeRegistries.ITEMS.getValue(recipeResource);
+        if (item == null) {
+            LOGGER.warn("Item not found for crucible recipe {}, using fallback", recipeId);
+            return createFallbackTextPage(pageJson);
+        }
+
+        return new CruciblePage(new ItemStack(item), recipeResource);
     }
 
     /**
      * Create a fallback text page when conversion fails
      */
     private static Page createFallbackTextPage(JsonObject pageJson) {
-        try {
-            String fallbackText = pageJson.has("text") ? pageJson.get("text").getAsString() :
-                                "Failed to load page content";
-            // Also translate fallback text if it's a translation key
-            String translatedText = translateText(fallbackText);
-            return new TextPage(translatedText);
-
-        } catch (Exception e) {
-            LOGGER.error("Failed to create fallback text page", e);
-            return null;
-        }
+        String fallbackText = pageJson.has("text") ? pageJson.get("text").getAsString() :
+                            "Failed to load page content";
+        // Also translate fallback text if it's a translation key
+        String translatedText = translateText(fallbackText);
+        return new TextPage(translatedText);
     }
 }
