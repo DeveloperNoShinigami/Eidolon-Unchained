@@ -1,0 +1,11 @@
+{
+  "id": "eidolonunchained:void_amulet",
+  "title": "Void Amulet", 
+  "description": "Mastery of void energies and dimensional magic",
+  "category": "artifice",
+  "icon": {
+    "item": "eidolon:void_amulet"
+  },
+  "sort_order": 600,
+  "secret": false
+}

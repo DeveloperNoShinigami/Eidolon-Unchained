@@ -180,9 +180,10 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                 targetChapter = ResourceLocation.tryParse(targetChapterStr);
                 LOGGER.info("Parsed as resource location: {}", targetChapter);
             } else {
-                // It's a direct field name like "VOID_AMULET" - convert to dummy resource location
-                targetChapter = ResourceLocation.tryParse("eidolon:" + targetChapterStr.toLowerCase());
-                LOGGER.info("Converted field name to resource location: {}", targetChapter);
+                // It's a direct field name like "VOID_AMULET" - convert to our namespace
+                // First try our namespace for custom chapters
+                targetChapter = ResourceLocation.tryParse("eidolonunchained:" + targetChapterStr.toLowerCase());
+                LOGGER.info("Converted field name to our custom resource location: {}", targetChapter);
             }
             
             if (targetChapter == null) {

@@ -80,19 +80,16 @@ public class EidolonResearchIntegration {
     }
 
     /**
-     * Attempts to register a research chapter with Eidolon using reflection to
-     * remain compatible if the API changes or is absent.
+     * Attempts to register a research chapter with Eidolon using reflection.
+     * Instead of registering as a new category, we add it as a chapter to an existing category.
      */
     private static void registerChapterWithEidolon(ResearchChapter chapter) {
         try {
-            Method registerCategory = Researches.class.getMethod(
-                "registerCategory", ResourceLocation.class, Component.class, ItemStack.class);
-            registerCategory.invoke(null, chapter.getId(), chapter.getTitle(), chapter.getIcon());
-            LOGGER.info("✓ Registered research chapter: {}", chapter.getId());
-        } catch (NoSuchMethodException e) {
-            LOGGER.warn("Eidolon Researches has no registerCategory method; unable to register chapter {}", chapter.getId());
+            // Don't register chapters as categories - they should be added to existing categories
+            // This will be handled by the EidolonCategoryExtension system
+            LOGGER.info("✓ Research chapter prepared for integration: {}", chapter.getId());
         } catch (Exception e) {
-            LOGGER.error("Failed to register research chapter {}", chapter.getId(), e);
+            LOGGER.error("Failed to prepare research chapter {}", chapter.getId(), e);
         }
     }
 

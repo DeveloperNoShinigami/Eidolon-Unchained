@@ -1,0 +1,11 @@
+{
+  "id": "eidolonunchained:wicked_sign",
+  "title": "Wicked Sign", 
+  "description": "Dark symbols and forbidden knowledge from the depths",
+  "category": "signs",
+  "icon": {
+    "item": "eidolon:wicked_weave"
+  },
+  "sort_order": 500,
+  "secret": true
+}

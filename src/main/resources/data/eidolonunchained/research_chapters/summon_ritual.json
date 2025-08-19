@@ -1,0 +1,11 @@
+{
+  "id": "eidolonunchained:summon_ritual",
+  "title": "Summon Ritual", 
+  "description": "Advanced techniques for summoning creatures and entities",
+  "category": "rituals",
+  "icon": {
+    "item": "eidolon:unholy_effigy"
+  },
+  "sort_order": 400,
+  "secret": false
+}

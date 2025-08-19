@@ -1,0 +1,64 @@
+{
+  "target_research": "eidolon:void_amulet",
+  "research_id": "eidolonunchained:void_manipulation",
+  "title": "Void Manipulation",
+  "description": "Learn to harness and control void energies for advanced magical purposes.",
+  "required_stars": 3,
+  "special_tasks": [
+    "Successfully craft 10 void-enhanced items",
+    "Travel through the End dimension for 2 hours"
+  ],
+  "tasks": {
+    "tier_1": [
+      {
+        "type": "collect_items",
+        "item": "minecraft:ender_pearl",
+        "count": 64
+      },
+      {
+        "type": "kill_entities",
+        "entity": "minecraft:enderman",
+        "count": 50
+      },
+      {
+        "type": "craft_items",
+        "item": "eidolon:void_amulet",
+        "count": 3
+      }
+    ],
+    "tier_2": [
+      {
+        "type": "use_ritual",
+        "ritual": "eidolon:warp_ritual",
+        "count": 15
+      },
+      {
+        "type": "kill_entities",
+        "entity": "minecraft:shulker",
+        "count": 10
+      },
+      {
+        "type": "collect_items",
+        "item": "minecraft:chorus_fruit",
+        "count": 128
+      }
+    ],
+    "tier_3": [
+      {
+        "type": "craft_items",
+        "item": "eidolon:terminus_mirror",
+        "count": 1
+      },
+      {
+        "type": "use_ritual",
+        "ritual": "eidolon:teleport_ritual",
+        "count": 10
+      },
+      {
+        "type": "kill_entities",
+        "entity": "minecraft:ender_dragon",
+        "count": 1
+      }
+    ]
+  }
+}

@@ -1,10 +1,13 @@
 package com.bluelotuscoding.eidolonunchained.integration;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
+import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
+import com.bluelotuscoding.eidolonunchained.research.ResearchChapter;
 import elucent.eidolon.codex.*;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -131,6 +134,10 @@ public class EidolonCategoryExtension {
         
         LOGGER.info("🔍 Adding custom chapters to existing categories via reflection...");
         
+        // Get loaded research chapters
+        Map<ResourceLocation, ResearchChapter> customChapters = ResearchDataManager.getLoadedResearchChapters();
+        LOGGER.info("Found {} custom research chapters to integrate", customChapters.size());
+        
         for (Category category : categories) {
             try {
                 // ⚠️ REFLECTION: Access category.key field
@@ -139,35 +146,13 @@ public class EidolonCategoryExtension {
                 keyField.setAccessible(true);
                 String categoryKey = (String) keyField.get(category);
                 
-                // Add custom content based on category type
-                switch (categoryKey.toLowerCase()) {
-                    case "nature":
-                        LOGGER.info("📖 Adding custom chapter to NATURE category...");
-                        addChapterToCategory(category, "Custom Nature Studies", 
-                                           new ItemStack(Items.OAK_SAPLING), itemToEntryMap);
-                        break;
-                        
-                    case "artifice":
-                        LOGGER.info("📖 Adding custom chapter to ARTIFICE category...");
-                        addChapterToCategory(category, "Modded Artifacts", 
-                                           new ItemStack(Items.DIAMOND), itemToEntryMap);
-                        break;
-                        
-                    case "spells":
-                        LOGGER.info("📖 Adding custom chapter to SPELLS category...");
-                        addChapterToCategory(category, "Advanced Spellcrafting", 
-                                           new ItemStack(Items.ENCHANTED_BOOK), itemToEntryMap);
-                        break;
-                        
-                    case "rituals":
-                        LOGGER.info("📖 Adding custom chapter to RITUALS category...");
-                        addChapterToCategory(category, "Community Rituals", 
-                                           new ItemStack(Items.CAULDRON), itemToEntryMap);
-                        break;
-                        
-                    default:
-                        // Skip unknown categories
-                        break;
+                // Add research chapters that belong to this category
+                for (ResearchChapter researchChapter : customChapters.values()) {
+                    if (categoryKey.equals(researchChapter.getCategory())) {
+                        LOGGER.info("📖 Adding research chapter '{}' to {} category...", 
+                                   researchChapter.getTitle().getString(), categoryKey.toUpperCase());
+                        addResearchChapterToCategory(category, researchChapter, itemToEntryMap);
+                    }
                 }
                 
             } catch (Exception e) {
@@ -225,6 +210,48 @@ public class EidolonCategoryExtension {
             
         } catch (Exception e) {
             LOGGER.error("❌ Failed to add chapter '{}' to category via reflection", chapterTitle, e);
+        }
+    }
+
+    /**
+     * Add a research chapter to an existing category using reflection
+     */
+    private static void addResearchChapterToCategory(Category category, ResearchChapter researchChapter, 
+                                                    Map<Item, IndexPage.IndexEntry> itemToEntryMap) {
+        try {
+            // Create codex chapter from research chapter
+            String titleKey = "eidolonunchained.codex.chapter." + researchChapter.getId().getPath();
+            Chapter codexChapter = new Chapter(titleKey);
+            
+            // Add title page with research chapter info
+            codexChapter.addPage(new TitlePage(researchChapter.getTitle().getString()));
+            
+            // Add description if available
+            if (!researchChapter.getDescription().getString().isEmpty()) {
+                codexChapter.addPage(new TextPage(researchChapter.getDescription().getString()));
+            }
+            
+            // Add placeholder content - this will be populated by the codex entries
+            codexChapter.addPage(new TextPage("This chapter contains custom content loaded from datapacks."));
+            codexChapter.addPage(new TextPage("§6Research Chapter: " + researchChapter.getId()));
+            
+            // Create index entry
+            IndexPage.IndexEntry newEntry = new IndexPage.IndexEntry(codexChapter, researchChapter.getIcon());
+            
+            // Add to item map for lookup
+            itemToEntryMap.put(researchChapter.getIcon().getItem(), newEntry);
+            
+            // Log success
+            Field keyField = category.getClass().getDeclaredField("key");
+            keyField.setAccessible(true);
+            String categoryKey = (String) keyField.get(category);
+            
+            LOGGER.info("✅ Added research chapter '{}' to category '{}' via reflection", 
+                       researchChapter.getTitle().getString(), categoryKey);
+            
+        } catch (Exception e) {
+            LOGGER.error("❌ Failed to add research chapter '{}' to category via reflection", 
+                        researchChapter.getId(), e);
         }
     }    /* COMMENTED OUT: Hardcoded category creation examples
      * We prefer JSON datapack-driven approach for maximum flexibility

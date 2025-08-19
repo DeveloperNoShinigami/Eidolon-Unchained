@@ -131,5 +131,43 @@
   "_comment_categories": "Category names for custom sections",
   "eidolonunchained.codex.category.custom_spells": "Custom Spells",
   "eidolonunchained.codex.category.community_rituals": "Community Rituals", 
-  "eidolonunchained.codex.category.expansions": "Expansions"
+  "eidolonunchained.codex.category.expansions": "Expansions",
+
+  "_comment_research": "=== Research System Translations ===",
+  
+  "eidolonunchained.research.chapter.advanced_necromancy": "Advanced Necromancy",
+  "eidolonunchained.research.chapter.void_mastery": "Void Mastery",
+  
+  "eidolonunchained.research.master_necromancer.title": "Master Necromancer",
+  "eidolonunchained.research.master_necromancer.description": "Achieve ultimate mastery over death and undeath through forbidden knowledge",
+  "eidolonunchained.research.master_necromancer.discovery": "The forbidden knowledge calls to you from the depths of ancient catacombs...",
+  "eidolonunchained.research.master_necromancer.completion": "You have transcended mortal limitations and achieved mastery over death itself.",
+  "eidolonunchained.research.master_necromancer.warning": "This path leads to power beyond imagination, but at the cost of your humanity.",
+  
+  "eidolonunchained.research.void_walker.title": "Void Walker",  
+  "eidolonunchained.research.void_walker.description": "Master interdimensional travel and void manipulation through forbidden techniques",
+  "eidolonunchained.research.void_walker.discovery": "The boundaries between dimensions shimmer before your enhanced perception...",
+  "eidolonunchained.research.void_walker.completion": "You have transcended physical limitations and mastered the void between worlds.",
+  "eidolonunchained.research.void_walker.warning": "Void mastery comes with the risk of losing yourself between dimensions.",
+  
+  "eidolonunchained.research.ritual_master.title": "Ritual Master",
+  "eidolonunchained.research.ritual_master.description": "Master advanced ritual techniques and combinations",
+  
+  "eidolonunchained.research.advanced_soul_manipulation.title": "Advanced Soul Manipulation", 
+  "eidolonunchained.research.advanced_soul_manipulation.description": "Master the deepest secrets of soul manipulation",
+  
+  "_comment_research_tasks": "Research task descriptions",
+  "eidolonunchained.research.task.kill_entities": "Eliminate %d %s using specified methods",
+  "eidolonunchained.research.task.use_ritual": "Successfully perform %s ritual %d times", 
+  "eidolonunchained.research.task.craft_items": "Craft %d %s under specific conditions",
+  "eidolonunchained.research.task.collect_items": "Gather required materials through designated methods",
+  "eidolonunchained.research.task.dimensional_exploration": "Explore specified dimensions meeting all requirements",
+  "eidolonunchained.research.task.master_technique": "Demonstrate mastery of advanced techniques",
+  "eidolonunchained.research.task.grand_ritual": "Complete the ultimate research ritual",
+  
+  "_comment_research_rewards": "Research completion rewards",
+  "eidolonunchained.research.reward.title_granted": "Title Granted: %s",
+  "eidolonunchained.research.reward.ability_unlocked": "Special Ability Unlocked: %s",
+  "eidolonunchained.research.reward.spell_unlocked": "New Spell: %s",
+  "eidolonunchained.research.reward.recipe_unlocked": "Recipe Discovered: %s"
 }

@@ -17,11 +17,12 @@ public class ResearchChapter {
     private final int sortOrder;
     private final boolean isSecret;
     private final ResourceLocation backgroundTexture;
+    private final String category; // Eidolon category this chapter belongs to
     private final JsonObject additionalData;
 
     public ResearchChapter(ResourceLocation id, Component title, Component description,
                           ItemStack icon, int sortOrder, boolean isSecret,
-                          ResourceLocation backgroundTexture, JsonObject additionalData) {
+                          ResourceLocation backgroundTexture, String category, JsonObject additionalData) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -29,6 +30,7 @@ public class ResearchChapter {
         this.sortOrder = sortOrder;
         this.isSecret = isSecret;
         this.backgroundTexture = backgroundTexture;
+        this.category = category;
         this.additionalData = additionalData != null ? additionalData : new JsonObject();
     }
 
@@ -40,6 +42,7 @@ public class ResearchChapter {
     public int getSortOrder() { return sortOrder; }
     public boolean isSecret() { return isSecret; }
     public ResourceLocation getBackgroundTexture() { return backgroundTexture; }
+    public String getCategory() { return category; }
     public JsonObject getAdditionalData() { return additionalData; }
 
     /**
@@ -82,14 +85,15 @@ public class ResearchChapter {
      * Builder pattern for easier chapter creation
      */
     public static class Builder {
-        private ResourceLocation id;
-        private Component title;
-        private Component description;
-        private ItemStack icon;
-        private int sortOrder = 0;
-        private boolean isSecret = false;
-        private ResourceLocation backgroundTexture;
-        private JsonObject additionalData = new JsonObject();
+    private ResourceLocation id;
+    private Component title;
+    private Component description;
+    private ItemStack icon;
+    private int sortOrder = 0;
+    private boolean isSecret = false;
+    private ResourceLocation backgroundTexture;
+    private String category = "nature";
+    private JsonObject additionalData = new JsonObject();
 
         public Builder(ResourceLocation id) {
             this.id = id;
@@ -125,6 +129,11 @@ public class ResearchChapter {
             return this;
         }
 
+        public Builder category(String category) {
+            this.category = category;
+            return this;
+        }
+
         public Builder additionalData(String key, String value) {
             this.additionalData.addProperty(key, value);
             return this;
@@ -132,7 +141,7 @@ public class ResearchChapter {
 
         public ResearchChapter build() {
             return new ResearchChapter(id, title, description, icon, sortOrder, 
-                                     isSecret, backgroundTexture, additionalData);
+                                     isSecret, backgroundTexture, category, additionalData);
         }
     }
 }

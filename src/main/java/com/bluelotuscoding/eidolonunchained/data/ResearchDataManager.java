@@ -179,6 +179,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
             ResourceLocation background = json.has("background")
                 ? ResourceLocation.tryParse(json.get("background").getAsString())
                 : null;
+            String category = json.has("category") ? json.get("category").getAsString() : "nature";
 
             ResearchChapter chapter = new ResearchChapter(
                 chapterId,
@@ -188,6 +189,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                 sortOrder,
                 isSecret,
                 background,
+                category,
                 new JsonObject()
             );
 

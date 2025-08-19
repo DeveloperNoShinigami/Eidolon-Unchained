@@ -1,0 +1,11 @@
+{
+  "id": "eidolonunchained:sacred_sign",
+  "title": "Sacred Sign", 
+  "description": "Understanding the sacred symbols and their mystical properties",
+  "category": "signs",
+  "icon": {
+    "item": "eidolon:wooden_altar"
+  },
+  "sort_order": 300,
+  "secret": false
+}

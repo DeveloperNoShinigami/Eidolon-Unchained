@@ -2,7 +2,7 @@
   "title_key": "eidolonunchained.codex.chapter.elemental_fusion", 
   "title": "Elemental Fusion",
   "icon": "minecraft:fire_charge",
-  "target_chapter": "ELEMENTAL_SPELLS",
+  "target_chapter": "rituals",
   "pages": [
     {
       "type": "text",

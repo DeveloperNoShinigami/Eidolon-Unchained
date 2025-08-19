@@ -1,0 +1,11 @@
+{
+  "id": "eidolonunchained:monsters",
+  "title": "Monsters", 
+  "description": "Knowledge about the various creatures and beasts of the world",
+  "category": "nature",
+  "icon": {
+    "item": "eidolon:necromantic_focus"
+  },
+  "sort_order": 200,
+  "secret": false
+}

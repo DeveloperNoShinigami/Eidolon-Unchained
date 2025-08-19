@@ -1,0 +1,64 @@
+{
+  "target_research": "eidolon:soul_sorcery",
+  "research_id": "eidolonunchained:soul_binding_mastery",
+  "title": "Soul Binding Mastery",
+  "description": "Learn advanced techniques for binding and manipulating souls.",
+  "required_stars": 3,
+  "special_tasks": [
+    "Successfully bind 25 souls to gems",
+    "Create soul-enhanced equipment"
+  ],
+  "tasks": {
+    "tier_1": [
+      {
+        "type": "collect_items",
+        "item": "eidolon:soul_shard",
+        "count": 50
+      },
+      {
+        "type": "craft_items",
+        "item": "eidolon:lesser_soul_gem",
+        "count": 20
+      },
+      {
+        "type": "kill_entities",
+        "entity": "minecraft:villager",
+        "count": 25
+      }
+    ],
+    "tier_2": [
+      {
+        "type": "craft_items",
+        "item": "eidolon:soul_gem",
+        "count": 15
+      },
+      {
+        "type": "use_ritual",
+        "ritual": "eidolon:soul_enchanting",
+        "count": 20
+      },
+      {
+        "type": "kill_entities",
+        "entity": "eidolon:wraith",
+        "count": 10
+      }
+    ],
+    "tier_3": [
+      {
+        "type": "craft_items",
+        "item": "eidolon:sanguine_amulet",
+        "count": 1
+      },
+      {
+        "type": "craft_items",
+        "item": "eidolon:soulbone_amulet", 
+        "count": 1
+      },
+      {
+        "type": "use_ritual",
+        "ritual": "eidolon:soul_binding_ritual",
+        "count": 5
+      }
+    ]
+  }
+}
