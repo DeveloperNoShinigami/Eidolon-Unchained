@@ -8,14 +8,18 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -133,16 +137,53 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
      */
     private void loadResearchChapter(ResourceLocation location, JsonObject json) {
         try {
-            // This would parse the JSON and create ResearchChapter objects
-            // For now, just store the location as a placeholder
             if (!json.has("id")) {
                 LOGGER.warn("Research chapter at {} missing required 'id' field", location);
                 return;
             }
-            
+
             ResourceLocation chapterId = ResourceLocation.tryParse(json.get("id").getAsString());
-            LOADED_RESEARCH_CHAPTERS.put(chapterId, null); // Placeholder for now
-            
+            Component title = json.has("title")
+                ? Component.literal(json.get("title").getAsString())
+                : Component.literal(chapterId.getPath());
+            Component description = json.has("description")
+                ? Component.literal(json.get("description").getAsString())
+                : Component.literal("");
+
+            // Icon parsing
+            ItemStack iconStack = ItemStack.EMPTY;
+            if (json.has("icon") && json.get("icon").isJsonObject()) {
+                JsonObject iconObj = json.getAsJsonObject("icon");
+                if (iconObj.has("item")) {
+                    ResourceLocation itemId = ResourceLocation.tryParse(iconObj.get("item").getAsString());
+                    Item item = ForgeRegistries.ITEMS.getValue(itemId);
+                    if (item != null) {
+                        int count = iconObj.has("count") ? iconObj.get("count").getAsInt() : 1;
+                        iconStack = new ItemStack(item, count);
+                    }
+                }
+            }
+
+            int sortOrder = json.has("sort_order") ? json.get("sort_order").getAsInt() : 0;
+            boolean isSecret = json.has("secret") && json.get("secret").getAsBoolean();
+            ResourceLocation background = json.has("background")
+                ? ResourceLocation.tryParse(json.get("background").getAsString())
+                : null;
+
+            ResearchChapter chapter = new ResearchChapter(
+                chapterId,
+                title,
+                description,
+                iconStack,
+                sortOrder,
+                isSecret,
+                background,
+                new JsonObject()
+            );
+
+            LOADED_RESEARCH_CHAPTERS.put(chapterId, chapter);
+            LOGGER.info("Loaded research chapter {}", chapterId);
+
         } catch (Exception e) {
             throw new RuntimeException("Failed to load research chapter from " + location, e);
         }
