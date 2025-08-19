@@ -1,0 +1,44 @@
+{
+  "title_key": "eidolonunchained.codex.expansions.content_pack.title",
+  "title": "Expansion Content Pack",
+  "icon": "minecraft:end_crystal", 
+  "pages": [
+    {
+      "type": "text",
+      "content": "This expansion pack contains additional content created by the Eidolon Unchained community. New spells, rituals, and magical discoveries await!"
+    },
+    {
+      "type": "list",
+      "content": "New Features",
+      "data": {
+        "items": [
+          "Advanced Soul Manipulation",
+          "Dimensional Rift Magic", 
+          "Crystalline Focus Systems",
+          "Multi-School Spell Combinations",
+          "Community-Driven Research"
+        ]
+      }
+    },
+    {
+      "type": "text",
+      "content": "The End Crystal serves as a powerful focus for reality-bending magic, allowing practitioners to manipulate the fabric of existence itself."
+    },
+    {
+      "type": "crucible",
+      "content": "Crystal Essence Extraction",
+      "data": {
+        "result": {
+          "item": "minecraft:prismarine_crystals",
+          "count": 4
+        },
+        "steps": [
+          {"item": "minecraft:end_crystal", "count": 1},
+          {"item": "minecraft:water_bucket", "count": 1},
+          {"item": "minecraft:soul_sand", "count": 8}
+        ],
+        "description": "Extracts pure magical essence from End Crystals"
+      }
+    }
+  ]
+}

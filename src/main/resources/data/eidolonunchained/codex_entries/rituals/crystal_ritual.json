@@ -1,0 +1,32 @@
+{
+  "target_chapter": "CRYSTAL_RITUAL",
+  "title": "eidolonunchained.codex.entry.crystal_ritual.mastery.title",
+  "description": "eidolonunchained.codex.entry.crystal_ritual.mastery.description",
+  "icon": {
+    "item": "eidolon:arcane_gold_ingot",
+    "count": 1
+  },
+  "pages": [
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.crystal_ritual.mastery.introduction"
+    },
+    {
+      "type": "ritual",
+      "ritual": "eidolon:crystallization"
+    },
+    {
+      "type": "text", 
+      "text": "eidolonunchained.codex.entry.crystal_ritual.mastery.placement_theory"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.crystal_ritual.mastery.resonance_theory"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.crystal_ritual.mastery.advanced_configurations"
+    }
+  ],
+  "prerequisites": []
+}

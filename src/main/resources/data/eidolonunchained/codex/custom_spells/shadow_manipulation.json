@@ -1,0 +1,32 @@
+{
+  "title_key": "eidolonunchained.codex.chapter.shadow_manipulation",
+  "title": "Shadow Manipulation",
+  "icon": "minecraft:coal_block",
+  "target_chapter": "SHADOW_SPELLS",
+  "pages": [
+    {
+      "type": "text",
+      "text": "Shadow manipulation is an advanced magical technique that allows practitioners to bend darkness to their will. This ancient art requires both mental discipline and a deep understanding of the void."
+    },
+    {
+      "type": "crafting_recipe",
+      "recipe": "eidolonunchained:shadow_crystal",
+      "text": "The Shadow Crystal serves as a focus for shadow-based spells. Its dark surface seems to absorb light itself."
+    },
+    {
+      "type": "ritual_recipe", 
+      "ritual": "eidolonunchained:shadow_bind",
+      "text": "The Shadow Bind ritual allows you to temporarily merge with your own shadow, becoming incorporeal for a brief time."
+    },
+    {
+      "type": "text",
+      "text": "§4Warning:§r Prolonged use of shadow magic can lead to permanent changes in one's essence. Practice with caution and always maintain a connection to the light."
+    },
+    {
+      "type": "image",
+      "image": "eidolonunchained:textures/gui/codex/shadow_diagram.png",
+      "width": 128,
+      "height": 96
+    }
+  ]
+}

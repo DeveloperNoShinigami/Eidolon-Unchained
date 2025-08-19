@@ -1,0 +1,74 @@
+{
+  "mappings": {
+    "elucent/eidolon/mixin/LivingEntityMixin": {
+      "isFallFlying": "Lnet/minecraft/world/entity/LivingEntity;m_21255_()Z",
+      "canAttack(Lnet/minecraft/world/entity/LivingEntity;)Z": "Lnet/minecraft/world/entity/LivingEntity;m_6779_(Lnet/minecraft/world/entity/LivingEntity;)Z",
+      "getMobType": "Lnet/minecraft/world/entity/LivingEntity;m_6336_()Lnet/minecraft/world/entity/MobType;"
+    },
+    "elucent/eidolon/mixin/compat/SpellArrowMixin": {
+      "tick": "Lcom/hollingsworth/arsnouveau/common/entity/EntitySpellArrow;m_8119_()V"
+    },
+    "elucent/eidolon/mixin/ProjectileMixin": {
+      "onHit": "Lnet/minecraft/world/entity/projectile/Projectile;m_6532_(Lnet/minecraft/world/phys/HitResult;)V",
+      "tick": "Lnet/minecraft/world/entity/projectile/Projectile;m_8119_()V"
+    },
+    "elucent/eidolon/mixin/PotionBrewingMixin": {
+      "addMix": "m_43513_(Lnet/minecraft/world/item/alchemy/Potion;Lnet/minecraft/world/item/Item;Lnet/minecraft/world/item/alchemy/Potion;)V"
+    },
+    "elucent/eidolon/mixin/BlockEntityTypeAccessor": {
+      "validBlocks": "f_58915_:Ljava/util/Set;"
+    },
+    "elucent/eidolon/mixin/EntityMixin": {
+      "isAlliedTo(Lnet/minecraft/world/entity/Entity;)Z": "Lnet/minecraft/world/entity/Entity;m_7307_(Lnet/minecraft/world/entity/Entity;)Z"
+    },
+    "elucent/eidolon/mixin/AbstractContainerMenuMixin": {
+      "addSlot": "m_38897_(Lnet/minecraft/world/inventory/Slot;)Lnet/minecraft/world/inventory/Slot;",
+      "remoteSlots": "f_150394_:Lnet/minecraft/core/NonNullList;",
+      "lastSlots": "f_38841_:Lnet/minecraft/core/NonNullList;"
+    },
+    "elucent/eidolon/mixin/LevelRendererMixin": {
+      "renderLevel": "Lnet/minecraft/client/renderer/LevelRenderer;m_109599_(Lcom/mojang/blaze3d/vertex/PoseStack;FJZLnet/minecraft/client/Camera;Lnet/minecraft/client/renderer/GameRenderer;Lnet/minecraft/client/renderer/LightTexture;Lorg/joml/Matrix4f;)V",
+      "Lnet/minecraft/client/renderer/LevelRenderer;checkPoseStack(Lcom/mojang/blaze3d/vertex/PoseStack;)V": "Lnet/minecraft/client/renderer/LevelRenderer;m_109588_(Lcom/mojang/blaze3d/vertex/PoseStack;)V"
+    },
+    "elucent/eidolon/mixin/PlayerMixin": {
+      "removeEntitiesOnShoulder": "Lnet/minecraft/world/entity/player/Player;m_36328_()V"
+    }
+  },
+  "data": {
+    "searge": {
+      "elucent/eidolon/mixin/LivingEntityMixin": {
+        "isFallFlying": "Lnet/minecraft/world/entity/LivingEntity;m_21255_()Z",
+        "canAttack(Lnet/minecraft/world/entity/LivingEntity;)Z": "Lnet/minecraft/world/entity/LivingEntity;m_6779_(Lnet/minecraft/world/entity/LivingEntity;)Z",
+        "getMobType": "Lnet/minecraft/world/entity/LivingEntity;m_6336_()Lnet/minecraft/world/entity/MobType;"
+      },
+      "elucent/eidolon/mixin/compat/SpellArrowMixin": {
+        "tick": "Lcom/hollingsworth/arsnouveau/common/entity/EntitySpellArrow;m_8119_()V"
+      },
+      "elucent/eidolon/mixin/ProjectileMixin": {
+        "onHit": "Lnet/minecraft/world/entity/projectile/Projectile;m_6532_(Lnet/minecraft/world/phys/HitResult;)V",
+        "tick": "Lnet/minecraft/world/entity/projectile/Projectile;m_8119_()V"
+      },
+      "elucent/eidolon/mixin/PotionBrewingMixin": {
+        "addMix": "m_43513_(Lnet/minecraft/world/item/alchemy/Potion;Lnet/minecraft/world/item/Item;Lnet/minecraft/world/item/alchemy/Potion;)V"
+      },
+      "elucent/eidolon/mixin/BlockEntityTypeAccessor": {
+        "validBlocks": "f_58915_:Ljava/util/Set;"
+      },
+      "elucent/eidolon/mixin/EntityMixin": {
+        "isAlliedTo(Lnet/minecraft/world/entity/Entity;)Z": "Lnet/minecraft/world/entity/Entity;m_7307_(Lnet/minecraft/world/entity/Entity;)Z"
+      },
+      "elucent/eidolon/mixin/AbstractContainerMenuMixin": {
+        "addSlot": "m_38897_(Lnet/minecraft/world/inventory/Slot;)Lnet/minecraft/world/inventory/Slot;",
+        "remoteSlots": "f_150394_:Lnet/minecraft/core/NonNullList;",
+        "lastSlots": "f_38841_:Lnet/minecraft/core/NonNullList;"
+      },
+      "elucent/eidolon/mixin/LevelRendererMixin": {
+        "renderLevel": "Lnet/minecraft/client/renderer/LevelRenderer;m_109599_(Lcom/mojang/blaze3d/vertex/PoseStack;FJZLnet/minecraft/client/Camera;Lnet/minecraft/client/renderer/GameRenderer;Lnet/minecraft/client/renderer/LightTexture;Lorg/joml/Matrix4f;)V",
+        "Lnet/minecraft/client/renderer/LevelRenderer;checkPoseStack(Lcom/mojang/blaze3d/vertex/PoseStack;)V": "Lnet/minecraft/client/renderer/LevelRenderer;m_109588_(Lcom/mojang/blaze3d/vertex/PoseStack;)V"
+      },
+      "elucent/eidolon/mixin/PlayerMixin": {
+        "removeEntitiesOnShoulder": "Lnet/minecraft/world/entity/player/Player;m_36328_()V"
+      }
+    }
+  }
+}

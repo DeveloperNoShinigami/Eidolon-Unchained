@@ -1,0 +1,38 @@
+{
+  "chapter": "warded_mail",
+  "pages": [
+    {
+      "type": "text",
+      "title": "eidolonunchained.codex.warded_mail.protective_magic.title",
+      "text": "eidolonunchained.codex.warded_mail.protective_magic.desc"
+    },
+    {
+      "type": "item_showcase",
+      "title": "eidolonunchained.codex.warded_mail.chainmail.title",
+      "item": "eidolon:warped_sprouts",
+      "text": "eidolonunchained.codex.warded_mail.chainmail.desc"
+    },
+    {
+      "type": "crafting",
+      "title": "eidolonunchained.codex.warded_mail.armor_crafting.title",
+      "recipe": {
+        "type": "minecraft:crafting_shaped",
+        "pattern": [
+          "SAS",
+          "ACA",
+          "SAS"
+        ],
+        "key": {
+          "S": {"item": "eidolon:silver_ingot"},
+          "A": {"item": "minecraft:chainmail_chestplate"},
+          "C": {"item": "eidolon:soul_shard"}
+        },
+        "result": {
+          "item": "eidolon:warped_sprouts",
+          "count": 1
+        }
+      },
+      "text": "eidolonunchained.codex.warded_mail.armor_crafting.desc"
+    }
+  ]
+}

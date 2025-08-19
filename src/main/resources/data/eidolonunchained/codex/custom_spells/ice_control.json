@@ -1,0 +1,28 @@
+{
+  "title_key": "eidolonunchained.codex.custom_spells.ice_control.title",
+  "title": "Ice Control",
+  "icon": "minecraft:ice",
+  "pages": [
+    {
+      "type": "text",
+      "content": "Harness the power of winter's embrace. Ice magic allows you to freeze enemies, create barriers, and manipulate water in all its forms."
+    },
+    {
+      "type": "text",
+      "content": "The key to ice magic is understanding that cold is not the absence of heat, but the presence of stillness - the slowing of all motion and energy."
+    },
+    {
+      "type": "ritual",
+      "content": "Ritual of Eternal Winter",
+      "data": {
+        "circle_size": 3,
+        "components": [
+          {"item": "minecraft:ice", "count": 8},
+          {"item": "minecraft:blue_dye", "count": 4},
+          {"item": "minecraft:snowball", "count": 16}
+        ],
+        "description": "Creates a permanent winter biome in a small area"
+      }
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "target_chapter": "MONSTERS",
+  "title": "eidolonunchained.codex.entry.monsters.advanced_studies.title",
+  "description": "eidolonunchained.codex.entry.monsters.advanced_studies.description",
+  "icon": {
+    "item": "eidolon:necromancer_spawn_egg",
+    "count": 1
+  },
+  "pages": [
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.monsters.advanced_studies.introduction"
+    },
+    {
+      "type": "entity",
+      "entity": "eidolon:necromancer"
+    },
+    {
+      "type": "text", 
+      "text": "eidolonunchained.codex.entry.monsters.advanced_studies.necromancer_details"
+    },
+    {
+      "type": "entity",
+      "entity": "eidolon:wraith"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.monsters.advanced_studies.wraith_details"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.monsters.advanced_studies.behavior_patterns"
+    }
+  ],
+  "prerequisites": []
+}

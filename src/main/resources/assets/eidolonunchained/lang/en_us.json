@@ -29,5 +29,107 @@
   "eidolonunchained.codex.entry.void_mastery": "Expanding upon the knowledge of void amulets and void manipulation. Through extensive study of void amulets, you have learned to harness void energy in new ways.",
   "eidolonunchained.codex.entry.void_mastery.fundamentals": "Void Mastery Fundamentals: This knowledge allows for more efficient void manipulation and deeper understanding of the space between worlds. The void is not empty space, but rather a realm of infinite potential.",
   "eidolonunchained.codex.entry.void_mastery.advanced": "Advanced practitioners can draw upon this potential to perform feats that seem to defy the natural order. Master void practitioners can create stable portals between distant locations, manipulate gravity in localized areas, and even briefly step outside of normal time.",
-  "eidolonunchained.codex.entry.void_mastery.risks": "Enhanced Void Techniques: These abilities come with significant risks. Prolonged void exposure can lead to dimensional instability, where the practitioner begins to phase between realities involuntarily."
+  "eidolonunchained.codex.entry.void_mastery.risks": "Enhanced Void Techniques: These abilities come with significant risks. Prolonged void exposure can lead to dimensional instability, where the practitioner begins to phase between realities involuntarily.",
+
+  "eidolonunchained.codex.entry.monsters.advanced_studies.title": "Advanced Monster Studies",
+  "eidolonunchained.codex.entry.monsters.advanced_studies.description": "Comprehensive guide to magical creatures and their behaviors",
+  "eidolonunchained.codex.entry.monsters.advanced_studies.introduction": "Through careful observation, patterns emerge in how different undead creatures behave. Understanding these patterns is crucial for any aspiring necromancer or monster hunter.",
+  "eidolonunchained.codex.entry.monsters.advanced_studies.necromancer_details": "Necromancers are powerful spellcasters that command undead minions. They appear in dark robes and can summon skeletons, zombies, and other undead creatures to fight for them. Necromancers drop valuable magical components when defeated, including soul shards and necromantic reagents.",
+  "eidolonunchained.codex.entry.monsters.advanced_studies.wraith_details": "Wraiths are ethereal undead that phase between dimensions. These spectral entities can move through walls and drain life energy from their victims. They are particularly dangerous in groups and vulnerable to silver weapons and holy magic.",
+  "eidolonunchained.codex.entry.monsters.advanced_studies.behavior_patterns": "Monster Behavior Patterns: Most undead are drawn to areas of high magical activity and negative energy. They become more aggressive during new moon phases and can sense soul energy from great distances.",
+
+  "eidolonunchained.codex.entry.monsters.rare_variants.title": "Rare Monster Variants",
+  "eidolonunchained.codex.entry.monsters.rare_variants.description": "Documentation of unusual monster behaviors and variants",
+  "eidolonunchained.codex.entry.monsters.rare_variants.introduction": "These elusive creatures appear only during the darkest nights and possess unique abilities that set them apart from common monsters.",
+  "eidolonunchained.codex.entry.monsters.rare_variants.shadow_wraiths": "Shadow Wraiths: Unlike common wraiths, shadow wraiths possess the ability to phase through solid matter and are nearly invisible to the naked eye. They are drawn to areas of intense magical activity and can drain soul energy from multiple targets simultaneously.",
+  "eidolonunchained.codex.entry.monsters.rare_variants.frost_skeleton": "Frost Skeleton: These skeletal warriors have been corrupted by prolonged exposure to void energy. Unlike normal skeletons, they possess enhanced intelligence and can coordinate complex battle strategies.",
+  "eidolonunchained.codex.entry.monsters.rare_variants.frost_details": "Frost skeletons are immune to cold damage and their arrows inflict slowness on their targets. They are often found guarding ancient ruins and necromantic sites, making them formidable opponents even for experienced practitioners.",
+
+  "eidolonunchained.codex.entry.critters.enhanced_study.title": "Enhanced Critter Studies",
+  "eidolonunchained.codex.entry.critters.enhanced_study.description": "Advanced research into lesser undead creatures",
+  "eidolonunchained.codex.entry.critters.enhanced_study.introduction": "While often overlooked, the smaller undead creatures provide valuable insights into necromantic energy patterns and soul manipulation techniques.",
+  "eidolonunchained.codex.entry.critters.enhanced_study.zombie_variants": "Zombie Variants: Standard zombies show remarkable adaptability to different magical environments. Their simple behavior patterns make them excellent subjects for studying basic necromantic principles.",
+  "eidolonunchained.codex.entry.critters.enhanced_study.skeletal_behavior": "Skeletal Behavior: Skeletons retain muscle memory from their previous lives, making them capable of using weapons and tools with surprising proficiency. This retained knowledge can be enhanced through necromantic manipulation.",
+
+  "eidolonunchained.codex.entry.plants.magical_flora.title": "Magical Flora Studies",
+  "eidolonunchained.codex.entry.plants.magical_flora.description": "Research into plants affected by magical energies",
+  "eidolonunchained.codex.entry.plants.magical_flora.introduction": "Plants exposed to necromantic and void energies undergo remarkable transformations, developing properties useful for ritual components and alchemical applications.",
+  "eidolonunchained.codex.entry.plants.magical_flora.withered_plants": "Withered Plants: Dead and dying vegetation near necromantic sites develops enhanced magical conductivity. These plants can be harvested for use in dark rituals and void manipulation.",
+  "eidolonunchained.codex.entry.plants.magical_flora.nether_flora": "Nether Flora: Fungi from the Nether realm possess inherent resistance to corruption and can be used to stabilize volatile magical reactions. Their otherworldly nature makes them valuable for interdimensional workings.",
+
+  "eidolonunchained.codex.entry.arcane_gold.advanced_techniques.title": "Advanced Arcane Gold Techniques",
+  "eidolonunchained.codex.entry.arcane_gold.advanced_techniques.description": "Mastery of magical gold manipulation and refinement",
+  "eidolonunchained.codex.entry.arcane_gold.advanced_techniques.introduction": "Arcane gold represents the pinnacle of magical metallurgy, combining mundane gold with concentrated magical energies to create a material of extraordinary properties.",
+  "eidolonunchained.codex.entry.arcane_gold.advanced_techniques.enhanced_properties": "Enhanced Properties: Arcane gold conducts magical energy with minimal loss, making it ideal for crafting focus items and ritual implements. Its lustrous appearance also masks darker magical auras.",
+  "eidolonunchained.codex.entry.arcane_gold.advanced_techniques.alchemical_refinement": "Alchemical Refinement: Advanced practitioners can further purify arcane gold through crucible processes, creating ultra-pure ingots that amplify magical effects by up to 200%.",
+
+  "eidolonunchained.codex.entry.pewter.enhanced_crafting.title": "Enhanced Pewter Crafting",
+  "eidolonunchained.codex.entry.pewter.enhanced_crafting.description": "Advanced techniques for working with magical pewter alloys",
+  "eidolonunchained.codex.entry.pewter.enhanced_crafting.introduction": "Pewter's malleable nature makes it an excellent medium for magical inscription and enchantment. Unlike other metals, pewter readily accepts and holds magical charges.",
+  "eidolonunchained.codex.entry.pewter.enhanced_crafting.advanced_alloys": "Advanced Alloys: By adding trace amounts of silver and void essence during smelting, pewter develops enhanced magical conductivity and resistance to corruption.",
+  "eidolonunchained.codex.entry.pewter.enhanced_crafting.smelting_techniques": "Smelting Techniques: The key to high-quality magical pewter lies in maintaining precise temperature control during the smelting process. Too much heat burns away the magical properties, while too little fails to properly bind the metals.",
+
+  "eidolonunchained.codex.entry.soul_gems.advanced_manipulation.title": "Advanced Soul Gem Manipulation",
+  "eidolonunchained.codex.entry.soul_gems.advanced_manipulation.description": "Mastery of soul binding and ethereal energy manipulation",
+  "eidolonunchained.codex.entry.soul_gems.advanced_manipulation.introduction": "Soul gems represent crystallized life force, containing vast amounts of spiritual energy that can be harnessed for powerful magical workings.",
+  "eidolonunchained.codex.entry.soul_gems.advanced_manipulation.soul_binding": "Soul Binding: The process of binding souls to gems requires precise ritual timing and proper containment circles. Improperly bound souls may escape or become hostile.",
+  "eidolonunchained.codex.entry.soul_gems.advanced_manipulation.summoning_applications": "Summoning Applications: Charged soul gems provide the energy needed for advanced summoning rituals, acting as spiritual anchors that stabilize summoned entities in our realm.",
+
+  "eidolonunchained.codex.entry.void_amulet.mastery.title": "Void Amulet Mastery",
+  "eidolonunchained.codex.entry.void_amulet.mastery.description": "Advanced techniques for void manipulation and interdimensional travel",
+  "eidolonunchained.codex.entry.void_amulet.mastery.introduction": "Through extensive study of void amulets, you have learned to harness void energy in new ways. This knowledge allows for more efficient void manipulation and deeper understanding of the space between worlds.",
+  "eidolonunchained.codex.entry.void_amulet.mastery.void_fundamentals": "Void Mastery Fundamentals: The void is not empty space, but rather a realm of infinite potential. Advanced practitioners can draw upon this potential to perform feats that seem to defy the natural order.",
+  "eidolonunchained.codex.entry.void_amulet.mastery.advanced_techniques": "Advanced Techniques: Master void practitioners can create stable portals between distant locations, manipulate gravity in localized areas, and even briefly step outside of normal time.",
+  "eidolonunchained.codex.entry.void_amulet.mastery.dimensional_risks": "Dimensional Risks: These abilities come with significant risks. Prolonged void exposure can lead to dimensional instability, where the practitioner begins to phase between realities involuntarily.",
+
+  "eidolonunchained.codex.entry.inlays.advanced_inscriptions.title": "Advanced Inlay Inscriptions",
+  "eidolonunchained.codex.entry.inlays.advanced_inscriptions.description": "Mastery of magical inscription and enhancement techniques",
+  "eidolonunchained.codex.entry.inlays.advanced_inscriptions.introduction": "Inlays represent the art of permanently embedding magical symbols and patterns into mundane materials, creating lasting enchantments that enhance the properties of crafted items.",
+  "eidolonunchained.codex.entry.inlays.advanced_inscriptions.gold_properties": "Arcane Gold Inlays: Gold inlays provide exceptional magical conductivity and are particularly suited for enchantments requiring sustained power. They resist corruption and maintain their properties over centuries.",
+  "eidolonunchained.codex.entry.inlays.advanced_inscriptions.silver_applications": "Silver Inlay Applications: Silver inlays excel at channeling purification magic and protection spells. They are especially effective against undead creatures and corrupted magical influences.",
+  "eidolonunchained.codex.entry.inlays.advanced_inscriptions.workbench_techniques": "Workbench Techniques: The magical workbench allows for precise inscription of complex patterns that would be impossible to achieve by hand. Master craftsmen can create multi-layered inlays with interlocking magical effects.",
+
+  "eidolonunchained.codex.entry.crystal_ritual.mastery.title": "Crystal Ritual Mastery",
+  "eidolonunchained.codex.entry.crystal_ritual.mastery.description": "Advanced techniques for crystal-based magical workings",
+  "eidolonunchained.codex.entry.crystal_ritual.mastery.introduction": "This improved approach to crystal rituals provides greater magical output through proper harmonic alignment. The key is understanding how different crystals interact with each other and the ambient magical field.",
+  "eidolonunchained.codex.entry.crystal_ritual.mastery.placement_theory": "Crystal Placement Theory: Proper crystal placement can increase ritual effectiveness by up to 300%. The most powerful configurations use seven crystals arranged in specific geometric patterns that amplify resonant frequencies.",
+  "eidolonunchained.codex.entry.crystal_ritual.mastery.resonance_theory": "Crystal Resonance Theory: Different crystals resonate at different magical frequencies. Quartz provides stability and acts as a magical amplifier, while amethyst channels void energy and enhances spiritual connections.",
+  "eidolonunchained.codex.entry.crystal_ritual.mastery.advanced_configurations": "Advanced Configurations: Master practitioners can create complex crystal networks that maintain their charge for extended periods. These networks can be activated remotely and provide sustained magical effects over large areas.",
+
+  "eidolonunchained.codex.entry.summon_ritual.advanced_techniques.title": "Advanced Summoning Techniques",
+  "eidolonunchained.codex.entry.summon_ritual.advanced_techniques.description": "For the Experienced Practitioner - Advanced wraith summoning",
+  "eidolonunchained.codex.entry.summon_ritual.advanced_techniques.introduction": "Advanced wraith summoning requires precise control and understanding of spectral energies and ethereal manipulation.",
+  "eidolonunchained.codex.entry.summon_ritual.advanced_techniques.binding_protocols": "Wraith Binding Protocols: The binding process involves three critical phases: 1) Preparation of the ethereal anchor, 2) Invocation of the wraith essence, 3) Establishment of the binding covenant.",
+  "eidolonunchained.codex.entry.summon_ritual.advanced_techniques.timing_requirements": "Timing Requirements: Each phase must be completed with exact timing to prevent the wraith from becoming hostile or escaping the binding circle. Failure may result in permanent spectral contamination.",
+  "eidolonunchained.codex.entry.summon_ritual.advanced_techniques.bound_wraith_details": "Bound Wraith: A spectral entity tethered to the summoner's will through advanced binding rituals. These creatures maintain their ethereal properties but are compelled to serve their master.",
+  "eidolonunchained.codex.entry.summon_ritual.advanced_techniques.manifestation_properties": "Manifestation Properties: Translucent, shifting ethereal form with glowing purple essence core. Leaves spectral frost trail. Height: 2.5 blocks. Binding lasts exactly 7 days and requires daily soul energy to maintain (5 energy per day).",
+
+  "eidolonunchained.codex.entry.wicked_sign.advanced_applications.title": "Advanced Wicked Sign Applications",
+  "eidolonunchained.codex.entry.wicked_sign.advanced_applications.description": "Mastery of dark inscription techniques and malevolent magic",
+  "eidolonunchained.codex.entry.wicked_sign.advanced_applications.introduction": "Wicked signs channel malevolent energies and corrupt intentions into physical manifestations. These powerful symbols can curse enemies, weaken defenses, and amplify dark magical workings.",
+  "eidolonunchained.codex.entry.wicked_sign.advanced_applications.ink_preparation": "Dark Ink Preparation: The ink used for wicked signs must be prepared under specific conditions - during new moon phases, using materials tainted by suffering and corruption.",
+  "eidolonunchained.codex.entry.wicked_sign.advanced_applications.sign_placement": "Sign Placement: Wicked signs must be inscribed with intent and malice. The location of placement affects the sign's power - crossroads, graveyards, and sites of tragedy provide the strongest resonance.",
+  "eidolonunchained.codex.entry.wicked_sign.advanced_applications.dark_energies": "Dark Energies: Once activated, wicked signs create auras of malevolent energy that affect both living creatures and magical workings within their influence. These effects intensify with time and repeated use.",
+
+  "eidolonunchained.codex.entry.sacred_sign.divine_inscriptions.title": "Sacred Sign Divine Inscriptions",
+  "eidolonunchained.codex.entry.sacred_sign.divine_inscriptions.description": "Holy inscription techniques for protection and purification",
+  "eidolonunchained.codex.entry.sacred_sign.divine_inscriptions.introduction": "Sacred signs channel divine energies and benevolent intentions into protective wards. These blessed symbols can heal the wounded, purify corruption, and provide sanctuary against dark forces.",
+  "eidolonunchained.codex.entry.sacred_sign.divine_inscriptions.blessed_materials": "Blessed Materials: Sacred signs require pure materials blessed by divine ritual. Holy water, consecrated silver, and prayers of dedication imbue the inscriptions with celestial power.",
+  "eidolonunchained.codex.entry.sacred_sign.divine_inscriptions.purification_effects": "Purification Effects: Active sacred signs cleanse nearby areas of corruption and negative energy. Undead creatures suffer damage when approaching these blessed inscriptions.",
+  "eidolonunchained.codex.entry.sacred_sign.divine_inscriptions.protective_properties": "Protective Properties: Sacred signs create auras of divine protection that strengthen allies and weaken enemies aligned with darkness. These effects are most powerful during daylight hours and holy celebrations.",
+
+  "_comment": "=== Custom Category Translations ===",
+  
+  "eidolonunchained.codex.custom_spells.fire_mastery.title": "Fire Mastery",
+  "eidolonunchained.codex.custom_spells.ice_control.title": "Ice Control",
+  
+  "eidolonunchained.codex.community_rituals.summoning.title": "Community Summoning", 
+  "eidolonunchained.codex.community_rituals.binding.title": "Ritual Binding",
+  
+  "eidolonunchained.codex.expansions.content_pack.title": "Expansion Content Pack",
+  
+  "_comment_categories": "Category names for custom sections",
+  "eidolonunchained.codex.category.custom_spells": "Custom Spells",
+  "eidolonunchained.codex.category.community_rituals": "Community Rituals", 
+  "eidolonunchained.codex.category.expansions": "Expansions"
 }

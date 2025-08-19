@@ -3,6 +3,7 @@ package com.bluelotuscoding.eidolonunchained;
 import com.bluelotuscoding.eidolonunchained.data.CodexDataManager;
 import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
 import com.bluelotuscoding.eidolonunchained.integration.ModIntegration;
+import com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.CreativeModeTab;
@@ -56,6 +57,9 @@ public class EidolonUnchained
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
+        
+        // Detect Eidolon version capabilities and log results
+        EidolonVersionDetection.logFeatureDetection();
     }
 
     private void commonSetup(final FMLCommonSetupEvent event)

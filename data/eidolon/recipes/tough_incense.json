@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "eidolon:merammer_resin"
+    },
+    {
+      "item": "eidolon:avennian_sprig"
+    },
+    {
+      "item": "eidolon:sildrian_seed"
+    },
+    {
+      "item": "minecraft:iron_nugget"
+    },
+    {
+      "item": "minecraft:amethyst_cluster"
+    }
+  ],
+  "result": {
+    "item": "eidolon:tough_incense",
+    "count": 1
+  }
+}

@@ -14,13 +14,18 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.slf4j.Logger;
 
+// ⚠️ REFLECTION IMPORT - Only used where absolutely necessary for research registration
 import java.lang.reflect.Method;
+
 import java.util.List;
 import java.util.Map;
 
 /**
  * Handles integration with Eidolon's research system to inject custom research entries.
- * This is separate from the codex integration and focuses on the research progression system.
+ * 
+ * ⚠️ NOTE: This class uses REFLECTION only where absolutely necessary.
+ * Research system integration currently requires reflection due to Eidolon's API limitations.
+ * We minimize reflection usage and clearly mark where it's used.
  */
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class EidolonResearchIntegration {

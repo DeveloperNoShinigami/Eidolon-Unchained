@@ -11,7 +11,6 @@ import elucent.eidolon.codex.CodexChapters;
 import elucent.eidolon.codex.Page;
 import elucent.eidolon.codex.TextPage;
 import elucent.eidolon.codex.TitlePage;
-import elucent.eidolon.codex.TextPage;
 import elucent.eidolon.registries.Researches;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -20,8 +19,10 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.slf4j.Logger;
 
+// ⚠️ REFLECTION IMPORTS - Only used where absolutely necessary
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +31,10 @@ import java.util.Map;
 
 /**
  * Handles integration with Eidolon's codex system to inject custom entries.
- * Uses direct access to Eidolon's public static Chapter fields for clean integration.
+ * 
+ * ⚠️ NOTE: This class uses REFLECTION only where absolutely necessary.
+ * We prefer using the new event-driven system (EidolonCategoryExtension) for new content.
+ * This class is kept for compatibility with existing content injection needs.
  */
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class EidolonCodexIntegration {
@@ -42,6 +46,10 @@ public class EidolonCodexIntegration {
     private static final Map<Chapter, List<CodexEntry>> DEFERRED_ENTRIES = new HashMap<>();
 
     static {
+        // ⚠️ REFLECTION USAGE - Only used here because we need to access existing static fields
+        // This is the ONLY place where reflection is necessary in our codebase
+        LOGGER.info("🔍 Using reflection to build chapter lookup (necessary for existing content)...");
+        
         // Build lookup dynamically using reflection to gather all public static Chapter fields
         for (Field field : CodexChapters.class.getDeclaredFields()) {
             if (!Modifier.isStatic(field.getModifiers())) continue;
@@ -54,6 +62,8 @@ public class EidolonCodexIntegration {
                 LOGGER.error("Failed to access chapter field {}", field.getName(), e);
             }
         }
+        
+        LOGGER.info("✅ Built chapter lookup with {} existing chapters", CHAPTER_LOOKUP.size());
     }
 
     @SubscribeEvent
@@ -105,7 +115,7 @@ public class EidolonCodexIntegration {
 
                 ItemStack iconStack = research.getIcon() == null ? ItemStack.EMPTY : research.getIcon().copy();
                 String title = research.getTitle().getString();
-                chapter = new Chapter(title, new TitlePage(title, iconStack));
+                chapter = new Chapter(title, new TitlePage(title));
                 CHAPTER_LOOKUP.put(chapterId, chapter);
                 LOGGER.info("Created new chapter {} from research data", chapterId);
             }
@@ -137,9 +147,7 @@ public class EidolonCodexIntegration {
 
             // Title and icon
             if (entry.getTitle() != null && !entry.getTitle().getString().isEmpty()) {
-                TitlePage tp = entry.getIcon().isEmpty()
-                    ? new TitlePage(entry.getTitle().getString())
-                    : new TitlePage(entry.getTitle().getString(), entry.getIcon());
+                TitlePage tp = new TitlePage(entry.getTitle().getString());
                 chapter.addPage(tp);
             }
 
