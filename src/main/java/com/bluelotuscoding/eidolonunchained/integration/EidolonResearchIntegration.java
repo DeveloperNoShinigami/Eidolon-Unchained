@@ -3,6 +3,8 @@ package com.bluelotuscoding.eidolonunchained.integration;
 import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
 import com.bluelotuscoding.eidolonunchained.research.ResearchEntry;
 import com.mojang.logging.LogUtils;
+import elucent.eidolon.api.research.Research;
+import elucent.eidolon.registries.Researches;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -19,76 +21,31 @@ import java.util.Map;
 public class EidolonResearchIntegration {
     private static final Logger LOGGER = LogUtils.getLogger();
     
-    private static boolean integrationAttempted = false;
-    private static boolean integrationSuccessful = false;
-
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> {
-            if (!integrationAttempted) {
-                attemptResearchIntegration();
-                if (integrationSuccessful) {
-                    injectCustomResearch();
-                }
-            }
-        });
-    }
-
-    /**
-     * Attempts to integrate with Eidolon's research system
-     */
-    private static void attemptResearchIntegration() {
-        if (integrationAttempted) return;
-        integrationAttempted = true;
-        
-        try {
-            LOGGER.info("Attempting to integrate with Eidolon's research system...");
-            
-            // Try to find Eidolon's Research class
-            Class.forName("elucent.eidolon.api.research.Research");
-            LOGGER.info("Found Eidolon Research class");
-            
-            // Try to find research registry or manager
-            // We'll need to explore Eidolon's structure more to find where researches are stored
-            
-            integrationSuccessful = true;
-            LOGGER.info("✓ Research integration setup successful!");
-            
-        } catch (Exception e) {
-            LOGGER.warn("Could not integrate with Eidolon research: {}", e.getMessage());
-            LOGGER.debug("Research integration error details:", e);
-        }
+        event.enqueueWork(EidolonResearchIntegration::injectCustomResearch);
     }
 
     /**
      * Injects our custom research entries into Eidolon's research system
      */
     private static void injectCustomResearch() {
-        if (!integrationSuccessful) {
-            LOGGER.warn("Cannot inject research - integration was not successful");
-            return;
-        }
-
         try {
             Map<ResourceLocation, ResearchEntry> customResearch = ResearchDataManager.getLoadedResearchEntries();
-            
+
             LOGGER.info("Attempting to inject {} custom research entries", customResearch.size());
-            
+
             for (Map.Entry<ResourceLocation, ResearchEntry> entry : customResearch.entrySet()) {
                 ResourceLocation researchId = entry.getKey();
-                
-                // TODO: Convert our ResearchEntry to Eidolon's Research object and register it
-                LOGGER.info("✓ Would inject research entry: {}", researchId);
+                Research research = new Research(researchId, 0);
+                Researches.register(research);
+                LOGGER.info("✓ Injected research entry: {}", researchId);
             }
-            
+
             LOGGER.info("Research integration complete!");
-            
+
         } catch (Exception e) {
             LOGGER.error("Failed to inject custom research", e);
         }
-    }
-
-    public static boolean isIntegrationSuccessful() {
-        return integrationSuccessful;
     }
 }

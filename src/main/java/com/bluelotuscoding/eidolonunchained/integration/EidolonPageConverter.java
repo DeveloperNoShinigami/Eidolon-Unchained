@@ -3,15 +3,21 @@ package com.bluelotuscoding.eidolonunchained.integration;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
+import elucent.eidolon.codex.CraftingPage;
+import elucent.eidolon.codex.CruciblePage;
+import elucent.eidolon.codex.EntityPage;
+import elucent.eidolon.codex.Page;
+import elucent.eidolon.codex.RitualPage;
+import elucent.eidolon.codex.TextPage;
+import elucent.eidolon.codex.TitlePage;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.network.chat.Component;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 
-import java.lang.reflect.Constructor;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
@@ -51,7 +57,7 @@ public class EidolonPageConverter {
     /**
      * Convert a JSON page definition to an Eidolon Page object
      */
-    public static Object convertPage(JsonObject pageJson) {
+    public static Page convertPage(JsonObject pageJson) {
         try {
             String type = pageJson.has("type") ? pageJson.get("type").getAsString().toLowerCase() : "text";
             
@@ -82,17 +88,14 @@ public class EidolonPageConverter {
     /**
      * Create a TextPage - takes just a String parameter
      */
-    private static Object createTextPage(JsonObject pageJson) {
+    private static Page createTextPage(JsonObject pageJson) {
         try {
-            Class<?> textPageClass = Class.forName("elucent.eidolon.codex.TextPage");
-            Constructor<?> constructor = textPageClass.getConstructor(String.class);
-            
             String text = pageJson.has("text") ? pageJson.get("text").getAsString() : "";
             // Translate the text if it's a translation key
             String translatedText = translateText(text);
             LOGGER.debug("TextPage: {} -> {}", text, translatedText);
-            return constructor.newInstance(translatedText);
-            
+            return new TextPage(translatedText);
+
         } catch (Exception e) {
             LOGGER.error("Failed to create TextPage", e);
             return createFallbackTextPage(pageJson);
@@ -104,20 +107,17 @@ public class EidolonPageConverter {
      * IMPORTANT: TitlePage expects raw translation keys, NOT translated text!
      * TitlePage will automatically append ".title" to get the title and use base key for content
      */
-    private static Object createTitlePage(JsonObject pageJson) {
+    private static Page createTitlePage(JsonObject pageJson) {
         try {
-            Class<?> titlePageClass = Class.forName("elucent.eidolon.codex.TitlePage");
-            Constructor<?> constructor = titlePageClass.getConstructor(String.class);
-            
             String text = pageJson.has("text") ? pageJson.get("text").getAsString() : "";
-            
+
             // For TitlePage, we pass the RAW key, not translated text
             // TitlePage will handle translation internally:
             // - Uses base key for content
             // - Automatically appends ".title" for title
             LOGGER.debug("TitlePage using raw key: {}", text);
-            return constructor.newInstance(text);
-            
+            return new TitlePage(text);
+
         } catch (Exception e) {
             LOGGER.error("Failed to create TitlePage", e);
             return createFallbackTextPage(pageJson);
@@ -239,32 +239,30 @@ public class EidolonPageConverter {
     /**
      * Create an EntityPage - takes just an EntityType parameter
      */
-    private static Object createEntityPage(JsonObject pageJson) {
+    private static Page createEntityPage(JsonObject pageJson) {
         try {
             String entityId = pageJson.has("entity") ? pageJson.get("entity").getAsString() : "";
             if (entityId.isEmpty()) {
                 LOGGER.warn("Entity page missing entity ID");
                 return createFallbackTextPage(pageJson);
             }
-            
+
             // Get EntityType from registry
             ResourceLocation entityResource = ResourceLocation.tryParse(entityId);
             if (entityResource == null) {
                 LOGGER.warn("Invalid entity ID: {}", entityId);
                 return createFallbackTextPage(pageJson);
             }
-            
+
             EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(entityResource);
             if (entityType == null) {
                 LOGGER.warn("Entity type not found: {}", entityId);
                 return createFallbackTextPage(pageJson);
             }
-            
+
             // Create EntityPage with EntityType parameter
-            Class<?> entityPageClass = Class.forName("elucent.eidolon.codex.EntityPage");
-            Constructor<?> constructor = entityPageClass.getConstructor(EntityType.class);
-            return constructor.newInstance(entityType);
-            
+            return new EntityPage(entityType);
+
         } catch (Exception e) {
             LOGGER.error("Failed to create EntityPage for: {}", pageJson.get("entity"), e);
             return createFallbackTextPage(pageJson);
@@ -274,7 +272,7 @@ public class EidolonPageConverter {
     /**
      * Create a CraftingPage - takes an ItemStack parameter
      */
-    private static Object createCraftingPage(JsonObject pageJson) {
+    private static Page createCraftingPage(JsonObject pageJson) {
         try {
             // Support both "recipe" and "item" properties
             String itemId = "";
@@ -364,11 +362,9 @@ public class EidolonPageConverter {
             }
             
             // Create CraftingPage with ItemStack parameter
-            Class<?> craftingPageClass = Class.forName("elucent.eidolon.codex.CraftingPage");
-            Constructor<?> constructor = craftingPageClass.getConstructor(ItemStack.class);
             ItemStack itemStack = new ItemStack(item);
             LOGGER.info("Successfully creating CraftingPage with item: {} ({})", item, itemStack);
-            return constructor.newInstance(itemStack);
+            return new CraftingPage(itemStack);
             
         } catch (Exception e) {
             LOGGER.error("Failed to create CraftingPage for: {}", pageJson, e);
@@ -379,7 +375,7 @@ public class EidolonPageConverter {
     /**
      * Create a RitualPage - takes a ResourceLocation parameter
      */
-    private static Object createRitualPage(JsonObject pageJson) {
+    private static Page createRitualPage(JsonObject pageJson) {
         try {
             String ritualId = pageJson.has("ritual") ? pageJson.get("ritual").getAsString() : "";
             if (ritualId.isEmpty()) {
@@ -394,9 +390,7 @@ public class EidolonPageConverter {
             }
             
             // Create RitualPage with ResourceLocation parameter
-            Class<?> ritualPageClass = Class.forName("elucent.eidolon.codex.RitualPage");
-            Constructor<?> constructor = ritualPageClass.getConstructor(ResourceLocation.class);
-            return constructor.newInstance(ritualResource);
+            return new RitualPage(ritualResource);
             
         } catch (Exception e) {
             LOGGER.error("Failed to create RitualPage for: {}", pageJson.get("ritual"), e);
@@ -407,25 +401,28 @@ public class EidolonPageConverter {
     /**
      * Create a CruciblePage - takes a ResourceLocation parameter
      */
-    private static Object createCruciblePage(JsonObject pageJson) {
+    private static Page createCruciblePage(JsonObject pageJson) {
         try {
             String recipeId = pageJson.has("recipe") ? pageJson.get("recipe").getAsString() : "";
             if (recipeId.isEmpty()) {
                 LOGGER.warn("Crucible page missing recipe ID");
                 return createFallbackTextPage(pageJson);
             }
-            
+
             ResourceLocation recipeResource = ResourceLocation.tryParse(recipeId);
             if (recipeResource == null) {
                 LOGGER.warn("Invalid recipe ID: {}", recipeId);
                 return createFallbackTextPage(pageJson);
             }
-            
-            // Create CruciblePage with ResourceLocation parameter
-            Class<?> cruciblePageClass = Class.forName("elucent.eidolon.codex.CruciblePage");
-            Constructor<?> constructor = cruciblePageClass.getConstructor(ResourceLocation.class);
-            return constructor.newInstance(recipeResource);
-            
+
+            Item item = ForgeRegistries.ITEMS.getValue(recipeResource);
+            if (item == null) {
+                LOGGER.warn("Item not found for crucible recipe {}, using fallback", recipeId);
+                return createFallbackTextPage(pageJson);
+            }
+
+            return new CruciblePage(new ItemStack(item), recipeResource);
+
         } catch (Exception e) {
             LOGGER.error("Failed to create CruciblePage for: {}", pageJson.get("recipe"), e);
             return createFallbackTextPage(pageJson);
@@ -435,17 +432,14 @@ public class EidolonPageConverter {
     /**
      * Create a fallback text page when conversion fails
      */
-    private static Object createFallbackTextPage(JsonObject pageJson) {
+    private static Page createFallbackTextPage(JsonObject pageJson) {
         try {
-            Class<?> textPageClass = Class.forName("elucent.eidolon.codex.TextPage");
-            Constructor<?> constructor = textPageClass.getConstructor(String.class);
-            
-            String fallbackText = pageJson.has("text") ? pageJson.get("text").getAsString() : 
+            String fallbackText = pageJson.has("text") ? pageJson.get("text").getAsString() :
                                 "Failed to load page content";
             // Also translate fallback text if it's a translation key
             String translatedText = translateText(fallbackText);
-            return constructor.newInstance(translatedText);
-            
+            return new TextPage(translatedText);
+
         } catch (Exception e) {
             LOGGER.error("Failed to create fallback text page", e);
             return null;

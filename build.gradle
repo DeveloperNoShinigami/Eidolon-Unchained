@@ -120,9 +120,10 @@ dependencies {
 
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-    // Eidolon dependency - temporarily disabled due to mixin compatibility issues
-    implementation fg.deobf("curse.maven:eidolon-repraised-870250:5877358")
-    //implementation ("com.alexthw.eidolon_repraised:eidolon_repraised-${minecraft_version}-${eidolon_version}") {transitive=false}
+    // Eidolon dependency - now a compile-time requirement
+    implementation ("com.alexthw.eidolon_repraised:eidolon-${minecraft_version}:${eidolon_version}") {
+        transitive = false
+    }
 
     // Curios dependencies - following official documentation
     // Compile against only the API artifact
