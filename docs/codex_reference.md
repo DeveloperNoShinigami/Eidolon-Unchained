@@ -40,8 +40,23 @@ Top‑down ritual circle with ingredients and steps.
 ```
 Item lists or material checklists.
 
-### Other recipe pages
-The system also accepts `smelting`, `crucible`, and `workbench` page types for specialized recipes.
+### `smelting`
+```json
+{ "type": "smelting", "input": "minecraft:iron_ore", "result": "minecraft:iron_ingot" }
+```
+Shows a furnace recipe with input and output items.
+
+### `workbench`
+```json
+{ "type": "workbench", "item": "eidolon:wooden_altar" }
+```
+Displays an Eidolon workbench recipe.
+
+### `crucible`
+```json
+{ "type": "crucible", "recipe": "eidolon:arcane_gold_ingot" }
+```
+Specialized recipe page for crucible crafting.
 
 ## Advanced Formatting Codes
 
