@@ -64,6 +64,19 @@ Additional tips:
 - `/eidolonunchained reload_codex` – Reload JSON entries without restarting.
 - `/eidolonunchained test_translations` – Report missing or malformed translation keys.
 
+## Custom Chapters
+
+Define new chapters by adding files under `data/<namespace>/codex_chapters/`:
+
+```json
+{
+  "title": "yourmod.codex.chapter.mythology",
+  "icon": "minecraft:book"
+}
+```
+
+Entries can then target the chapter with `"target_chapter": "yourmod:mythology"`.
+
 ## Troubleshooting
 
 | Problem | Cause | Fix |

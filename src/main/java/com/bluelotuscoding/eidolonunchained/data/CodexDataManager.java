@@ -18,6 +18,9 @@ import net.minecraftforge.fml.common.Mod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -30,9 +33,10 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(CodexDataManager.class);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     
-    // Storage for loaded codex entries, grouped by target chapter
+    // Storage for loaded codex entries and custom chapters
     private static final Map<ResourceLocation, List<CodexEntry>> CHAPTER_EXTENSIONS = new HashMap<>();
     private static final Map<ResourceLocation, CodexEntry> ALL_ENTRIES = new HashMap<>();
+    private static final Map<ResourceLocation, ChapterDefinition> CUSTOM_CHAPTERS = new HashMap<>();
     
     private static CodexDataManager INSTANCE;
     
@@ -65,16 +69,20 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
     
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
-        LOGGER.info("Server started - loaded {} custom codex entries extending {} chapters", 
-                   ALL_ENTRIES.size(), CHAPTER_EXTENSIONS.size());
-        
+        LOGGER.info("Server started - loaded {} custom codex entries extending {} chapters and {} new chapters",
+                   ALL_ENTRIES.size(), CHAPTER_EXTENSIONS.size(), CUSTOM_CHAPTERS.size());
+
         // Log all loaded content for debugging
         if (!CHAPTER_EXTENSIONS.isEmpty()) {
             CHAPTER_EXTENSIONS.forEach((chapter, entries) -> {
-                LOGGER.info("Chapter '{}' extended with {} entries: {}", 
-                           chapter, entries.size(), 
+                LOGGER.info("Chapter '{}' extended with {} entries: {}",
+                           chapter, entries.size(),
                            entries.stream().map(e -> e.getId().toString()).toList());
             });
+        }
+
+        if (!CUSTOM_CHAPTERS.isEmpty()) {
+            LOGGER.info("Custom chapters: {}", CUSTOM_CHAPTERS.keySet());
         }
     }
     
@@ -91,6 +99,10 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
         
         CHAPTER_EXTENSIONS.clear();
         ALL_ENTRIES.clear();
+        CUSTOM_CHAPTERS.clear();
+
+        // Load chapter definitions first so entries can reference them
+        loadCustomChapters(resourceManager);
         
         int loadedEntries = 0;
         int errors = 0;
@@ -191,6 +203,35 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
             throw new RuntimeException("Failed to load codex entry from " + location, e);
         }
     }
+
+    /**
+     * Loads custom chapter definitions from datapacks
+     */
+    private void loadCustomChapters(ResourceManager resourceManager) {
+        resourceManager.listResources("codex_chapters", path -> path.getPath().endsWith(".json"))
+            .forEach((resLoc, resource) -> {
+                try (InputStreamReader reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
+                    JsonObject json = GSON.fromJson(reader, JsonObject.class);
+                    if (json == null || !json.has("title")) {
+                        LOGGER.warn("Skipping invalid chapter definition at {}", resLoc);
+                        return;
+                    }
+
+                    String title = json.get("title").getAsString();
+                    String iconStr = json.has("icon") ? json.get("icon").getAsString() : "minecraft:book";
+                    ResourceLocation icon = ResourceLocation.tryParse(iconStr);
+
+                    String path = resLoc.getPath();
+                    path = path.substring("codex_chapters/".length(), path.length() - 5); // remove directory and .json
+                    ResourceLocation chapterId = new ResourceLocation(resLoc.getNamespace(), path);
+
+                    CUSTOM_CHAPTERS.put(chapterId, new ChapterDefinition(title, icon));
+                    LOGGER.info("Loaded custom chapter definition {}", chapterId);
+                } catch (IOException e) {
+                    LOGGER.error("Failed to load chapter definition at {}", resLoc, e);
+                }
+            });
+    }
     
     /**
      * Gets all loaded codex entries for a specific chapter
@@ -233,18 +274,57 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
     public static boolean hasExtensions(ResourceLocation chapterId) {
         return CHAPTER_EXTENSIONS.containsKey(chapterId) && !CHAPTER_EXTENSIONS.get(chapterId).isEmpty();
     }
+
+    /**
+     * Gets a datapack-defined chapter definition
+     */
+    public static ChapterDefinition getCustomChapter(ResourceLocation id) {
+        return CUSTOM_CHAPTERS.get(id);
+    }
+
+    /**
+     * Gets all custom chapter definitions
+     */
+    public static Map<ResourceLocation, ChapterDefinition> getAllCustomChapters() {
+        return new HashMap<>(CUSTOM_CHAPTERS);
+    }
     
     /**
      * Log loaded data for debugging
      */
     public static void logLoadedData() {
-        LOGGER.info("Server started - loaded {} custom codex entries extending {} chapters", 
-                   ALL_ENTRIES.size(), CHAPTER_EXTENSIONS.size());
-        
+        LOGGER.info("Server started - loaded {} custom codex entries extending {} chapters and {} new chapters",
+                   ALL_ENTRIES.size(), CHAPTER_EXTENSIONS.size(), CUSTOM_CHAPTERS.size());
+
         for (Map.Entry<ResourceLocation, List<CodexEntry>> entry : CHAPTER_EXTENSIONS.entrySet()) {
-            LOGGER.info("Chapter '{}' extended with {} entries: {}", 
-                       entry.getKey(), entry.getValue().size(), 
+            LOGGER.info("Chapter '{}' extended with {} entries: {}",
+                       entry.getKey(), entry.getValue().size(),
                        entry.getValue().stream().map(e -> e.getId().toString()).toList());
+        }
+
+        if (!CUSTOM_CHAPTERS.isEmpty()) {
+            LOGGER.info("Custom chapters: {}", CUSTOM_CHAPTERS.keySet());
+        }
+    }
+
+    /**
+     * Represents a datapack-defined chapter with title and icon
+     */
+    public static class ChapterDefinition {
+        private final String title;
+        private final ResourceLocation icon;
+
+        public ChapterDefinition(String title, ResourceLocation icon) {
+            this.title = title;
+            this.icon = icon;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public ResourceLocation getIcon() {
+            return icon;
         }
     }
 }

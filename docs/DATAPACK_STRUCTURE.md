@@ -7,6 +7,9 @@ See [Codex Tutorial](codex_tutorial.md) for a guided walkthrough and [Codex Refe
 ```
 📦 data/
 ├── 📁 eidolonunchained/                    # Your mod namespace
+│   ├── 📁 codex_chapters/                  # Optional new chapter definitions
+│   │   └── 📄 mythology.json               # Defines a new chapter
+│   │
 │   ├── 📁 codex_entries/                   # Codex system extensions
 │   │   ├── 📄 void_amulet_advanced.json    # Extends VOID_AMULET chapter
 │   │   ├── 📄 ritual_mastery.json          # Extends SUMMON_RITUAL chapter
@@ -38,7 +41,7 @@ See [Codex Tutorial](codex_tutorial.md) for a guided walkthrough and [Codex Refe
 
 ```json
 {
-  "target_chapter": "CHAPTER_NAME",          // ← Must match Eidolon's field name
+  "target_chapter": "CHAPTER_NAME",          // ← Eidolon field name or custom ID
   "pages": [
     {
       "type": "title",                       // ← Page types: title, text, crafting
@@ -57,6 +60,15 @@ See [Codex Tutorial](codex_tutorial.md) for a guided walkthrough and [Codex Refe
       "text": "Recipe description"
     }
   ]
+}
+```
+
+## 🗂️ **Codex Chapter Template**
+
+```json
+{
+  "title": "yourmod.codex.chapter.mythology",
+  "icon": "minecraft:book"
 }
 ```
 
@@ -91,8 +103,8 @@ See [Codex Tutorial](codex_tutorial.md) for a guided walkthrough and [Codex Refe
 }
 ```
 
-## 🎯 **Available Eidolon Chapters** 
-*(Use these exact names for `target_chapter`)*
+## 🎯 **Available Eidolon Chapters**
+*(Use these exact names for built-in chapters or a namespaced ID for custom ones)*
 
 ### **🏺 Artifacts & Items**
 - `"VOID_AMULET"`        - Void amulet crafting and uses

@@ -7,16 +7,21 @@ import com.mojang.logging.LogUtils;
 import elucent.eidolon.codex.Chapter;
 import elucent.eidolon.codex.CodexChapters;
 import elucent.eidolon.codex.Page;
-import elucent.eidolon.codex.TextPage;
 import elucent.eidolon.codex.TitlePage;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -31,15 +36,18 @@ public class EidolonCodexIntegration {
     private static final Map<ResourceLocation, Chapter> CHAPTER_LOOKUP = new HashMap<>();
 
     static {
-        registerChapter("monsters", CodexChapters.MONSTERS);
-        registerChapter("summon_ritual", CodexChapters.SUMMON_RITUAL);
-        registerChapter("crystal_ritual", CodexChapters.CRYSTAL_RITUAL);
-        registerChapter("void_amulet", CodexChapters.VOID_AMULET);
-        // Additional chapters can be registered here as needed
-    }
-
-    private static void registerChapter(String path, Chapter chapter) {
-        CHAPTER_LOOKUP.put(new ResourceLocation("eidolon", path), chapter);
+        // Build lookup dynamically using reflection to gather all public static Chapter fields
+        for (Field field : CodexChapters.class.getDeclaredFields()) {
+            if (!Modifier.isStatic(field.getModifiers())) continue;
+            if (!Chapter.class.isAssignableFrom(field.getType())) continue;
+            try {
+                Chapter chapter = (Chapter) field.get(null);
+                String name = field.getName().toLowerCase(Locale.ROOT);
+                CHAPTER_LOOKUP.put(new ResourceLocation("eidolon", name), chapter);
+            } catch (IllegalAccessException e) {
+                LOGGER.error("Failed to access chapter field {}", field.getName(), e);
+            }
+        }
     }
 
     @SubscribeEvent
@@ -80,6 +88,19 @@ public class EidolonCodexIntegration {
             LOGGER.info("Processing chapter {} with {} entries", chapterId, entries.size());
 
             Chapter chapter = CHAPTER_LOOKUP.get(chapterId);
+
+            // If chapter isn't in the reflection map, see if a datapack defined it
+            if (chapter == null) {
+                CodexDataManager.ChapterDefinition def = CodexDataManager.getCustomChapter(chapterId);
+                if (def != null) {
+                    Item iconItem = ForgeRegistries.ITEMS.getValue(def.getIcon());
+                    ItemStack iconStack = iconItem != null ? new ItemStack(iconItem) : ItemStack.EMPTY;
+                    chapter = new Chapter(def.getTitle(), new TitlePage(def.getTitle(), iconStack));
+                    CHAPTER_LOOKUP.put(chapterId, chapter);
+                    LOGGER.info("Created new datapack chapter {}", chapterId);
+                }
+            }
+
             if (chapter != null) {
                 LOGGER.info("✓ Injecting {} entries into chapter {}", entries.size(), chapterId);
                 for (CodexEntry entry : entries) {
