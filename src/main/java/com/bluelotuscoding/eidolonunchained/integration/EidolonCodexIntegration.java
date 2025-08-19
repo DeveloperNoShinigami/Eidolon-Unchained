@@ -11,6 +11,8 @@ import elucent.eidolon.codex.CodexChapters;
 import elucent.eidolon.codex.Page;
 import elucent.eidolon.codex.TextPage;
 import elucent.eidolon.codex.TitlePage;
+import elucent.eidolon.codex.TextPage;
+import elucent.eidolon.registries.Researches;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -20,6 +22,7 @@ import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -35,6 +38,8 @@ public class EidolonCodexIntegration {
 
     // Lookup map for Eidolon chapters keyed by their resource location
     private static final Map<ResourceLocation, Chapter> CHAPTER_LOOKUP = new HashMap<>();
+    // Entries whose prerequisites weren't found will be stored here for potential later use
+    private static final Map<Chapter, List<CodexEntry>> DEFERRED_ENTRIES = new HashMap<>();
 
     static {
         // Build lookup dynamically using reflection to gather all public static Chapter fields
@@ -119,6 +124,17 @@ public class EidolonCodexIntegration {
      */
     private static void injectEntryIntoChapter(Chapter chapter, CodexEntry entry) {
         try {
+            // If the entry has prerequisites, ensure they are all registered
+            if (!entry.getPrerequisites().isEmpty()) {
+                for (ResourceLocation prereq : entry.getPrerequisites()) {
+                    if (Researches.find(prereq) == null) {
+                        LOGGER.debug("Deferring entry '{}' due to unmet prerequisite {}", entry.getId(), prereq);
+                        DEFERRED_ENTRIES.computeIfAbsent(chapter, c -> new ArrayList<>()).add(entry);
+                        return; // Skip injecting pages until prerequisites exist
+                    }
+                }
+            }
+
             // Title and icon
             if (entry.getTitle() != null && !entry.getTitle().getString().isEmpty()) {
                 TitlePage tp = entry.getIcon().isEmpty()
