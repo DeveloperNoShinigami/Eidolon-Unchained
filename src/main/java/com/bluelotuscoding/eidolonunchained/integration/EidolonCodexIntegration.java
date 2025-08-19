@@ -2,24 +2,27 @@ package com.bluelotuscoding.eidolonunchained.integration;
 
 import com.bluelotuscoding.eidolonunchained.data.CodexDataManager;
 import com.bluelotuscoding.eidolonunchained.codex.CodexEntry;
+import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
+import com.bluelotuscoding.eidolonunchained.research.ResearchChapter;
 import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
 import elucent.eidolon.codex.Chapter;
 import elucent.eidolon.codex.CodexChapters;
 import elucent.eidolon.codex.Page;
+import elucent.eidolon.codex.TextPage;
 import elucent.eidolon.codex.TitlePage;
 import elucent.eidolon.codex.TextPage;
+import elucent.eidolon.registries.Researches;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -35,6 +38,8 @@ public class EidolonCodexIntegration {
 
     // Lookup map for Eidolon chapters keyed by their resource location
     private static final Map<ResourceLocation, Chapter> CHAPTER_LOOKUP = new HashMap<>();
+    // Entries whose prerequisites weren't found will be stored here for potential later use
+    private static final Map<Chapter, List<CodexEntry>> DEFERRED_ENTRIES = new HashMap<>();
 
     static {
         // Build lookup dynamically using reflection to gather all public static Chapter fields
@@ -90,25 +95,24 @@ public class EidolonCodexIntegration {
 
             Chapter chapter = CHAPTER_LOOKUP.get(chapterId);
 
-            // If chapter isn't in the reflection map, see if a datapack defined it
             if (chapter == null) {
-                CodexDataManager.ChapterDefinition def = CodexDataManager.getCustomChapter(chapterId);
-                if (def != null) {
-                    Item iconItem = ForgeRegistries.ITEMS.getValue(def.getIcon());
-                    ItemStack iconStack = iconItem != null ? new ItemStack(iconItem) : ItemStack.EMPTY;
-                    chapter = new Chapter(def.getTitle(), new TitlePage(def.getTitle(), iconStack));
-                    CHAPTER_LOOKUP.put(chapterId, chapter);
-                    LOGGER.info("Created new datapack chapter {}", chapterId);
+                // Attempt to create a new chapter from research metadata
+                ResearchChapter research = ResearchDataManager.getResearchChapter(chapterId);
+                if (research == null) {
+                    LOGGER.warn("✗ No research chapter for {} - skipping to avoid orphaned tab", chapterId);
+                    continue;
                 }
+
+                ItemStack iconStack = research.getIcon() == null ? ItemStack.EMPTY : research.getIcon().copy();
+                String title = research.getTitle().getString();
+                chapter = new Chapter(title, new TitlePage(title, iconStack));
+                CHAPTER_LOOKUP.put(chapterId, chapter);
+                LOGGER.info("Created new chapter {} from research data", chapterId);
             }
 
-            if (chapter != null) {
-                LOGGER.info("✓ Injecting {} entries into chapter {}", entries.size(), chapterId);
-                for (CodexEntry entry : entries) {
-                    injectEntryIntoChapter(chapter, entry);
-                }
-            } else {
-                LOGGER.warn("✗ Unknown chapter {} - skipping", chapterId);
+            LOGGER.info("✓ Injecting {} entries into chapter {}", entries.size(), chapterId);
+            for (CodexEntry entry : entries) {
+                injectEntryIntoChapter(chapter, entry);
             }
         }
 
@@ -120,6 +124,17 @@ public class EidolonCodexIntegration {
      */
     private static void injectEntryIntoChapter(Chapter chapter, CodexEntry entry) {
         try {
+            // If the entry has prerequisites, ensure they are all registered
+            if (!entry.getPrerequisites().isEmpty()) {
+                for (ResourceLocation prereq : entry.getPrerequisites()) {
+                    if (Researches.find(prereq) == null) {
+                        LOGGER.debug("Deferring entry '{}' due to unmet prerequisite {}", entry.getId(), prereq);
+                        DEFERRED_ENTRIES.computeIfAbsent(chapter, c -> new ArrayList<>()).add(entry);
+                        return; // Skip injecting pages until prerequisites exist
+                    }
+                }
+            }
+
             // Title and icon
             if (entry.getTitle() != null && !entry.getTitle().getString().isEmpty()) {
                 TitlePage tp = entry.getIcon().isEmpty()
