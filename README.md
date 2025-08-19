@@ -73,6 +73,8 @@ This mod requires the following mods to function:
 
 ## Codex Development Guide
 
+For a step-by-step tutorial see [Codex Tutorial](docs/codex_tutorial.md). For a comprehensive reference see [Codex Reference](docs/codex_reference.md).
+
 ### Creating New Codex Entries
 
 #### 1. JSON Entry Structure

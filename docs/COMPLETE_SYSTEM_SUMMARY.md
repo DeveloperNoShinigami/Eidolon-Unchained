@@ -245,7 +245,7 @@ Full Minecraft formatting code support:
 - `crystal_rituals.json` - Ritual-focused content with detailed instructions
 
 ### Documentation Files
-- `CODEX_SYSTEM_DOCUMENTATION.md` - Complete technical reference
+- `codex_reference.md` - Complete technical reference
 - `VISUAL_ELEMENTS_REFERENCE.md` - Visual design guide and formatting codes
 
 ## 🚀 Usage Instructions
