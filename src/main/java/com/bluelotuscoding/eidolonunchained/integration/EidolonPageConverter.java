@@ -101,6 +101,8 @@ public class EidolonPageConverter {
 
     /**
      * Create a TitlePage - takes just a String parameter like TextPage but renders differently
+     * IMPORTANT: TitlePage expects raw translation keys, NOT translated text!
+     * TitlePage will automatically append ".title" to get the title and use base key for content
      */
     private static Object createTitlePage(JsonObject pageJson) {
         try {
@@ -108,10 +110,13 @@ public class EidolonPageConverter {
             Constructor<?> constructor = titlePageClass.getConstructor(String.class);
             
             String text = pageJson.has("text") ? pageJson.get("text").getAsString() : "";
-            // Translate the text if it's a translation key
-            String translatedText = translateText(text);
-            LOGGER.debug("TitlePage: {} -> {}", text, translatedText);
-            return constructor.newInstance(translatedText);
+            
+            // For TitlePage, we pass the RAW key, not translated text
+            // TitlePage will handle translation internally:
+            // - Uses base key for content
+            // - Automatically appends ".title" for title
+            LOGGER.debug("TitlePage using raw key: {}", text);
+            return constructor.newInstance(text);
             
         } catch (Exception e) {
             LOGGER.error("Failed to create TitlePage", e);
@@ -125,43 +130,31 @@ public class EidolonPageConverter {
     private static String translateText(String text) {
         // If text looks like a translation key (contains dots and starts with mod name)
         if (text.contains(".") && (text.startsWith("eidolonunchained.") || text.startsWith("eidolon."))) {
+            LOGGER.info("[DEBUG] Requested translation for key: {}", text);
+            // Try direct translation first since it's more reliable
+            String directTranslation = getDirectTranslation(text);
+            if (directTranslation != null && !directTranslation.equals(text)) {
+                LOGGER.info("[DEBUG] Direct translation found for '{}': '{}'", text, directTranslation);
+                return directTranslation;
+            } else {
+                LOGGER.info("[DEBUG] No direct translation found for '{}'.", text);
+            }
+            // Fallback to Component.translatable
             try {
                 Component translated = Component.translatable(text);
                 String result = translated.getString();
-                
-                LOGGER.debug("Translation attempt: '{}' -> '{}'", text, result);
-                
-                // Check if translation actually occurred by looking at the component's resolved content
-                // If it's still the same as the input key or contains the key, translation failed
-                if (result.equals(text) || result.contains(text)) {
-                    LOGGER.warn("Component translation failed for: {}, trying direct translation", text);
-                    
-                    // Try direct translation from cached language file
-                    String directTranslation = getDirectTranslation(text);
-                    if (directTranslation != null) {
-                        LOGGER.info("Found direct translation for '{}': '{}'", text, directTranslation);
-                        return directTranslation;
-                    }
-                    
-                    // Last resort: create fallback
-                    LOGGER.warn("No translation found for key: {}, creating fallback", text);
-                    return createFallbackFromKey(text);
-                } else {
-                    LOGGER.debug("Successfully translated: {} -> {}", text, result);
+                LOGGER.info("[DEBUG] Component translation attempt: '{}' -> '{}'", text, result);
+                // Check if translation actually occurred
+                if (!result.equals(text) && !result.contains("translation.key.not.found")) {
+                    LOGGER.info("[DEBUG] Successfully translated via Component: {} -> {}", text, result);
                     return result;
                 }
             } catch (Exception e) {
-                LOGGER.warn("Failed to translate key: {}, trying direct translation: {}", text, e.getMessage());
-                
-                // Try direct translation as backup
-                String directTranslation = getDirectTranslation(text);
-                if (directTranslation != null) {
-                    LOGGER.info("Found direct translation for '{}': '{}'", text, directTranslation);
-                    return directTranslation;
-                }
-                
-                return createFallbackFromKey(text);
+                LOGGER.info("[DEBUG] Component translation failed for: {}, error: {}", text, e.getMessage());
             }
+            // Last resort: create readable fallback
+            LOGGER.warn("[DEBUG] No translation found for key: {}, creating fallback", text);
+            return createFallbackFromKey(text);
         }
         return text;
     }
@@ -233,14 +226,13 @@ public class EidolonPageConverter {
      */
     private static String getDirectTranslation(String key) {
         loadTranslationsFromFile();
-        
+        LOGGER.info("[DEBUG] Looking up direct translation for key: {}", key);
         String translation = cachedTranslations.get(key);
         if (translation != null) {
-            LOGGER.debug("Found direct translation for '{}': '{}'", key, translation);
+            LOGGER.info("[DEBUG] Found direct translation for '{}': '{}'", key, translation);
             return translation;
         }
-        
-        LOGGER.debug("No direct translation found for '{}'", key);
+        LOGGER.info("[DEBUG] No direct translation found for '{}'.", key);
         return null;
     }
 

@@ -1,3 +1,5 @@
+# Exclude unpacked Eidolon Repraised jar folder
+eidolon_repraised-1.20.1-0.3.8.15_unpacked_jar/
 # eclipse
 bin
 *.launch

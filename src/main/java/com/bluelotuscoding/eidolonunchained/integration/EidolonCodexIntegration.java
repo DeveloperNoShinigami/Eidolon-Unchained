@@ -186,20 +186,14 @@ public class EidolonCodexIntegration {
      */
     private static void injectEntryIntoChapter(Object chapterObj, CodexEntry entry) {
         try {
-            // Add title page for the entry
-            Object titlePage = titlePageConstructor.newInstance(entry.getTitle().getString());
-            addPageMethod.invoke(chapterObj, titlePage);
-            
-            // Add pages for each page in the entry using the converter
+            // Only add pages from the JSON definition; do not always add a TitlePage
             for (JsonObject pageJson : entry.getPages()) {
                 Object eidolonPage = EidolonPageConverter.convertPage(pageJson);
                 if (eidolonPage != null) {
                     addPageMethod.invoke(chapterObj, eidolonPage);
                 }
             }
-            
-            LOGGER.debug("Successfully injected entry '{}' with {} pages", entry.getId(), entry.getPages().size() + 1);
-            
+            LOGGER.debug("Successfully injected entry '{}' with {} pages", entry.getId(), entry.getPages().size());
         } catch (Exception e) {
             LOGGER.error("Failed to inject entry '{}' into chapter", entry.getId(), e);
         }

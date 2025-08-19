@@ -1,6 +1,7 @@
 # Note on Research and Ritual Datapack Support
 
 Currently, the Eidolon Unchained system provides robust datapack support for codex entries, including rituals as codex pages. However, full datapack-based extension of the underlying research system and actual ritual mechanics (beyond documentation) may require additional development. At present, you can document rituals and research in the codex, but adding new functional rituals or research entries via datapack is not fully supported out-of-the-box. Further code changes may be needed for full extensibility.
+
 # Eidolon Unchained Codex System - Wiki Overview
 
 Welcome to the comprehensive documentation for the Eidolon Unchained Codex Extension System! This guide is organized for easy conversion into a wiki, with clear sections for features, usage, page types, formatting, troubleshooting, and best practices.

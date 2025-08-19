@@ -3,11 +3,7 @@
   "pages": [
     {
       "type": "title",
-      "text": "eidolonunchained.codex.entry.crystal_rituals.title"
-    },
-    {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.crystal_rituals.intro"
+      "text": "eidolonunchained.codex.entry.crystal_rituals"
     },
     {
       "type": "text",

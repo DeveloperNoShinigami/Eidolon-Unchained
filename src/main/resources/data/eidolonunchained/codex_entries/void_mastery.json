@@ -3,11 +3,7 @@
   "pages": [
     {
       "type": "title",
-      "text": "eidolonunchained.codex.entry.void_mastery.title"
-    },
-    {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.void_mastery.intro"
+      "text": "eidolonunchained.codex.entry.void_mastery"
     },
     {
       "type": "text", 

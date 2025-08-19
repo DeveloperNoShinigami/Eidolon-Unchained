@@ -3,11 +3,7 @@
   "pages": [
     {
       "type": "title",
-      "text": "eidolonunchained.codex.entry.rare_monsters.title"
-    },
-    {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.rare_monsters.intro"
+      "text": "eidolonunchained.codex.entry.rare_monsters"
     },
     {
       "type": "text",

@@ -3,11 +3,7 @@
   "pages": [
     {
       "type": "title",
-      "text": "eidolonunchained.codex.entry.advanced_monsters.title"
-    },
-    {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.advanced_monsters.intro"
+      "text": "eidolonunchained.codex.entry.advanced_monsters"
     },
     {
       "type": "entity",
