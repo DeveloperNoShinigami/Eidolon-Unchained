@@ -8,6 +8,7 @@ import elucent.eidolon.codex.Chapter;
 import elucent.eidolon.codex.CodexChapters;
 import elucent.eidolon.codex.Page;
 import elucent.eidolon.codex.TitlePage;
+import elucent.eidolon.codex.TextPage;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
