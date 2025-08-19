@@ -53,3 +53,26 @@ assets/
 - Use `/reload` after changing JSON files.
 - Use `/eidolonunchained reload_codex` or restart the game after editing translations.
 - `/eidolonunchained test_translations` prints missing or broken keys for debugging.
+
+## Defining a New Chapter
+
+To create an entirely new chapter instead of extending an existing one:
+
+1. **Create a chapter definition** in `data/yourmod/codex_chapters/`:
+   ```json
+   {
+     "title": "yourmod.codex.chapter.mythology",
+     "icon": "minecraft:book"
+   }
+   ```
+2. **Target the chapter** from a codex entry using its namespaced ID:
+   ```json
+   {
+     "target_chapter": "yourmod:mythology",
+     "pages": [ { "type": "text", "text": "yourmod.codex.chapter.mythology.start" } ]
+   }
+   ```
+3. **Add translations** for the chapter title and pages as usual.
+
+When the datapack is loaded the new chapter will be created with the specified
+title and icon and any entries targeting it will populate its pages.
