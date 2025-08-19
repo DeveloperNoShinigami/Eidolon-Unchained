@@ -218,4 +218,4 @@ Creates organized lists of related items.
 4. **Progressive Complexity**: Start with simple text, build to complex rituals
 5. **Cross-Reference**: Reference other chapters and recipes in your text
 
-Your expanded system now supports **all major Eidolon page types** for comprehensive content creation! 🔮✨
+This system  supports **all major Eidolon page types** for comprehensive content creation! 🔮✨
