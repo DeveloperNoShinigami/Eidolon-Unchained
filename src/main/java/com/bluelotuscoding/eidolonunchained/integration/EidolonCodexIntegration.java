@@ -15,7 +15,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.slf4j.Logger;
 
-import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,8 +26,21 @@ import java.util.Map;
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class EidolonCodexIntegration {
     private static final Logger LOGGER = LogUtils.getLogger();
-    
-    // No runtime reflection caching needed now that Eidolon is a compile-time dependency
+
+    // Lookup map for Eidolon chapters keyed by their resource location
+    private static final Map<ResourceLocation, Chapter> CHAPTER_LOOKUP = new HashMap<>();
+
+    static {
+        registerChapter("monsters", CodexChapters.MONSTERS);
+        registerChapter("summon_ritual", CodexChapters.SUMMON_RITUAL);
+        registerChapter("crystal_ritual", CodexChapters.CRYSTAL_RITUAL);
+        registerChapter("void_amulet", CodexChapters.VOID_AMULET);
+        // Additional chapters can be registered here as needed
+    }
+
+    private static void registerChapter(String path, Chapter chapter) {
+        CHAPTER_LOOKUP.put(new ResourceLocation("eidolon", path), chapter);
+    }
 
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
@@ -66,27 +79,14 @@ public class EidolonCodexIntegration {
 
             LOGGER.info("Processing chapter {} with {} entries", chapterId, entries.size());
 
-            // Convert "eidolon:arcane_gold" to "ARCANE_GOLD"
-            String fieldName = convertChapterIdToFieldName(chapterId.toString());
-
-            try {
-                Field chapterField = CodexChapters.class.getField(fieldName);
-                Chapter chapter = (Chapter) chapterField.get(null);
-
-                if (chapter != null) {
-                    LOGGER.info("✓ Injecting {} entries into chapter {}", entries.size(), fieldName);
-
-                    for (CodexEntry entry : entries) {
-                        injectEntryIntoChapter(chapter, entry);
-                    }
-                } else {
-                    LOGGER.warn("✗ Chapter {} is null - may need to defer injection", fieldName);
+            Chapter chapter = CHAPTER_LOOKUP.get(chapterId);
+            if (chapter != null) {
+                LOGGER.info("✓ Injecting {} entries into chapter {}", entries.size(), chapterId);
+                for (CodexEntry entry : entries) {
+                    injectEntryIntoChapter(chapter, entry);
                 }
-
-            } catch (NoSuchFieldException e) {
-                LOGGER.warn("✗ Could not find chapter field {} for target {}", fieldName, chapterId);
-            } catch (Exception e) {
-                LOGGER.error("Failed to inject entries into chapter {}", chapterId, e);
+            } else {
+                LOGGER.warn("✗ Unknown chapter {} - skipping", chapterId);
             }
         }
 
@@ -108,24 +108,6 @@ public class EidolonCodexIntegration {
             LOGGER.debug("Successfully injected entry '{}' with {} pages", entry.getId(), entry.getPages().size());
         } catch (Exception e) {
             LOGGER.error("Failed to inject entry '{}' into chapter", entry.getId(), e);
-        }
-    }
-
-    /**
-     * Converts "eidolon:arcane_gold" to "ARCANE_GOLD" OR just returns "ARCANE_GOLD" if already uppercase
-     */
-    private static String convertChapterIdToFieldName(String chapterId) {
-        // If it's already uppercase and looks like a field name, use it directly
-        if (chapterId.equals(chapterId.toUpperCase()) && !chapterId.contains(":")) {
-            return chapterId;
-        }
-        
-        // Otherwise convert from resource location format
-        if (chapterId.startsWith("eidolon:")) {
-            return chapterId.substring(8).toUpperCase();
-        } else {
-            // Handle cases like "void_amulet" -> "VOID_AMULET"
-            return chapterId.toUpperCase();
         }
     }
 
