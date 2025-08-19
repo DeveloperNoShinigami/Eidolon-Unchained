@@ -5,6 +5,7 @@ import com.bluelotuscoding.eidolonunchained.research.ResearchEntry;
 import com.bluelotuscoding.eidolonunchained.research.ResearchChapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -22,11 +23,11 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * Manages loading and registration of custom research entries and chapters from datapacks.
@@ -42,6 +43,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
     private static final Map<ResourceLocation, ResearchChapter> LOADED_RESEARCH_CHAPTERS = new HashMap<>();
     private static final Map<ResourceLocation, List<ResearchEntry>> RESEARCH_EXTENSIONS = new HashMap<>();
     private static final Map<ResourceLocation, ResearchEntry> LOADED_RESEARCH_ENTRIES = new HashMap<>();
+    private static final Map<ResourceLocation, ResourceLocation> ENTRIES_WITH_MISSING_CHAPTER = new HashMap<>();
     
     private static ResearchDataManager INSTANCE;
     
@@ -93,6 +95,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
         LOADED_RESEARCH_CHAPTERS.clear();
         RESEARCH_EXTENSIONS.clear();
         LOADED_RESEARCH_ENTRIES.clear();
+        ENTRIES_WITH_MISSING_CHAPTER.clear();
         
         int loadedChapters = 0;
         int loadedEntries = 0;
@@ -128,8 +131,14 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
             }
         }
         
-        LOGGER.info("Loaded {} research chapters, {} research entries with {} errors", 
+        LOGGER.info("Loaded {} research chapters, {} research entries with {} errors",
                    loadedChapters, loadedEntries, errors);
+
+        if (!ENTRIES_WITH_MISSING_CHAPTER.isEmpty()) {
+            ENTRIES_WITH_MISSING_CHAPTER.forEach((entryId, chapterId) ->
+                LOGGER.warn("Research entry {} references missing chapter {}", entryId, chapterId)
+            );
+        }
     }
 
     /**
@@ -138,8 +147,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
     private void loadResearchChapter(ResourceLocation location, JsonObject json) {
         try {
             if (!json.has("id")) {
-                LOGGER.warn("Research chapter at {} missing required 'id' field", location);
-                return;
+                throw new JsonParseException("Missing required 'id' field");
             }
 
             ResourceLocation chapterId = ResourceLocation.tryParse(json.get("id").getAsString());
@@ -183,7 +191,6 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
 
             LOADED_RESEARCH_CHAPTERS.put(chapterId, chapter);
             LOGGER.info("Loaded research chapter {}", chapterId);
-
         } catch (Exception e) {
             throw new RuntimeException("Failed to load research chapter from " + location, e);
         }
@@ -194,16 +201,120 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
      */
     private void loadResearchEntry(ResourceLocation location, JsonObject json) {
         try {
-            // This would parse the JSON and create ResearchEntry objects
-            // For now, just store the location as a placeholder
             if (!json.has("id")) {
                 LOGGER.warn("Research entry at {} missing required 'id' field", location);
                 return;
             }
-            
+
             ResourceLocation entryId = ResourceLocation.tryParse(json.get("id").getAsString());
-            LOADED_RESEARCH_ENTRIES.put(entryId, null); // Placeholder for now
-            
+            if (entryId == null) {
+                LOGGER.warn("Invalid research entry id '{}' at {}", json.get("id").getAsString(), location);
+                return;
+            }
+
+            // Basic fields
+            Component title = json.has("title")
+                ? Component.literal(json.get("title").getAsString())
+                : Component.literal(entryId.toString());
+
+            Component description = json.has("description")
+                ? Component.literal(json.get("description").getAsString())
+                : Component.literal("");
+
+            ResourceLocation chapter = null;
+            if (json.has("chapter")) {
+                chapter = ResourceLocation.tryParse(json.get("chapter").getAsString());
+            }
+            if (chapter == null) {
+                LOGGER.warn("Research entry {} missing or has invalid 'chapter' field", entryId);
+                return;
+            }
+
+            // Icon parsing
+            ItemStack icon = ItemStack.EMPTY;
+            if (json.has("icon")) {
+                JsonElement iconElem = json.get("icon");
+                if (iconElem.isJsonPrimitive()) {
+                    ResourceLocation itemId = ResourceLocation.tryParse(iconElem.getAsString());
+                    if (itemId != null) {
+                        Item item = ForgeRegistries.ITEMS.getValue(itemId);
+                        if (item != null) icon = new ItemStack(item);
+                    }
+                } else if (iconElem.isJsonObject()) {
+                    JsonObject iconObj = iconElem.getAsJsonObject();
+                    if (iconObj.has("item")) {
+                        ResourceLocation itemId = ResourceLocation.tryParse(iconObj.get("item").getAsString());
+                        Item item = itemId != null ? ForgeRegistries.ITEMS.getValue(itemId) : null;
+                        if (item != null) {
+                            int count = iconObj.has("count") ? iconObj.get("count").getAsInt() : 1;
+                            icon = new ItemStack(item, count);
+                            if (iconObj.has("nbt")) {
+                                try {
+                                    CompoundTag tag = TagParser.parseTag(iconObj.get("nbt").getAsString());
+                                    icon.setTag(tag);
+                                } catch (Exception e) {
+                                    LOGGER.warn("Failed to parse icon NBT for {}: {}", entryId, e.getMessage());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Prerequisites
+            List<ResourceLocation> prerequisites = new ArrayList<>();
+            if (json.has("prerequisites")) {
+                JsonArray prereqArray = json.getAsJsonArray("prerequisites");
+                for (JsonElement elem : prereqArray) {
+                    ResourceLocation prereq = ResourceLocation.tryParse(elem.getAsString());
+                    if (prereq != null) prerequisites.add(prereq);
+                }
+            }
+
+            // Unlocks
+            List<ResourceLocation> unlocks = new ArrayList<>();
+            if (json.has("unlocks")) {
+                JsonArray unlocksArray = json.getAsJsonArray("unlocks");
+                for (JsonElement elem : unlocksArray) {
+                    ResourceLocation unlock = ResourceLocation.tryParse(elem.getAsString());
+                    if (unlock != null) unlocks.add(unlock);
+                }
+            }
+
+            int x = json.has("x") ? json.get("x").getAsInt() : 0;
+            int y = json.has("y") ? json.get("y").getAsInt() : 0;
+
+            ResearchEntry.ResearchType type = ResearchEntry.ResearchType.BASIC;
+            if (json.has("type")) {
+                String typeStr = json.get("type").getAsString();
+                for (ResearchEntry.ResearchType t : ResearchEntry.ResearchType.values()) {
+                    if (t.getName().equalsIgnoreCase(typeStr)) {
+                        type = t;
+                        break;
+                    }
+                }
+            }
+
+            // Additional custom fields
+            JsonObject additional = new JsonObject();
+            Set<String> known = Set.of("id", "title", "description", "chapter", "icon",
+                                       "prerequisites", "unlocks", "x", "y", "type");
+            for (Map.Entry<String, JsonElement> e : json.entrySet()) {
+                if (!known.contains(e.getKey())) {
+                    additional.add(e.getKey(), e.getValue());
+                }
+            }
+
+            ResearchEntry entry = new ResearchEntry(entryId, title, description, chapter, icon,
+                                                    prerequisites, unlocks, x, y, type, additional);
+
+            LOADED_RESEARCH_ENTRIES.put(entryId, entry);
+            RESEARCH_EXTENSIONS.computeIfAbsent(chapter, k -> new ArrayList<>()).add(entry);
+
+            if (!LOADED_RESEARCH_CHAPTERS.containsKey(chapter)) {
+                ENTRIES_WITH_MISSING_CHAPTER.put(entryId, chapter);
+            }
+
         } catch (Exception e) {
             throw new RuntimeException("Failed to load research entry from " + location, e);
         }
