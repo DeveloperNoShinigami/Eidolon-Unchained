@@ -2,19 +2,20 @@ package com.bluelotuscoding.eidolonunchained.integration;
 
 import com.bluelotuscoding.eidolonunchained.data.CodexDataManager;
 import com.bluelotuscoding.eidolonunchained.codex.CodexEntry;
+import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
+import com.bluelotuscoding.eidolonunchained.research.ResearchChapter;
 import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
 import elucent.eidolon.codex.Chapter;
 import elucent.eidolon.codex.CodexChapters;
 import elucent.eidolon.codex.Page;
+import elucent.eidolon.codex.TextPage;
 import elucent.eidolon.codex.TitlePage;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
@@ -89,25 +90,24 @@ public class EidolonCodexIntegration {
 
             Chapter chapter = CHAPTER_LOOKUP.get(chapterId);
 
-            // If chapter isn't in the reflection map, see if a datapack defined it
             if (chapter == null) {
-                CodexDataManager.ChapterDefinition def = CodexDataManager.getCustomChapter(chapterId);
-                if (def != null) {
-                    Item iconItem = ForgeRegistries.ITEMS.getValue(def.getIcon());
-                    ItemStack iconStack = iconItem != null ? new ItemStack(iconItem) : ItemStack.EMPTY;
-                    chapter = new Chapter(def.getTitle(), new TitlePage(def.getTitle(), iconStack));
-                    CHAPTER_LOOKUP.put(chapterId, chapter);
-                    LOGGER.info("Created new datapack chapter {}", chapterId);
+                // Attempt to create a new chapter from research metadata
+                ResearchChapter research = ResearchDataManager.getResearchChapter(chapterId);
+                if (research == null) {
+                    LOGGER.warn("✗ No research chapter for {} - skipping to avoid orphaned tab", chapterId);
+                    continue;
                 }
+
+                ItemStack iconStack = research.getIcon() == null ? ItemStack.EMPTY : research.getIcon().copy();
+                String title = research.getTitle().getString();
+                chapter = new Chapter(title, new TitlePage(title, iconStack));
+                CHAPTER_LOOKUP.put(chapterId, chapter);
+                LOGGER.info("Created new chapter {} from research data", chapterId);
             }
 
-            if (chapter != null) {
-                LOGGER.info("✓ Injecting {} entries into chapter {}", entries.size(), chapterId);
-                for (CodexEntry entry : entries) {
-                    injectEntryIntoChapter(chapter, entry);
-                }
-            } else {
-                LOGGER.warn("✗ Unknown chapter {} - skipping", chapterId);
+            LOGGER.info("✓ Injecting {} entries into chapter {}", entries.size(), chapterId);
+            for (CodexEntry entry : entries) {
+                injectEntryIntoChapter(chapter, entry);
             }
         }
 

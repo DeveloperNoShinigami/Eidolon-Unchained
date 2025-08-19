@@ -9,8 +9,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.TagParser;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -18,7 +16,6 @@ import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -26,7 +23,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -155,72 +151,46 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
             }
 
             ResourceLocation chapterId = ResourceLocation.tryParse(json.get("id").getAsString());
-            if (chapterId == null) {
-                throw new JsonParseException("Invalid chapter id: " + json.get("id").getAsString());
-            }
-
-            String titleStr = json.has("title") ? json.get("title").getAsString() : chapterId.getPath();
-            Component title = Component.literal(titleStr);
-
+            Component title = json.has("title")
+                ? Component.literal(json.get("title").getAsString())
+                : Component.literal(chapterId.getPath());
             Component description = json.has("description")
                 ? Component.literal(json.get("description").getAsString())
                 : Component.literal("");
 
             // Icon parsing
-            ItemStack icon = ItemStack.EMPTY;
-            if (json.has("icon")) {
-                JsonElement iconElem = json.get("icon");
-                if (iconElem.isJsonPrimitive()) {
-                    ResourceLocation itemId = ResourceLocation.tryParse(iconElem.getAsString());
-                    if (itemId != null) {
-                        Item item = ForgeRegistries.ITEMS.getValue(itemId);
-                        if (item != null) icon = new ItemStack(item);
-                    }
-                } else if (iconElem.isJsonObject()) {
-                    JsonObject iconObj = iconElem.getAsJsonObject();
-                    if (iconObj.has("item")) {
-                        ResourceLocation itemId = ResourceLocation.tryParse(iconObj.get("item").getAsString());
-                        Item item = itemId != null ? ForgeRegistries.ITEMS.getValue(itemId) : null;
-                        if (item != null) {
-                            int count = iconObj.has("count") ? iconObj.get("count").getAsInt() : 1;
-                            icon = new ItemStack(item, count);
-                            if (iconObj.has("nbt")) {
-                                try {
-                                    CompoundTag tag = TagParser.parseTag(iconObj.get("nbt").getAsString());
-                                    icon.setTag(tag);
-                                } catch (Exception e) {
-                                    LOGGER.warn("Failed to parse icon NBT for {}: {}", chapterId, e.getMessage());
-                                }
-                            }
-                        }
+            ItemStack iconStack = ItemStack.EMPTY;
+            if (json.has("icon") && json.get("icon").isJsonObject()) {
+                JsonObject iconObj = json.getAsJsonObject("icon");
+                if (iconObj.has("item")) {
+                    ResourceLocation itemId = ResourceLocation.tryParse(iconObj.get("item").getAsString());
+                    Item item = ForgeRegistries.ITEMS.getValue(itemId);
+                    if (item != null) {
+                        int count = iconObj.has("count") ? iconObj.get("count").getAsInt() : 1;
+                        iconStack = new ItemStack(item, count);
                     }
                 }
             }
 
             int sortOrder = json.has("sort_order") ? json.get("sort_order").getAsInt() : 0;
-            boolean secret = json.has("secret") && json.get("secret").getAsBoolean();
+            boolean isSecret = json.has("secret") && json.get("secret").getAsBoolean();
+            ResourceLocation background = json.has("background")
+                ? ResourceLocation.tryParse(json.get("background").getAsString())
+                : null;
 
-            ResourceLocation background = null;
-            if (json.has("background")) {
-                background = ResourceLocation.tryParse(json.get("background").getAsString());
-            }
+            ResearchChapter chapter = new ResearchChapter(
+                chapterId,
+                title,
+                description,
+                iconStack,
+                sortOrder,
+                isSecret,
+                background,
+                new JsonObject()
+            );
 
-            // Additional custom data
-            JsonObject additional = new JsonObject();
-            Set<String> known = Set.of("id", "title", "description", "icon", "sort_order", "secret", "background");
-            for (Map.Entry<String, JsonElement> e : json.entrySet()) {
-                if (!known.contains(e.getKey())) {
-                    additional.add(e.getKey(), e.getValue());
-                }
-            }
-
-            ResearchChapter chapter = new ResearchChapter(chapterId, title, description, icon,
-                                                           sortOrder, secret, background, additional);
             LOADED_RESEARCH_CHAPTERS.put(chapterId, chapter);
-            LOGGER.info("Loaded research chapter '{}'", chapterId);
-
-        } catch (JsonParseException e) {
-            LOGGER.error("Malformed research chapter JSON at {}: {}", location, e.getMessage());
+            LOGGER.info("Loaded research chapter {}", chapterId);
         } catch (Exception e) {
             throw new RuntimeException("Failed to load research chapter from " + location, e);
         }
