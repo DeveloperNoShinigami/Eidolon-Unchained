@@ -1,5 +1,7 @@
 # 📁 Eidolon Unchained Datapack Structure
 
+See [Codex Tutorial](codex_tutorial.md) for a guided walkthrough and [Codex Reference](codex_reference.md) for full details.
+
 ## 🎯 **Complete Datapack Layout**
 
 ```

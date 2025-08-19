@@ -105,10 +105,10 @@ src/main/resources/
 
 ## 10. Reference & Examples
 
-- See `COMPLETE_PAGE_TYPES.md` for all supported page types and JSON examples.
+- See `docs/codex_reference.md` for all supported page types and JSON examples.
 - See `VISUAL_ELEMENTS_REFERENCE.md` for visual breakdowns and formatting code samples.
-- See `CODEX_TRANSLATION_TIPS.md` for translation and character usage tips.
-- See `CODEX_SYSTEM_DOCUMENTATION.md` and `CODEX_EXTENSION_GUIDE.md` for technical and integration details.
+- See `docs/codex_reference.md#advanced-formatting-codes` for translation and formatting tips.
+- See `docs/codex_reference.md` for the full reference and `docs/codex_tutorial.md` for a hands-on guide.
 
 ---
 
