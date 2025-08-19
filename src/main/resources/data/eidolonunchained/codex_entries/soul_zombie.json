@@ -1,0 +1,8 @@
+{
+  "target_chapter": "soul_monsters",
+  "pages": [
+    { "type": "title", "text": "eidolonunchained.codex.entry.soul_zombie" },
+    { "type": "entity", "entity": "minecraft:zombie" },
+    { "type": "text", "text": "eidolonunchained.codex.entry.soul_zombie.details" }
+  ]
+}

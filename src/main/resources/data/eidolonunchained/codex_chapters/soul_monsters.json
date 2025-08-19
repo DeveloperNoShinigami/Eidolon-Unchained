@@ -1,0 +1,6 @@
+{
+  "name": "eidolonunchained.codex.chapter.soul_monsters",
+  "icon": "minecraft:soul_torch",
+  "category": "soul_studies",
+  "entries": ["soul_zombie", "soul_skeleton"]
+}

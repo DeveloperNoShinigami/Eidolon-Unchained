@@ -1,0 +1,5 @@
+{
+  "name": "eidolonunchained.codex.category.soul_studies",
+  "icon": "minecraft:soul_sand",
+  "chapters": ["soul_monsters", "soul_items"]
+}

@@ -1,0 +1,25 @@
+{
+  "target_chapter": "MONSTERS",
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolonunchained.codex.entry.rare_monsters"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.rare_monsters.shadow_wraiths"
+    },
+    {
+      "type": "entity",
+      "entity": "minecraft:stray"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.rare_monsters.frost_skeleton"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.rare_monsters.frost_details"
+    }
+  ]
+}

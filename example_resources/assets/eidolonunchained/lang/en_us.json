@@ -1,0 +1,33 @@
+{
+  "eidolonunchained.codex.entry.advanced_monsters.title": "Advanced Monster Studies",
+  "eidolonunchained.codex.entry.advanced_monsters": "Comprehensive guide to magical creatures and their behaviors. Through careful observation, patterns emerge in how different undead creatures behave. Understanding these patterns is crucial for any aspiring necromancer or monster hunter.",
+  "eidolonunchained.codex.entry.advanced_monsters.necromancer": "Necromancers are powerful spellcasters that command undead minions. They appear in dark robes and can summon skeletons, zombies, and other undead creatures to fight for them. Necromancers drop valuable magical components when defeated, including soul shards and necromantic reagents.",
+  "eidolonunchained.codex.entry.advanced_monsters.wraith": "Wraiths are ethereal undead that phase between dimensions. These spectral entities can move through walls and drain life energy from their victims. They are particularly dangerous in groups and vulnerable to silver weapons and holy magic.",
+  "eidolonunchained.codex.entry.advanced_monsters.behavior": "Monster Behavior Patterns: Most undead are drawn to areas of high magical activity and negative energy. They become more aggressive during new moon phases and can sense soul energy from great distances.",
+
+  "eidolonunchained.codex.entry.rare_monsters.title": "Rare Monster Variants",
+  "eidolonunchained.codex.entry.rare_monsters": "Documentation of unusual monster behaviors and variants. These elusive creatures appear only during the darkest nights and possess unique abilities that set them apart from common monsters.",
+  "eidolonunchained.codex.entry.rare_monsters.shadow_wraiths": "Shadow Wraiths: Unlike common wraiths, shadow wraiths possess the ability to phase through solid matter and are nearly invisible to the naked eye. They are drawn to areas of intense magical activity and can drain soul energy from multiple targets simultaneously.",
+  "eidolonunchained.codex.entry.rare_monsters.frost_skeleton": "Frost Skeleton: These skeletal warriors have been corrupted by prolonged exposure to void energy. Unlike normal skeletons, they possess enhanced intelligence and can coordinate complex battle strategies.",
+  "eidolonunchained.codex.entry.rare_monsters.frost_details": "Frost skeletons are immune to cold damage and their arrows inflict slowness on their targets. They are often found guarding ancient ruins and necromantic sites, making them formidable opponents even for experienced practitioners.",
+
+  "eidolonunchained.codex.entry.advanced_summoning.title": "Advanced Summoning Techniques",
+  "eidolonunchained.codex.entry.advanced_summoning": "For the Experienced Practitioner. Advanced wraith summoning requires precise control and understanding of spectral energies and ethereal manipulation.",
+  "eidolonunchained.codex.entry.advanced_summoning.protocols": "Wraith Binding Protocols: The binding process involves three critical phases: 1) Preparation of the ethereal anchor, 2) Invocation of the wraith essence, 3) Establishment of the binding covenant.",
+  "eidolonunchained.codex.entry.advanced_summoning.timing": "Each phase must be completed with exact timing to prevent the wraith from becoming hostile or escaping the binding circle. Failure may result in permanent spectral contamination.",
+  "eidolonunchained.codex.entry.advanced_summoning.bound_wraith": "Bound Wraith: A spectral entity tethered to the summoner's will through advanced binding rituals. These creatures maintain their ethereal properties but are compelled to serve their master.",
+  "eidolonunchained.codex.entry.advanced_summoning.manifestation": "Physical Manifestation: Translucent, shifting ethereal form with glowing purple essence core. Leaves spectral frost trail. Height: 2.5 blocks. Binding lasts exactly 7 days and requires daily soul energy to maintain (5 energy per day).",
+
+  "eidolonunchained.codex.entry.crystal_rituals.title": "Crystal Ritual Mastery",
+  "eidolonunchained.codex.entry.crystal_rituals": "Advanced techniques for crystal-based magical workings. This improved approach to crystal rituals provides greater magical output through proper harmonic alignment. The key is understanding how different crystals interact with each other and the ambient magical field.",
+  "eidolonunchained.codex.entry.crystal_rituals.placement": "Proper crystal placement can increase ritual effectiveness by up to 300%%. The most powerful configurations use seven crystals arranged in specific geometric patterns.",
+  "eidolonunchained.codex.entry.crystal_rituals.resonance": "Crystal Resonance Theory: Different crystals resonate at different magical frequencies. By understanding these frequencies, a practitioner can optimize their ritual setup for maximum efficiency.",
+  "eidolonunchained.codex.entry.crystal_rituals.types": "Quartz provides stability and acts as a magical amplifier, while amethyst channels void energy and enhances spiritual connections. Combining multiple crystal types requires careful balance to prevent harmonic interference.",
+  "eidolonunchained.codex.entry.crystal_rituals.advanced": "Advanced Configurations: Master practitioners can create complex crystal networks that maintain their charge for extended periods. These networks can be activated remotely and provide sustained magical effects over large areas.",
+
+  "eidolonunchained.codex.entry.void_mastery.title": "Advanced Void Techniques",
+  "eidolonunchained.codex.entry.void_mastery": "Expanding upon the knowledge of void amulets and void manipulation. Through extensive study of void amulets, you have learned to harness void energy in new ways.",
+  "eidolonunchained.codex.entry.void_mastery.fundamentals": "Void Mastery Fundamentals: This knowledge allows for more efficient void manipulation and deeper understanding of the space between worlds. The void is not empty space, but rather a realm of infinite potential.",
+  "eidolonunchained.codex.entry.void_mastery.advanced": "Advanced practitioners can draw upon this potential to perform feats that seem to defy the natural order. Master void practitioners can create stable portals between distant locations, manipulate gravity in localized areas, and even briefly step outside of normal time.",
+  "eidolonunchained.codex.entry.void_mastery.risks": "Enhanced Void Techniques: These abilities come with significant risks. Prolonged void exposure can lead to dimensional instability, where the practitioner begins to phase between realities involuntarily."
+}

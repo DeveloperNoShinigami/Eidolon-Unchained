@@ -1,0 +1,29 @@
+{
+  "target_chapter": "CRYSTAL_RITUAL",
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolonunchained.codex.entry.crystal_rituals"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.crystal_rituals.placement"
+    },
+    {
+      "type": "crafting",
+      "recipe": "eidolon:arcane_gold_ingot"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.crystal_rituals.resonance"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.crystal_rituals.types"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.crystal_rituals.advanced"
+    }
+  ]
+}

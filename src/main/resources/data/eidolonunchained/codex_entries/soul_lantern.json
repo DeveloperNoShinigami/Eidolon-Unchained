@@ -1,0 +1,8 @@
+{
+  "target_chapter": "soul_items",
+  "pages": [
+    { "type": "title", "text": "eidolonunchained.codex.entry.soul_lantern" },
+    { "type": "crafting", "recipe": "minecraft:soul_lantern" },
+    { "type": "text", "text": "eidolonunchained.codex.entry.soul_lantern.details" }
+  ]
+}

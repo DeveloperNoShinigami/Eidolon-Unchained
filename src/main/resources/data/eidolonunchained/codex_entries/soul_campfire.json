@@ -1,0 +1,8 @@
+{
+  "target_chapter": "soul_items",
+  "pages": [
+    { "type": "title", "text": "eidolonunchained.codex.entry.soul_campfire" },
+    { "type": "crafting", "recipe": "minecraft:soul_campfire" },
+    { "type": "text", "text": "eidolonunchained.codex.entry.soul_campfire.details" }
+  ]
+}

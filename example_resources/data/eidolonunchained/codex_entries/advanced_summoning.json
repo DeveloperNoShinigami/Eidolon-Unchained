@@ -1,0 +1,29 @@
+{
+  "target_chapter": "SUMMON_RITUAL",
+  "pages": [
+    {
+      "type": "title", 
+      "text": "eidolonunchained.codex.entry.advanced_summoning"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.advanced_summoning.protocols"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.advanced_summoning.timing"
+    },
+    {
+      "type": "entity",
+      "entity": "eidolon:wraith"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.advanced_summoning.bound_wraith"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.advanced_summoning.manifestation"
+    }
+  ]
+}

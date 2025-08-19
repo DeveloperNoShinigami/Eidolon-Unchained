@@ -1,0 +1,6 @@
+{
+  "name": "eidolonunchained.codex.chapter.soul_items",
+  "icon": "minecraft:soul_lantern",
+  "category": "soul_studies",
+  "entries": ["soul_lantern", "soul_campfire"]
+}

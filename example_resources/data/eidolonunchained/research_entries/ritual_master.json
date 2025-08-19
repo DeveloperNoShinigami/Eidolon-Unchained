@@ -1,0 +1,49 @@
+{
+  "target_research": "eidolon:basic_rituals",
+  "research_id": "eidolonunchained:ritual_master",
+  "title": "Ritual Mastery",
+  "description": "Master advanced ritual techniques and combinations.",
+  "required_stars": 4,
+  "special_tasks": [
+    "Perform 25 different types of rituals",
+    "Successfully combine two rituals in sequence"
+  ],
+  "tasks": {
+    "tier_1": [
+      {
+        "type": "use_ritual",
+        "ritual": "eidolon:crystal_ritual",
+        "count": 10
+      },
+      {
+        "type": "use_ritual", 
+        "ritual": "eidolon:summon_ritual",
+        "count": 5
+      }
+    ],
+    "tier_2": [
+      {
+        "type": "craft_items",
+        "item": "eidolon:ritual_brazier",
+        "count": 3
+      },
+      {
+        "type": "use_ritual",
+        "ritual": "eidolon:purify_ritual",
+        "count": 8
+      }
+    ],
+    "tier_3": [
+      {
+        "type": "use_ritual",
+        "ritual": "eidolon:time_rituals",
+        "count": 2
+      },
+      {
+        "type": "craft_items",
+        "item": "eidolonunchained:master_ritual_focus",
+        "count": 1
+      }
+    ]
+  }
+}
