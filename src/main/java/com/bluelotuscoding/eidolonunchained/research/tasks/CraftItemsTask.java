@@ -1,0 +1,26 @@
+package com.bluelotuscoding.eidolonunchained.research.tasks;
+
+import net.minecraft.resources.ResourceLocation;
+
+/**
+ * Task requiring crafting a number of specific items.
+ */
+public class CraftItemsTask extends ResearchTask {
+    private final ResourceLocation item;
+    private final int count;
+
+    public CraftItemsTask(ResourceLocation item, int count) {
+        super(TaskType.CRAFT_ITEMS);
+        this.item = item;
+        this.count = count;
+    }
+
+    public ResourceLocation getItem() {
+        return item;
+    }
+
+    public int getCount() {
+        return count;
+    }
+}
+

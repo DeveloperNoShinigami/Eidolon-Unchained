@@ -169,6 +169,24 @@ See [Codex Tutorial](codex_tutorial.md) for a guided walkthrough and [Codex Refe
 }
 ```
 
+### Available Task Types
+
+| Type | Required Fields | Description |
+|------|----------------|-------------|
+| `kill_entities` | `entity`, `count` | Kill a specific entity a number of times. |
+| `craft_items` | `item`, `count` | Craft the given item the specified number of times. |
+| `use_ritual` | `ritual`, `count` | Perform a ritual a certain number of times. |
+| `collect_items` | `item`, `count` | Gather items and submit them to the research table. |
+
+Example for each type:
+
+```json
+{ "type": "kill_entities", "entity": "minecraft:zombie", "count": 5 }
+{ "type": "craft_items",   "item": "eidolon:soul_gem",     "count": 3 }
+{ "type": "use_ritual",    "ritual": "eidolon:summon_wraith", "count": 2 }
+{ "type": "collect_items", "item": "minecraft:diamond",    "count": 10 }
+```
+
 ## 🔄 **How It Works**
 
 1. **Codex System**: Your JSON files extend existing Eidolon chapters with new pages

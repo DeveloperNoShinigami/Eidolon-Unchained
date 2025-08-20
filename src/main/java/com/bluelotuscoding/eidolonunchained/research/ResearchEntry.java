@@ -2,12 +2,19 @@ package com.bluelotuscoding.eidolonunchained.research;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 import java.util.ArrayList;
+
+import com.bluelotuscoding.eidolonunchained.research.conditions.DimensionCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.InventoryCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.ResearchCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.TimeCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.WeatherCondition;
 
 /**
  * Represents a custom research entry that can be added to Eidolon's research system
@@ -25,6 +32,7 @@ public class ResearchEntry {
     private final int y;
     private final ResearchType type;
     private final JsonObject additionalData;
+    private final java.util.Map<Integer, java.util.List<ResearchTask>> tasks;
 
     public enum ResearchType {
         BASIC("basic"),
@@ -47,7 +55,8 @@ public class ResearchEntry {
     public ResearchEntry(ResourceLocation id, Component title, Component description,
                         ResourceLocation chapter, ItemStack icon, List<ResourceLocation> prerequisites,
                         List<ResourceLocation> unlocks, int x, int y, ResearchType type,
-                        JsonObject additionalData) {
+                        JsonObject additionalData,
+                        java.util.Map<Integer, java.util.List<ResearchTask>> tasks) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -59,6 +68,8 @@ public class ResearchEntry {
         this.y = y;
         this.type = type;
         this.additionalData = additionalData != null ? additionalData : new JsonObject();
+        this.tasks = tasks != null ? tasks : new java.util.HashMap<>();
+
     }
 
     // Getters
@@ -73,6 +84,7 @@ public class ResearchEntry {
     public int getY() { return y; }
     public ResearchType getType() { return type; }
     public JsonObject getAdditionalData() { return additionalData; }
+    public java.util.Map<Integer, java.util.List<ResearchTask>> getTasks() { return tasks; }
 
     /**
      * Converts this research entry to a JSON format for datapack generation
@@ -113,10 +125,72 @@ public class ResearchEntry {
             json.add("unlocks", unlocksArray);
         }
 
+        // Conditional requirements
+        if (!conditions.isEmpty()) {
+            JsonObject cond = new JsonObject();
+            for (ResearchCondition c : conditions) {
+                if (c instanceof DimensionCondition dc) {
+                    cond.addProperty("dimension", dc.getDimension().toString());
+                } else if (c instanceof TimeCondition tc) {
+                    JsonObject time = new JsonObject();
+                    time.addProperty("min", tc.getMin());
+                    time.addProperty("max", tc.getMax());
+                    cond.add("time_range", time);
+                } else if (c instanceof WeatherCondition wc) {
+                    cond.addProperty("weather", wc.getWeather().name().toLowerCase());
+                } else if (c instanceof InventoryCondition ic) {
+                    JsonArray arr = cond.has("inventory") ? cond.getAsJsonArray("inventory") : new JsonArray();
+                    JsonObject itemObj = new JsonObject();
+                    itemObj.addProperty("item", ic.getItem().toString());
+                    itemObj.addProperty("count", ic.getCount());
+                    arr.add(itemObj);
+                    cond.add("inventory", arr);
+                }
+            }
+            json.add("conditional_requirements", cond);
+        }
+
         // Merge additional data
-        additionalData.entrySet().forEach(entry -> 
+        additionalData.entrySet().forEach(entry ->
             json.add(entry.getKey(), entry.getValue())
         );
+
+        // Tasks
+        if (!tasks.isEmpty()) {
+            JsonObject tasksObj = new JsonObject();
+            for (var entry : tasks.entrySet()) {
+                JsonArray array = new JsonArray();
+                for (ResearchTask task : entry.getValue()) {
+                    JsonObject tObj = new JsonObject();
+                    tObj.addProperty("type", task.getType().getId());
+                    switch (task.getType()) {
+                        case KILL_ENTITIES -> {
+                            var t = (com.bluelotuscoding.eidolonunchained.research.tasks.KillEntitiesTask) task;
+                            tObj.addProperty("entity", t.getEntity().toString());
+                            tObj.addProperty("count", t.getCount());
+                        }
+                        case CRAFT_ITEMS -> {
+                            var t = (com.bluelotuscoding.eidolonunchained.research.tasks.CraftItemsTask) task;
+                            tObj.addProperty("item", t.getItem().toString());
+                            tObj.addProperty("count", t.getCount());
+                        }
+                        case USE_RITUAL -> {
+                            var t = (com.bluelotuscoding.eidolonunchained.research.tasks.UseRitualTask) task;
+                            tObj.addProperty("ritual", t.getRitual().toString());
+                            tObj.addProperty("count", t.getCount());
+                        }
+                        case COLLECT_ITEMS -> {
+                            var t = (com.bluelotuscoding.eidolonunchained.research.tasks.CollectItemsTask) task;
+                            tObj.addProperty("item", t.getItem().toString());
+                            tObj.addProperty("count", t.getCount());
+                        }
+                    }
+                    array.add(tObj);
+                }
+                tasksObj.add("tier_" + entry.getKey(), array);
+            }
+            json.add("tasks", tasksObj);
+        }
 
         return json;
     }
@@ -136,6 +210,7 @@ public class ResearchEntry {
         private int y = 0;
         private ResearchType type = ResearchType.BASIC;
         private JsonObject additionalData = new JsonObject();
+        private java.util.Map<Integer, java.util.List<ResearchTask>> tasks = new java.util.HashMap<>();
 
         public Builder(ResourceLocation id) {
             this.id = id;
@@ -187,9 +262,16 @@ public class ResearchEntry {
             return this;
         }
 
+        public Builder task(int tier, ResearchTask task) {
+            this.tasks.computeIfAbsent(tier, k -> new java.util.ArrayList<>()).add(task);
+
+            return this;
+        }
+
         public ResearchEntry build() {
-            return new ResearchEntry(id, title, description, chapter, icon, 
-                                   prerequisites, unlocks, x, y, type, additionalData);
+            return new ResearchEntry(id, title, description, chapter, icon,
+                                   prerequisites, unlocks, x, y, type, additionalData, tasks);
+
         }
     }
 }

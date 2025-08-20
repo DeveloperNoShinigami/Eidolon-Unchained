@@ -6,6 +6,9 @@ import elucent.eidolon.common.tile.ResearchTableTileEntity;
 import elucent.eidolon.mixin.AbstractContainerMenuMixin;
 import elucent.eidolon.registries.Registry;
 import elucent.eidolon.registries.Researches;
+import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
+import com.bluelotuscoding.eidolonunchained.research.ResearchEntry;
+import com.bluelotuscoding.eidolonunchained.research.conditions.ResearchCondition;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -25,6 +28,7 @@ public class ResearchTableContainer extends AbstractContainerMenu implements Con
     private final Container tile;
     private final ContainerData intArray;
     protected final List<ResearchTask> tasks;
+    private final Player player;
 
     public ResearchTableContainer(int id, Inventory playerInventory) {
         this(id, playerInventory, new SimpleContainer(2), new SimpleContainerData(2));
@@ -34,6 +38,7 @@ public class ResearchTableContainer extends AbstractContainerMenu implements Con
         super(Registry.RESEARCH_TABLE_CONTAINER.get(), id);
         this.tile = inventory;
         this.intArray = data;
+        this.player = playerInventory.player;
         this.addSlot(new NotesSlot(inventory, 0, 58, 68));
         this.addSlot(new SealSlot(inventory, 1, 58, 32));
         this.addDataSlots(data);
@@ -92,6 +97,12 @@ public class ResearchTableContainer extends AbstractContainerMenu implements Con
         if (tag == null || !tag.contains("research")) return;
         Research r = Researches.find(new ResourceLocation(tag.getString("research")));
         if (r == null || tag.getInt("stepsDone") >= r.getStars()) return;
+        ResearchEntry entry = ResearchDataManager.getResearchEntry(r.getRegistryName());
+        if (entry != null) {
+            for (ResearchCondition condition : entry.getConditions()) {
+                if (!condition.test(player)) return;
+            }
+        }
         List<ResearchTask> tasks = r.getTasks(getSeed(stack), tag.getInt("stepsDone"));
         for (int i = 0; i < tasks.size(); i++) {
             int x = 189, y = 17 + 36 * i;
@@ -248,6 +259,12 @@ public class ResearchTableContainer extends AbstractContainerMenu implements Con
             if (!stack.hasTag() || !stack.getTag().contains("research")) return;
             Research r = Researches.find(new ResourceLocation(stack.getTag().getString("research")));
             if (r == null) return;
+            ResearchEntry entry = ResearchDataManager.getResearchEntry(r.getRegistryName());
+            if (entry != null) {
+                for (ResearchCondition condition : entry.getConditions()) {
+                    if (!condition.test(player)) return;
+                }
+            }
             List<ResearchTask> tasks = r.getTasks(getSeed(stack), stack.getTag().getInt("stepsDone"));
             if (tasks.size() < index) return;
             ResearchTask toComplete = tasks.get(index);
