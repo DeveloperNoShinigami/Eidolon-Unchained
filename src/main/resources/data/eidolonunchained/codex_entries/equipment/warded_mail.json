@@ -1,5 +1,5 @@
 {
-  "chapter": "warded_mail",
+  "target_chapter": "eidolon:warded_mail",
   "pages": [
     {
       "type": "text",
