@@ -1,7 +1,6 @@
 package com.bluelotuscoding.eidolonunchained.research.tasks;
 
 import javax.annotation.Nullable;
-
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.resources.ResourceLocation;
@@ -34,7 +33,7 @@ public class HasItemWithNbtTask extends ResearchTask {
     public CompoundTag getFilter() {
         return filter;
     }
-
+  
     public int getCount() {
         return count;
     }
@@ -50,8 +49,8 @@ public class HasItemWithNbtTask extends ResearchTask {
             if (filter != null && !NbtUtils.compareNbt(filter, stack.getTag(), true)) continue;
             found += stack.getCount();
             if (found >= count) return true;
+
         }
         return false;
     }
 }
-
