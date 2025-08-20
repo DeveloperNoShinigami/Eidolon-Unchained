@@ -81,7 +81,7 @@ See [Codex Tutorial](codex_tutorial.md) for a guided walkthrough and [Codex Refe
   "title": "Research Title",
   "description": "Research description",
   "required_stars": 3,                               // ← Stars needed to unlock
-  "conditions": {                                    // ← Optional gating
+  "conditions": {                                    // ← Optional gating; see RESEARCH_CONDITIONS.md
     "dimension": "minecraft:the_nether"
   },
   "tasks": {                                         // ← Progression tasks
@@ -103,7 +103,7 @@ See [Codex Tutorial](codex_tutorial.md) for a guided walkthrough and [Codex Refe
 }
 ```
 
-Conditions act as prerequisites for the entry; tasks only begin tracking once all conditions are satisfied.
+Conditions act as prerequisites for the entry; tasks only begin tracking once all conditions are satisfied. See [Research Conditions](RESEARCH_CONDITIONS.md) for supported types.
 
 ## 🎯 **Available Eidolon Chapters**
 *(Use these exact names for built-in chapters or a namespaced ID for custom ones)*
