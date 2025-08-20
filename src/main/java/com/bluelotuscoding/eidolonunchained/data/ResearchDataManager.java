@@ -449,14 +449,28 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                                 }
                             }
                         }
+                        com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task;
                         try {
-                            com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task = taskType.decoder().apply(tobj);
-                            if (task != null) {
-                                tierTasks.add(task);
-                                integrateTask(task);
+                            if (taskType == ResearchTaskTypes.KILL_ENTITY_NBT) {
+                                ResourceLocation entity = ResourceLocation.tryParse(tobj.get("entity").getAsString());
+                                CompoundTag filter = null;
+                                if (tobj.has("filter")) {
+                                    try {
+                                        filter = TagParser.parseTag(tobj.get("filter").getAsString());
+                                    } catch (Exception ignored) {}
+                                }
+                                int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                task = new KillEntityWithNbtTask(entity, filter, count);
+                            } else {
+                                task = taskType.decoder().apply(tobj);
                             }
                         } catch (Exception e) {
                             LOGGER.warn("Failed to parse task of type '{}' in research {}", typeStr, entryId, e);
+                            continue;
+                        }
+                        if (task != null) {
+                            tierTasks.add(task);
+                            integrateTask(task);
                         }
                     }
                     if (!tierTasks.isEmpty()) tasks.put(tier, tierTasks);
