@@ -2,6 +2,8 @@ package com.bluelotuscoding.eidolonunchained.research.tasks;
 
 import java.util.Locale;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.resources.ResourceLocation;
+import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 
 /**
  * Basic representation of a research task parsed from JSON.
@@ -12,6 +14,10 @@ public abstract class ResearchTask {
 
     protected ResearchTask(ResearchTaskType type) {
         this.type = type;
+    }
+
+    protected ResearchTask(TaskType legacyType) {
+        this(new ResearchTaskType(new ResourceLocation(EidolonUnchained.MODID, legacyType.getId()), json -> null));
     }
 
     public ResearchTaskType getType() {
@@ -39,6 +45,7 @@ public abstract class ResearchTask {
      */
     public enum TaskType {
         KILL_ENTITIES("kill_entities"),
+        KILL_ENTITY_NBT("kill_entity_nbt"),
         CRAFT_ITEMS("craft_items"),
         USE_RITUAL("use_ritual"),
         COLLECT_ITEMS("collect_items"),

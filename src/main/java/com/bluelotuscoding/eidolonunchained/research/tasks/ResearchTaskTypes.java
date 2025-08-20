@@ -3,6 +3,8 @@ package com.bluelotuscoding.eidolonunchained.research.tasks;
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +28,7 @@ public class ResearchTaskTypes {
 
     // Built-in task types
     public static ResearchTaskType KILL_ENTITIES;
+    public static ResearchTaskType KILL_ENTITY_NBT;
     public static ResearchTaskType CRAFT_ITEMS;
     public static ResearchTaskType USE_RITUAL;
     public static ResearchTaskType COLLECT_ITEMS;
@@ -40,6 +43,17 @@ public class ResearchTaskTypes {
             ResourceLocation entity = ResourceLocation.tryParse(json.get("entity").getAsString());
             int count = json.has("count") ? json.get("count").getAsInt() : 1;
             return new KillEntitiesTask(entity, count);
+        });
+        KILL_ENTITY_NBT = register(new ResourceLocation(EidolonUnchained.MODID, "kill_entity_nbt"), json -> {
+            ResourceLocation entity = ResourceLocation.tryParse(json.get("entity").getAsString());
+            CompoundTag filter = null;
+            if (json.has("filter")) {
+                try {
+                    filter = TagParser.parseTag(json.get("filter").getAsString());
+                } catch (Exception ignored) {}
+            }
+            int count = json.has("count") ? json.get("count").getAsInt() : 1;
+            return new KillEntityWithNbtTask(entity, filter, count);
         });
         CRAFT_ITEMS = register(new ResourceLocation(EidolonUnchained.MODID, "craft_items"), json -> {
             ResourceLocation item = ResourceLocation.tryParse(json.get("item").getAsString());
