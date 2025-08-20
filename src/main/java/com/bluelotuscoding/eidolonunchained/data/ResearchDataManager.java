@@ -148,6 +148,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
      */
     private void loadResearchChapter(ResourceLocation location, JsonObject json) {
         try {
+            LOGGER.info("Attempting to load research chapter from resource: {} (namespace: {}, path: {})", location, location.getNamespace(), location.getPath());
             if (!json.has("id")) {
                 throw new JsonParseException("Missing required 'id' field");
             }
@@ -181,6 +182,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                 : null;
             String category = json.has("category") ? json.get("category").getAsString() : "nature";
 
+            LOGGER.info("Registering research chapter: {} (title: {}, icon: {}, sortOrder: {}, secret: {}, background: {}, category: {})", chapterId, title, iconStack, sortOrder, isSecret, background, category);
             ResearchChapter chapter = new ResearchChapter(
                 chapterId,
                 title,
@@ -196,6 +198,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
             LOADED_RESEARCH_CHAPTERS.put(chapterId, chapter);
             LOGGER.info("Loaded research chapter {}", chapterId);
         } catch (Exception e) {
+            LOGGER.error("Failed to load research chapter from {}: {}", location, e.getMessage(), e);
             throw new RuntimeException("Failed to load research chapter from " + location, e);
         }
     }

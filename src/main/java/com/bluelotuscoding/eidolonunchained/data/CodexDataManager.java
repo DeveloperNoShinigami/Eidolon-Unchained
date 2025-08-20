@@ -290,8 +290,10 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
      * Loads custom chapter definitions from datapacks
      */
     private void loadCustomChapters(ResourceManager resourceManager) {
+        LOGGER.info("Searching for custom codex chapters in 'codex_chapters'...");
         resourceManager.listResources("codex_chapters", path -> path.getPath().endsWith(".json"))
             .forEach((resLoc, resource) -> {
+                LOGGER.info("Found codex chapter resource: {} (namespace: {}, path: {})", resLoc, resLoc.getNamespace(), resLoc.getPath());
                 try (InputStreamReader reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
                     JsonObject json = GSON.fromJson(reader, JsonObject.class);
                     if (json == null || !json.has("title")) {
@@ -307,12 +309,14 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                     path = path.substring("codex_chapters/".length(), path.length() - 5); // remove directory and .json
                     ResourceLocation chapterId = new ResourceLocation(resLoc.getNamespace(), path);
 
+                    LOGGER.info("Registering custom chapter: {} (title: {}, icon: {})", chapterId, title, icon);
                     CUSTOM_CHAPTERS.put(chapterId, new ChapterDefinition(title, icon));
                     LOGGER.info("Loaded custom chapter definition {}", chapterId);
                 } catch (IOException e) {
                     LOGGER.error("Failed to load chapter definition at {}", resLoc, e);
                 }
             });
+        LOGGER.info("Custom chapter loading complete. Total loaded: {}", CUSTOM_CHAPTERS.size());
     }
     
     /**
