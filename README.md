@@ -26,6 +26,8 @@ If you see a "Format error" in a codex page, it is often caused by a percent sig
 This will prevent Minecraft from showing a format error and display the percent sign as intended.
 # Eidolon Unchained
 
+See the [documentation](docs/README.md) for a complete list of guides.
+
 An addon mod for **Eidolon: Repraised** that expands the mystical world with new chapters, rituals, and other Eidolon-focused content.
 
 ## Description
