@@ -11,10 +11,6 @@
   "type": "ritual",
   "additional": {
     "required_stars": 4,
-    "special_tasks": [
-      "Perform 25 different types of rituals",
-      "Successfully combine two rituals in sequence"
-    ],
     "tasks": {
       "tier_1": [
         {"type": "use_ritual", "ritual": "eidolon:crystal_ritual", "count": 10},

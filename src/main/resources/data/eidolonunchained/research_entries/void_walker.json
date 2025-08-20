@@ -11,10 +11,6 @@
   "type": "advanced",
   "additional": {
     "required_stars": 3,
-    "special_tasks": [
-      "Successfully craft 10 void-enhanced items",
-      "Travel through the End dimension for 2 hours"
-    ],
     "tasks": {
       "tier_1": [
         {"type": "collect_items", "item": "minecraft:ender_pearl", "count": 64},

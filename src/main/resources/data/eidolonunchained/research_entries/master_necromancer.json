@@ -11,10 +11,6 @@
   "type": "advanced",
   "additional": {
     "required_stars": 4,
-    "special_tasks": [
-      "Successfully perform 50 necromantic rituals",
-      "Command 10 different types of undead creatures"
-    ],
     "tasks": {
       "tier_1": [
         {"type": "kill_entities", "entity": "minecraft:zombie", "count": 150},
