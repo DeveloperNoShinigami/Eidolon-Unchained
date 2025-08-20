@@ -9,8 +9,8 @@
   "x": 0,
   "y": 0,
   "type": "advanced",
+  "required_stars": 3,
   "additional": {
-    "required_stars": 3,
     "special_tasks": [
       "Successfully bind 25 souls to gems",
       "Create soul-enhanced equipment"

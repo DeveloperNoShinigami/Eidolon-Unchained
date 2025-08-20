@@ -9,8 +9,8 @@
   "x": 0,
   "y": 0,
   "type": "ritual",
+  "required_stars": 4,
   "additional": {
-    "required_stars": 4,
     "special_tasks": [
       "Perform 25 different types of rituals",
       "Successfully combine two rituals in sequence"

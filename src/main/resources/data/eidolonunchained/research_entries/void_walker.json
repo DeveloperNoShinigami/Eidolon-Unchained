@@ -9,8 +9,8 @@
   "x": 0,
   "y": 0,
   "type": "advanced",
+  "required_stars": 3,
   "additional": {
-    "required_stars": 3,
     "special_tasks": [
       "Successfully craft 10 void-enhanced items",
       "Travel through the End dimension for 2 hours"

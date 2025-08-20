@@ -23,7 +23,7 @@ Conditions and tasks complement each other—conditions set the scene, limiting 
 
 ## ⭐ Star Requirements
 
-The `required_stars` value gates access to higher‑tier research. Star costs should scale with entry complexity and reward.
+The `required_stars` value gates access to higher‑tier research. Star costs should scale with entry complexity and reward. If omitted, star costs fall back to the entry type: 0 for `basic` or `crafting`, 1 for `advanced` or `ritual`, and 2 for `forbidden` entries.
 
 ## 📊 Task Tiers
 

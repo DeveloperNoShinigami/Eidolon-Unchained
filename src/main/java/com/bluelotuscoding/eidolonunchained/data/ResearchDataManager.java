@@ -338,6 +338,17 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                 }
             }
 
+            int requiredStars = -1;
+            if (json.has("required_stars")) {
+                requiredStars = json.get("required_stars").getAsInt();
+            } else if (json.has("additional") && json.get("additional").isJsonObject()) {
+                JsonObject addObj = json.getAsJsonObject("additional");
+                if (addObj.has("required_stars")) {
+                    requiredStars = addObj.get("required_stars").getAsInt();
+                    addObj.remove("required_stars");
+                }
+            }
+
             // Tasks parsing
             Map<Integer, List<com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask>> tasks = new HashMap<>();
             JsonObject tasksContainer = null;
@@ -438,7 +449,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
             // Additional custom fields
             JsonObject additional = new JsonObject();
             Set<String> known = Set.of("id", "title", "description", "chapter", "icon",
-                                       "prerequisites", "unlocks", "x", "y", "type", "tasks", "additional");
+                                       "prerequisites", "unlocks", "x", "y", "type", "required_stars", "tasks", "additional");
             for (Map.Entry<String, JsonElement> e : json.entrySet()) {
                 if (!known.contains(e.getKey())) {
                     additional.add(e.getKey(), e.getValue());
@@ -488,7 +499,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
             }
 
             ResearchEntry entry = new ResearchEntry(entryId, title, description, chapter, icon,
-                                                    prerequisites, unlocks, x, y, type, additional, tasks, conditions);
+                                                    prerequisites, unlocks, x, y, type, requiredStars, additional, tasks, conditions);
 
             LOADED_RESEARCH_ENTRIES.put(entryId, entry);
             RESEARCH_EXTENSIONS.computeIfAbsent(chapter, k -> new ArrayList<>()).add(entry);

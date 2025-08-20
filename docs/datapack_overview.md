@@ -36,7 +36,9 @@ data/
 | **Codex Chapter** | `title` | `icon` |
 | **Codex Entry** | `target_chapter`, `pages` | `title`, `description`, `icon`, `prerequisites`, `type` |
 | **Research Chapter** | `id`, `title`, `description`, `category`, `icon` | `background`, `position` |
-| **Research Entry** | `id`, `title`, `description`, `chapter` | `icon`, `prerequisites`, `unlocks`, `star_requirement`, `conditions`, `tasks`, `rewards` |
+| **Research Entry** | `id`, `title`, `description`, `chapter` | `icon`, `prerequisites`, `unlocks`, `required_stars`, `conditions`, `tasks`, `rewards` |
+
+`required_stars` is optional; if omitted, the game assigns star costs based on the entry type (0 for basic/crafting, 1 for advanced/ritual, 2 for forbidden).
 
 ### Cross References
 
@@ -106,7 +108,7 @@ data/
   "title": "yourmod.research.void_step",
   "description": "yourmod.research.void_step.desc",
   "chapter": "yourmod:void_mastery",
-  "star_requirement": 2,
+  "required_stars": 2,
   "conditions": { "dimension": "minecraft:the_nether" },
   "tasks": {
     "tier_1": [
