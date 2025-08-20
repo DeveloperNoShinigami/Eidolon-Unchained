@@ -96,26 +96,22 @@ public class EidolonCategoryExtension {
     private static boolean initializeEidolonAccess() {
         try {
             LOGGER.info("🔍 Using reflection to access Eidolon's category system...");
-            
-            // Find the Index class and get categories field
-            // FUTURE: Replace with event.categories
-            Class<?> indexClass = Class.forName("elucent.eidolon.codex.Index");
-            Field categoriesField = indexClass.getDeclaredField("categories");
+            // Use CodexChapters for categories and itemToEntryMap
+            Class<?> chaptersClass = Class.forName("elucent.eidolon.codex.CodexChapters");
+            Field categoriesField = chaptersClass.getDeclaredField("categories");
             categoriesField.setAccessible(true);
             eidolonCategories = (List<Category>) categoriesField.get(null);
-            
-            // Find itemToEntryMap field  
-            // FUTURE: Replace with event.itemToEntryMap
-            Field itemMapField = indexClass.getDeclaredField("itemToEntryMap");
+
+            Field itemMapField = chaptersClass.getDeclaredField("itemToEntryMap");
             itemMapField.setAccessible(true);
             eidolonItemToEntryMap = (Map<Item, IndexPage.IndexEntry>) itemMapField.get(null);
-            
+
             LOGGER.info("✅ Successfully accessed Eidolon internals via reflection");
             LOGGER.info("   Categories list: {} entries", eidolonCategories.size());
             LOGGER.info("   Item map: {} entries", eidolonItemToEntryMap.size());
-            
+
             return true;
-            
+
         } catch (Exception e) {
             LOGGER.error("❌ Failed to access Eidolon internals via reflection", e);
             return false;
