@@ -182,6 +182,7 @@ Conditions act as prerequisites for the entry; tasks only begin tracking once al
 | `craft_items` | `item`, `count` | Craft the given item the specified number of times. |
 | `use_ritual` | `ritual`, `count` | Perform a ritual a certain number of times. |
 | `collect_items` | `item`, `count` | Gather items and submit them to the research table. |
+| `explore_biomes` | `biome`, `count` | Visit the specified biome a number of times. |
 
 Example for each type:
 
@@ -190,6 +191,7 @@ Example for each type:
 { "type": "craft_items",   "item": "eidolon:soul_gem",     "count": 3 }
 { "type": "use_ritual",    "ritual": "eidolon:summon_wraith", "count": 2 }
 { "type": "collect_items", "item": "minecraft:diamond",    "count": 10 }
+{ "type": "explore_biomes", "biome": "minecraft:dark_forest", "count": 1 }
 ```
 
 ## 🔄 **How It Works**

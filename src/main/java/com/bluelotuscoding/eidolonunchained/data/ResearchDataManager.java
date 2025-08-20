@@ -401,6 +401,11 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                                     int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
                                     task = new CollectItemsTask(item, count);
                                 }
+                                case EXPLORE_BIOMES -> {
+                                    ResourceLocation biome = ResourceLocation.tryParse(tobj.get("biome").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    task = new ExploreBiomesTask(biome, count);
+                                }
                                 case ENTER_DIMENSION -> {
                                     ResourceLocation dim = ResourceLocation.tryParse(tobj.get("dimension").getAsString());
                                     task = new EnterDimensionTask(dim);
@@ -509,6 +514,10 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                 Researches.addTask(rand -> new ResearchTask.TaskItems(new ItemStack(item, collect.getCount())));
                 return;
             }
+        }
+        if (task instanceof ExploreBiomesTask explore) {
+            Researches.addTask(rand -> new ResearchTask.XP(explore.getCount()));
+            return;
         }
         // Fallback placeholder task to ensure registration
         Researches.addTask(rand -> new ResearchTask.XP(1));
