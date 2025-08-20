@@ -26,7 +26,7 @@ data/
 4. **Research**
    - `research_chapters/` organize research topics and can reference a category ID.
    - `research_entries/` link to a research chapter and may unlock codex entries.
-   - Entries may specify `conditions` that must be met before their `tasks` can progress.
+   - Entries may specify `conditions` that must be met before their `tasks` can progress. See [Research Conditions](RESEARCH_CONDITIONS.md) for available types.
 
 ## Required and Optional Fields
 
@@ -47,6 +47,8 @@ data/
 - Research chapters reference a category ID so they appear under the same codex section.
 - Research entries reference their parent research chapter via `chapter`.
 - Translation keys for titles and text belong in `assets/<namespace>/lang/<lang>.json`.
+
+For more about research entry fields and available gating options, see [research_entries.md](research_entries.md) and [RESEARCH_CONDITIONS.md](RESEARCH_CONDITIONS.md).
 
 ## Best Practices
 
@@ -121,4 +123,4 @@ data/
 }
 ```
 
-In this example, tasks only track progress while the player is in the Nether because of the `dimension` condition.
+In this example, tasks only track progress while the player is in the Nether because of the `dimension` condition. See [Research Conditions](RESEARCH_CONDITIONS.md) for more options.

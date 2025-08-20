@@ -10,11 +10,6 @@
   "y": 0,
   "type": "advanced",
   "required_stars": 3,
-  "additional": {
-    "special_tasks": [
-      "Successfully bind 25 souls to gems",
-      "Create soul-enhanced equipment"
-    ],
     "tasks": {
       "tier_1": [
         {"type": "collect_items", "item": "eidolon:soul_shard", "count": 50},
@@ -32,5 +27,4 @@
         {"type": "use_ritual", "ritual": "eidolon:soul_binding_ritual", "count": 5}
       ]
     }
-  }
 }

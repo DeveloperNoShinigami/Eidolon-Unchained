@@ -11,9 +11,6 @@
   "type": "advanced",
   "required_stars": 5,
   "additional": {
-    "special_tasks": [
-      "Perform 50 soul enchantments"
-    ],
     "tasks": {
       "tier_1": [
         {"type": "kill_entities", "entity": "minecraft:zombie", "count": 100}

@@ -10,11 +10,6 @@
   "y": 0,
   "type": "ritual",
   "required_stars": 4,
-  "additional": {
-    "special_tasks": [
-      "Perform 25 different types of rituals",
-      "Successfully combine two rituals in sequence"
-    ],
     "tasks": {
       "tier_1": [
         {"type": "use_ritual", "ritual": "eidolon:crystal_ritual", "count": 10},
@@ -29,5 +24,4 @@
         {"type": "craft_items", "item": "eidolonunchained:master_ritual_focus", "count": 1}
       ]
     }
-  }
 }

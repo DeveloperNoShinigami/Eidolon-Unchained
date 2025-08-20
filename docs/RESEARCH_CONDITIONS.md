@@ -1,8 +1,8 @@
 # Research Condition Types
 
-Eidolon Unchained research entries can specify **conditions** to gate
-a research until certain world or player states are met. The following condition
-types are supported:
+Eidolon Unchained research entries can specify **conditions** to gate a research until certain world or player states are met. The following condition types are supported.
+
+> **Backward Compatibility:** Earlier documentation referred to this key as `conditional_requirements`. The old name is still accepted but will be removed in a future release.
 
 Each condition mirrors a task-based equivalent, allowing you to gate an entry globally or require the same context as part of its tasks.
 
