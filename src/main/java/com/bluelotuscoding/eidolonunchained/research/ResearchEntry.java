@@ -201,6 +201,13 @@ public class ResearchEntry {
                         var t = (com.bluelotuscoding.eidolonunchained.research.tasks.CollectItemsTask) task;
                         tObj.addProperty("item", t.getItem().toString());
                         tObj.addProperty("count", t.getCount());
+                    } else if (type == ResearchTaskTypes.HAS_ITEM_NBT) {
+                        var t = (com.bluelotuscoding.eidolonunchained.research.tasks.HasItemWithNbtTask) task;
+                        tObj.addProperty("item", t.getItem().toString());
+                        if (t.getFilter() != null) {
+                            tObj.addProperty("nbt", t.getFilter().toString());
+                        }
+                        tObj.addProperty("count", t.getCount());
                     } else if (type == ResearchTaskTypes.EXPLORE_BIOMES) {
                         var t = (com.bluelotuscoding.eidolonunchained.research.tasks.ExploreBiomesTask) task;
                         tObj.addProperty("biome", t.getBiome().toString());
