@@ -25,6 +25,9 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,48 +94,48 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
     }
     
     @Override
-    protected void apply(Map<ResourceLocation, JsonElement> resourceLocationJsonObjectMap, 
+    protected void apply(Map<ResourceLocation, JsonElement> resourceLocationJsonObjectMap,
                         ResourceManager resourceManager, ProfilerFiller profilerFiller) {
-        
+
         LOADED_RESEARCH_CHAPTERS.clear();
         RESEARCH_EXTENSIONS.clear();
         LOADED_RESEARCH_ENTRIES.clear();
         ENTRIES_WITH_MISSING_CHAPTER.clear();
-        
+
         int loadedChapters = 0;
         int loadedEntries = 0;
         int errors = 0;
-        
+
+        // First load all research chapters from their own directory
+        for (Map.Entry<ResourceLocation, JsonObject> chapter : loadResearchChapters(resourceManager).entrySet()) {
+            try {
+                loadResearchChapter(chapter.getKey(), chapter.getValue());
+                loadedChapters++;
+            } catch (Exception e) {
+                LOGGER.error("Failed to load research chapter from {}", chapter.getKey(), e);
+                errors++;
+            }
+        }
+
+        // Now load research entries passed in by the reload listener
         for (Map.Entry<ResourceLocation, JsonElement> entry : resourceLocationJsonObjectMap.entrySet()) {
             ResourceLocation resourceLocation = entry.getKey();
             JsonElement jsonElement = entry.getValue();
-            
+
             if (!jsonElement.isJsonObject()) {
                 LOGGER.warn("Skipping non-object JSON at {}", resourceLocation);
                 continue;
             }
-            
-            JsonObject json = jsonElement.getAsJsonObject();
-            
+
             try {
-                String path = resourceLocation.getPath();
-                
-                if (path.startsWith("research_chapters/")) {
-                    loadResearchChapter(resourceLocation, json);
-                    loadedChapters++;
-                } else if (path.startsWith("research_entries/")) {
-                    loadResearchEntry(resourceLocation, json);
-                    loadedEntries++;
-                } else {
-                    LOGGER.debug("Skipping unrecognized research data at {}", resourceLocation);
-                }
-                
+                loadResearchEntry(resourceLocation, jsonElement.getAsJsonObject());
+                loadedEntries++;
             } catch (Exception e) {
-                LOGGER.error("Failed to load research data from {}", resourceLocation, e);
+                LOGGER.error("Failed to load research entry from {}", resourceLocation, e);
                 errors++;
             }
         }
-        
+
         LOGGER.info("Loaded {} research chapters, {} research entries with {} errors",
                    loadedChapters, loadedEntries, errors);
 
@@ -141,6 +144,27 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                 LOGGER.warn("Research entry {} references missing chapter {}", entryId, chapterId)
             );
         }
+    }
+
+    /**
+     * Scans the resource manager for research chapter JSON files.
+     */
+    private Map<ResourceLocation, JsonObject> loadResearchChapters(ResourceManager resourceManager) {
+        Map<ResourceLocation, JsonObject> chapters = new HashMap<>();
+
+        resourceManager.listResources("research_chapters", path -> path.getPath().endsWith(".json"))
+            .forEach((resLoc, resource) -> {
+                try (InputStreamReader reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
+                    JsonObject json = GSON.fromJson(reader, JsonObject.class);
+                    if (json != null) {
+                        chapters.put(resLoc, json);
+                    }
+                } catch (IOException e) {
+                    LOGGER.error("Failed to read research chapter at {}", resLoc, e);
+                }
+            });
+
+        return chapters;
     }
 
     /**
