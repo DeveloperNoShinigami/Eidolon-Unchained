@@ -9,6 +9,12 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 import java.util.ArrayList;
 
+import com.bluelotuscoding.eidolonunchained.research.conditions.DimensionCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.InventoryCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.ResearchCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.TimeCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.WeatherCondition;
+
 /**
  * Represents a custom research entry that can be added to Eidolon's research system
  * through datapacks. This allows for easy extension of the research tree.
@@ -25,6 +31,7 @@ public class ResearchEntry {
     private final int y;
     private final ResearchType type;
     private final JsonObject additionalData;
+    private final List<ResearchCondition> conditions;
 
     public enum ResearchType {
         BASIC("basic"),
@@ -47,7 +54,7 @@ public class ResearchEntry {
     public ResearchEntry(ResourceLocation id, Component title, Component description,
                         ResourceLocation chapter, ItemStack icon, List<ResourceLocation> prerequisites,
                         List<ResourceLocation> unlocks, int x, int y, ResearchType type,
-                        JsonObject additionalData) {
+                        JsonObject additionalData, List<ResearchCondition> conditions) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -59,6 +66,7 @@ public class ResearchEntry {
         this.y = y;
         this.type = type;
         this.additionalData = additionalData != null ? additionalData : new JsonObject();
+        this.conditions = conditions != null ? conditions : new ArrayList<>();
     }
 
     // Getters
@@ -73,6 +81,7 @@ public class ResearchEntry {
     public int getY() { return y; }
     public ResearchType getType() { return type; }
     public JsonObject getAdditionalData() { return additionalData; }
+    public List<ResearchCondition> getConditions() { return conditions; }
 
     /**
      * Converts this research entry to a JSON format for datapack generation
@@ -113,8 +122,33 @@ public class ResearchEntry {
             json.add("unlocks", unlocksArray);
         }
 
+        // Conditional requirements
+        if (!conditions.isEmpty()) {
+            JsonObject cond = new JsonObject();
+            for (ResearchCondition c : conditions) {
+                if (c instanceof DimensionCondition dc) {
+                    cond.addProperty("dimension", dc.getDimension().toString());
+                } else if (c instanceof TimeCondition tc) {
+                    JsonObject time = new JsonObject();
+                    time.addProperty("min", tc.getMin());
+                    time.addProperty("max", tc.getMax());
+                    cond.add("time_range", time);
+                } else if (c instanceof WeatherCondition wc) {
+                    cond.addProperty("weather", wc.getWeather().name().toLowerCase());
+                } else if (c instanceof InventoryCondition ic) {
+                    JsonArray arr = cond.has("inventory") ? cond.getAsJsonArray("inventory") : new JsonArray();
+                    JsonObject itemObj = new JsonObject();
+                    itemObj.addProperty("item", ic.getItem().toString());
+                    itemObj.addProperty("count", ic.getCount());
+                    arr.add(itemObj);
+                    cond.add("inventory", arr);
+                }
+            }
+            json.add("conditional_requirements", cond);
+        }
+
         // Merge additional data
-        additionalData.entrySet().forEach(entry -> 
+        additionalData.entrySet().forEach(entry ->
             json.add(entry.getKey(), entry.getValue())
         );
 
@@ -136,6 +170,7 @@ public class ResearchEntry {
         private int y = 0;
         private ResearchType type = ResearchType.BASIC;
         private JsonObject additionalData = new JsonObject();
+        private List<ResearchCondition> conditions = new ArrayList<>();
 
         public Builder(ResourceLocation id) {
             this.id = id;
@@ -187,9 +222,14 @@ public class ResearchEntry {
             return this;
         }
 
+        public Builder condition(ResearchCondition condition) {
+            this.conditions.add(condition);
+            return this;
+        }
+
         public ResearchEntry build() {
-            return new ResearchEntry(id, title, description, chapter, icon, 
-                                   prerequisites, unlocks, x, y, type, additionalData);
+            return new ResearchEntry(id, title, description, chapter, icon,
+                                   prerequisites, unlocks, x, y, type, additionalData, conditions);
         }
     }
 }
