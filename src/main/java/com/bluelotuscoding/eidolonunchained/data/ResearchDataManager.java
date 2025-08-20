@@ -435,6 +435,14 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                                     int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
                                     task = new InventoryTask(item, count);
                                 }
+                                case HAS_NBT -> {
+                                    try {
+                                        CompoundTag tag = TagParser.parseTag(tobj.get("nbt").getAsString());
+                                        task = new HasNbtTask(tag);
+                                    } catch (Exception e) {
+                                        LOGGER.warn("Failed to parse NBT for task in research {}", entryId, e);
+                                    }
+                                }
                             }
                         }
                         try {

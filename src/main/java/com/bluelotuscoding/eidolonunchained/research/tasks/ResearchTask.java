@@ -46,7 +46,8 @@ public abstract class ResearchTask {
         TIME_WINDOW("time_window"),
         WEATHER("weather"),
         INVENTORY("inventory"),
-        EXPLORE_BIOMES("explore_biomes");
+        EXPLORE_BIOMES("explore_biomes"),
+        HAS_NBT("has_nbt");
 
         private final String id;
 
