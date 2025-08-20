@@ -26,6 +26,7 @@ data/
 4. **Research**
    - `research_chapters/` organize research topics and can reference a category ID.
    - `research_entries/` link to a research chapter and may unlock codex entries.
+   - Entries may specify `conditions` that must be met before their `tasks` can progress.
 
 ## Required and Optional Fields
 
@@ -35,7 +36,7 @@ data/
 | **Codex Chapter** | `title` | `icon` |
 | **Codex Entry** | `target_chapter`, `pages` | `title`, `description`, `icon`, `prerequisites`, `type` |
 | **Research Chapter** | `id`, `title`, `description`, `category`, `icon` | `background`, `position` |
-| **Research Entry** | `id`, `title`, `description`, `chapter` | `icon`, `prerequisites`, `unlocks`, `star_requirement`, `tasks`, `rewards` |
+| **Research Entry** | `id`, `title`, `description`, `chapter` | `icon`, `prerequisites`, `unlocks`, `star_requirement`, `conditions`, `tasks`, `rewards` |
 
 ### Cross References
 
@@ -106,6 +107,7 @@ data/
   "description": "yourmod.research.void_step.desc",
   "chapter": "yourmod:void_mastery",
   "star_requirement": 2,
+  "conditions": { "dimension": "minecraft:the_nether" },
   "tasks": {
     "tier_1": [
       { "type": "use_ritual", "ritual": "yourmod:void_portal", "count": 1 }
@@ -116,3 +118,5 @@ data/
   }
 }
 ```
+
+In this example, tasks only track progress while the player is in the Nether because of the `dimension` condition.

@@ -13,9 +13,13 @@ This guide explains how to define research entries for Eidolon Unchained. Each e
 | `unlocks` | Research IDs made available after completion. |
 | `type` | Entry category: `basic`, `advanced`, `forbidden`, `ritual`, or `crafting`. |
 | `x`, `y` | Coordinates on the research screen grid. |
-| `conditions` | Deprecated in favour of task‑based equivalents. Older datapacks may still use this section to gate entries by dimension, time or inventory. |
+| `conditions` | Environmental or player state requirements that must be met before progress begins. Conditions gate when tasks are eligible to run, letting you restrict entries by dimension, time, weather, or inventory. |
 | `tasks` | Objectives the player must complete. Each task uses a specific task class such as `KillEntitiesTask`, `CollectItemsTask`, `UseRitualTask`, `EnterDimensionTask`, `TimeWindowTask`, `WeatherTask`, or `InventoryTask`. |
 | `rewards` | Extra benefits granted on completion (items, advancements, unlocks). |
+
+> **Note:** The JSON key for conditions is `"conditions"`. Earlier drafts of the documentation used `"conditional_requirements"`, but that name has been retired.
+
+Conditions and tasks complement each other—conditions set the scene, limiting when a research entry is active, while tasks define the actions the player must perform once those conditions are met.
 
 ## ⭐ Star Requirements
 

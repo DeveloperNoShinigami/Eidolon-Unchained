@@ -81,6 +81,9 @@ See [Codex Tutorial](codex_tutorial.md) for a guided walkthrough and [Codex Refe
   "title": "Research Title",
   "description": "Research description",
   "required_stars": 3,                               // ← Stars needed to unlock
+  "conditions": {                                    // ← Optional gating
+    "dimension": "minecraft:the_nether"
+  },
   "special_tasks": [                                 // ← Special requirements
     "Kill 100 zombies with void magic"
   ],
@@ -102,6 +105,8 @@ See [Codex Tutorial](codex_tutorial.md) for a guided walkthrough and [Codex Refe
   }
 }
 ```
+
+Conditions act as prerequisites for the entry; tasks only begin tracking once all conditions are satisfied.
 
 ## 🎯 **Available Eidolon Chapters**
 *(Use these exact names for built-in chapters or a namespaced ID for custom ones)*
