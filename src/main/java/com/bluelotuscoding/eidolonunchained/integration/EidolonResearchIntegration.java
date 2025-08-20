@@ -3,12 +3,14 @@ package com.bluelotuscoding.eidolonunchained.integration;
 import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
 import com.bluelotuscoding.eidolonunchained.research.ResearchChapter;
 import com.bluelotuscoding.eidolonunchained.research.ResearchEntry;
+import com.bluelotuscoding.eidolonunchained.research.conditions.ResearchCondition;
 import com.mojang.logging.LogUtils;
 import elucent.eidolon.api.research.Research;
 import elucent.eidolon.registries.Researches;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.client.Minecraft;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -63,9 +65,17 @@ public class EidolonResearchIntegration {
                     LOGGER.warn("✗ Missing chapter {} for research {} - skipping", data.getChapter(), researchId);
                     continue;
                 }
-                Research research = createResearchFromEntry(data);
-                Researches.register(research);
-                LOGGER.info("✓ Injected research entry: {}", researchId);
+                boolean conditionsMet = true;
+                if (!data.getConditions().isEmpty()) {
+                    conditionsMet = data.getConditions().stream().allMatch(c -> c.test(Minecraft.getInstance().player));
+                }
+                if (conditionsMet) {
+                    Research research = createResearchFromEntry(data);
+                    Researches.register(research);
+                    LOGGER.info("✓ Injected research entry: {}", researchId);
+                } else {
+                    LOGGER.info("✗ Skipping research entry {} due to unmet conditions", researchId);
+                }
             }
 
             LOGGER.info("Research integration complete!");

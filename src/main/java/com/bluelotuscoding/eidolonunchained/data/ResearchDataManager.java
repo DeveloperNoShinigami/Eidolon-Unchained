@@ -3,6 +3,11 @@ package com.bluelotuscoding.eidolonunchained.data;
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.research.ResearchEntry;
 import com.bluelotuscoding.eidolonunchained.research.ResearchChapter;
+import com.bluelotuscoding.eidolonunchained.research.conditions.DimensionCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.InventoryCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.ResearchCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.TimeCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.WeatherCondition;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -336,8 +341,42 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                 }
             }
 
+            // Conditional requirements
+            List<ResearchCondition> conditions = new ArrayList<>();
+            if (json.has("conditional_requirements") && json.get("conditional_requirements").isJsonObject()) {
+                JsonObject cond = json.getAsJsonObject("conditional_requirements");
+                if (cond.has("dimension")) {
+                    ResourceLocation dim = ResourceLocation.tryParse(cond.get("dimension").getAsString());
+                    if (dim != null) conditions.add(new DimensionCondition(dim));
+                }
+                if (cond.has("time_range") && cond.get("time_range").isJsonObject()) {
+                    JsonObject time = cond.getAsJsonObject("time_range");
+                    long min = time.has("min") ? time.get("min").getAsLong() : 0;
+                    long max = time.has("max") ? time.get("max").getAsLong() : 24000;
+                    conditions.add(new TimeCondition(min, max));
+                }
+                if (cond.has("weather")) {
+                    conditions.add(new WeatherCondition(cond.get("weather").getAsString()));
+                }
+                if (cond.has("inventory") && cond.get("inventory").isJsonArray()) {
+                    JsonArray inv = cond.getAsJsonArray("inventory");
+                    for (JsonElement el : inv) {
+                        if (!el.isJsonObject()) continue;
+                        JsonObject obj = el.getAsJsonObject();
+                        if (!obj.has("item")) continue;
+                        ResourceLocation itemId = ResourceLocation.tryParse(obj.get("item").getAsString());
+                        if (itemId == null) continue;
+                        int count = obj.has("count") ? obj.get("count").getAsInt() : 1;
+                        Item item = ForgeRegistries.ITEMS.getValue(itemId);
+                        if (item != null) {
+                            conditions.add(new InventoryCondition(item, count));
+                        }
+                    }
+                }
+            }
+
             ResearchEntry entry = new ResearchEntry(entryId, title, description, chapter, icon,
-                                                    prerequisites, unlocks, x, y, type, additional);
+                                                    prerequisites, unlocks, x, y, type, additional, conditions);
 
             LOADED_RESEARCH_ENTRIES.put(entryId, entry);
             RESEARCH_EXTENSIONS.computeIfAbsent(chapter, k -> new ArrayList<>()).add(entry);
