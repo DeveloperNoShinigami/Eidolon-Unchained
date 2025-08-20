@@ -284,6 +284,11 @@ public class ResearchEntry {
             return this;
         }
 
+        public Builder condition(ResearchCondition condition) {
+            this.conditions.add(condition);
+            return this;
+        }
+
         public ResearchEntry build() {
             return new ResearchEntry(id, title, description, chapter, icon,
                                    prerequisites, unlocks, x, y, type, additionalData, tasks, conditions);
