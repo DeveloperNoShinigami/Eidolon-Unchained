@@ -29,6 +29,7 @@ public class ResearchTaskTypes {
     public static ResearchTaskType CRAFT_ITEMS;
     public static ResearchTaskType USE_RITUAL;
     public static ResearchTaskType COLLECT_ITEMS;
+    public static ResearchTaskType EXPLORE_BIOMES;
 
     /**
      * Registers the built-in task types. Should be called during mod
@@ -54,6 +55,11 @@ public class ResearchTaskTypes {
             ResourceLocation item = ResourceLocation.tryParse(json.get("item").getAsString());
             int count = json.has("count") ? json.get("count").getAsInt() : 1;
             return new CollectItemsTask(item, count);
+        });
+        EXPLORE_BIOMES = register(new ResourceLocation(EidolonUnchained.MODID, "explore_biomes"), json -> {
+            ResourceLocation biome = ResourceLocation.tryParse(json.get("biome").getAsString());
+            int count = json.has("count") ? json.get("count").getAsInt() : 1;
+            return new ExploreBiomesTask(biome, count);
         });
     }
 }
