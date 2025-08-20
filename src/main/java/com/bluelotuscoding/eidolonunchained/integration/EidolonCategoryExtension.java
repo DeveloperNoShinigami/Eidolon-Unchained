@@ -48,42 +48,33 @@ public class EidolonCategoryExtension {
     private static Map<Item, IndexPage.IndexEntry> eidolonItemToEntryMap = null;
 
     /**
-     * Initialize custom categories using reflection - provides FULL functionality now!
-     * 
-     * 🔄 MIGRATION NOTE: Replace this entire method when CodexEvents become available with:
-     * @SubscribeEvent
-     * public static void onCodexPreInit(CodexEvents.PreInit event) {
-     *     // Direct access: event.categories and event.itemToEntryMap
-     *     DatapackCategoryExample.addDatapackCategories(event.categories, event.itemToEntryMap);
-     * }
+     * Initialize custom categories using reflection at the correct mod loading phase (FMLLoadCompleteEvent)
+     * This ensures Eidolon is fully loaded before we access its internals.
      */
     @SubscribeEvent
-    public static void onFMLClientSetupEvent(net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent event) {
-        event.enqueueWork(() -> {
-            LOGGER.info("🎯 EidolonCategoryExtension - Implementing FULL functionality via reflection!");
-            
-            try {
-                // Step 1: Get access to Eidolon's internal category system using reflection
-                if (!initializeEidolonAccess()) {
-                    LOGGER.error("❌ Failed to access Eidolon's category system via reflection");
-                    return;
-                }
-                
-                // Step 2: Create and add custom categories using our datapack system
-                LOGGER.info("📁 Creating custom categories from JSON datapacks...");
-                DatapackCategoryExample.addDatapackCategories(eidolonCategories, eidolonItemToEntryMap);
-                
-                // Step 3: Add chapters to existing categories
-                LOGGER.info("📖 Adding custom chapters to existing categories...");
-                addChaptersToExistingCategories(eidolonCategories, eidolonItemToEntryMap);
-                
-                LOGGER.info("✅ Successfully implemented FULL category system via reflection!");
-                LOGGER.info("🚀 Ready for migration to event system when CodexEvents become available");
-                
-            } catch (Exception e) {
-                LOGGER.error("❌ Failed to initialize custom categories via reflection", e);
+    public static void onFMLLoadCompleteEvent(net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent event) {
+        LOGGER.info("🎯 EidolonCategoryExtension - Implementing FULL functionality via reflection (FMLLoadCompleteEvent)!");
+        try {
+            // Step 1: Get access to Eidolon's internal category system using reflection
+            if (!initializeEidolonAccess()) {
+                LOGGER.error("❌ Failed to access Eidolon's category system via reflection");
+                return;
             }
-        });
+
+            // Step 2: Create and add custom categories using our datapack system
+            LOGGER.info("📁 Creating custom categories from JSON datapacks...");
+            DatapackCategoryExample.addDatapackCategories(eidolonCategories, eidolonItemToEntryMap);
+
+            // Step 3: Add chapters to existing categories
+            LOGGER.info("📖 Adding custom chapters to existing categories...");
+            addChaptersToExistingCategories(eidolonCategories, eidolonItemToEntryMap);
+
+            LOGGER.info("✅ Successfully implemented FULL category system via reflection!");
+            LOGGER.info("🚀 Ready for migration to event system when CodexEvents become available");
+
+        } catch (Exception e) {
+            LOGGER.error("❌ Failed to initialize custom categories via reflection", e);
+        }
     }
     
     /**
