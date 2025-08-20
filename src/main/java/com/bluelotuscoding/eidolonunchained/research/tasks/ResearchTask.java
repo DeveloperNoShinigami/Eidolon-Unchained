@@ -1,6 +1,7 @@
 package com.bluelotuscoding.eidolonunchained.research.tasks;
 
 import java.util.Locale;
+import net.minecraft.world.entity.player.Player;
 
 /**
  * Basic representation of a research task parsed from JSON.
@@ -18,13 +19,33 @@ public abstract class ResearchTask {
     }
 
     /**
+     * Checks whether this task is considered complete for the given player.
+     *
+     * <p>Most tasks track progress through the base Eidolon research system and
+     * thus always return {@code false} here.  Tasks that mirror
+     * {@link com.bluelotuscoding.eidolonunchained.research.conditions.ResearchCondition}
+     * implementations can override this to provide on‑the‑fly evaluation and
+     * automatically mark themselves complete.</p>
+     *
+     * @param player the player to test against
+     * @return {@code true} if the task has been satisfied
+     */
+    public boolean isComplete(Player player) {
+        return false;
+    }
+
+    /**
      * Supported task types.
      */
     public enum TaskType {
         KILL_ENTITIES("kill_entities"),
         CRAFT_ITEMS("craft_items"),
         USE_RITUAL("use_ritual"),
-        COLLECT_ITEMS("collect_items");
+        COLLECT_ITEMS("collect_items"),
+        ENTER_DIMENSION("enter_dimension"),
+        TIME_WINDOW("time_window"),
+        WEATHER("weather"),
+        INVENTORY("inventory");
 
         private final String id;
 

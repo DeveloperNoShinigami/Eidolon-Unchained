@@ -4,6 +4,7 @@ import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.research.ResearchEntry;
 import com.bluelotuscoding.eidolonunchained.research.ResearchChapter;
 import com.bluelotuscoding.eidolonunchained.research.tasks.*;
+import com.bluelotuscoding.eidolonunchained.research.conditions.*;
 import elucent.eidolon.api.research.ResearchTask;
 import elucent.eidolon.registries.Researches;
 import com.google.gson.Gson;
@@ -388,6 +389,24 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                                     int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
                                     task = new CollectItemsTask(item, count);
                                 }
+                                case ENTER_DIMENSION -> {
+                                    ResourceLocation dim = ResourceLocation.tryParse(tobj.get("dimension").getAsString());
+                                    task = new EnterDimensionTask(dim);
+                                }
+                                case TIME_WINDOW -> {
+                                    long min = tobj.has("min") ? tobj.get("min").getAsLong() : 0;
+                                    long max = tobj.has("max") ? tobj.get("max").getAsLong() : 24000;
+                                    task = new TimeWindowTask(min, max);
+                                }
+                                case WEATHER -> {
+                                    String weather = tobj.get("weather").getAsString();
+                                    task = new WeatherTask(weather);
+                                }
+                                case INVENTORY -> {
+                                    ResourceLocation item = ResourceLocation.tryParse(tobj.get("item").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    task = new InventoryTask(item, count);
+                                }
                             }
                         }
                         if (task != null) {
@@ -416,6 +435,8 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
             }
 
             // Conditional requirements
+            // This block is maintained for backwards compatibility but datapacks
+            // should prefer expressing these as dedicated tasks instead.
             List<ResearchCondition> conditions = new ArrayList<>();
             if (json.has("conditional_requirements") && json.get("conditional_requirements").isJsonObject()) {
                 JsonObject cond = json.getAsJsonObject("conditional_requirements");
@@ -450,7 +471,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
             }
 
             ResearchEntry entry = new ResearchEntry(entryId, title, description, chapter, icon,
-                                                    prerequisites, unlocks, x, y, type, additional, tasks);
+                                                    prerequisites, unlocks, x, y, type, additional, tasks, conditions);
 
             LOADED_RESEARCH_ENTRIES.put(entryId, entry);
             RESEARCH_EXTENSIONS.computeIfAbsent(chapter, k -> new ArrayList<>()).add(entry);
