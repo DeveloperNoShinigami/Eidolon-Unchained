@@ -84,14 +84,11 @@ See [Codex Tutorial](codex_tutorial.md) for a guided walkthrough and [Codex Refe
   "conditions": {                                    // ← Optional gating
     "dimension": "minecraft:the_nether"
   },
-  "special_tasks": [                                 // ← Special requirements
-    "Kill 100 zombies with void magic"
-  ],
   "tasks": {                                         // ← Progression tasks
     "tier_1": [
       {
         "type": "kill_entities",
-        "entity": "minecraft:zombie", 
+        "entity": "minecraft:zombie",
         "count": 50
       }
     ],
