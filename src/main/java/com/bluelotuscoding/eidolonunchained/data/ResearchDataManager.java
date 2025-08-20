@@ -390,7 +390,64 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                         com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskType taskType = com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskTypes.get(typeId);
                         if (taskType == null) {
                             LOGGER.warn("Unknown task type '{}' in research {}", typeStr, entryId);
-                            continue;
+                        } else {
+                            com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task;
+                            switch (taskType) {
+                                case KILL_ENTITIES -> {
+                                    ResourceLocation entity = ResourceLocation.tryParse(tobj.get("entity").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    task = new KillEntitiesTask(entity, count);
+                                }
+                                case CRAFT_ITEMS -> {
+                                    ResourceLocation item = ResourceLocation.tryParse(tobj.get("item").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    task = new CraftItemsTask(item, count);
+                                }
+                                case USE_RITUAL -> {
+                                    ResourceLocation ritual = ResourceLocation.tryParse(tobj.get("ritual").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    task = new UseRitualTask(ritual, count);
+                                }
+                                case COLLECT_ITEMS -> {
+                                    ResourceLocation item = ResourceLocation.tryParse(tobj.get("item").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    task = new CollectItemsTask(item, count);
+                                }
+                                case EXPLORE_BIOMES -> {
+                                    ResourceLocation biome = ResourceLocation.tryParse(tobj.get("biome").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    task = new ExploreBiomesTask(biome, count);
+                                }
+                                case ENTER_DIMENSION -> {
+                                    ResourceLocation dim = ResourceLocation.tryParse(tobj.get("dimension").getAsString());
+                                    task = new EnterDimensionTask(dim);
+                                }
+                                case TIME_WINDOW -> {
+                                    long min = tobj.has("min") ? tobj.get("min").getAsLong() : 0;
+                                    long max = tobj.has("max") ? tobj.get("max").getAsLong() : 24000;
+                                    task = new TimeWindowTask(min, max);
+                                }
+                                case WEATHER -> {
+                                    String weather = tobj.get("weather").getAsString();
+                                    task = new WeatherTask(weather);
+                                }
+                                case INVENTORY -> {
+                                    ResourceLocation item = ResourceLocation.tryParse(tobj.get("item").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    task = new InventoryTask(item, count);
+                                }
+                                case HAS_ITEM_NBT -> {
+                                    ResourceLocation item = ResourceLocation.tryParse(tobj.get("item").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    CompoundTag tag = null;
+                                    if (tobj.has("nbt")) {
+                                        try {
+                                            tag = TagParser.parseTag(tobj.get("nbt").getAsString());
+                                        } catch (Exception ignored) {}
+                                    }
+                                    task = new HasItemWithNbtTask(item, count, tag);
+                                }
+                            }
                         }
                         com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task;
                         try {
