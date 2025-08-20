@@ -38,6 +38,12 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.Set;
 
+import com.bluelotuscoding.eidolonunchained.research.conditions.DimensionCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.InventoryCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.ResearchCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.TimeCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.WeatherCondition;
+
 /**
  * Manages loading and registration of custom research entries and chapters from datapacks.
  * This extends Eidolon's research system (separate from the codex system).
@@ -73,7 +79,9 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
      */
     public static void init() {
         LOGGER.info("Initializing ResearchDataManager...");
-        // The actual registration happens via @SubscribeEvent methods
+        // Register built-in research task types
+        ResearchTaskTypes.registerBuiltins();
+        // The actual data registration happens via @SubscribeEvent methods
         // This method is mainly for logging and ensuring the class is loaded
     }
     
@@ -363,8 +371,12 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                             continue;
                         }
                         String typeStr = tobj.get("type").getAsString();
-                        var taskType = com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask.TaskType.byId(typeStr);
-                        com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task = null;
+                        ResourceLocation typeId = ResourceLocation.tryParse(typeStr.contains(":") ? typeStr : EidolonUnchained.MODID + ":" + typeStr);
+                        if (typeId == null) {
+                            LOGGER.warn("Invalid task type '{}' in research {}", typeStr, entryId);
+                            continue;
+                        }
+                        com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskType taskType = com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskTypes.get(typeId);
                         if (taskType == null) {
                             LOGGER.warn("Unknown task type '{}' in research {}", typeStr, entryId);
                         } else {
@@ -409,9 +421,14 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                                 }
                             }
                         }
-                        if (task != null) {
-                            tierTasks.add(task);
-                            integrateTask(task);
+                        try {
+                            com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task = taskType.decoder().apply(tobj);
+                            if (task != null) {
+                                tierTasks.add(task);
+                                integrateTask(task);
+                            }
+                        } catch (Exception e) {
+                            LOGGER.warn("Failed to parse task of type '{}' in research {}", typeStr, entryId, e);
                         }
                     }
                     if (!tierTasks.isEmpty()) tasks.put(tier, tierTasks);

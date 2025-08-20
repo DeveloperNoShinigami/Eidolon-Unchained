@@ -8,13 +8,13 @@ import net.minecraft.world.entity.player.Player;
  * Concrete implementations store task-specific data.
  */
 public abstract class ResearchTask {
-    private final TaskType type;
+    private final ResearchTaskType type;
 
-    protected ResearchTask(TaskType type) {
+    protected ResearchTask(ResearchTaskType type) {
         this.type = type;
     }
 
-    public TaskType getType() {
+    public ResearchTaskType getType() {
         return type;
     }
 
@@ -76,4 +76,5 @@ public abstract class ResearchTask {
         }
     }
 }
+
 

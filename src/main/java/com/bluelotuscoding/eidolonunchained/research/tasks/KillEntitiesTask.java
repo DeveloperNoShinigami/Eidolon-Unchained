@@ -10,7 +10,7 @@ public class KillEntitiesTask extends ResearchTask {
     private final int count;
 
     public KillEntitiesTask(ResourceLocation entity, int count) {
-        super(TaskType.KILL_ENTITIES);
+        super(ResearchTaskTypes.KILL_ENTITIES);
         this.entity = entity;
         this.count = count;
     }

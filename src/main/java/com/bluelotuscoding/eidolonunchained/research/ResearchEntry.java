@@ -3,12 +3,14 @@ package com.bluelotuscoding.eidolonunchained.research;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask;
+import com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import com.bluelotuscoding.eidolonunchained.research.conditions.DimensionCondition;
 import com.bluelotuscoding.eidolonunchained.research.conditions.InventoryCondition;
@@ -28,6 +30,7 @@ public class ResearchEntry {
     private final ItemStack icon;
     private final List<ResourceLocation> prerequisites;
     private final List<ResourceLocation> unlocks;
+    private final List<ResearchCondition> conditions;
     private final int x;
     private final int y;
     private final ResearchType type;
@@ -66,6 +69,7 @@ public class ResearchEntry {
         this.icon = icon;
         this.prerequisites = prerequisites != null ? prerequisites : new ArrayList<>();
         this.unlocks = unlocks != null ? unlocks : new ArrayList<>();
+        this.conditions = conditions != null ? conditions : new ArrayList<>();
         this.x = x;
         this.y = y;
         this.type = type;
@@ -86,6 +90,9 @@ public class ResearchEntry {
     public int getY() { return y; }
     public ResearchType getType() { return type; }
     public JsonObject getAdditionalData() { return additionalData; }
+    public List<ResearchCondition> getConditions() {
+        return Collections.unmodifiableList(new ArrayList<>(conditions));
+    }
     public java.util.Map<Integer, java.util.List<ResearchTask>> getTasks() { return tasks; }
     public List<ResearchCondition> getConditions() { return conditions; }
 
@@ -227,6 +234,7 @@ public class ResearchEntry {
         private ItemStack icon;
         private List<ResourceLocation> prerequisites = new ArrayList<>();
         private List<ResourceLocation> unlocks = new ArrayList<>();
+        private List<ResearchCondition> conditions = new ArrayList<>();
         private int x = 0;
         private int y = 0;
         private ResearchType type = ResearchType.BASIC;
@@ -268,6 +276,11 @@ public class ResearchEntry {
             return this;
         }
 
+        public Builder condition(ResearchCondition condition) {
+            this.conditions.add(condition);
+            return this;
+        }
+
         public Builder position(int x, int y) {
             this.x = x;
             this.y = y;
@@ -286,7 +299,16 @@ public class ResearchEntry {
 
         public Builder task(int tier, ResearchTask task) {
             this.tasks.computeIfAbsent(tier, k -> new java.util.ArrayList<>()).add(task);
+            return this;
+        }
 
+        public Builder condition(ResearchCondition condition) {
+            this.conditions.add(condition);
+            return this;
+        }
+
+        public Builder condition(ResearchCondition condition) {
+            this.conditions.add(condition);
             return this;
         }
 

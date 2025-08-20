@@ -10,7 +10,7 @@ public class CraftItemsTask extends ResearchTask {
     private final int count;
 
     public CraftItemsTask(ResourceLocation item, int count) {
-        super(TaskType.CRAFT_ITEMS);
+        super(ResearchTaskTypes.CRAFT_ITEMS);
         this.item = item;
         this.count = count;
     }
