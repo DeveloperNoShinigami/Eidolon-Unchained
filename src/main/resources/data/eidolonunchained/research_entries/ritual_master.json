@@ -9,8 +9,7 @@
   "x": 0,
   "y": 0,
   "type": "ritual",
-  "additional": {
-    "required_stars": 4,
+  "required_stars": 4,
     "tasks": {
       "tier_1": [
         {"type": "use_ritual", "ritual": "eidolon:crystal_ritual", "count": 10},
@@ -25,5 +24,4 @@
         {"type": "craft_items", "item": "eidolonunchained:master_ritual_focus", "count": 1}
       ]
     }
-  }
 }

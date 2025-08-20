@@ -96,13 +96,15 @@ public class EidolonResearchIntegration {
      * Creates a Research object from our ResearchEntry data.
      */
     private static Research createResearchFromEntry(ResearchEntry entry) {
-        int stars;
-        switch (entry.getType()) {
-            case ADVANCED -> stars = 1;
-            case FORBIDDEN -> stars = 2;
-            case RITUAL -> stars = 1;
-            case CRAFTING, BASIC -> stars = 0;
-            default -> stars = 0;
+        int stars = entry.getRequiredStars();
+        if (stars < 0) {
+            switch (entry.getType()) {
+                case ADVANCED -> stars = 1;
+                case FORBIDDEN -> stars = 2;
+                case RITUAL -> stars = 1;
+                case CRAFTING, BASIC -> stars = 0;
+                default -> stars = 0;
+            }
         }
         return new CustomResearch(entry, stars);
     }

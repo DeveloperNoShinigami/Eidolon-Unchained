@@ -9,8 +9,8 @@
   "x": 0,
   "y": 0,
   "type": "advanced",
+  "required_stars": 5,
   "additional": {
-    "required_stars": 5,
     "tasks": {
       "tier_1": [
         {"type": "kill_entities", "entity": "minecraft:zombie", "count": 100}

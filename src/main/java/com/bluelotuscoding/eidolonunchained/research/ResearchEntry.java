@@ -34,6 +34,7 @@ public class ResearchEntry {
     private final int x;
     private final int y;
     private final ResearchType type;
+    private final int requiredStars;
     private final JsonObject additionalData;
     private final java.util.Map<Integer, java.util.List<ResearchTask>> tasks;
     private final List<ResearchCondition> conditions;
@@ -59,7 +60,7 @@ public class ResearchEntry {
     public ResearchEntry(ResourceLocation id, Component title, Component description,
                         ResourceLocation chapter, ItemStack icon, List<ResourceLocation> prerequisites,
                         List<ResourceLocation> unlocks, int x, int y, ResearchType type,
-                        JsonObject additionalData,
+                        int requiredStars, JsonObject additionalData,
                         java.util.Map<Integer, java.util.List<ResearchTask>> tasks,
                         List<ResearchCondition> conditions) {
         this.id = id;
@@ -73,6 +74,7 @@ public class ResearchEntry {
         this.x = x;
         this.y = y;
         this.type = type;
+        this.requiredStars = requiredStars;
         this.additionalData = additionalData != null ? additionalData : new JsonObject();
         this.tasks = tasks != null ? tasks : new java.util.HashMap<>();
         this.conditions = conditions != null ? conditions : new ArrayList<>();
@@ -89,6 +91,7 @@ public class ResearchEntry {
     public int getX() { return x; }
     public int getY() { return y; }
     public ResearchType getType() { return type; }
+    public int getRequiredStars() { return requiredStars; }
     public JsonObject getAdditionalData() { return additionalData; }
     public List<ResearchCondition> getConditions() {
         return Collections.unmodifiableList(new ArrayList<>(conditions));
@@ -107,6 +110,9 @@ public class ResearchEntry {
         json.addProperty("description", description.getString());
         json.addProperty("chapter", chapter.toString());
         json.addProperty("type", type.getName());
+        if (requiredStars >= 0) {
+            json.addProperty("required_stars", requiredStars);
+        }
         json.addProperty("x", x);
         json.addProperty("y", y);
 
@@ -238,6 +244,7 @@ public class ResearchEntry {
         private int x = 0;
         private int y = 0;
         private ResearchType type = ResearchType.BASIC;
+        private int requiredStars = -1;
         private JsonObject additionalData = new JsonObject();
         private java.util.Map<Integer, java.util.List<ResearchTask>> tasks = new java.util.HashMap<>();
         private List<ResearchCondition> conditions = new ArrayList<>();
@@ -292,6 +299,11 @@ public class ResearchEntry {
             return this;
         }
 
+        public Builder requiredStars(int stars) {
+            this.requiredStars = stars;
+            return this;
+        }
+
         public Builder additionalData(String key, String value) {
             this.additionalData.addProperty(key, value);
             return this;
@@ -319,7 +331,7 @@ public class ResearchEntry {
 
         public ResearchEntry build() {
             return new ResearchEntry(id, title, description, chapter, icon,
-                                   prerequisites, unlocks, x, y, type, additionalData, tasks, conditions);
+                                   prerequisites, unlocks, x, y, type, requiredStars, additionalData, tasks, conditions);
 
         }
     }

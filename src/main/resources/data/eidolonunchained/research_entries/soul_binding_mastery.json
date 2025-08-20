@@ -9,8 +9,7 @@
   "x": 0,
   "y": 0,
   "type": "advanced",
-  "additional": {
-    "required_stars": 3,
+  "required_stars": 3,
     "tasks": {
       "tier_1": [
         {"type": "collect_items", "item": "eidolon:soul_shard", "count": 50},
@@ -28,5 +27,4 @@
         {"type": "use_ritual", "ritual": "eidolon:soul_binding_ritual", "count": 5}
       ]
     }
-  }
 }
