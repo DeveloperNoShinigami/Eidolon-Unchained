@@ -3,6 +3,9 @@ package com.bluelotuscoding.eidolonunchained.data;
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.research.ResearchEntry;
 import com.bluelotuscoding.eidolonunchained.research.ResearchChapter;
+import com.bluelotuscoding.eidolonunchained.research.tasks.*;
+import elucent.eidolon.api.research.ResearchTask;
+import elucent.eidolon.registries.Researches;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -326,18 +329,94 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                 }
             }
 
+            // Tasks parsing
+            Map<Integer, List<com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask>> tasks = new HashMap<>();
+            JsonObject tasksContainer = null;
+            if (json.has("tasks") && json.get("tasks").isJsonObject()) {
+                tasksContainer = json.getAsJsonObject("tasks");
+            } else if (json.has("additional") && json.get("additional").isJsonObject()) {
+                JsonObject addObj = json.getAsJsonObject("additional");
+                if (addObj.has("tasks") && addObj.get("tasks").isJsonObject()) {
+                    tasksContainer = addObj.getAsJsonObject("tasks");
+                    addObj.remove("tasks");
+                }
+            }
+
+            if (tasksContainer != null) {
+                for (Map.Entry<String, JsonElement> tierEntry : tasksContainer.entrySet()) {
+                    String tierKey = tierEntry.getKey();
+                    int tier;
+                    try {
+                        tier = Integer.parseInt(tierKey.replace("tier_", ""));
+                    } catch (NumberFormatException ex) {
+                        LOGGER.warn("Invalid task tier '{}' in research {}", tierKey, entryId);
+                        continue;
+                    }
+                    List<com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask> tierTasks = new ArrayList<>();
+                    JsonArray arr = tierEntry.getValue().getAsJsonArray();
+                    for (JsonElement el : arr) {
+                        if (!el.isJsonObject()) continue;
+                        JsonObject tobj = el.getAsJsonObject();
+                        if (!tobj.has("type")) {
+                            LOGGER.warn("Task in research {} missing type", entryId);
+                            continue;
+                        }
+                        String typeStr = tobj.get("type").getAsString();
+                        var taskType = com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask.TaskType.byId(typeStr);
+                        com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task = null;
+                        if (taskType == null) {
+                            LOGGER.warn("Unknown task type '{}' in research {}", typeStr, entryId);
+                        } else {
+                            switch (taskType) {
+                                case KILL_ENTITIES -> {
+                                    ResourceLocation entity = ResourceLocation.tryParse(tobj.get("entity").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    task = new KillEntitiesTask(entity, count);
+                                }
+                                case CRAFT_ITEMS -> {
+                                    ResourceLocation item = ResourceLocation.tryParse(tobj.get("item").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    task = new CraftItemsTask(item, count);
+                                }
+                                case USE_RITUAL -> {
+                                    ResourceLocation ritual = ResourceLocation.tryParse(tobj.get("ritual").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    task = new UseRitualTask(ritual, count);
+                                }
+                                case COLLECT_ITEMS -> {
+                                    ResourceLocation item = ResourceLocation.tryParse(tobj.get("item").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    task = new CollectItemsTask(item, count);
+                                }
+                            }
+                        }
+                        if (task != null) {
+                            tierTasks.add(task);
+                            integrateTask(task);
+                        }
+                    }
+                    if (!tierTasks.isEmpty()) tasks.put(tier, tierTasks);
+                }
+            }
+
             // Additional custom fields
             JsonObject additional = new JsonObject();
             Set<String> known = Set.of("id", "title", "description", "chapter", "icon",
-                                       "prerequisites", "unlocks", "x", "y", "type");
+                                       "prerequisites", "unlocks", "x", "y", "type", "tasks", "additional");
             for (Map.Entry<String, JsonElement> e : json.entrySet()) {
                 if (!known.contains(e.getKey())) {
                     additional.add(e.getKey(), e.getValue());
                 }
             }
+            if (json.has("additional") && json.get("additional").isJsonObject()) {
+                JsonObject addObj = json.getAsJsonObject("additional");
+                for (Map.Entry<String, JsonElement> e : addObj.entrySet()) {
+                    additional.add(e.getKey(), e.getValue());
+                }
+            }
 
             ResearchEntry entry = new ResearchEntry(entryId, title, description, chapter, icon,
-                                                    prerequisites, unlocks, x, y, type, additional);
+                                                    prerequisites, unlocks, x, y, type, additional, tasks);
 
             LOADED_RESEARCH_ENTRIES.put(entryId, entry);
             RESEARCH_EXTENSIONS.computeIfAbsent(chapter, k -> new ArrayList<>()).add(entry);
@@ -351,6 +430,17 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
         }
     }
 
+    private static void integrateTask(com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task) {
+        if (task instanceof CollectItemsTask collect) {
+            Item item = ForgeRegistries.ITEMS.getValue(collect.getItem());
+            if (item != null) {
+                Researches.addTask(rand -> new ResearchTask.TaskItems(new ItemStack(item, collect.getCount())));
+                return;
+            }
+        }
+        // Fallback placeholder task to ensure registration
+        Researches.addTask(rand -> new ResearchTask.XP(1));
+    }
     // Public API methods for accessing loaded research data
     
     /**
