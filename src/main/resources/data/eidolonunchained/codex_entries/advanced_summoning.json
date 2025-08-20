@@ -1,5 +1,5 @@
 {
-  "chapter": "summon_ritual",
+  "target_chapter": "eidolon:summon_ritual",
   "pages": [
     {
       "type": "title", 

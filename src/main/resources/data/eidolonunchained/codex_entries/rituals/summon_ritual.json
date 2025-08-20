@@ -1,5 +1,5 @@
 {
-  "chapter": "summon_ritual",
+  "target_chapter": "eidolon:summon_ritual",
   "title": "eidolonunchained.codex.entry.summon_ritual.advanced_techniques.title",
   "description": "eidolonunchained.codex.entry.summon_ritual.advanced_techniques.description",
   "icon": {
