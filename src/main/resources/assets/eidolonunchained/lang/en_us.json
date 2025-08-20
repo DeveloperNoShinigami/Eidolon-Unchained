@@ -1,4 +1,11 @@
 {
+  "eidolon.codex.category.expansions": "Expansions",
+  "eidolon.codex.category.community_rituals": "Community Rituals",
+  "eidolon.codex.category.custom_spells": "Custom Spells",
+  "eidolon.codex.category.advanced_techniques": "Advanced Techniques",
+  "eidolonunchained.codex.chapter.community_rituals": "Community Rituals",
+  "eidolonunchained.codex.chapter.rituals": "Rituals",
+  "eidolonunchained.codex.chapter.summon_ritual": "Summon Ritual",
   "eidolonunchained.codex.entry.advanced_monsters.title": "Advanced Monster Studies",
   "eidolonunchained.codex.entry.advanced_monsters": "Comprehensive guide to magical creatures and their behaviors. Through careful observation, patterns emerge in how different undead creatures behave. Understanding these patterns is crucial for any aspiring necromancer or monster hunter.",
   "eidolonunchained.codex.entry.advanced_monsters.necromancer": "Necromancers are powerful spellcasters that command undead minions. They appear in dark robes and can summon skeletons, zombies, and other undead creatures to fight for them. Necromancers drop valuable magical components when defeated, including soul shards and necromantic reagents.",

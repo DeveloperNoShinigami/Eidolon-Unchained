@@ -1,6 +1,6 @@
 {
-  "target_research": "eidolon:soul_sorcery",
-  "research_id": "eidolonunchained:advanced_soul_manipulation",
+  "chapter": "eidolon:soul_sorcery",
+  "id": "eidolonunchained:advanced_soul_manipulation",
   "title": "Advanced Soul Manipulation",
   "description": "Master the deepest secrets of soul manipulation.",
   "required_stars": 5,
