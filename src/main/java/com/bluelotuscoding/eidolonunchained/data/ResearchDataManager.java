@@ -391,6 +391,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                         if (taskType == null) {
                             LOGGER.warn("Unknown task type '{}' in research {}", typeStr, entryId);
                         } else {
+                            com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task;
                             switch (taskType) {
                                 case KILL_ENTITIES -> {
                                     ResourceLocation entity = ResourceLocation.tryParse(tobj.get("entity").getAsString());
@@ -434,6 +435,17 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                                     ResourceLocation item = ResourceLocation.tryParse(tobj.get("item").getAsString());
                                     int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
                                     task = new InventoryTask(item, count);
+                                }
+                                case HAS_ITEM_NBT -> {
+                                    ResourceLocation item = ResourceLocation.tryParse(tobj.get("item").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    CompoundTag tag = null;
+                                    if (tobj.has("nbt")) {
+                                        try {
+                                            tag = TagParser.parseTag(tobj.get("nbt").getAsString());
+                                        } catch (Exception ignored) {}
+                                    }
+                                    task = new HasItemWithNbtTask(item, count, tag);
                                 }
                             }
                         }

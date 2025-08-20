@@ -218,6 +218,14 @@ public class ResearchEntry {
                             tObj.addProperty("item", t.getItem().toString());
                             tObj.addProperty("count", t.getCount());
                         }
+                        case HAS_ITEM_NBT -> {
+                            var t = (com.bluelotuscoding.eidolonunchained.research.tasks.HasItemWithNbtTask) task;
+                            tObj.addProperty("item", t.getItem().toString());
+                            tObj.addProperty("count", t.getCount());
+                            if (t.getNbt() != null && !t.getNbt().isEmpty()) {
+                                tObj.addProperty("nbt", t.getNbt().toString());
+                            }
+                        }
                     }
                     array.add(tObj);
                 }
