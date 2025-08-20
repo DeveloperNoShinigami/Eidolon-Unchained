@@ -1,0 +1,18 @@
+{
+  "sources": [
+    {
+      "type": "directory",
+      "source": "vfx",
+      "prefix": "particle/"
+    },
+    {
+      "type": "directory",
+      "source": "rune",
+      "prefix": "rune/"
+    },
+    {
+      "type": "single",
+      "resource": "eidolon:entity/enchanter_book"
+    }
+  ]
+}

@@ -41,8 +41,7 @@ public class DatapackCategoryExample {
      * ✅ TRULY DATAPACK-DRIVEN: Reads category definitions from _category.json files
      * 🔄 FUTURE MIGRATION: Replace reflection with direct CodexEvents API access
      */
-    public static void addDatapackCategories(java.util.List<Category> categories,
-                                           java.util.Map<Item, IndexPage.IndexEntry> itemToEntryMap) {
+    public static void addDatapackCategories(java.util.List<Category> categories) {
         
         LOGGER.info("🎯 Scanning for datapack category definitions...");
         
@@ -68,7 +67,7 @@ public class DatapackCategoryExample {
                 if (categoryDef != null) {
                     LOGGER.info("📁 Found category definition: {}", categoryDef.name);
                     
-                    createCategoryFromDatapack(categories, itemToEntryMap, dataManager,
+                    createCategoryFromDatapack(categories, dataManager,
                         categoryDef.key, 
                         categoryDef.getIconStack(), 
                         categoryDef.getColorInt(), 
@@ -176,7 +175,6 @@ public class DatapackCategoryExample {
      * ✅ FULLY FUNCTIONAL: Uses reflection-compatible approach
      */
     private static void createCategoryFromDatapack(java.util.List<Category> categories,
-                                                 java.util.Map<Item, IndexPage.IndexEntry> itemToEntryMap,
                                                  CodexDataManager dataManager,
                                                  String categoryKey,
                                                  ItemStack categoryIcon,
@@ -184,7 +182,7 @@ public class DatapackCategoryExample {
                                                  String jsonDirectory) {
         try {
             Category category = createDatapackCategory(categoryKey, categoryIcon, categoryColor, 
-                                                     jsonDirectory, dataManager, itemToEntryMap);
+                                                     jsonDirectory, dataManager);
             
             if (category != null) {
                 categories.add(category); // Direct addition - reflection handles the rest!
@@ -206,8 +204,7 @@ public class DatapackCategoryExample {
                                                   ItemStack categoryIcon,
                                                   int categoryColor,
                                                   String jsonDirectory,
-                                                  CodexDataManager dataManager,
-                                                  java.util.Map<Item, IndexPage.IndexEntry> itemToEntryMap) {
+                                                  CodexDataManager dataManager) {
         
         try {
             // Load entries from JSON files in the directory
@@ -236,7 +233,7 @@ public class DatapackCategoryExample {
                 }
             }
             
-            return builder.build(itemToEntryMap);
+            return builder.build();
             
         } catch (Exception e) {
             LOGGER.error("Failed to create datapack category '{}'", categoryKey, e);

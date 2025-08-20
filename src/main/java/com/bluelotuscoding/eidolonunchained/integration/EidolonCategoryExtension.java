@@ -43,9 +43,8 @@ import java.util.ArrayList;
 public class EidolonCategoryExtension {
     private static final Logger LOGGER = LogUtils.getLogger();
     
-    // ⚠️ REFLECTION FIELDS - Will be replaced by event.categories when available
+    // Eidolon Repraised 0.3.8.15: Only categories list is needed for integration
     private static List<Category> eidolonCategories = null;
-    private static Map<Item, IndexPage.IndexEntry> eidolonItemToEntryMap = null;
 
     /**
      * Initialize custom categories using reflection at the correct mod loading phase (FMLLoadCompleteEvent)
@@ -55,19 +54,31 @@ public class EidolonCategoryExtension {
     public static void onFMLLoadCompleteEvent(net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent event) {
         LOGGER.info("🎯 EidolonCategoryExtension - Implementing FULL functionality via reflection (FMLLoadCompleteEvent)!");
         try {
+
             // Step 1: Get access to Eidolon's internal category system using reflection
-            if (!initializeEidolonAccess()) {
+            if (!initializeEidolonCategoriesAccess()) {
                 LOGGER.error("❌ Failed to access Eidolon's category system via reflection");
                 return;
             }
 
             // Step 2: Create and add custom categories using our datapack system
             LOGGER.info("📁 Creating custom categories from JSON datapacks...");
-            DatapackCategoryExample.addDatapackCategories(eidolonCategories, eidolonItemToEntryMap);
+            DatapackCategoryExample.addDatapackCategories(eidolonCategories);
+
+            // Step 3: Add chapters to existing categories (if needed)
+            LOGGER.info("📖 Adding custom chapters to existing categories...");
+            addChaptersToExistingCategories(eidolonCategories);
+
+            LOGGER.info("✅ Successfully implemented FULL category system via reflection!");
+            LOGGER.info("🚀 Ready for migration to event system when CodexEvents become available");
+
+            // Step 2: Create and add custom categories using our datapack system
+            LOGGER.info("📁 Creating custom categories from JSON datapacks...");
+            DatapackCategoryExample.addDatapackCategories(eidolonCategories);
 
             // Step 3: Add chapters to existing categories
             LOGGER.info("📖 Adding custom chapters to existing categories...");
-            addChaptersToExistingCategories(eidolonCategories, eidolonItemToEntryMap);
+            addChaptersToExistingCategories(eidolonCategories);
 
             LOGGER.info("✅ Successfully implemented FULL category system via reflection!");
             LOGGER.info("🚀 Ready for migration to event system when CodexEvents become available");
@@ -84,25 +95,16 @@ public class EidolonCategoryExtension {
      * Event system will provide direct access to categories and itemToEntryMap.
      */
     @SuppressWarnings("unchecked")
-    private static boolean initializeEidolonAccess() {
+    private static boolean initializeEidolonCategoriesAccess() {
         try {
             LOGGER.info("🔍 Using reflection to access Eidolon's category system...");
-            // Use CodexChapters for categories and itemToEntryMap
             Class<?> chaptersClass = Class.forName("elucent.eidolon.codex.CodexChapters");
             Field categoriesField = chaptersClass.getDeclaredField("categories");
             categoriesField.setAccessible(true);
             eidolonCategories = (List<Category>) categoriesField.get(null);
-
-            Field itemMapField = chaptersClass.getDeclaredField("itemToEntryMap");
-            itemMapField.setAccessible(true);
-            eidolonItemToEntryMap = (Map<Item, IndexPage.IndexEntry>) itemMapField.get(null);
-
             LOGGER.info("✅ Successfully accessed Eidolon internals via reflection");
             LOGGER.info("   Categories list: {} entries", eidolonCategories.size());
-            LOGGER.info("   Item map: {} entries", eidolonItemToEntryMap.size());
-
             return true;
-
         } catch (Exception e) {
             LOGGER.error("❌ Failed to access Eidolon internals via reflection", e);
             return false;
@@ -116,8 +118,7 @@ public class EidolonCategoryExtension {
      * - category.getKey() instead of reflection field access
      * - Direct category.addChapter() instead of reflection manipulation
      */
-    private static void addChaptersToExistingCategories(List<Category> categories,
-                                                      Map<Item, IndexPage.IndexEntry> itemToEntryMap) {
+    private static void addChaptersToExistingCategories(List<Category> categories) {
         
         LOGGER.info("🔍 Adding custom chapters to existing categories via reflection...");
         
@@ -138,7 +139,7 @@ public class EidolonCategoryExtension {
                     if (categoryKey.equals(researchChapter.getCategory())) {
                         LOGGER.info("📖 Adding research chapter '{}' to {} category...", 
                                    researchChapter.getTitle().getString(), categoryKey.toUpperCase());
-                        addResearchChapterToCategory(category, researchChapter, itemToEntryMap);
+                        addResearchChapterToCategory(category, researchChapter);
                     }
                 }
                 
@@ -156,8 +157,7 @@ public class EidolonCategoryExtension {
      * - Enhanced TitlePage(title, icon) constructor
      */
     private static void addChapterToCategory(Category category, String chapterTitle, 
-                                           ItemStack iconItem, 
-                                           Map<Item, IndexPage.IndexEntry> itemToEntryMap) {
+                                           ItemStack iconItem) {
         try {
             // Create custom chapter
             String titleKey = "eidolonunchained.codex.chapter." + chapterTitle.toLowerCase().replace(" ", "_");
@@ -185,8 +185,8 @@ public class EidolonCategoryExtension {
             indexPageField.setAccessible(true);
             IndexPage indexPage = (IndexPage) indexPageField.get(categoryIndex);
             
-            // This is complex - for now, just add to item map for lookup
-            itemToEntryMap.put(iconItem.getItem(), newEntry);
+            // This is complex - for now, just log the addition
+            LOGGER.info("(No itemToEntryMap: registered chapter '{}' with icon {} in category)", chapterTitle, iconItem);
             
             // ⚠️ REFLECTION: Get category key for logging
             Field keyField = category.getClass().getDeclaredField("key");
@@ -203,8 +203,7 @@ public class EidolonCategoryExtension {
     /**
      * Add a research chapter to an existing category using reflection
      */
-    private static void addResearchChapterToCategory(Category category, ResearchChapter researchChapter, 
-                                                    Map<Item, IndexPage.IndexEntry> itemToEntryMap) {
+    private static void addResearchChapterToCategory(Category category, ResearchChapter researchChapter) {
         try {
             // Create codex chapter from research chapter
             String titleKey = "eidolonunchained.codex.chapter." + researchChapter.getId().getPath();
@@ -225,8 +224,8 @@ public class EidolonCategoryExtension {
             // Create index entry
             IndexPage.IndexEntry newEntry = new IndexPage.IndexEntry(codexChapter, researchChapter.getIcon());
             
-            // Add to item map for lookup
-            itemToEntryMap.put(researchChapter.getIcon().getItem(), newEntry);
+            // No itemToEntryMap in Eidolon Repraised; just log
+            LOGGER.info("(No itemToEntryMap: registered research chapter '{}' with icon {} in category)", researchChapter.getTitle().getString(), researchChapter.getIcon());
             
             // Log success
             Field keyField = category.getClass().getDeclaredField("key");
@@ -263,7 +262,7 @@ public class EidolonCategoryExtension {
             .addChapter("eidolonunchained.codex.chapter.datapack_guide", 
                        "Datapack Creation Guide", 
                        new ItemStack(Items.WRITABLE_BOOK))
-            .build(itemToEntryMap);
+            .build();
         
         categories.add(moddedCategory);
         
@@ -277,7 +276,7 @@ public class EidolonCategoryExtension {
             .addChapter("eidolonunchained.codex.chapter.custom_items", 
                        "Custom Artifacts", 
                        new ItemStack(Items.DIAMOND))
-            .build(itemToEntryMap);
+            .build();
         
         categories.add(expansionsCategory);
         

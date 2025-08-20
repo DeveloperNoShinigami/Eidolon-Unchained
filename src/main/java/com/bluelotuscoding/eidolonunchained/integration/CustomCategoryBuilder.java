@@ -68,7 +68,7 @@ public class CustomCategoryBuilder {
     /**
      * Build and return the category, also registering items in the lookup map
      */
-    public Category build(java.util.Map<Item, IndexPage.IndexEntry> itemToEntryMap) {
+    public Category build() {
         if (chapters.isEmpty()) {
             LOGGER.warn("Building category '{}' with no chapters!", key);
         }
@@ -78,9 +78,6 @@ public class CustomCategoryBuilder {
         for (int i = 0; i < chapters.size(); i++) {
             ChapterEntry entry = chapters.get(i);
             entries[i] = new IndexPage.IndexEntry(entry.chapter, entry.icon);
-            
-            // Register in item lookup map
-            itemToEntryMap.put(entry.icon.getItem(), entries[i]);
         }
         
         // Create index page
