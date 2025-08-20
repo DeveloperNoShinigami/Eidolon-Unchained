@@ -10,7 +10,7 @@ public class UseRitualTask extends ResearchTask {
     private final int count;
 
     public UseRitualTask(ResourceLocation ritual, int count) {
-        super(TaskType.USE_RITUAL);
+        super(ResearchTaskTypes.USE_RITUAL);
         this.ritual = ritual;
         this.count = count;
     }

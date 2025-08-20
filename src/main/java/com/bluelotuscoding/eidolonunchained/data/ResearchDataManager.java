@@ -4,6 +4,7 @@ import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.research.ResearchEntry;
 import com.bluelotuscoding.eidolonunchained.research.ResearchChapter;
 import com.bluelotuscoding.eidolonunchained.research.tasks.*;
+import com.bluelotuscoding.eidolonunchained.research.conditions.*;
 import elucent.eidolon.api.research.ResearchTask;
 import elucent.eidolon.registries.Researches;
 import com.google.gson.Gson;
@@ -72,7 +73,9 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
      */
     public static void init() {
         LOGGER.info("Initializing ResearchDataManager...");
-        // The actual registration happens via @SubscribeEvent methods
+        // Register built-in research task types
+        ResearchTaskTypes.registerBuiltins();
+        // The actual data registration happens via @SubscribeEvent methods
         // This method is mainly for logging and ensuring the class is loaded
     }
     
@@ -362,37 +365,24 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                             continue;
                         }
                         String typeStr = tobj.get("type").getAsString();
-                        var taskType = com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask.TaskType.byId(typeStr);
-                        com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task = null;
+                        ResourceLocation typeId = ResourceLocation.tryParse(typeStr.contains(":") ? typeStr : EidolonUnchained.MODID + ":" + typeStr);
+                        if (typeId == null) {
+                            LOGGER.warn("Invalid task type '{}' in research {}", typeStr, entryId);
+                            continue;
+                        }
+                        com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskType taskType = com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskTypes.get(typeId);
                         if (taskType == null) {
                             LOGGER.warn("Unknown task type '{}' in research {}", typeStr, entryId);
-                        } else {
-                            switch (taskType) {
-                                case KILL_ENTITIES -> {
-                                    ResourceLocation entity = ResourceLocation.tryParse(tobj.get("entity").getAsString());
-                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
-                                    task = new KillEntitiesTask(entity, count);
-                                }
-                                case CRAFT_ITEMS -> {
-                                    ResourceLocation item = ResourceLocation.tryParse(tobj.get("item").getAsString());
-                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
-                                    task = new CraftItemsTask(item, count);
-                                }
-                                case USE_RITUAL -> {
-                                    ResourceLocation ritual = ResourceLocation.tryParse(tobj.get("ritual").getAsString());
-                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
-                                    task = new UseRitualTask(ritual, count);
-                                }
-                                case COLLECT_ITEMS -> {
-                                    ResourceLocation item = ResourceLocation.tryParse(tobj.get("item").getAsString());
-                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
-                                    task = new CollectItemsTask(item, count);
-                                }
-                            }
+                            continue;
                         }
-                        if (task != null) {
-                            tierTasks.add(task);
-                            integrateTask(task);
+                        try {
+                            com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task = taskType.decoder().apply(tobj);
+                            if (task != null) {
+                                tierTasks.add(task);
+                                integrateTask(task);
+                            }
+                        } catch (Exception e) {
+                            LOGGER.warn("Failed to parse task of type '{}' in research {}", typeStr, entryId, e);
                         }
                     }
                     if (!tierTasks.isEmpty()) tasks.put(tier, tierTasks);
@@ -450,7 +440,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
             }
 
             ResearchEntry entry = new ResearchEntry(entryId, title, description, chapter, icon,
-                                                    prerequisites, unlocks, x, y, type, additional, tasks);
+                                                    prerequisites, unlocks, x, y, type, additional, tasks, conditions);
 
             LOADED_RESEARCH_ENTRIES.put(entryId, entry);
             RESEARCH_EXTENSIONS.computeIfAbsent(chapter, k -> new ArrayList<>()).add(entry);
