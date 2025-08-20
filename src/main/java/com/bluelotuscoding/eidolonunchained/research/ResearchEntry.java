@@ -188,14 +188,44 @@ public class ResearchEntry {
                         if (t.getFilter() != null) {
                             tObj.addProperty("filter", t.getFilter().toString());
                         }
-                        case HAS_ITEM_NBT -> {
-                            var t = (com.bluelotuscoding.eidolonunchained.research.tasks.HasItemWithNbtTask) task;
-                            tObj.addProperty("item", t.getItem().toString());
-                            tObj.addProperty("count", t.getCount());
-                            if (t.getNbt() != null && !t.getNbt().isEmpty()) {
-                                tObj.addProperty("nbt", t.getNbt().toString());
-                            }
+                        tObj.addProperty("count", t.getCount());
+                    } else if (type == ResearchTaskTypes.CRAFT_ITEMS) {
+                        var t = (com.bluelotuscoding.eidolonunchained.research.tasks.CraftItemsTask) task;
+                        tObj.addProperty("item", t.getItem().toString());
+                        tObj.addProperty("count", t.getCount());
+                    } else if (type == ResearchTaskTypes.USE_RITUAL) {
+                        var t = (com.bluelotuscoding.eidolonunchained.research.tasks.UseRitualTask) task;
+                        tObj.addProperty("ritual", t.getRitual().toString());
+                        tObj.addProperty("count", t.getCount());
+                    } else if (type == ResearchTaskTypes.COLLECT_ITEMS) {
+                        var t = (com.bluelotuscoding.eidolonunchained.research.tasks.CollectItemsTask) task;
+                        tObj.addProperty("item", t.getItem().toString());
+                        tObj.addProperty("count", t.getCount());
+                    } else if (type == ResearchTaskTypes.HAS_ITEM_NBT) {
+                        var t = (com.bluelotuscoding.eidolonunchained.research.tasks.HasItemWithNbtTask) task;
+                        tObj.addProperty("item", t.getItem().toString());
+                        if (t.getFilter() != null) {
+                            tObj.addProperty("nbt", t.getFilter().toString());
                         }
+                        tObj.addProperty("count", t.getCount());
+                    } else if (type == ResearchTaskTypes.EXPLORE_BIOMES) {
+                        var t = (com.bluelotuscoding.eidolonunchained.research.tasks.ExploreBiomesTask) task;
+                        tObj.addProperty("biome", t.getBiome().toString());
+                        tObj.addProperty("count", t.getCount());
+                    } else if ("enter_dimension".equals(typeId)) {
+                        var t = (com.bluelotuscoding.eidolonunchained.research.tasks.EnterDimensionTask) task;
+                        tObj.addProperty("dimension", t.getDimension().toString());
+                    } else if ("time_window".equals(typeId)) {
+                        var t = (com.bluelotuscoding.eidolonunchained.research.tasks.TimeWindowTask) task;
+                        tObj.addProperty("min", t.getMin());
+                        tObj.addProperty("max", t.getMax());
+                    } else if ("weather".equals(typeId)) {
+                        var t = (com.bluelotuscoding.eidolonunchained.research.tasks.WeatherTask) task;
+                        tObj.addProperty("weather", t.getWeather().name().toLowerCase());
+                    } else if ("inventory".equals(typeId)) {
+                        var t = (com.bluelotuscoding.eidolonunchained.research.tasks.InventoryTask) task;
+                        tObj.addProperty("item", t.getItem().toString());
+                        tObj.addProperty("count", t.getCount());
                     }
                     array.add(tObj);
                 }

@@ -76,14 +76,18 @@ public class ResearchTaskTypes {
         });
         HAS_ITEM_NBT = register(new ResourceLocation(EidolonUnchained.MODID, "has_item_nbt"), json -> {
             ResourceLocation item = ResourceLocation.tryParse(json.get("item").getAsString());
-            int count = json.has("count") ? json.get("count").getAsInt() : 1;
-            CompoundTag tag = null;
+            CompoundTag filter = null;
             if (json.has("nbt")) {
                 try {
-                    tag = TagParser.parseTag(json.get("nbt").getAsString());
+                    filter = TagParser.parseTag(json.get("nbt").getAsString());
+                } catch (Exception ignored) {}
+            } else if (json.has("filter")) {
+                try {
+                    filter = TagParser.parseTag(json.get("filter").getAsString());
                 } catch (Exception ignored) {}
             }
-            return new HasItemWithNbtTask(item, count, tag);
+            int count = json.has("count") ? json.get("count").getAsInt() : 1;
+            return new HasItemWithNbtTask(item, filter, count);
         });
         EXPLORE_BIOMES = register(new ResourceLocation(EidolonUnchained.MODID, "explore_biomes"), json -> {
             ResourceLocation biome = ResourceLocation.tryParse(json.get("biome").getAsString());
