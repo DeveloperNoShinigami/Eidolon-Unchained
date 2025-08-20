@@ -35,6 +35,7 @@ public class ResearchTaskTypes {
     public static ResearchTaskType USE_RITUAL;
     public static ResearchTaskType COLLECT_ITEMS;
     public static ResearchTaskType EXPLORE_BIOMES;
+    public static ResearchTaskType HAS_NBT;
     public static ResearchTaskType HAS_ITEM_NBT;
 
     /**
@@ -88,6 +89,15 @@ public class ResearchTaskTypes {
             ResourceLocation biome = ResourceLocation.tryParse(json.get("biome").getAsString());
             int count = json.has("count") ? json.get("count").getAsInt() : 1;
             return new ExploreBiomesTask(biome, count);
+        });
+        HAS_NBT = register(new ResourceLocation(EidolonUnchained.MODID, "has_nbt"), json -> {
+            if (!json.has("nbt")) return null;
+            try {
+                CompoundTag tag = TagParser.parseTag(json.get("nbt").getAsString());
+                return new HasNbtTask(tag);
+            } catch (Exception e) {
+                return null;
+            }
         });
     }
 }
