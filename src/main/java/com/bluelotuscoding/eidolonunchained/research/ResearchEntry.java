@@ -33,6 +33,7 @@ public class ResearchEntry {
     private final ResearchType type;
     private final JsonObject additionalData;
     private final java.util.Map<Integer, java.util.List<ResearchTask>> tasks;
+    private final List<ResearchCondition> conditions;
 
     public enum ResearchType {
         BASIC("basic"),
@@ -56,7 +57,8 @@ public class ResearchEntry {
                         ResourceLocation chapter, ItemStack icon, List<ResourceLocation> prerequisites,
                         List<ResourceLocation> unlocks, int x, int y, ResearchType type,
                         JsonObject additionalData,
-                        java.util.Map<Integer, java.util.List<ResearchTask>> tasks) {
+                        java.util.Map<Integer, java.util.List<ResearchTask>> tasks,
+                        List<ResearchCondition> conditions) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -69,7 +71,7 @@ public class ResearchEntry {
         this.type = type;
         this.additionalData = additionalData != null ? additionalData : new JsonObject();
         this.tasks = tasks != null ? tasks : new java.util.HashMap<>();
-
+        this.conditions = conditions != null ? conditions : new ArrayList<>();
     }
 
     // Getters
@@ -85,6 +87,7 @@ public class ResearchEntry {
     public ResearchType getType() { return type; }
     public JsonObject getAdditionalData() { return additionalData; }
     public java.util.Map<Integer, java.util.List<ResearchTask>> getTasks() { return tasks; }
+    public List<ResearchCondition> getConditions() { return conditions; }
 
     /**
      * Converts this research entry to a JSON format for datapack generation
@@ -211,6 +214,7 @@ public class ResearchEntry {
         private ResearchType type = ResearchType.BASIC;
         private JsonObject additionalData = new JsonObject();
         private java.util.Map<Integer, java.util.List<ResearchTask>> tasks = new java.util.HashMap<>();
+        private List<ResearchCondition> conditions = new ArrayList<>();
 
         public Builder(ResourceLocation id) {
             this.id = id;
@@ -268,9 +272,14 @@ public class ResearchEntry {
             return this;
         }
 
+        public Builder condition(ResearchCondition condition) {
+            this.conditions.add(condition);
+            return this;
+        }
+
         public ResearchEntry build() {
             return new ResearchEntry(id, title, description, chapter, icon,
-                                   prerequisites, unlocks, x, y, type, additionalData, tasks);
+                                   prerequisites, unlocks, x, y, type, additionalData, tasks, conditions);
 
         }
     }

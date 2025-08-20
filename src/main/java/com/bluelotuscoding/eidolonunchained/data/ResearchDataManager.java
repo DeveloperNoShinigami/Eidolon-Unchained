@@ -37,6 +37,12 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.Set;
 
+import com.bluelotuscoding.eidolonunchained.research.conditions.DimensionCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.InventoryCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.ResearchCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.TimeCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.WeatherCondition;
+
 /**
  * Manages loading and registration of custom research entries and chapters from datapacks.
  * This extends Eidolon's research system (separate from the codex system).
@@ -450,7 +456,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
             }
 
             ResearchEntry entry = new ResearchEntry(entryId, title, description, chapter, icon,
-                                                    prerequisites, unlocks, x, y, type, additional, tasks);
+                                                    prerequisites, unlocks, x, y, type, additional, tasks, conditions);
 
             LOADED_RESEARCH_ENTRIES.put(entryId, entry);
             RESEARCH_EXTENSIONS.computeIfAbsent(chapter, k -> new ArrayList<>()).add(entry);
