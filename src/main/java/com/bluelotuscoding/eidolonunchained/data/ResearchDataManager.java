@@ -379,7 +379,47 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                         com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskType taskType = com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskTypes.get(typeId);
                         if (taskType == null) {
                             LOGGER.warn("Unknown task type '{}' in research {}", typeStr, entryId);
-                            continue;
+                        } else {
+                            switch (taskType) {
+                                case KILL_ENTITIES -> {
+                                    ResourceLocation entity = ResourceLocation.tryParse(tobj.get("entity").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    task = new KillEntitiesTask(entity, count);
+                                }
+                                case CRAFT_ITEMS -> {
+                                    ResourceLocation item = ResourceLocation.tryParse(tobj.get("item").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    task = new CraftItemsTask(item, count);
+                                }
+                                case USE_RITUAL -> {
+                                    ResourceLocation ritual = ResourceLocation.tryParse(tobj.get("ritual").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    task = new UseRitualTask(ritual, count);
+                                }
+                                case COLLECT_ITEMS -> {
+                                    ResourceLocation item = ResourceLocation.tryParse(tobj.get("item").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    task = new CollectItemsTask(item, count);
+                                }
+                                case ENTER_DIMENSION -> {
+                                    ResourceLocation dim = ResourceLocation.tryParse(tobj.get("dimension").getAsString());
+                                    task = new EnterDimensionTask(dim);
+                                }
+                                case TIME_WINDOW -> {
+                                    long min = tobj.has("min") ? tobj.get("min").getAsLong() : 0;
+                                    long max = tobj.has("max") ? tobj.get("max").getAsLong() : 24000;
+                                    task = new TimeWindowTask(min, max);
+                                }
+                                case WEATHER -> {
+                                    String weather = tobj.get("weather").getAsString();
+                                    task = new WeatherTask(weather);
+                                }
+                                case INVENTORY -> {
+                                    ResourceLocation item = ResourceLocation.tryParse(tobj.get("item").getAsString());
+                                    int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
+                                    task = new InventoryTask(item, count);
+                                }
+                            }
                         }
                         try {
                             com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task = taskType.decoder().apply(tobj);
@@ -412,6 +452,8 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
             }
 
             // Conditional requirements
+            // This block is maintained for backwards compatibility but datapacks
+            // should prefer expressing these as dedicated tasks instead.
             List<ResearchCondition> conditions = new ArrayList<>();
             if (json.has("conditional_requirements") && json.get("conditional_requirements").isJsonObject()) {
                 JsonObject cond = json.getAsJsonObject("conditional_requirements");

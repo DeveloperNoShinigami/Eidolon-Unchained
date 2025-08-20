@@ -172,23 +172,46 @@ public class ResearchEntry {
                 JsonArray array = new JsonArray();
                 for (ResearchTask task : entry.getValue()) {
                     JsonObject tObj = new JsonObject();
-                    tObj.addProperty("type", task.getType().id().toString());
-                    if (task.getType() == ResearchTaskTypes.KILL_ENTITIES) {
-                        var t = (com.bluelotuscoding.eidolonunchained.research.tasks.KillEntitiesTask) task;
-                        tObj.addProperty("entity", t.getEntity().toString());
-                        tObj.addProperty("count", t.getCount());
-                    } else if (task.getType() == ResearchTaskTypes.CRAFT_ITEMS) {
-                        var t = (com.bluelotuscoding.eidolonunchained.research.tasks.CraftItemsTask) task;
-                        tObj.addProperty("item", t.getItem().toString());
-                        tObj.addProperty("count", t.getCount());
-                    } else if (task.getType() == ResearchTaskTypes.USE_RITUAL) {
-                        var t = (com.bluelotuscoding.eidolonunchained.research.tasks.UseRitualTask) task;
-                        tObj.addProperty("ritual", t.getRitual().toString());
-                        tObj.addProperty("count", t.getCount());
-                    } else if (task.getType() == ResearchTaskTypes.COLLECT_ITEMS) {
-                        var t = (com.bluelotuscoding.eidolonunchained.research.tasks.CollectItemsTask) task;
-                        tObj.addProperty("item", t.getItem().toString());
-                        tObj.addProperty("count", t.getCount());
+                    tObj.addProperty("type", task.getType().getId());
+                    switch (task.getType()) {
+                        case KILL_ENTITIES -> {
+                            var t = (com.bluelotuscoding.eidolonunchained.research.tasks.KillEntitiesTask) task;
+                            tObj.addProperty("entity", t.getEntity().toString());
+                            tObj.addProperty("count", t.getCount());
+                        }
+                        case CRAFT_ITEMS -> {
+                            var t = (com.bluelotuscoding.eidolonunchained.research.tasks.CraftItemsTask) task;
+                            tObj.addProperty("item", t.getItem().toString());
+                            tObj.addProperty("count", t.getCount());
+                        }
+                        case USE_RITUAL -> {
+                            var t = (com.bluelotuscoding.eidolonunchained.research.tasks.UseRitualTask) task;
+                            tObj.addProperty("ritual", t.getRitual().toString());
+                            tObj.addProperty("count", t.getCount());
+                        }
+                        case COLLECT_ITEMS -> {
+                            var t = (com.bluelotuscoding.eidolonunchained.research.tasks.CollectItemsTask) task;
+                            tObj.addProperty("item", t.getItem().toString());
+                            tObj.addProperty("count", t.getCount());
+                        }
+                        case ENTER_DIMENSION -> {
+                            var t = (com.bluelotuscoding.eidolonunchained.research.tasks.EnterDimensionTask) task;
+                            tObj.addProperty("dimension", t.getDimension().toString());
+                        }
+                        case TIME_WINDOW -> {
+                            var t = (com.bluelotuscoding.eidolonunchained.research.tasks.TimeWindowTask) task;
+                            tObj.addProperty("min", t.getMin());
+                            tObj.addProperty("max", t.getMax());
+                        }
+                        case WEATHER -> {
+                            var t = (com.bluelotuscoding.eidolonunchained.research.tasks.WeatherTask) task;
+                            tObj.addProperty("weather", t.getWeather().name().toLowerCase());
+                        }
+                        case INVENTORY -> {
+                            var t = (com.bluelotuscoding.eidolonunchained.research.tasks.InventoryTask) task;
+                            tObj.addProperty("item", t.getItem().toString());
+                            tObj.addProperty("count", t.getCount());
+                        }
                     }
                     array.add(tObj);
                 }
@@ -276,6 +299,11 @@ public class ResearchEntry {
 
         public Builder task(int tier, ResearchTask task) {
             this.tasks.computeIfAbsent(tier, k -> new java.util.ArrayList<>()).add(task);
+            return this;
+        }
+
+        public Builder condition(ResearchCondition condition) {
+            this.conditions.add(condition);
             return this;
         }
 
