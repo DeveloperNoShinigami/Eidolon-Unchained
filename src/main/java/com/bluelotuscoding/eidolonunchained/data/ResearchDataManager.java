@@ -4,6 +4,7 @@ import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.research.ResearchEntry;
 import com.bluelotuscoding.eidolonunchained.research.ResearchChapter;
 import com.bluelotuscoding.eidolonunchained.research.tasks.*;
+import com.bluelotuscoding.eidolonunchained.research.conditions.*;
 import elucent.eidolon.api.research.ResearchTask;
 import elucent.eidolon.registries.Researches;
 import com.google.gson.Gson;
@@ -450,7 +451,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
             }
 
             ResearchEntry entry = new ResearchEntry(entryId, title, description, chapter, icon,
-                                                    prerequisites, unlocks, x, y, type, additional, tasks);
+                                                    prerequisites, unlocks, x, y, type, conditions, additional, tasks);
 
             LOADED_RESEARCH_ENTRIES.put(entryId, entry);
             RESEARCH_EXTENSIONS.computeIfAbsent(chapter, k -> new ArrayList<>()).add(entry);
