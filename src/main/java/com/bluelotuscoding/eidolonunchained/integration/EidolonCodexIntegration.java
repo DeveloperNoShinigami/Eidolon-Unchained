@@ -7,7 +7,7 @@ import com.bluelotuscoding.eidolonunchained.research.ResearchChapter;
 import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
 import elucent.eidolon.codex.Chapter;
-import elucent.eidolon.codex.CodexChapters;
+// import elucent.eidolon.codex.CodexChapters; // No longer needed
 import elucent.eidolon.codex.Page;
 import elucent.eidolon.codex.TextPage;
 import elucent.eidolon.codex.TitlePage;
@@ -19,9 +19,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.slf4j.Logger;
 
-// ⚠️ REFLECTION IMPORTS - Only used where absolutely necessary
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
+// No reflection imports needed
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,31 +38,8 @@ import java.util.Map;
 public class EidolonCodexIntegration {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    // Lookup map for Eidolon chapters keyed by their resource location
-    private static final Map<ResourceLocation, Chapter> CHAPTER_LOOKUP = new HashMap<>();
     // Entries whose prerequisites weren't found will be stored here for potential later use
     private static final Map<Chapter, List<CodexEntry>> DEFERRED_ENTRIES = new HashMap<>();
-
-    static {
-        // ⚠️ REFLECTION USAGE - Only used here because we need to access existing static fields
-        // This is the ONLY place where reflection is necessary in our codebase
-        LOGGER.info("🔍 Using reflection to build chapter lookup (necessary for existing content)...");
-        
-        // Build lookup dynamically using reflection to gather all public static Chapter fields
-        for (Field field : CodexChapters.class.getDeclaredFields()) {
-            if (!Modifier.isStatic(field.getModifiers())) continue;
-            if (!Chapter.class.isAssignableFrom(field.getType())) continue;
-            try {
-                Chapter chapter = (Chapter) field.get(null);
-                String name = field.getName().toLowerCase(Locale.ROOT);
-                CHAPTER_LOOKUP.put(new ResourceLocation("eidolon", name), chapter);
-            } catch (IllegalAccessException e) {
-                LOGGER.error("Failed to access chapter field {}", field.getName(), e);
-            }
-        }
-        
-        LOGGER.info("✅ Built chapter lookup with {} existing chapters", CHAPTER_LOOKUP.size());
-    }
 
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
@@ -103,22 +78,17 @@ public class EidolonCodexIntegration {
 
             LOGGER.info("Processing chapter {} with {} entries", chapterId, entries.size());
 
-            Chapter chapter = CHAPTER_LOOKUP.get(chapterId);
-
-            if (chapter == null) {
-                // Attempt to create a new chapter from research metadata
-                ResearchChapter research = ResearchDataManager.getResearchChapter(chapterId);
-                if (research == null) {
-                    LOGGER.warn("✗ No research chapter for {} - skipping to avoid orphaned tab", chapterId);
-                    continue;
-                }
-
-                ItemStack iconStack = research.getIcon() == null ? ItemStack.EMPTY : research.getIcon().copy();
-                String title = research.getTitle().getString();
-                chapter = new Chapter(title, new TitlePage(title));
-                CHAPTER_LOOKUP.put(chapterId, chapter);
-                LOGGER.info("Created new chapter {} from research data", chapterId);
+            // Always create a new chapter from research metadata (datapack-driven)
+            ResearchChapter research = ResearchDataManager.getResearchChapter(chapterId);
+            if (research == null) {
+                LOGGER.warn("✗ No research chapter for {} - skipping to avoid orphaned tab", chapterId);
+                continue;
             }
+
+            ItemStack iconStack = research.getIcon() == null ? ItemStack.EMPTY : research.getIcon().copy();
+            String title = research.getTitle().getString();
+            Chapter chapter = new Chapter(title, new TitlePage(title));
+            LOGGER.info("Created new chapter {} from research data", chapterId);
 
             LOGGER.info("✓ Injecting {} entries into chapter {}", entries.size(), chapterId);
             for (CodexEntry entry : entries) {

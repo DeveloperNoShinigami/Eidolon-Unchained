@@ -14,18 +14,14 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.slf4j.Logger;
 
-// ⚠️ REFLECTION IMPORT - Only used where absolutely necessary for research registration
-import java.lang.reflect.Method;
+// No reflection imports needed
 
 import java.util.List;
 import java.util.Map;
 
 /**
  * Handles integration with Eidolon's research system to inject custom research entries.
- * 
- * ⚠️ NOTE: This class uses REFLECTION only where absolutely necessary.
- * Research system integration currently requires reflection due to Eidolon's API limitations.
- * We minimize reflection usage and clearly mark where it's used.
+ * Fully datapack-driven, no reflection or legacy API usage.
  */
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class EidolonResearchIntegration {
@@ -80,17 +76,10 @@ public class EidolonResearchIntegration {
     }
 
     /**
-     * Attempts to register a research chapter with Eidolon using reflection.
-     * Instead of registering as a new category, we add it as a chapter to an existing category.
+     * No-op: Research chapters are handled purely via datapack and category extension system.
      */
     private static void registerChapterWithEidolon(ResearchChapter chapter) {
-        try {
-            // Don't register chapters as categories - they should be added to existing categories
-            // This will be handled by the EidolonCategoryExtension system
-            LOGGER.info("✓ Research chapter prepared for integration: {}", chapter.getId());
-        } catch (Exception e) {
-            LOGGER.error("Failed to prepare research chapter {}", chapter.getId(), e);
-        }
+        LOGGER.info("✓ Research chapter prepared for integration: {}", chapter.getId());
     }
 
     /**
