@@ -1,6 +1,5 @@
 package com.bluelotuscoding.eidolonunchained.research.tasks;
 
-import javax.annotation.Nullable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.resources.ResourceLocation;
@@ -9,8 +8,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import javax.annotation.Nullable;
+
 /**
- * Task requiring the player to possess a specific item with optional NBT data.
+ * Task requiring the player to possess an item that matches a given NBT filter.
  */
 public class HasItemWithNbtTask extends ResearchTask {
     private final ResourceLocation item;
@@ -33,7 +34,7 @@ public class HasItemWithNbtTask extends ResearchTask {
     public CompoundTag getFilter() {
         return filter;
     }
-  
+
     public int getCount() {
         return count;
     }
@@ -41,15 +42,18 @@ public class HasItemWithNbtTask extends ResearchTask {
     @Override
     public boolean isComplete(Player player) {
         if (player == null) return false;
-        Item target = ForgeRegistries.ITEMS.getValue(item);
-        if (target == null) return false;
+        Item mcItem = ForgeRegistries.ITEMS.getValue(item);
+        if (mcItem == null) return false;
         int found = 0;
         for (ItemStack stack : player.getInventory().items) {
-            if (!stack.is(target)) continue;
-            if (filter != null && !NbtUtils.compareNbt(filter, stack.getTag(), true)) continue;
-            found += stack.getCount();
-            if (found >= count) return true;
-
+            if (stack.is(mcItem)) {
+                if (filter != null) {
+                    CompoundTag tag = stack.getTag();
+                    if (tag == null || !NbtUtils.compareNbt(filter, tag, true)) continue;
+                }
+                found += stack.getCount();
+                if (found >= count) return true;
+            }
         }
         return false;
     }

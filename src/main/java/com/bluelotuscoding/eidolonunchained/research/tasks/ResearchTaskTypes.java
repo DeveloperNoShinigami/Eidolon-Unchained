@@ -34,6 +34,11 @@ public class ResearchTaskTypes {
     public static ResearchTaskType CRAFT_ITEMS;
     public static ResearchTaskType USE_RITUAL;
     public static ResearchTaskType COLLECT_ITEMS;
+    public static ResearchTaskType INVENTORY;
+    public static ResearchTaskType ENTER_DIMENSION;
+    public static ResearchTaskType TIME_WINDOW;
+    public static ResearchTaskType WEATHER;
+    public static ResearchTaskType HAS_ITEM_NBT;
     public static ResearchTaskType EXPLORE_BIOMES;
     public static ResearchTaskType HAS_NBT;
     public static ResearchTaskType HAS_ITEM_NBT;
@@ -74,14 +79,28 @@ public class ResearchTaskTypes {
             int count = json.has("count") ? json.get("count").getAsInt() : 1;
             return new CollectItemsTask(item, count);
         });
+        INVENTORY = register(new ResourceLocation(EidolonUnchained.MODID, "inventory"), json -> {
+            ResourceLocation item = ResourceLocation.tryParse(json.get("item").getAsString());
+            int count = json.has("count") ? json.get("count").getAsInt() : 1;
+            return new InventoryTask(item, count);
+        });
+        ENTER_DIMENSION = register(new ResourceLocation(EidolonUnchained.MODID, "enter_dimension"), json -> {
+            ResourceLocation dimension = ResourceLocation.tryParse(json.get("dimension").getAsString());
+            return new EnterDimensionTask(dimension);
+        });
+        TIME_WINDOW = register(new ResourceLocation(EidolonUnchained.MODID, "time_window"), json -> {
+            long min = json.has("min") ? json.get("min").getAsLong() : 0L;
+            long max = json.has("max") ? json.get("max").getAsLong() : 0L;
+            return new TimeWindowTask(min, max);
+        });
+        WEATHER = register(new ResourceLocation(EidolonUnchained.MODID, "weather"), json -> {
+            String weather = json.get("weather").getAsString();
+            return new WeatherTask(weather);
+        });
         HAS_ITEM_NBT = register(new ResourceLocation(EidolonUnchained.MODID, "has_item_nbt"), json -> {
             ResourceLocation item = ResourceLocation.tryParse(json.get("item").getAsString());
             CompoundTag filter = null;
-            if (json.has("nbt")) {
-                try {
-                    filter = TagParser.parseTag(json.get("nbt").getAsString());
-                } catch (Exception ignored) {}
-            } else if (json.has("filter")) {
+            if (json.has("filter")) {
                 try {
                     filter = TagParser.parseTag(json.get("filter").getAsString());
                 } catch (Exception ignored) {}
