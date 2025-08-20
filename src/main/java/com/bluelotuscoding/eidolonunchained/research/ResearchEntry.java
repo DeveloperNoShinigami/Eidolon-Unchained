@@ -10,6 +10,12 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 import java.util.ArrayList;
 
+import com.bluelotuscoding.eidolonunchained.research.conditions.DimensionCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.InventoryCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.ResearchCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.TimeCondition;
+import com.bluelotuscoding.eidolonunchained.research.conditions.WeatherCondition;
+
 /**
  * Represents a custom research entry that can be added to Eidolon's research system
  * through datapacks. This allows for easy extension of the research tree.
@@ -63,6 +69,7 @@ public class ResearchEntry {
         this.type = type;
         this.additionalData = additionalData != null ? additionalData : new JsonObject();
         this.tasks = tasks != null ? tasks : new java.util.HashMap<>();
+
     }
 
     // Getters
@@ -116,6 +123,31 @@ public class ResearchEntry {
             JsonArray unlocksArray = new JsonArray();
             unlocks.forEach(unlock -> unlocksArray.add(unlock.toString()));
             json.add("unlocks", unlocksArray);
+        }
+
+        // Conditional requirements
+        if (!conditions.isEmpty()) {
+            JsonObject cond = new JsonObject();
+            for (ResearchCondition c : conditions) {
+                if (c instanceof DimensionCondition dc) {
+                    cond.addProperty("dimension", dc.getDimension().toString());
+                } else if (c instanceof TimeCondition tc) {
+                    JsonObject time = new JsonObject();
+                    time.addProperty("min", tc.getMin());
+                    time.addProperty("max", tc.getMax());
+                    cond.add("time_range", time);
+                } else if (c instanceof WeatherCondition wc) {
+                    cond.addProperty("weather", wc.getWeather().name().toLowerCase());
+                } else if (c instanceof InventoryCondition ic) {
+                    JsonArray arr = cond.has("inventory") ? cond.getAsJsonArray("inventory") : new JsonArray();
+                    JsonObject itemObj = new JsonObject();
+                    itemObj.addProperty("item", ic.getItem().toString());
+                    itemObj.addProperty("count", ic.getCount());
+                    arr.add(itemObj);
+                    cond.add("inventory", arr);
+                }
+            }
+            json.add("conditional_requirements", cond);
         }
 
         // Merge additional data
@@ -232,12 +264,14 @@ public class ResearchEntry {
 
         public Builder task(int tier, ResearchTask task) {
             this.tasks.computeIfAbsent(tier, k -> new java.util.ArrayList<>()).add(task);
+
             return this;
         }
 
         public ResearchEntry build() {
             return new ResearchEntry(id, title, description, chapter, icon,
                                    prerequisites, unlocks, x, y, type, additionalData, tasks);
+
         }
     }
 }
