@@ -121,6 +121,12 @@
   "eidolonunchained.codex.entry.sacred_sign.divine_inscriptions.purification_effects": "Purification Effects: Active sacred signs cleanse nearby areas of corruption and negative energy. Undead creatures suffer damage when approaching these blessed inscriptions.",
   "eidolonunchained.codex.entry.sacred_sign.divine_inscriptions.protective_properties": "Protective Properties: Sacred signs create auras of divine protection that strengthen allies and weaken enemies aligned with darkness. These effects are most powerful during daylight hours and holy celebrations.",
 
+  "eidolonunchained.codex.entry.shadow_manipulation.title": "Shadow Manipulation",
+  "eidolonunchained.codex.entry.shadow_manipulation.intro": "Shadow manipulation is an advanced magical technique that allows practitioners to bend darkness to their will. This ancient art requires both mental discipline and a deep understanding of the void.",
+  "eidolonunchained.codex.entry.shadow_manipulation.shadow_crystal": "The Shadow Crystal serves as a focus for shadow-based spells. Its dark surface seems to absorb light itself.",
+  "eidolonunchained.codex.entry.shadow_manipulation.shadow_bind": "The Shadow Bind ritual allows you to temporarily merge with your own shadow, becoming incorporeal for a brief time.",
+  "eidolonunchained.codex.entry.shadow_manipulation.warning": "§4Warning:§r Prolonged use of shadow magic can lead to permanent changes in one's essence. Practice with caution and always maintain a connection to the light.",
+
   "_comment": "=== Custom Category Translations ===",
   
   "eidolonunchained.codex.custom_spells.fire_mastery.title": "Fire Mastery",
