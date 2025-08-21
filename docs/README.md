@@ -4,7 +4,7 @@ See the [main README](../README.md) for an overview of the mod.
 
 ## Guides
 
-- [Complete System Summary](COMPLETE_SYSTEM_SUMMARY.md)
+- [System Summary](misc/system_summary.md)
 - [Datapack Overview](datapack_overview.md)
 - [Datapack Structure](DATAPACK_STRUCTURE.md)
 - [Research Conditions](RESEARCH_CONDITIONS.md)
