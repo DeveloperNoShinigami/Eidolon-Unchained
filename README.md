@@ -86,6 +86,10 @@ Create JSON files in `src/main/resources/data/eidolonunchained/codex_entries/`:
     {
       "type": "crafting",
       "recipe": "eidolon:arcane_gold_ingot"
+    },
+    {
+      "type": "ritual",
+      "ritual": "eidolon:summon_wraith"
     }
   ]
 }
@@ -116,7 +120,8 @@ Available page types:
 - **`text`**: Plain text content
 - **`entity`**: Displays an entity with information
 - **`crafting`**: Shows a crafting recipe
-- **`ritual`**: Displays ritual information
+- **`ritual`**: Shows the full ritual layout from a ritual ID
+- **`ritual_recipe`**: Links to a ritual by ID without showing the layout
 
 #### 5. Translation Best Practices
 - Use consistent naming: `eidolonunchained.codex.entry.[entry_name].[section]`

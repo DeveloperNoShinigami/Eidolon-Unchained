@@ -87,23 +87,9 @@ Specialized recipe page for crucible crafting.
 
 ### `ritual`
 ```
-{
-  "type": "ritual",
-  "content": "Greater Summoning Circle",
-  "data": {
-    "circle_size": 5,
-    "participants": 3,
-    "components": [
-      {"item": "minecraft:bell", "count": 1},
-      {"item": "minecraft:soul_sand", "count": 32},
-      {"item": "minecraft:wither_skeleton_skull", "count": 3},
-      {"item": "minecraft:nether_star", "count": 1}
-    ],
-    "description": "Summons a powerful ally to aid the community"
-  }
-}
+{ "type": "ritual", "ritual": "<id>" }
 ```
-Shows a top‑down ritual circle with components.
+Displays the full ritual layout for the given ritual ID.
 
 ### `workbench`
 ```
@@ -133,7 +119,9 @@ Links to an existing crafting recipe ID.
 ```
 { "type": "ritual_recipe", "ritual": "eidolonunchained:shadow_bind", "text": "The Shadow Bind ritual allows you to temporarily merge with your own shadow." }
 ```
-References a predefined ritual by ID.
+References a predefined ritual by ID without displaying the layout.
+
+Use `ritual` when you need to show the full ritual circle. Use `ritual_recipe` for quick references to an existing ritual.
 
 ### `image`
 ```
