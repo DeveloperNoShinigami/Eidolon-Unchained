@@ -8,6 +8,9 @@ contains gameplay JSON while `assets/` stores language and other client resource
 ```text
 📦 data/
 └── 📁 eidolonunchained/                # Your namespace
+    ├── 📁 codex/                       # Category folders with `_category.json`
+    │   └── 📁 custom_spells/           # Example category folder
+    │       └── 📄 _category.json       # Category definition file
     ├── 📁 codex_chapters/              # Optional new chapter definitions
     │   └── 📄 mythology.json           # Example chapter file
     ├── 📁 codex_entries/               # 📖 Codex pages live here
@@ -16,8 +19,20 @@ contains gameplay JSON while `assets/` stores language and other client resource
         └── 📄 ritual_master.json       # Example research entry
 ```
 
-*`codex_entries/` and `research_entries/` hold the JSON that adds new pages and
-progression to the mod.*
+*`codex/`, `codex_entries/`, and `research_entries/` hold the JSON that adds new
+categories, pages, and progression to the mod.*
+
+Example `custom_spells/_category.json`:
+
+```json
+{
+  "key": "custom_spells",
+  "name": "eidolonunchained.codex.category.custom_spells",
+  "icon": "minecraft:enchanted_book",
+  "color": "0x4169E1",
+  "description": "Community-created magical techniques"
+}
+```
 
 ## `assets/`
 
