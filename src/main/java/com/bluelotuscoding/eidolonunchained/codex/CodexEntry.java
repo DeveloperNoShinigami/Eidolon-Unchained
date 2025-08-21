@@ -30,10 +30,13 @@ public class CodexEntry {
         RITUAL("ritual"),
         ENTITY("entity"),
         CRAFTING("crafting"),
-        SMELTING("smelting"),
         CRUCIBLE("crucible"),
         WORKBENCH("workbench"),
-        LIST("list");
+        LIST("list"),
+        CRAFTING_RECIPE("crafting_recipe"),
+        RITUAL_RECIPE("ritual_recipe"),
+        IMAGE("image"),
+        ITEM_SHOWCASE("item_showcase");
 
         private final String name;
 
