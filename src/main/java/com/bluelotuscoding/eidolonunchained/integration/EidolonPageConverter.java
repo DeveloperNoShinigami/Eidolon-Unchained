@@ -10,16 +10,19 @@ import elucent.eidolon.codex.EntityPage;
 import elucent.eidolon.codex.ListPage;
 import elucent.eidolon.codex.Page;
 import elucent.eidolon.codex.RitualPage;
-import elucent.eidolon.codex.SmeltingPage;
 import elucent.eidolon.codex.TextPage;
 import elucent.eidolon.codex.TitlePage;
 import elucent.eidolon.codex.WorktablePage;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import org.slf4j.Logger;
 
 import java.io.InputStream;
@@ -55,7 +58,7 @@ public class EidolonPageConverter {
      * Get list of supported page types - for compatibility with EidolonCodexIntegration
      */
     public static String[] getSupportedPageTypes() {
-        return new String[]{"text", "title", "entity", "crafting", "ritual", "crucible", "list", "smelting", "workbench"};
+        return new String[]{"text", "title", "entity", "crafting", "crafting_recipe", "ritual", "ritual_recipe", "crucible", "list", "image", "item_showcase", "workbench"};
     }
 
     /**
@@ -73,14 +76,20 @@ public class EidolonPageConverter {
                 return createEntityPage(pageJson);
             case "crafting":
                 return createCraftingPage(pageJson);
+            case "crafting_recipe":
+                return createCraftingRecipePage(pageJson);
             case "ritual":
                 return createRitualPage(pageJson);
+            case "ritual_recipe":
+                return createRitualRecipePage(pageJson);
             case "crucible":
                 return createCruciblePage(pageJson);
             case "list":
                 return createListPage(pageJson);
-            case "smelting":
-                return createSmeltingPage(pageJson);
+            case "image":
+                return createImagePage(pageJson);
+            case "item_showcase":
+                return createItemShowcasePage(pageJson);
             case "workbench":
                 return createWorkbenchPage(pageJson);
             default:
@@ -368,6 +377,31 @@ public class EidolonPageConverter {
     }
 
     /**
+     * Create a CraftingPage tied to a specific recipe ID
+     */
+    private static Page createCraftingRecipePage(JsonObject pageJson) {
+        String recipeId = pageJson.has("recipe") ? pageJson.get("recipe").getAsString() : "";
+        if (recipeId.isEmpty()) {
+            LOGGER.warn("Crafting recipe page missing recipe ID");
+            return createFallbackTextPage(pageJson);
+        }
+
+        ResourceLocation recipeResource = ResourceLocation.tryParse(recipeId);
+        if (recipeResource == null) {
+            LOGGER.warn("Invalid crafting recipe ID: {}", recipeId);
+            return createFallbackTextPage(pageJson);
+        }
+
+        Item item = ForgeRegistries.ITEMS.getValue(recipeResource);
+        if (item == null) {
+            LOGGER.warn("Item not found for crafting recipe {}, using fallback", recipeId);
+            return createFallbackTextPage(pageJson);
+        }
+
+        return new CraftingPage(new ItemStack(item), recipeResource);
+    }
+
+    /**
      * Create a RitualPage - takes a ResourceLocation parameter
      */
     private static Page createRitualPage(JsonObject pageJson) {
@@ -384,6 +418,25 @@ public class EidolonPageConverter {
         }
 
         // Create RitualPage with ResourceLocation parameter
+        return new RitualPage(ritualResource);
+    }
+
+    /**
+     * Create a RitualPage tied to a specific ritual recipe ID
+     */
+    private static Page createRitualRecipePage(JsonObject pageJson) {
+        String ritualId = pageJson.has("ritual") ? pageJson.get("ritual").getAsString() : "";
+        if (ritualId.isEmpty()) {
+            LOGGER.warn("Ritual recipe page missing ritual ID");
+            return createFallbackTextPage(pageJson);
+        }
+
+        ResourceLocation ritualResource = ResourceLocation.tryParse(ritualId);
+        if (ritualResource == null) {
+            LOGGER.warn("Invalid ritual recipe ID: {}", ritualId);
+            return createFallbackTextPage(pageJson);
+        }
+
         return new RitualPage(ritualResource);
     }
 
@@ -443,34 +496,46 @@ public class EidolonPageConverter {
     }
 
     /**
-     * Create a SmeltingPage - takes input and result items, optionally a recipe ID
+     * Create an ImagePage that renders a texture in the codex
      */
-    private static Page createSmeltingPage(JsonObject pageJson) {
-        String inputId = pageJson.has("input") ? pageJson.get("input").getAsString() : "";
-        String resultId = pageJson.has("result") ? pageJson.get("result").getAsString() :
-                (pageJson.has("output") ? pageJson.get("output").getAsString() : "");
-        if (inputId.isEmpty() || resultId.isEmpty()) {
-            LOGGER.warn("Smelting page missing input or result");
+    private static Page createImagePage(JsonObject pageJson) {
+        String image = pageJson.has("image") ? pageJson.get("image").getAsString() : "";
+        int width = pageJson.has("width") ? pageJson.get("width").getAsInt() : 128;
+        int height = pageJson.has("height") ? pageJson.get("height").getAsInt() : 128;
+        if (image.isEmpty()) {
+            LOGGER.warn("Image page missing image path");
             return createFallbackTextPage(pageJson);
         }
 
-        Item inputItem = ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(inputId));
-        Item resultItem = ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(resultId));
-        if (inputItem == null || resultItem == null) {
-            LOGGER.warn("Invalid smelting items: {} -> {}", inputId, resultId);
+        ResourceLocation imageRes = ResourceLocation.tryParse(image);
+        if (imageRes == null) {
+            LOGGER.warn("Invalid image resource: {}", image);
             return createFallbackTextPage(pageJson);
         }
 
-        ItemStack inStack = new ItemStack(inputItem);
-        ItemStack outStack = new ItemStack(resultItem);
+        return new ImagePage(imageRes, width, height);
+    }
 
-        if (pageJson.has("recipe")) {
-            ResourceLocation recipeRes = ResourceLocation.tryParse(pageJson.get("recipe").getAsString());
-            if (recipeRes != null) {
-                return new SmeltingPage(inStack, outStack, recipeRes);
-            }
+    /**
+     * Create an ItemShowcasePage displaying an item with accompanying text
+     */
+    private static Page createItemShowcasePage(JsonObject pageJson) {
+        String itemId = pageJson.has("item") ? pageJson.get("item").getAsString() : "";
+        if (itemId.isEmpty()) {
+            LOGGER.warn("Item showcase page missing item ID");
+            return createFallbackTextPage(pageJson);
         }
-        return new SmeltingPage(inStack, outStack);
+
+        Item item = ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(itemId));
+        if (item == null) {
+            LOGGER.warn("Invalid item for item showcase: {}", itemId);
+            return createFallbackTextPage(pageJson);
+        }
+
+        String title = pageJson.has("title") ? translateText(pageJson.get("title").getAsString()) : "";
+        String text = pageJson.has("text") ? translateText(pageJson.get("text").getAsString()) : "";
+
+        return new ItemShowcasePage(new ItemStack(item), title, text);
     }
 
     /**
@@ -517,5 +582,58 @@ public class EidolonPageConverter {
         // Also translate fallback text if it's a translation key
         String translatedText = translateText(fallbackText);
         return new TextPage(translatedText);
+    }
+
+    /**
+     * Simple page that displays a centered image
+     */
+    private static class ImagePage extends Page {
+        private final ResourceLocation image;
+        private final int width;
+        private final int height;
+
+        public ImagePage(ResourceLocation image, int width, int height) {
+            super(new ResourceLocation("eidolon", "textures/gui/codex_blank_page.png"));
+            this.image = image;
+            this.width = width;
+            this.height = height;
+        }
+
+        @Override
+        @OnlyIn(Dist.CLIENT)
+        public void render(CodexGui gui, GuiGraphics mStack, ResourceLocation bg, int x, int y, int mouseX, int mouseY) {
+            int drawX = x + (128 - width) / 2;
+            int drawY = y + (160 - height) / 2;
+            mStack.blit(image, drawX, drawY, 0, 0, width, height, width, height);
+        }
+    }
+
+    /**
+     * Page that shows an item with a title and description
+     */
+    private static class ItemShowcasePage extends Page {
+        private final ItemStack item;
+        private final String title;
+        private final String text;
+
+        public ItemShowcasePage(ItemStack item, String title, String text) {
+            super(new ResourceLocation("eidolon", "textures/gui/codex_title_page.png"));
+            this.item = item;
+            this.title = title;
+            this.text = text;
+        }
+
+        @Override
+        @OnlyIn(Dist.CLIENT)
+        public void render(CodexGui gui, GuiGraphics mStack, ResourceLocation bg, int x, int y, int mouseX, int mouseY) {
+            if (!title.isEmpty()) {
+                int titleWidth = Minecraft.getInstance().font.width(title);
+                drawText(mStack, title, x + 64 - titleWidth / 2, y + 15 - Minecraft.getInstance().font.lineHeight);
+            }
+            drawItem(mStack, item, x + 56, y + 32, mouseX, mouseY);
+            if (!text.isEmpty()) {
+                drawWrappingText(mStack, text, x + 4, y + 72, 120);
+            }
+        }
     }
 }

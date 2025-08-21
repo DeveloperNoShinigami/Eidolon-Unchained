@@ -141,4 +141,10 @@ References a predefined ritual by ID.
 ```
 Embeds a texture into the page.
 
+### `item_showcase`
+```
+{ "type": "item_showcase", "title": "Arcane Alloy", "item": "eidolon:arcane_gold_ingot", "text": "A gleaming ingot brimming with latent power." }
+```
+Displays a single item with a title and description.
+
 These examples are pulled directly from the sample codex data shipped with the project and represent the currently supported page types.

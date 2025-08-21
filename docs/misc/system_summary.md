@@ -6,7 +6,7 @@ The codex extension system lets datapacks add custom knowledge entries to Eidolo
 ## Current Metrics
 - **Codex entries**: 56 JSON files loaded from `data/eidolonunchained/codex_entries` and `data/eidolonunchained/codex`.
 - **Chapters**: Content spans 10 chapters (8 base Eidolon chapters plus 2 custom mod chapters; a third custom chapter is available for future use).
-- **Supported page types**: 9 – `text`, `title`, `entity`, `crafting`, `ritual`, `crucible`, `list`, `smelting`, and `workbench`.
+- **Supported page types**: 12 – `text`, `title`, `entity`, `crafting`, `crafting_recipe`, `ritual`, `ritual_recipe`, `crucible`, `list`, `image`, `item_showcase`, and `workbench`.
 
 ## Example Entry
 ```json
@@ -16,7 +16,7 @@ The codex extension system lets datapacks add custom knowledge entries to Eidolo
   "icon": "eidolon:arcane_gold_ingot",
   "pages": [
     { "type": "text", "text": "Transmuted metal infused with void energy." },
-    { "type": "smelting", "input": "minecraft:gold_ingot", "result": "eidolon:arcane_gold_ingot" }
+    { "type": "crafting_recipe", "recipe": "eidolon:arcane_gold_ingot" }
   ]
 }
 ```
