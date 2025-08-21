@@ -80,14 +80,15 @@ public class EidolonCodexIntegration {
             ResearchChapter research = ResearchDataManager.getResearchChapter(chapterId);
             CodexDataManager.ChapterDefinition metadata = CodexDataManager.getCustomChapter(chapterId);
 
-            Component title;
+            Component titleComponent;
             if (metadata != null) {
-                title = metadata.getTitle();
+                titleComponent = metadata.getTitle();
             } else if (research != null) {
-                title = research.getTitle();
+                titleComponent = research.getTitle();
             } else {
-                title = Component.literal(chapterId.getPath());
+                titleComponent = Component.literal(chapterId.getPath());
             }
+            String title = titleComponent.getString();
 
             if (research == null) {
                 LOGGER.info("No research chapter for {} - using fallback metadata", chapterId);
