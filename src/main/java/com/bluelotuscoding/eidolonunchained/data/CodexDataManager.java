@@ -204,11 +204,11 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
 
             // Basic fields
             String titleStr = json.has("title") ? json.get("title").getAsString() : location.getPath();
-            Component title = (titleStr.contains(".") || titleStr.startsWith("eidolonunchained:"))
+            Component title = (titleStr.contains(":") || titleStr.contains(".") || titleStr.startsWith("eidolonunchained:"))
                 ? Component.translatable(titleStr)
                 : Component.literal(titleStr);
             String descStr = json.has("description") ? json.get("description").getAsString() : "";
-            Component description = (descStr.contains(".") || descStr.startsWith("eidolonunchained:"))
+            Component description = (descStr.contains(":") || descStr.contains(".") || descStr.startsWith("eidolonunchained:"))
                 ? Component.translatable(descStr)
                 : Component.literal(descStr);
 
@@ -323,7 +323,7 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                     ResourceLocation chapterId = new ResourceLocation(resLoc.getNamespace(), path);
 
                     // Store the translation key or literal for the chapter title
-                    String chapterTitle = (titleStr.contains(".") || titleStr.startsWith("eidolonunchained:"))
+                    String chapterTitle = (titleStr.contains(":") || titleStr.contains(".") || titleStr.startsWith("eidolonunchained:"))
                         ? Component.translatable(titleStr).getString()
                         : titleStr;
 
