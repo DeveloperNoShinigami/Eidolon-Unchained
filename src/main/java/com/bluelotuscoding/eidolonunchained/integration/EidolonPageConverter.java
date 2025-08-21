@@ -1,6 +1,7 @@
 package com.bluelotuscoding.eidolonunchained.integration;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
@@ -286,7 +287,12 @@ public class EidolonPageConverter {
         // Support both "recipe" and "item" properties
         String itemId = "";
         if (pageJson.has("recipe")) {
-            itemId = pageJson.get("recipe").getAsString();
+            JsonElement recipeElement = pageJson.get("recipe");
+            if (recipeElement.isJsonObject()) {
+                LOGGER.error("Crafting page 'recipe' must be a string recipe ID, not a JSON object");
+                return createFallbackTextPage(pageJson);
+            }
+            itemId = recipeElement.getAsString();
             LOGGER.info("Creating crafting page for recipe: {}", itemId);
         } else if (pageJson.has("item")) {
             itemId = pageJson.get("item").getAsString();

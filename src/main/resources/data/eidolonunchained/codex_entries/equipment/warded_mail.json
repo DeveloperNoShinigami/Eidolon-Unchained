@@ -9,30 +9,15 @@
     {
   "type": "item_showcase",
   "title": "Chainmail Properties",
-  "item": "eidolon:warped_sprouts",
+  "item": "eidolon:warded_mail",
   "text": "Chainmail reinforced with magical wards offers superior protection."
     },
     {
   "type": "crafting",
   "title": "Crafting Warded Mail",
-  "recipe": {
-        "type": "minecraft:crafting_shaped",
-        "pattern": [
-          "SAS",
-          "ACA",
-          "SAS"
-        ],
-        "key": {
-          "S": {"item": "eidolon:silver_ingot"},
-          "A": {"item": "minecraft:chainmail_chestplate"},
-          "C": {"item": "eidolon:soul_shard"}
-        },
-        "result": {
-          "item": "eidolon:warped_sprouts",
-          "count": 1
-        }
-      },
+  "recipe": "eidolon:warded_mail",
   "text": "Crafting warded mail requires rare materials and precise technique."
     }
   ]
 }
+
