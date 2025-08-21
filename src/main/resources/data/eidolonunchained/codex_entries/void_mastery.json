@@ -2,20 +2,20 @@
   "target_chapter": "eidolon:void_amulet",
   "pages": [
     {
-  "type": "title",
-  "text": "Void Mastery"
+      "type": "title",
+      "text": "eidolonunchained.codex.entry.void_mastery.title"
     },
     {
-  "type": "text", 
-  "text": "The fundamentals of void mastery involve understanding the nature of emptiness and the flow of magical energy."
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.void_mastery.fundamentals"
     },
     {
-  "type": "text",
-  "text": "Advanced void mastery allows the practitioner to manipulate space and reality itself."
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.void_mastery.advanced"
     },
     {
-  "type": "text",
-  "text": "The risks of void magic are great; improper use can lead to catastrophic consequences."
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.void_mastery.risks"
     }
   ]
 }

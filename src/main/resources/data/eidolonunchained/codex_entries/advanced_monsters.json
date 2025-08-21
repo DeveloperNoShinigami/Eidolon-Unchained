@@ -2,28 +2,28 @@
   "target_chapter": "eidolon:monsters",
   "pages": [
     {
-  "type": "title",
-  "text": "Advanced Monsters"
+      "type": "title",
+      "text": "eidolonunchained.codex.entry.advanced_monsters.title"
     },
     {
       "type": "entity",
       "entity": "eidolon:necromancer"
     },
     {
-  "type": "text",
-  "text": "Necromancers are powerful sorcerers who command the dead and wield forbidden magics."
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.advanced_monsters.necromancer"
     },
     {
       "type": "entity", 
       "entity": "eidolon:wraith"
     },
     {
-  "type": "text",
-  "text": "Wraiths are spectral entities, feared for their ability to drain life and pass through solid matter."
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.advanced_monsters.wraith"
     },
     {
-  "type": "text",
-  "text": "Advanced monsters exhibit unique behaviors and abilities that challenge even experienced adventurers."
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.advanced_monsters.behavior"
     }
   ]
 }
