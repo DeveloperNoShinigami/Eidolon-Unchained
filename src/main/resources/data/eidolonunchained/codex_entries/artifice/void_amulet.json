@@ -1,31 +1,31 @@
 {
   "target_chapter": "eidolon:void_amulet",
-  "title": "eidolonunchained.codex.entry.void_amulet.mastery.title", 
-  "description": "eidolonunchained.codex.entry.void_amulet.mastery.description",
+  "title": "Void Amulet Mastery", 
+  "description": "Master the secrets of the void amulet and its dimensional powers.",
   "icon": {
     "item": "eidolon:void_amulet",
     "count": 1
   },
   "pages": [
     {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.void_amulet.mastery.introduction"
+  "type": "text",
+  "text": "The void amulet is a powerful artifact that manipulates dimensional energies."
     },
     {
       "type": "crafting",
       "item": "eidolon:void_amulet"
     },
     {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.void_amulet.mastery.void_fundamentals"
+  "type": "text",
+  "text": "Understanding the fundamentals of void energy is essential for safe use."
     },
     {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.void_amulet.mastery.advanced_techniques"
+  "type": "text",
+  "text": "Advanced techniques allow the user to bend space and traverse dimensions."
     },
     {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.void_amulet.mastery.dimensional_risks"
+  "type": "text",
+  "text": "Dimensional risks are inherent; improper use can have catastrophic consequences."
     }
   ],
   "prerequisites": []

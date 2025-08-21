@@ -1,7 +1,7 @@
 {
   "target_chapter": "eidolon:monsters",
-  "title": "eidolonunchained.codex.entry.monsters.advanced_studies.title",
-  "description": "eidolonunchained.codex.entry.monsters.advanced_studies.description",
+  "title": "Advanced Monster Studies",
+  "description": "A deeper look into the abilities and behaviors of advanced monsters.",
   "icon": {
     "item": "eidolon:necromancer_spawn_egg",
     "count": 1
@@ -9,7 +9,7 @@
   "pages": [
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.monsters.advanced_studies.introduction"
+  "text": "Advanced monster studies reveal the secrets behind their formidable powers."
     },
     {
       "type": "entity",
@@ -17,7 +17,7 @@
     },
     {
       "type": "text", 
-      "text": "eidolonunchained.codex.entry.monsters.advanced_studies.necromancer_details"
+  "text": "Necromancers use forbidden rituals to control the dead and unleash dark magic."
     },
     {
       "type": "entity",
@@ -25,11 +25,11 @@
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.monsters.advanced_studies.wraith_details"
+  "text": "Wraiths are spirits of vengeance, haunting the living with chilling attacks."
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.monsters.advanced_studies.behavior_patterns"
+  "text": "Each advanced monster has unique behavior patterns that must be studied to be overcome."
     }
   ],
   "prerequisites": []

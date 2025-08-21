@@ -194,10 +194,13 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
 
             // Basic fields
             String titleStr = json.has("title") ? json.get("title").getAsString() : location.getPath();
-            Component title = Component.literal(titleStr);
-            Component description = json.has("description")
-                ? Component.literal(json.get("description").getAsString())
-                : Component.literal("");
+            Component title = (titleStr.contains(".") || titleStr.startsWith("eidolonunchained:"))
+                ? Component.translatable(titleStr)
+                : Component.literal(titleStr);
+            String descStr = json.has("description") ? json.get("description").getAsString() : "";
+            Component description = (descStr.contains(".") || descStr.startsWith("eidolonunchained:"))
+                ? Component.translatable(descStr)
+                : Component.literal(descStr);
 
             // Icon parsing
             ItemStack icon = ItemStack.EMPTY;
@@ -301,7 +304,7 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                         return;
                     }
 
-                    String title = json.get("title").getAsString();
+                    String titleStr = json.get("title").getAsString();
                     String iconStr = json.has("icon") ? json.get("icon").getAsString() : "minecraft:book";
                     ResourceLocation icon = ResourceLocation.tryParse(iconStr);
 
@@ -309,8 +312,13 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                     path = path.substring("codex_chapters/".length(), path.length() - 5); // remove directory and .json
                     ResourceLocation chapterId = new ResourceLocation(resLoc.getNamespace(), path);
 
-                    LOGGER.info("Registering custom chapter: {} (title: {}, icon: {})", chapterId, title, icon);
-                    CUSTOM_CHAPTERS.put(chapterId, new ChapterDefinition(title, icon));
+                    // Store the translation key or literal for the chapter title
+                    String chapterTitle = (titleStr.contains(".") || titleStr.startsWith("eidolonunchained:"))
+                        ? Component.translatable(titleStr).getString()
+                        : titleStr;
+
+                    LOGGER.info("Registering custom chapter: {} (title: {}, icon: {})", chapterId, chapterTitle, icon);
+                    CUSTOM_CHAPTERS.put(chapterId, new ChapterDefinition(chapterTitle, icon));
                     LOGGER.info("Loaded custom chapter definition {}", chapterId);
                 } catch (IOException e) {
                     LOGGER.error("Failed to load chapter definition at {}", resLoc, e);

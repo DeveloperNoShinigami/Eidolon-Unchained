@@ -1,6 +1,5 @@
 {
-  "chapter": "rituals",
-  "title_key": "eidolonunchained.codex.custom_spells.ice_control.title",
+  "target_chapter": "rituals",
   "title": "Ice Control",
   "icon": "minecraft:ice",
   "pages": [

@@ -2,28 +2,28 @@
   "target_chapter": "eidolon:summon_ritual",
   "pages": [
     {
-      "type": "title", 
-      "text": "eidolonunchained.codex.entry.advanced_summoning"
+  "type": "title", 
+  "text": "Advanced Summoning"
     },
     {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.advanced_summoning.protocols"
+  "type": "text",
+  "text": "Summoning protocols are the foundation of advanced conjuration. Mastery of these allows for more complex and stable summons."
     },
     {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.advanced_summoning.timing"
+  "type": "text",
+  "text": "Timing is critical in advanced summoning. The correct moment can mean the difference between success and disaster."
     },
     {
       "type": "entity",
       "entity": "eidolon:wraith"
     },
     {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.advanced_summoning.bound_wraith"
+  "type": "text",
+  "text": "A bound wraith is a powerful entity that can be controlled by experienced summoners."
     },
     {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.advanced_summoning.manifestation"
+  "type": "text",
+  "text": "Manifestation is the final stage, where the summoned entity takes physical form in the world."
     }
   ]
 }

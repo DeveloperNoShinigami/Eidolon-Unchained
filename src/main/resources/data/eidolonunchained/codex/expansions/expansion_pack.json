@@ -1,6 +1,5 @@
 {
-  "chapter": "rituals",
-  "title_key": "eidolonunchained.codex.expansions.content_pack.title",
+  "target_chapter": "rituals",
   "title": "Expansion Content Pack",
   "icon": "minecraft:end_crystal", 
   "pages": [

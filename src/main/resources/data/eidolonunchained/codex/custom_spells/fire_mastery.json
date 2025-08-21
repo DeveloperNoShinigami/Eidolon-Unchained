@@ -1,6 +1,5 @@
 {
-  "chapter": "rituals",
-  "title_key": "eidolonunchained.codex.custom_spells.fire_mastery.title",
+  "target_chapter": "rituals",
   "title": "Fire Mastery",
   "icon": "minecraft:fire_charge",
   "pages": [

@@ -1,6 +1,5 @@
 {
-  "chapter": "summon_ritual",
-  "title_key": "eidolonunchained.codex.community_rituals.summoning.title", 
+  "target_chapter": "summon_ritual",
   "title": "Community Summoning",
   "icon": "minecraft:bell",
   "pages": [

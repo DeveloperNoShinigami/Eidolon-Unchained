@@ -38,10 +38,9 @@ public class ResearchTaskTypes {
     public static ResearchTaskType ENTER_DIMENSION;
     public static ResearchTaskType TIME_WINDOW;
     public static ResearchTaskType WEATHER;
-    public static ResearchTaskType HAS_ITEM_NBT;
     public static ResearchTaskType EXPLORE_BIOMES;
-    public static ResearchTaskType HAS_NBT;
     public static ResearchTaskType HAS_ITEM_NBT;
+    public static ResearchTaskType HAS_NBT;
 
     /**
      * Registers the built-in task types. Should be called during mod

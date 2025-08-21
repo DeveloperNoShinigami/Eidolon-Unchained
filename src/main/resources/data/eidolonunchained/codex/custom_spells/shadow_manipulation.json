@@ -1,8 +1,7 @@
 {
-  "title_key": "eidolonunchained.codex.chapter.shadow_manipulation",
   "title": "Shadow Manipulation",
   "icon": "minecraft:coal_block",
-  "chapter": "rituals",
+  "target_chapter": "rituals",
   "pages": [
     {
       "type": "text",

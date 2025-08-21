@@ -1,7 +1,7 @@
 {
   "target_chapter": "eidolon:sacred_sign",
-  "title": "eidolonunchained.codex.entry.sacred_sign.divine_inscriptions.title",
-  "description": "eidolonunchained.codex.entry.sacred_sign.divine_inscriptions.description",
+  "title": "Divine Inscriptions",
+  "description": "The sacred sign holds the power of divine protection and blessing.",
   "icon": {
     "item": "eidolon:holy_symbol",
     "count": 1
@@ -9,7 +9,7 @@
   "pages": [
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.sacred_sign.divine_inscriptions.introduction"
+  "text": "Divine inscriptions are ancient symbols used to invoke the favor and protection of higher powers."
     },
     {
       "type": "crafting",
@@ -17,15 +17,15 @@
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.sacred_sign.divine_inscriptions.blessed_materials"
+  "text": "Blessed materials are required to craft and empower the sacred sign."
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.sacred_sign.divine_inscriptions.purification_effects"
+  "text": "Purification effects cleanse the bearer of negative influences."
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.sacred_sign.divine_inscriptions.protective_properties"
+  "text": "The sacred sign grants powerful protective properties against dark magic."
     }
   ],
   "prerequisites": []

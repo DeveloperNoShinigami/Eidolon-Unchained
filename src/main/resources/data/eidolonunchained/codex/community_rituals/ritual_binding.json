@@ -1,6 +1,5 @@
 {
-  "chapter": "rituals",
-  "title_key": "eidolonunchained.codex.community_rituals.binding.title",
+  "target_chapter": "rituals",
   "title": "Ritual Binding", 
   "icon": "minecraft:chain",
   "pages": [

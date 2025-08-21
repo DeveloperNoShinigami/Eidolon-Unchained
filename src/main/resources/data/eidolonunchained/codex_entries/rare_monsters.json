@@ -2,24 +2,24 @@
   "target_chapter": "eidolon:monsters",
   "pages": [
     {
-      "type": "title",
-      "text": "eidolonunchained.codex.entry.rare_monsters"
+  "type": "title",
+  "text": "Rare Monsters"
     },
     {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.rare_monsters.shadow_wraiths"
+  "type": "text",
+  "text": "Shadow Wraiths are elusive and dangerous entities that haunt the darkest corners of the world."
     },
     {
       "type": "entity",
       "entity": "minecraft:stray"
     },
     {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.rare_monsters.frost_skeleton"
+  "type": "text",
+  "text": "Frost Skeletons are rare undead creatures found in the coldest regions."
     },
     {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.rare_monsters.frost_details"
+  "type": "text",
+  "text": "These skeletons are imbued with icy power, making them formidable opponents."
     }
   ]
 }

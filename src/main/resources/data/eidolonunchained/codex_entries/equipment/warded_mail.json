@@ -2,20 +2,20 @@
   "target_chapter": "eidolon:warded_mail",
   "pages": [
     {
-      "type": "text",
-      "title": "eidolonunchained.codex.warded_mail.protective_magic.title",
-      "text": "eidolonunchained.codex.warded_mail.protective_magic.desc"
+  "type": "text",
+  "title": "Protective Magic",
+  "text": "Warded mail is enchanted armor that protects the wearer from magical harm."
     },
     {
-      "type": "item_showcase",
-      "title": "eidolonunchained.codex.warded_mail.chainmail.title",
-      "item": "eidolon:warped_sprouts",
-      "text": "eidolonunchained.codex.warded_mail.chainmail.desc"
+  "type": "item_showcase",
+  "title": "Chainmail Properties",
+  "item": "eidolon:warped_sprouts",
+  "text": "Chainmail reinforced with magical wards offers superior protection."
     },
     {
-      "type": "crafting",
-      "title": "eidolonunchained.codex.warded_mail.armor_crafting.title",
-      "recipe": {
+  "type": "crafting",
+  "title": "Crafting Warded Mail",
+  "recipe": {
         "type": "minecraft:crafting_shaped",
         "pattern": [
           "SAS",
@@ -32,7 +32,7 @@
           "count": 1
         }
       },
-      "text": "eidolonunchained.codex.warded_mail.armor_crafting.desc"
+  "text": "Crafting warded mail requires rare materials and precise technique."
     }
   ]
 }

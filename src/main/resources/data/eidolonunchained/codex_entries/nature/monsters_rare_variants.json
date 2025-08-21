@@ -1,7 +1,7 @@
 {
   "target_chapter": "eidolon:monsters",
-  "title": "eidolonunchained.codex.entry.monsters.rare_variants.title",
-  "description": "eidolonunchained.codex.entry.monsters.rare_variants.description", 
+  "title": "Rare Monster Variants",
+  "description": "Some monsters possess rare variants with unique abilities and appearances.", 
   "icon": {
     "item": "eidolon:wraith_spawn_egg",
     "count": 1
@@ -9,7 +9,7 @@
   "pages": [
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.monsters.rare_variants.introduction"
+  "text": "Rare monster variants are seldom seen, but pose a significant threat to the unprepared."
     },
     {
       "type": "entity",
@@ -17,7 +17,7 @@
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.monsters.rare_variants.shadow_wraiths"
+  "text": "Shadow Wraiths are elusive and deadly, striking from the darkness."
     },
     {
       "type": "entity", 
@@ -25,11 +25,11 @@
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.monsters.rare_variants.frost_skeleton"
+  "text": "Frost Skeletons are imbued with chilling power, freezing their foes."
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.monsters.rare_variants.frost_details"
+  "text": "Frost Skeletons can slow and weaken those they attack, making them especially dangerous."
     }
   ],
   "prerequisites": []

@@ -1,31 +1,31 @@
 {
   "target_chapter": "eidolon:crystal_ritual",
-  "title": "eidolonunchained.codex.entry.crystal_ritual.mastery.title",
-  "description": "eidolonunchained.codex.entry.crystal_ritual.mastery.description",
+  "title": "Crystal Ritual Mastery",
+  "description": "Unlock the secrets of crystal rituals and harness their magical potential.",
   "icon": {
     "item": "eidolon:arcane_gold_ingot",
     "count": 1
   },
   "pages": [
     {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.crystal_ritual.mastery.introduction"
+  "type": "text",
+  "text": "Crystal rituals channel energy through carefully arranged crystals."
     },
     {
       "type": "ritual",
       "ritual": "eidolon:crystallization"
     },
     {
-      "type": "text", 
-      "text": "eidolonunchained.codex.entry.crystal_ritual.mastery.placement_theory"
+  "type": "text", 
+  "text": "Placement theory explains how the position of each crystal affects the ritual's outcome."
     },
     {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.crystal_ritual.mastery.resonance_theory"
+  "type": "text",
+  "text": "Resonance theory describes the interaction between crystals and magical energy."
     },
     {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.crystal_ritual.mastery.advanced_configurations"
+  "type": "text",
+  "text": "Advanced configurations allow for more powerful and complex rituals."
     }
   ],
   "prerequisites": []

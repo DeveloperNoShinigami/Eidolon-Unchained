@@ -1,31 +1,31 @@
 {
   "target_chapter": "eidolon:arcane_gold",
-  "title": "eidolonunchained.codex.entry.arcane_gold.advanced_techniques.title",
-  "description": "eidolonunchained.codex.entry.arcane_gold.advanced_techniques.description",
+  "title": "Advanced Arcane Gold Techniques",
+  "description": "Discover advanced methods for working with arcane gold and unlocking its full potential.",
   "icon": {
     "item": "eidolon:arcane_gold_ingot",
     "count": 1
   },
   "pages": [
     {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.arcane_gold.advanced_techniques.introduction"
+  "type": "text",
+  "text": "Arcane gold is a rare and powerful material, prized for its magical properties."
     },
     {
       "type": "crafting",
       "item": "eidolon:arcane_gold_ingot"
     },
     {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.arcane_gold.advanced_techniques.enhanced_properties"
+  "type": "text",
+  "text": "Enhanced properties of arcane gold make it ideal for crafting potent artifacts."
     },
     {
       "type": "crucible",
       "recipe": "eidolon:arcane_gold_ingot"
     },
     {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.arcane_gold.advanced_techniques.alchemical_refinement"
+  "type": "text",
+  "text": "Alchemical refinement can further increase the power of arcane gold."
     }
   ],
   "prerequisites": []
