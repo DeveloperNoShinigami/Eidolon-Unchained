@@ -40,12 +40,62 @@ import java.util.ArrayList;
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class EidolonCategoryExtension {
     private static final Logger LOGGER = LogUtils.getLogger();
+
+    // ---------------------------------------------------------------------
+    // Reflection targets - update these when Eidolon internals change.
+    // See docs/REFLECTION_TARGETS.md for guidance on field names and paths.
+    // ---------------------------------------------------------------------
+    private static final String CLASS_CODEX_CHAPTERS = "elucent.eidolon.codex.CodexChapters";
+    private static final String FIELD_CATEGORIES = "categories";
+    private static final String FIELD_CATEGORY_KEY = "key";
+    private static final String FIELD_CATEGORY_CHAPTER = "chapter";
+    private static final String FIELD_CHAPTER_PAGES = "pages";
+    private static final String FIELD_INDEX_ENTRIES = "entries";
     
     // Eidolon Repraised 0.3.8.15: Only categories list is needed for integration
     private static List<Category> eidolonCategories = null;
 
     // Keep references to dynamically created chapters so they aren't garbage collected
     private static final List<Chapter> registeredChapters = new ArrayList<>();
+
+    // ---------------------------------------------------------------------
+    // Helper methods for safe reflection access. These log informative
+    // messages when targets change and allow the mod to fail gracefully.
+    // ---------------------------------------------------------------------
+
+    private static Class<?> safeForName(String className) {
+        try {
+            return Class.forName(className);
+        } catch (ClassNotFoundException e) {
+            LOGGER.error("Missing class '{}' - Eidolon may have changed. See docs/REFLECTION_TARGETS.md", className, e);
+            return null;
+        }
+    }
+
+    private static Field safeGetField(Class<?> clazz, String fieldName) {
+        try {
+            Field field = clazz.getDeclaredField(fieldName);
+            if (!safeSetAccessible(field)) {
+                return null;
+            }
+            return field;
+        } catch (NoSuchFieldException e) {
+            LOGGER.error("Missing field '{}' in class '{}' - Eidolon may have changed. See docs/REFLECTION_TARGETS.md", fieldName, clazz.getName(), e);
+        } catch (Exception e) {
+            LOGGER.error("Unable to access field '{}' in class '{}'", fieldName, clazz.getName(), e);
+        }
+        return null;
+    }
+
+    private static boolean safeSetAccessible(Field field) {
+        try {
+            field.setAccessible(true);
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Failed to make field '{}' accessible", field.getName(), e);
+            return false;
+        }
+    }
 
     /**
      * Initialize custom categories using reflection at the correct mod loading phase (FMLLoadCompleteEvent)
@@ -88,9 +138,16 @@ public class EidolonCategoryExtension {
     private static boolean initializeEidolonCategoriesAccess() {
         try {
             LOGGER.info("🔍 Using reflection to access Eidolon's category system...");
-            Class<?> chaptersClass = Class.forName("elucent.eidolon.codex.CodexChapters");
-            Field categoriesField = chaptersClass.getDeclaredField("categories");
-            categoriesField.setAccessible(true);
+            Class<?> chaptersClass = safeForName(CLASS_CODEX_CHAPTERS);
+            if (chaptersClass == null) {
+                return false;
+            }
+
+            Field categoriesField = safeGetField(chaptersClass, FIELD_CATEGORIES);
+            if (categoriesField == null) {
+                return false;
+            }
+
             eidolonCategories = (List<Category>) categoriesField.get(null);
             LOGGER.info("✅ Successfully accessed Eidolon internals via reflection");
             LOGGER.info("   Categories list: {} entries", eidolonCategories.size());
@@ -120,19 +177,22 @@ public class EidolonCategoryExtension {
             try {
                 // ⚠️ REFLECTION: Access category.key field
                 // FUTURE: Replace with category.getKey() when available
-                Field keyField = category.getClass().getDeclaredField("key");
-                keyField.setAccessible(true);
+                Field keyField = safeGetField(category.getClass(), FIELD_CATEGORY_KEY);
+                if (keyField == null) {
+                    LOGGER.warn("Category structure changed; skipping chapter injection");
+                    continue;
+                }
                 String categoryKey = (String) keyField.get(category);
-                
+
                 // Add research chapters that belong to this category
                 for (ResearchChapter researchChapter : customChapters.values()) {
                     if (categoryKey.equals(researchChapter.getCategory())) {
-                        LOGGER.info("📖 Adding research chapter '{}' to {} category...", 
+                        LOGGER.info("📖 Adding research chapter '{}' to {} category...",
                                    researchChapter.getTitle().getString(), categoryKey.toUpperCase());
                         addResearchChapterToCategory(category, researchChapter);
                     }
                 }
-                
+
             } catch (Exception e) {
                 LOGGER.error("❌ Failed to add chapters to category via reflection", e);
             }
@@ -166,13 +226,19 @@ public class EidolonCategoryExtension {
             
             // ⚠️ REFLECTION: Add to category's index
             // FUTURE: Replace with category.addChapter(customChapter) when available
-            Field chapterField = category.getClass().getDeclaredField("chapter");
-            chapterField.setAccessible(true);
+            Field chapterField = safeGetField(category.getClass(), FIELD_CATEGORY_CHAPTER);
+            if (chapterField == null) {
+                LOGGER.warn("Category structure changed; cannot add chapter '{}'", chapterTitle);
+                return;
+            }
             Index categoryIndex = (Index) chapterField.get(category);
 
             // Locate the first IndexPage within the category's index
-            Field pagesField = Chapter.class.getDeclaredField("pages");
-            pagesField.setAccessible(true);
+            Field pagesField = safeGetField(Chapter.class, FIELD_CHAPTER_PAGES);
+            if (pagesField == null) {
+                LOGGER.warn("Chapter structure changed; cannot add chapter '{}'", chapterTitle);
+                return;
+            }
             @SuppressWarnings("unchecked")
             List<Page> pages = (List<Page>) pagesField.get(categoryIndex);
 
@@ -190,8 +256,11 @@ public class EidolonCategoryExtension {
             }
 
             // Append the new entry to the IndexPage's list via reflection
-            Field entriesField = IndexPage.class.getDeclaredField("entries");
-            entriesField.setAccessible(true);
+            Field entriesField = safeGetField(IndexPage.class, FIELD_INDEX_ENTRIES);
+            if (entriesField == null) {
+                LOGGER.warn("IndexPage structure changed; cannot add chapter '{}'", chapterTitle);
+                return;
+            }
             @SuppressWarnings("unchecked")
             List<IndexPage.IndexEntry> entries = (List<IndexPage.IndexEntry>) entriesField.get(indexPage);
             entries.add(newEntry);
@@ -200,11 +269,13 @@ public class EidolonCategoryExtension {
             registeredChapters.add(customChapter);
 
             // ⚠️ REFLECTION: Get category key for logging
-            Field keyField = category.getClass().getDeclaredField("key");
-            keyField.setAccessible(true);
-            String categoryKey = (String) keyField.get(category);
-
-            LOGGER.info("✅ Added chapter '{}' to category '{}' via reflection", chapterTitle, categoryKey);
+            Field keyField = safeGetField(category.getClass(), FIELD_CATEGORY_KEY);
+            if (keyField != null) {
+                String categoryKey = (String) keyField.get(category);
+                LOGGER.info("✅ Added chapter '{}' to category '{}' via reflection", chapterTitle, categoryKey);
+            } else {
+                LOGGER.info("✅ Added chapter '{}' to category via reflection", chapterTitle);
+            }
             
         } catch (Exception e) {
             LOGGER.error("❌ Failed to add chapter '{}' to category via reflection", chapterTitle, e);
@@ -236,12 +307,18 @@ public class EidolonCategoryExtension {
             IndexPage.IndexEntry newEntry = new IndexPage.IndexEntry(codexChapter, researchChapter.getIcon());
 
             // ⚠️ REFLECTION: Add to category's index
-            Field chapterField = category.getClass().getDeclaredField("chapter");
-            chapterField.setAccessible(true);
+            Field chapterField = safeGetField(category.getClass(), FIELD_CATEGORY_CHAPTER);
+            if (chapterField == null) {
+                LOGGER.warn("Category structure changed; cannot add research chapter '{}'", researchChapter.getId());
+                return;
+            }
             Index categoryIndex = (Index) chapterField.get(category);
 
-            Field pagesField = Chapter.class.getDeclaredField("pages");
-            pagesField.setAccessible(true);
+            Field pagesField = safeGetField(Chapter.class, FIELD_CHAPTER_PAGES);
+            if (pagesField == null) {
+                LOGGER.warn("Chapter structure changed; cannot add research chapter '{}'", researchChapter.getId());
+                return;
+            }
             @SuppressWarnings("unchecked")
             List<Page> pages = (List<Page>) pagesField.get(categoryIndex);
 
@@ -258,8 +335,11 @@ public class EidolonCategoryExtension {
                 return;
             }
 
-            Field entriesField = IndexPage.class.getDeclaredField("entries");
-            entriesField.setAccessible(true);
+            Field entriesField = safeGetField(IndexPage.class, FIELD_INDEX_ENTRIES);
+            if (entriesField == null) {
+                LOGGER.warn("IndexPage structure changed; cannot add research chapter '{}'", researchChapter.getId());
+                return;
+            }
             @SuppressWarnings("unchecked")
             List<IndexPage.IndexEntry> entries = (List<IndexPage.IndexEntry>) entriesField.get(indexPage);
             entries.add(newEntry);
@@ -268,12 +348,14 @@ public class EidolonCategoryExtension {
             registeredChapters.add(codexChapter);
 
             // Log success
-            Field keyField = category.getClass().getDeclaredField("key");
-            keyField.setAccessible(true);
-            String categoryKey = (String) keyField.get(category);
-
-            LOGGER.info("✅ Added research chapter '{}' to category '{}' via reflection",
+            Field keyField = safeGetField(category.getClass(), FIELD_CATEGORY_KEY);
+            if (keyField != null) {
+                String categoryKey = (String) keyField.get(category);
+                LOGGER.info("✅ Added research chapter '{}' to category '{}' via reflection",
                        researchChapter.getTitle().getString(), categoryKey);
+            } else {
+                LOGGER.info("✅ Added research chapter '{}' via reflection", researchChapter.getTitle().getString());
+            }
             
         } catch (Exception e) {
             LOGGER.error("❌ Failed to add research chapter '{}' to category via reflection", 
