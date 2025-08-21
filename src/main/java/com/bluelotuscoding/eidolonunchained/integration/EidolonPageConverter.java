@@ -10,6 +10,8 @@ import elucent.eidolon.codex.CruciblePage;
 import elucent.eidolon.codex.EntityPage;
 import elucent.eidolon.codex.ListPage;
 import elucent.eidolon.codex.Page;
+import elucent.eidolon.codex.TitledRitualPage;
+import elucent.eidolon.codex.SmeltingPage;
 import elucent.eidolon.codex.RitualPage;
 import elucent.eidolon.codex.TextPage;
 import elucent.eidolon.codex.TitlePage;
@@ -423,8 +425,15 @@ public class EidolonPageConverter {
             return createFallbackTextPage(pageJson);
         }
 
-        // Create RitualPage with ResourceLocation parameter
-        return new RitualPage(ritualResource);
+        // Use TitledRitualPage with a title translation key
+        String title = pageJson.has("text") ? pageJson.get("text").getAsString() : "";
+        if (title.isEmpty()) {
+            LOGGER.warn("Ritual page missing title text");
+            return createFallbackTextPage(pageJson);
+        }
+
+        // Create TitledRitualPage with translation key and ritual ID
+        return new TitledRitualPage(title, ritualResource);
     }
 
     /**
