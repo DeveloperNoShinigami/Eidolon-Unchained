@@ -5,7 +5,7 @@
 ```
 data/
 └── <namespace>/
-    ├── codex_categories/      # Top-level codex categories
+    ├── codex/      # Top-level codex categories
     ├── codex_chapters/        # Chapter definitions referenced by entries
     ├── codex_entries/         # Page content for chapters
     ├── research_chapters/     # Research chapter definitions
