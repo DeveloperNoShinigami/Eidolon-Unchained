@@ -1,0 +1,9 @@
+{
+  "target_chapter": "eidolon:critters",
+  "title": "eidolon.codex.chapter.critters",
+  "icon": "eidolon:raven_feather",
+  "pages": [
+    {"type": "text", "text": "eidolon.codex.page.critters.raven"},
+    {"type": "text", "text": "eidolon.codex.page.critters.slimy_slug"}
+  ]
+}

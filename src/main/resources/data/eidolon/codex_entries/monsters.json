@@ -1,0 +1,9 @@
+{
+  "target_chapter": "eidolon:monsters",
+  "title": "eidolon.codex.chapter.monsters",
+  "icon": "eidolon:tattered_cloth",
+  "pages": [
+    {"type": "text", "text": "eidolon.codex.page.monsters.zombie_brute"},
+    {"type": "text", "text": "eidolon.codex.page.monsters.wraith"}
+  ]
+}

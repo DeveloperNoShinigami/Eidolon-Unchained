@@ -119,7 +119,14 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
 
         // Load chapter definitions first so entries can reference them
         loadCustomChapters(resourceManager);
-        
+
+        // Also load any default codex entries bundled with the mod.
+        // These serve as built-in pages that ship inside the jar and
+        // should always be available even if the user has no datapacks.
+        // Datapack entries processed below can extend or override these
+        // defaults.
+        loadBuiltinEntries(resourceManager, resourceLocationJsonObjectMap);
+
         int loadedEntries = 0;
         int errors = 0;
         
@@ -335,6 +342,32 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                 }
             });
         LOGGER.info("Custom chapter loading complete. Total loaded: {}", CUSTOM_CHAPTERS.size());
+    }
+
+    /**
+     * Loads codex entries that are bundled with the mod itself. These act as
+     * the default chapters/pages which existed previously in hard coded form.
+     * Datapack entries processed later may override or extend these defaults.
+     */
+    private void loadBuiltinEntries(ResourceManager resourceManager,
+                                    Map<ResourceLocation, JsonElement> alreadyLoaded) {
+        resourceManager.listResources("codex_entries", p -> p.getPath().endsWith(".json"))
+            .forEach((resLoc, resource) -> {
+                // Skip any resources that are already being processed via the
+                // SimpleJsonResourceReloadListener map (datapacks will appear
+                // there). This ensures we only handle missing built-in files.
+                if (alreadyLoaded.containsKey(resLoc)) {
+                    return;
+                }
+                try (InputStreamReader reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
+                    JsonObject json = GSON.fromJson(reader, JsonObject.class);
+                    if (json != null) {
+                        loadCodexEntry(resLoc, json);
+                    }
+                } catch (IOException e) {
+                    LOGGER.error("Failed to load built-in codex entry {}", resLoc, e);
+                }
+            });
     }
     
     /**
