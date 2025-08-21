@@ -89,21 +89,13 @@ Specialized recipe page for crucible crafting.
 ```
 {
   "type": "ritual",
-  "content": "Greater Summoning Circle",
-  "data": {
-    "circle_size": 5,
-    "participants": 3,
-    "components": [
-      {"item": "minecraft:bell", "count": 1},
-      {"item": "minecraft:soul_sand", "count": 32},
-      {"item": "minecraft:wither_skeleton_skull", "count": 3},
-      {"item": "minecraft:nether_star", "count": 1}
-    ],
-    "description": "Summons a powerful ally to aid the community"
-  }
+  "ritual": "eidolon:crystallization",
+  "text": "eidolonunchained.codex.page.crystal_ritual"
 }
 ```
-Shows a top‑down ritual circle with components.
+Shows a top‑down ritual circle for the specified ritual. The `text` field is a
+translation key base; the game will automatically append `.title` when looking
+up the display title.
 
 ### `workbench`
 ```
