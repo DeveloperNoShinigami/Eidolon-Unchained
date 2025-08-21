@@ -1,7 +1,7 @@
 {
   "target_chapter": "eidolon:wicked_sign",
-  "title": "Advanced Applications of the Wicked Sign",
-  "description": "The wicked sign is a symbol of forbidden power, used in advanced magical practices.",
+  "title": "eidolonunchained.codex.entry.wicked_sign.advanced_applications.title",
+  "description": "eidolonunchained.codex.entry.wicked_sign.advanced_applications.description",
   "icon": {
     "item": "eidolon:dark_ink",
     "count": 1
@@ -9,7 +9,7 @@
   "pages": [
     {
       "type": "text",
-  "text": "The wicked sign allows practitioners to tap into dark energies for powerful effects."
+      "text": "eidolonunchained.codex.entry.wicked_sign.advanced_applications.introduction"
     },
     {
       "type": "crafting", 
@@ -17,15 +17,15 @@
     },
     {
       "type": "text",
-  "text": "Ink preparation is crucial for inscribing the wicked sign. Only the purest dark ink will suffice."
+      "text": "eidolonunchained.codex.entry.wicked_sign.advanced_applications.ink_preparation"
     },
     {
       "type": "text",
-  "text": "Sign placement determines the effectiveness and safety of the wicked sign's magic."
+      "text": "eidolonunchained.codex.entry.wicked_sign.advanced_applications.sign_placement"
     },
     {
       "type": "text",
-  "text": "Dark energies can be harnessed through the wicked sign, but must be controlled with care."
+      "text": "eidolonunchained.codex.entry.wicked_sign.advanced_applications.dark_energies"
     }
   ],
   "prerequisites": []

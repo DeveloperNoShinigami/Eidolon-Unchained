@@ -10,6 +10,7 @@ The codex extension system lets datapacks add custom knowledge entries to Eidolo
   - `ritual` shows the full ritual circle using a ritual ID
   - `ritual_recipe` references a ritual by ID without the circle
 
+
 ## Example Entry
 ```json
 {
@@ -18,7 +19,7 @@ The codex extension system lets datapacks add custom knowledge entries to Eidolo
   "icon": "eidolon:arcane_gold_ingot",
   "pages": [
     { "type": "text", "text": "Transmuted metal infused with void energy." },
-    { "type": "smelting", "input": "minecraft:gold_ingot", "result": "eidolon:arcane_gold_ingot" }
+    { "type": "crafting_recipe", "recipe": "eidolon:arcane_gold_ingot" }
   ]
 }
 ```
@@ -29,12 +30,12 @@ The codex extension system lets datapacks add custom knowledge entries to Eidolo
 
 ## Further Documentation
 - [Documentation Index](../README.md)
-- [Datapack Overview](../datapack_overview.md)
-- [Datapack Structure](../DATAPACK_STRUCTURE.md)
-- [Research Conditions](../RESEARCH_CONDITIONS.md)
-- [Research Entries](../research_entries.md)
-- [Codex Reference](../codex_reference.md)
-- [Codex Tutorial](../codex_tutorial.md)
-- [Best Practices](../best_practices.md)
-- [UI Customization](../ui_customization.md)
+- [Datapack Overview](../datapack/overview.md)
+- [Datapack Structure](../datapack/structure.md)
+- [Research Conditions](../research/condition_types.md)
+- [Research Entries](../research/entry_reference.md)
+- [Codex Reference](../codex/reference.md)
+- [Codex Tutorial](../codex/tutorial.md)
+- [Best Practices](../datapack/best_practices.md)
+- [UI Customization](ui_texture_customization.md)
 - [Example Complete Codex Entry](../EXAMPLE_COMPLETE_CODEX_ENTRY.json)
