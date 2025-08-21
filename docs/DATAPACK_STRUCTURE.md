@@ -37,6 +37,21 @@ See [Codex Tutorial](codex_tutorial.md) for a guided walkthrough and [Codex Refe
         └── 📄 vanilla_integration.json
 ```
 
+## 🗃️ **Codex Category Template**
+
+```json
+{
+  "key": "community_rituals",
+  "name": "eidolonunchained.codex.category.community_rituals", // translation key
+  "icon": "minecraft:cauldron",
+  "color": "0xCC33FF",
+  "description": "Optional description"
+}
+```
+
+`name` must be the translation key for the category title, following the convention:
+`<namespace>.codex.category.<key>`.
+
 ## 📖 **Codex Entry Template**
 
 ```json

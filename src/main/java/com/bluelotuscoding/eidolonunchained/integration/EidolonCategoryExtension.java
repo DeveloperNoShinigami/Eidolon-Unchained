@@ -16,8 +16,6 @@ import org.slf4j.Logger;
 
 // ⚠️ REFLECTION IMPORTS - Will be removed when CodexEvents become available
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
@@ -45,6 +43,9 @@ public class EidolonCategoryExtension {
     
     // Eidolon Repraised 0.3.8.15: Only categories list is needed for integration
     private static List<Category> eidolonCategories = null;
+
+    // Keep references to dynamically created chapters so they aren't garbage collected
+    private static final List<Chapter> registeredChapters = new ArrayList<>();
 
     /**
      * Initialize custom categories using reflection at the correct mod loading phase (FMLLoadCompleteEvent)
@@ -168,20 +169,41 @@ public class EidolonCategoryExtension {
             Field chapterField = category.getClass().getDeclaredField("chapter");
             chapterField.setAccessible(true);
             Index categoryIndex = (Index) chapterField.get(category);
-            
-            // Add to index page (requires more reflection)
-            Field indexPageField = categoryIndex.getClass().getDeclaredField("indexPage");
-            indexPageField.setAccessible(true);
-            IndexPage indexPage = (IndexPage) indexPageField.get(categoryIndex);
-            
-            // This is complex - for now, just log the addition
-            LOGGER.info("(No itemToEntryMap: registered chapter '{}' with icon {} in category)", chapterTitle, iconItem);
-            
+
+            // Locate the first IndexPage within the category's index
+            Field pagesField = Chapter.class.getDeclaredField("pages");
+            pagesField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            List<Page> pages = (List<Page>) pagesField.get(categoryIndex);
+
+            IndexPage indexPage = null;
+            for (Page page : pages) {
+                if (page instanceof IndexPage) {
+                    indexPage = (IndexPage) page;
+                    break;
+                }
+            }
+
+            if (indexPage == null) {
+                LOGGER.warn("Category missing IndexPage; cannot add chapter '{}'", chapterTitle);
+                return;
+            }
+
+            // Append the new entry to the IndexPage's list via reflection
+            Field entriesField = IndexPage.class.getDeclaredField("entries");
+            entriesField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            List<IndexPage.IndexEntry> entries = (List<IndexPage.IndexEntry>) entriesField.get(indexPage);
+            entries.add(newEntry);
+
+            // Keep track of the chapter to ensure it remains registered with the category
+            registeredChapters.add(customChapter);
+
             // ⚠️ REFLECTION: Get category key for logging
             Field keyField = category.getClass().getDeclaredField("key");
             keyField.setAccessible(true);
             String categoryKey = (String) keyField.get(category);
-            
+
             LOGGER.info("✅ Added chapter '{}' to category '{}' via reflection", chapterTitle, categoryKey);
             
         } catch (Exception e) {
@@ -212,16 +234,45 @@ public class EidolonCategoryExtension {
             
             // Create index entry
             IndexPage.IndexEntry newEntry = new IndexPage.IndexEntry(codexChapter, researchChapter.getIcon());
-            
-            // No itemToEntryMap in Eidolon Repraised; just log
-            LOGGER.info("(No itemToEntryMap: registered research chapter '{}' with icon {} in category)", researchChapter.getTitle().getString(), researchChapter.getIcon());
-            
+
+            // ⚠️ REFLECTION: Add to category's index
+            Field chapterField = category.getClass().getDeclaredField("chapter");
+            chapterField.setAccessible(true);
+            Index categoryIndex = (Index) chapterField.get(category);
+
+            Field pagesField = Chapter.class.getDeclaredField("pages");
+            pagesField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            List<Page> pages = (List<Page>) pagesField.get(categoryIndex);
+
+            IndexPage indexPage = null;
+            for (Page page : pages) {
+                if (page instanceof IndexPage) {
+                    indexPage = (IndexPage) page;
+                    break;
+                }
+            }
+
+            if (indexPage == null) {
+                LOGGER.warn("Category missing IndexPage; cannot add research chapter '{}'", researchChapter.getId());
+                return;
+            }
+
+            Field entriesField = IndexPage.class.getDeclaredField("entries");
+            entriesField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            List<IndexPage.IndexEntry> entries = (List<IndexPage.IndexEntry>) entriesField.get(indexPage);
+            entries.add(newEntry);
+
+            // Keep track of the chapter to ensure it remains registered with the category
+            registeredChapters.add(codexChapter);
+
             // Log success
             Field keyField = category.getClass().getDeclaredField("key");
             keyField.setAccessible(true);
             String categoryKey = (String) keyField.get(category);
-            
-            LOGGER.info("✅ Added research chapter '{}' to category '{}' via reflection", 
+
+            LOGGER.info("✅ Added research chapter '{}' to category '{}' via reflection",
                        researchChapter.getTitle().getString(), categoryKey);
             
         } catch (Exception e) {
