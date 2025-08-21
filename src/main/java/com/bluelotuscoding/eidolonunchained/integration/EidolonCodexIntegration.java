@@ -12,6 +12,7 @@ import elucent.eidolon.codex.Page;
 import elucent.eidolon.codex.TextPage;
 import elucent.eidolon.codex.TitlePage;
 import elucent.eidolon.registries.Researches;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -79,14 +80,15 @@ public class EidolonCodexIntegration {
             ResearchChapter research = ResearchDataManager.getResearchChapter(chapterId);
             CodexDataManager.ChapterDefinition metadata = CodexDataManager.getCustomChapter(chapterId);
 
-            String title;
+            Component titleComponent;
             if (metadata != null) {
-                title = metadata.getTitle().getString();
+                titleComponent = metadata.getTitle();
             } else if (research != null) {
-                title = research.getTitle().getString();
+                titleComponent = research.getTitle();
             } else {
-                title = chapterId.getPath();
+                titleComponent = Component.literal(chapterId.getPath());
             }
+            String title = titleComponent.getString();
 
             if (research == null) {
                 LOGGER.info("No research chapter for {} - using fallback metadata", chapterId);
