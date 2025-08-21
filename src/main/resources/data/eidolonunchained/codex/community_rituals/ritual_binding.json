@@ -4,8 +4,8 @@
   "icon": "minecraft:chain",
   "pages": [
     {
-      "type": "text",
-      "content": "Binding rituals create permanent magical effects that persist across the world. These powerful enchantments require multiple practitioners to maintain stability."
+  "type": "text",
+  "text": "Binding rituals create permanent magical effects that persist across the world. These powerful enchantments require multiple practitioners to maintain stability."
     },
     {
       "type": "workbench",
@@ -29,8 +29,8 @@
       }
     },
     {
-      "type": "text",
-      "content": "Soul Chains can bind spiritual entities to physical locations, creating guardian spirits or persistent magical effects."
+  "type": "text",
+  "text": "Soul Chains can bind spiritual entities to physical locations, creating guardian spirits or persistent magical effects."
     }
   ]
 }

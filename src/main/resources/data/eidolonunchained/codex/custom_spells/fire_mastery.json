@@ -4,12 +4,12 @@
   "icon": "minecraft:fire_charge",
   "pages": [
     {
-      "type": "text",
-      "content": "Master the ancient art of fire magic with these powerful techniques. Fire spells require intense concentration and respect for the destructive force you wield."
+  "type": "text",
+  "text": "Master the ancient art of fire magic with these powerful techniques. Fire spells require intense concentration and respect for the destructive force you wield."
     },
     {
-      "type": "text", 
-      "content": "Advanced practitioners can combine fire magic with soul manipulation to create devastating attacks that burn both body and spirit."
+  "type": "text", 
+  "text": "Advanced practitioners can combine fire magic with soul manipulation to create devastating attacks that burn both body and spirit."
     },
     {
       "type": "crafting",

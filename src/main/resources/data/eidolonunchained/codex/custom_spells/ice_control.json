@@ -4,12 +4,12 @@
   "icon": "minecraft:ice",
   "pages": [
     {
-      "type": "text",
-      "content": "Harness the power of winter's embrace. Ice magic allows you to freeze enemies, create barriers, and manipulate water in all its forms."
+  "type": "text",
+  "text": "Harness the power of winter's embrace. Ice magic allows you to freeze enemies, create barriers, and manipulate water in all its forms."
     },
     {
-      "type": "text",
-      "content": "The key to ice magic is understanding that cold is not the absence of heat, but the presence of stillness - the slowing of all motion and energy."
+  "type": "text",
+  "text": "The key to ice magic is understanding that cold is not the absence of heat, but the presence of stillness - the slowing of all motion and energy."
     },
     {
       "type": "ritual",

@@ -4,8 +4,8 @@
   "icon": "minecraft:end_crystal", 
   "pages": [
     {
-      "type": "text",
-      "content": "This expansion pack contains additional content created by the Eidolon Unchained community. New spells, rituals, and magical discoveries await!"
+  "type": "text",
+  "text": "This expansion pack contains additional content created by the Eidolon Unchained community. New spells, rituals, and magical discoveries await!"
     },
     {
       "type": "list",
@@ -21,8 +21,8 @@
       }
     },
     {
-      "type": "text",
-      "content": "The End Crystal serves as a powerful focus for reality-bending magic, allowing practitioners to manipulate the fabric of existence itself."
+  "type": "text",
+  "text": "The End Crystal serves as a powerful focus for reality-bending magic, allowing practitioners to manipulate the fabric of existence itself."
     },
     {
       "type": "crucible",
