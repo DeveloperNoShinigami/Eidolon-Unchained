@@ -35,7 +35,7 @@ import java.util.*;
  * Manages loading and registration of custom codex categories, chapters and
  * entries supplied through datapacks.
  * <p>
- * Files follow the format described in {@code docs/datapack_overview.md}:
+ * Files follow the format described in {@code docs/datapack/overview.md}:
  * categories reside in {@code codex_categories/}, chapters in
  * {@code codex_chapters/} and individual entries in
  * {@code codex_entries/}. Translation keys should use the pattern
