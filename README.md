@@ -29,7 +29,7 @@ An addon mod for **Eidolon: Repraised** that expands the mystical world with new
 Comprehensive guides live in the [docs/](docs/) directory:
 
 - [Documentation Index](docs/README.md)
-- [System Summary](docs/misc/system_summary.md)
+- [Complete System Summary](docs/misc/system_summary.md)
 - [Datapack Overview](docs/datapack/overview.md)
 - [Datapack Structure](docs/datapack/structure.md)
 - [Research Conditions](docs/research/condition_types.md)
@@ -119,20 +119,16 @@ The TitlePage system automatically handles title generation:
 This means each title page displays both the title and introductory content together.
 
 #### 4. Page Types
-
-Supported page types include:
-- **`title`** – shows a title and introductory text on the same page
-- **`text`** – renders a block of formatted text
-- **`entity`** – displays a 3D entity model
-- **`crafting`** – renders a standard crafting grid
-- **`crucible`** – displays crucible transformations
-- **`list`** – shows a bullet list of text lines
-- **`workbench`** – renders a workbench-style recipe
-- **`ritual`**: Shows the full ritual layout from a ritual ID
-- **`crafting_recipe`** – links a recipe ID directly
-- **`ritual_recipe`** – links a ritual recipe by ID
-- **`image`** – shows a static image asset
-- **`item_showcase`** – displays a standalone item
+Available page types (9 total):
+- **`text`**: Plain text content
+- **`title`**: Creates a page with both title and content
+- **`entity`**: Displays an entity with information
+- **`crafting`**: Shows a crafting recipe
+- **`ritual`**: Displays ritual information
+- **`crucible`**: Shows a crucible recipe
+- **`list`**: Displays a bullet list of items
+- **`smelting`**: Shows a furnace recipe
+- **`workbench`**: Displays an Eidolon workbench recipe
 
 #### 5. Translation Best Practices
 - Use consistent naming: `eidolonunchained.codex.entry.[entry_name].[section]`
