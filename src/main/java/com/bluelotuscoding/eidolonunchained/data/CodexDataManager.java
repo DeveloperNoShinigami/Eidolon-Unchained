@@ -103,56 +103,46 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
     }
     
     @Override
-    protected void apply(Map<ResourceLocation, JsonElement> resourceLocationJsonObjectMap, 
-                        ResourceManager resourceManager, ProfilerFiller profilerFiller) {
-        
-        LOGGER.info("CodexDataManager.apply() called with {} resources", resourceLocationJsonObjectMap.size());
-        
-        // Log all detected resources for debugging
-        resourceLocationJsonObjectMap.keySet().forEach(location -> {
-            LOGGER.info("Found resource: {}", location);
-        });
-        
+    protected void apply(Map<ResourceLocation, JsonElement> resourceLocationJsonObjectMap,
+                         ResourceManager resourceManager, ProfilerFiller profilerFiller) {
+
+        // We no longer rely on the pre-parsed map supplied by SimpleJsonResourceReloadListener
+        // so that builtin resources packaged with the mod are treated the same as datapack
+        // additions. Instead we manually scan the resource manager for all codex entry JSON
+        // files. This ensures the default chapter data we ship is always loaded alongside any
+        // user provided datapacks.
+        LOGGER.info("CodexDataManager.apply() reloading codex data");
+
         CHAPTER_EXTENSIONS.clear();
         ALL_ENTRIES.clear();
         CUSTOM_CHAPTERS.clear();
 
         // Load chapter definitions first so entries can reference them
         loadCustomChapters(resourceManager);
-        
+
         int loadedEntries = 0;
         int errors = 0;
-        
-        for (Map.Entry<ResourceLocation, JsonElement> entry : resourceLocationJsonObjectMap.entrySet()) {
-            ResourceLocation resourceLocation = entry.getKey();
-            JsonElement jsonElement = entry.getValue();
-            
-            LOGGER.info("Processing codex entry file: {}", resourceLocation);
-            
-            if (!jsonElement.isJsonObject()) {
-                LOGGER.warn("Skipping non-object JSON at {}", resourceLocation);
-                continue;
-            }
-            
-            JsonObject json = jsonElement.getAsJsonObject();
-            
-            try {
-                String path = resourceLocation.getPath();
-                
-                LOGGER.info("Resource path: {}, processing codex entry...", path);
-                
-                // All files from this listener are already from codex_entries directory
-                LOGGER.info("Attempting to load codex entry...");
-                loadCodexEntry(resourceLocation, json);
-                loadedEntries++;
-                LOGGER.info("Successfully loaded entry! Total loaded: {}", loadedEntries);
-                
-            } catch (Exception e) {
-                LOGGER.error("Error loading codex data from {}: {}", resourceLocation, e.getMessage(), e);
-                errors++;
-            }
-        }
-        
+
+        // Find every codex entry JSON across all namespaces (builtin + datapack)
+        LOGGER.info("Scanning for codex entries in all namespaces...");
+        resourceManager.listResources("codex_entries", rl -> rl.getPath().endsWith(".json"))
+                .forEach((resLoc, resource) -> {
+                    LOGGER.info("Processing codex entry file: {}", resLoc);
+                    try (InputStreamReader reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
+                        JsonObject json = GSON.fromJson(reader, JsonObject.class);
+                        if (json == null) {
+                            LOGGER.warn("Skipping empty json at {}", resLoc);
+                            return;
+                        }
+                        loadCodexEntry(resLoc, json);
+                        loadedEntries++;
+                        LOGGER.info("Successfully loaded entry! Total loaded: {}", loadedEntries);
+                    } catch (Exception e) {
+                        LOGGER.error("Error loading codex data from {}: {}", resLoc, e.getMessage(), e);
+                        errors++;
+                    }
+                });
+
         LOGGER.info("Loaded {} codex entries with {} errors", loadedEntries, errors);
     }
     
