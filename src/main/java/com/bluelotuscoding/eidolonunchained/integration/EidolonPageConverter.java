@@ -36,6 +36,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -625,20 +627,28 @@ public class EidolonPageConverter {
         String inputId = pageJson.has("input") ? pageJson.get("input").getAsString() : "";
         String recipeId = pageJson.has("recipe") ? pageJson.get("recipe").getAsString() : "";
 
-        if (resultId.isEmpty() || inputId.isEmpty()) {
-            LOGGER.warn("Smelting page missing result or input");
+        if (inputId.isEmpty() || (recipeId.isEmpty() && resultId.isEmpty())) {
+            LOGGER.warn("Smelting page missing result, input, or recipe");
             return createFallbackTextPage(pageJson);
         }
 
-        Item resultItem = ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(resultId));
-        Item inputItem = ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(inputId));
-        if (resultItem == null || inputItem == null) {
-            LOGGER.warn("Invalid items for smelting page: result={}, input={}", resultId, inputId);
+        ItemStack inputStack = resolveItemFromId(inputId);
+        if (inputStack.isEmpty()) {
+            LOGGER.warn("Invalid input item for smelting page: {}", inputId);
             return createFallbackTextPage(pageJson);
         }
 
-        ItemStack resultStack = new ItemStack(resultItem);
-        ItemStack inputStack = new ItemStack(inputItem);
+        ItemStack resultStack = ItemStack.EMPTY;
+        if (!recipeId.isEmpty()) {
+            resultStack = getRecipeOutput(recipeId);
+        }
+        if (resultStack.isEmpty()) {
+            resultStack = resolveItemFromId(resultId);
+        }
+        if (resultStack.isEmpty()) {
+            LOGGER.warn("Invalid result item for smelting page: {}", resultId);
+            return createFallbackTextPage(pageJson);
+        }
 
         if (!recipeId.isEmpty()) {
             ResourceLocation recipeRes = ResourceLocation.tryParse(recipeId);
@@ -648,6 +658,33 @@ public class EidolonPageConverter {
         }
 
         return new SmeltingPage(resultStack, inputStack);
+    }
+
+    private static ItemStack getRecipeOutput(String recipeId) {
+        if (recipeId == null || recipeId.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        ResourceLocation recipeRes = ResourceLocation.tryParse(recipeId);
+        Minecraft mc = Minecraft.getInstance();
+        if (recipeRes == null || mc == null || mc.level == null) {
+            return ItemStack.EMPTY;
+        }
+        RecipeManager manager = mc.level.getRecipeManager();
+        return manager.byKey(recipeRes)
+                .map(recipe -> recipe.getResultItem(mc.level.registryAccess()).copy())
+                .orElse(ItemStack.EMPTY);
+    }
+
+    private static ItemStack resolveItemFromId(String itemId) {
+        if (itemId == null || itemId.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        ResourceLocation itemRes = ResourceLocation.tryParse(itemId);
+        if (itemRes == null) {
+            return ItemStack.EMPTY;
+        }
+        Item item = ForgeRegistries.ITEMS.getValue(itemRes);
+        return item != null ? new ItemStack(item) : ItemStack.EMPTY;
     }
 
     /**
