@@ -26,14 +26,14 @@ public class CodexEntry {
 
     public enum EntryType {
         TEXT("text"),
-        RECIPE("recipe"),
-        RITUAL("ritual"),
+        TITLE("title"),
         ENTITY("entity"),
         CRAFTING("crafting"),
-        SMELTING("smelting"),
+        RITUAL("ritual"),
         CRUCIBLE("crucible"),
-        WORKBENCH("workbench"),
-        LIST("list");
+        LIST("list"),
+        SMELTING("smelting"),
+        WORKBENCH("workbench");
 
         private final String name;
 
@@ -43,6 +43,18 @@ public class CodexEntry {
 
         public String getName() {
             return name;
+        }
+
+        /**
+         * Get an EntryType by its string name, or null if unrecognized.
+         */
+        public static EntryType fromName(String name) {
+            for (EntryType type : values()) {
+                if (type.name.equalsIgnoreCase(name)) {
+                    return type;
+                }
+            }
+            return null;
         }
     }
 

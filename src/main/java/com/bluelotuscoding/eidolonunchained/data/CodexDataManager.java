@@ -35,7 +35,7 @@ import java.util.*;
  * Manages loading and registration of custom codex categories, chapters and
  * entries supplied through datapacks.
  * <p>
- * Files follow the format described in {@code docs/datapack_overview.md}:
+ * Files follow the format described in {@code docs/datapack/overview.md}:
  * categories reside in {@code codex_categories/}, chapters in
  * {@code codex_chapters/} and individual entries in
  * {@code codex_entries/}. Translation keys should use the pattern
@@ -264,11 +264,11 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
             CodexEntry.EntryType type = CodexEntry.EntryType.TEXT;
             if (json.has("type")) {
                 String typeStr = json.get("type").getAsString();
-                for (CodexEntry.EntryType t : CodexEntry.EntryType.values()) {
-                    if (t.getName().equalsIgnoreCase(typeStr)) {
-                        type = t;
-                        break;
-                    }
+                CodexEntry.EntryType parsed = CodexEntry.EntryType.fromName(typeStr);
+                if (parsed != null) {
+                    type = parsed;
+                } else {
+                    LOGGER.warn("Unknown codex entry type '{}' in {}, defaulting to TEXT", typeStr, entryId);
                 }
             }
 
