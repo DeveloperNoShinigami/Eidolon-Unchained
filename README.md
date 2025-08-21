@@ -66,6 +66,10 @@ For a step-by-step tutorial see [Codex Tutorial](docs/codex/tutorial.md). For a 
 
 #### 1. JSON Entry Structure
 Create JSON files in `src/main/resources/data/eidolonunchained/codex_entries/`:
+These files add pages to the existing codex categories.
+To introduce a brand new category, make a folder under
+`src/main/resources/data/eidolonunchained/codex/` with a `_category.json`
+and place the category's entry files inside it.
 
 ```json
 {

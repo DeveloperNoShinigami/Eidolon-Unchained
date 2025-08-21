@@ -8,16 +8,24 @@ contains gameplay JSON while `assets/` stores language and other client resource
 ```text
 📦 data/
 └── 📁 eidolonunchained/                # Your namespace
-    ├── 📁 codex_chapters/              # Optional new chapter definitions
-    │   └── 📄 mythology.json           # Example chapter file
-    ├── 📁 codex_entries/               # 📖 Codex pages live here
+    ├── 📁 codex/                       # Category folders for new codex tabs
+    │   └── 📁 custom_spells/           # Example category folder
+    │       ├── 📄 _category.json       # Category metadata
+    │       └── 📄 fire_mastery.json    # Example entry inside the category
+    ├── 📁 codex_entries/               # 📖 Pages for built-in categories
     │   └── 📄 ritual_mastery.json      # Example codex entry
+    ├── 📁 codex_chapters/              # Optional codex chapter definitions
+    │   └── 📄 mythology.json           # Example chapter file
+    ├── 📁 research_chapters/           # Optional research chapter definitions
+    │   └── 📄 void_alchemy.json        # Example research chapter
     └── 📁 research_entries/            # 🔬 Research nodes live here
         └── 📄 ritual_master.json       # Example research entry
 ```
 
-*`codex_entries/` and `research_entries/` hold the JSON that adds new pages and
-progression to the mod.*
+*Use `codex_entries/` to add pages to existing categories.  Place new categories
+and their entries under `codex/` in folders with a `_category.json` file.
+`research_entries/` hold individual research nodes, while `research_chapters/`
+define the chapters that group them.*
 
 ## `assets/`
 
