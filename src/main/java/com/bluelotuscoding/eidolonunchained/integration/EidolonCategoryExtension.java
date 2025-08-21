@@ -72,17 +72,6 @@ public class EidolonCategoryExtension {
             LOGGER.info("✅ Successfully implemented FULL category system via reflection!");
             LOGGER.info("🚀 Ready for migration to event system when CodexEvents become available");
 
-            // Step 2: Create and add custom categories using our datapack system
-            LOGGER.info("📁 Creating custom categories from JSON datapacks...");
-            DatapackCategoryExample.addDatapackCategories(eidolonCategories);
-
-            // Step 3: Add chapters to existing categories
-            LOGGER.info("📖 Adding custom chapters to existing categories...");
-            addChaptersToExistingCategories(eidolonCategories);
-
-            LOGGER.info("✅ Successfully implemented FULL category system via reflection!");
-            LOGGER.info("🚀 Ready for migration to event system when CodexEvents become available");
-
         } catch (Exception e) {
             LOGGER.error("❌ Failed to initialize custom categories via reflection", e);
         }
