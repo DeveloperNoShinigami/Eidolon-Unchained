@@ -80,11 +80,14 @@ public class CustomCategoryBuilder {
             entries[i] = new IndexPage.IndexEntry(entry.chapter, entry.icon);
         }
         
+        // Translation key for this category
+        String translationKey = "eidolonunchained.codex.category." + key;
+
         // Create index page
-        Index index = new Index("eidolonunchained.codex.category." + key, new IndexPage(entries));
-        
-        // Create and return category
-        Category category = new Category(key, icon, color, index);
+        Index index = new Index(translationKey, new IndexPage(entries));
+
+        // Create and return category with fully-qualified translation key
+        Category category = new Category(translationKey, icon, color, index);
         
         LOGGER.info("✅ Built category '{}' with {} chapters", key, chapters.size());
         return category;

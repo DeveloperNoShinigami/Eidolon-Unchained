@@ -1,8 +1,4 @@
 {
-  "eidolon.codex.category.expansions": "Expansions",
-  "eidolon.codex.category.community_rituals": "Community Rituals",
-  "eidolon.codex.category.custom_spells": "Custom Spells",
-  "eidolon.codex.category.advanced_techniques": "Advanced Techniques",
   "eidolonunchained.codex.chapter.community_rituals": "Community Rituals",
   "eidolonunchained.codex.chapter.rituals": "Rituals",
   "eidolonunchained.codex.chapter.summon_ritual": "Summon Ritual",
@@ -137,8 +133,9 @@
   
   "_comment_categories": "Category names for custom sections",
   "eidolonunchained.codex.category.custom_spells": "Custom Spells",
-  "eidolonunchained.codex.category.community_rituals": "Community Rituals", 
+  "eidolonunchained.codex.category.community_rituals": "Community Rituals",
   "eidolonunchained.codex.category.expansions": "Expansions",
+  "eidolonunchained.codex.category.advanced_techniques": "Advanced Techniques",
 
   "_comment_research": "=== Research System Translations ===",
   
