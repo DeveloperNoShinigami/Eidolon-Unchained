@@ -1,50 +1,19 @@
-# Troubleshooting Codex Translation Errors
-
-## Common Format Errors
-
-If you see a "Format error" in a codex page, it is often caused by a percent sign (`%`) in your translation string. Minecraft's translation system treats `%` as the start of a format specifier (like `%s` or `%1$s`). If your translation string contains a `%` but the code does not provide arguments, you will get a format error.
-
-### How to Fix
-
-- **Escape percent signs:** Use `%%` instead of `%` in your translation strings to display a literal percent sign.
-- **Remove unused format specifiers:** If you do not intend to use arguments, make sure your translation string does not contain `%s`, `%1$s`, etc.
-
-#### Example
-
-**Incorrect:**
-
-```json
-"eidolonunchained.codex.entry.crystal_rituals.placement": "Proper crystal placement can increase ritual effectiveness by up to 300%."
-```
-
-**Correct:**
-
-```json
-"eidolonunchained.codex.entry.crystal_rituals.placement": "Proper crystal placement can increase ritual effectiveness by up to 300%%."
-```
-
-This will prevent Minecraft from showing a format error and display the percent sign as intended.
 # Eidolon Unchained
-
-See the [documentation](docs/README.md) for a complete list of guides.
 
 An addon mod for **Eidolon: Repraised** that expands the mystical world with new chapters, rituals, and other Eidolon-focused content.
 
-## Description
+## Features
 
-Eidolon Unchained is designed to enhance your Eidolon experience by adding:
-- New chapters and storylines  
+- New chapters and storylines
 - Additional rituals and magical practices
 - Enhanced mystical content
 - Integration with Curios API for mystical accessories
 - Advanced codex system with proper translation support
 - Allows developers and modders to datapack Eidolon codex features and implement spells
 
-## Features
-
 ### Enhanced Codex System
 - **Advanced Monster Studies**: Comprehensive guide to magical creatures and their behaviors
-- **Rare Monster Variants**: Documentation of unusual monster behaviors and variants  
+- **Rare Monster Variants**: Documentation of unusual monster behaviors and variants
 - **Advanced Summoning Techniques**: For experienced practitioners of spectral manipulation
 - **Crystal Ritual Mastery**: Advanced techniques for crystal-based magical workings
 - **Advanced Void Techniques**: Expanding upon void amulets and void manipulation
@@ -55,6 +24,22 @@ Eidolon Unchained is designed to enhance your Eidolon experience by adding:
 - Consistent language file structure
 - Proper TitlePage integration with automatic title generation
 
+## Documentation
+
+Comprehensive guides live in the [docs/](docs/) directory:
+
+- [Documentation Index](docs/README.md)
+- [Complete System Summary](docs/COMPLETE_SYSTEM_SUMMARY.md)
+- [Datapack Overview](docs/datapack_overview.md)
+- [Datapack Structure](docs/DATAPACK_STRUCTURE.md)
+- [Research Conditions](docs/RESEARCH_CONDITIONS.md)
+- [Research Entries](docs/research_entries.md)
+- [Codex Reference](docs/codex_reference.md)
+- [Codex Tutorial](docs/codex_tutorial.md)
+- [Best Practices](docs/best_practices.md)
+- [UI Customization](docs/ui_customization.md)
+- [Example Complete Codex Entry](docs/EXAMPLE_COMPLETE_CODEX_ENTRY.json)
+
 ## Dependencies
 
 This mod requires the following mods to function:
@@ -62,7 +47,7 @@ This mod requires the following mods to function:
 ### Required Dependencies
 - **Minecraft**: 1.20.1
 - **Minecraft Forge**: 47.4.0+
-- **Eidolon: Repraised**: 0.3.8+ 
+- **Eidolon: Repraised**: 0.3.8+
 - **Curios API**: 5.14.1+
 
 ## Installation
@@ -139,18 +124,45 @@ Available page types:
 - Keep content concise but descriptive
 - Use proper punctuation and formatting
 
-### Translation System Features
+## Translation System Features
 
-#### Caching System
+### Caching System
 The enhanced translation system includes:
 - **Memory caching** for frequently accessed translations
 - **Direct language file access** for fallback translations
 - **Performance optimization** for large codex entries
 
-#### Error Handling
+### Error Handling
 - Graceful fallback to English translations
 - Debug logging for missing translation keys
 - Automatic error recovery for malformed entries
+
+## Translation Troubleshooting
+
+### Common Format Errors
+
+If you see a "Format error" in a codex page, it is often caused by a percent sign (`%`) in your translation string. Minecraft's translation system treats `%` as the start of a format specifier (like `%s` or `%1$s`). If your translation string contains a `%` but the code does not provide arguments, you will get a format error.
+
+### How to Fix
+
+- **Escape percent signs:** Use `%%` instead of `%` in your translation strings to display a literal percent sign.
+- **Remove unused format specifiers:** If you do not intend to use arguments, make sure your translation string does not contain `%s`, `%1$s`, etc.
+
+#### Example
+
+**Incorrect:**
+
+```json
+"eidolonunchained.codex.entry.crystal_rituals.placement": "Proper crystal placement can increase ritual effectiveness by up to 300%."
+```
+
+**Correct:**
+
+```json
+"eidolonunchained.codex.entry.crystal_rituals.placement": "Proper crystal placement can increase ritual effectiveness by up to 300%%."
+```
+
+This will prevent Minecraft from showing a format error and display the percent sign as intended.
 
 ## Development
 
@@ -180,6 +192,12 @@ The mod integrates with:
 - **Language File Optimization**: Removed duplicate entries and improved organization
 - **Recipe Page Support**: Fixed "air" display issues in crafting pages
 
+## Future Features
+
+- Additional codex chapters and research content
+- Expanded ritual mechanics
+- Improved integration with other magic mods
+
 ## Authors
 
 **Blue Lotus Coding**
@@ -191,3 +209,4 @@ All Rights Reserved
 ## Version
 
 Current Version: 1.0.0
+
