@@ -178,13 +178,13 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
             
             // Use the file location as the entry ID
             ResourceLocation entryId = location;
-            
+
             // Parse target chapter - support both direct field names and resource locations
             String targetChapterStr = json.get("target_chapter").getAsString();
             LOGGER.info("Entry {} targets chapter: {}", entryId, targetChapterStr);
-            
+
             ResourceLocation targetChapter;
-            
+
             if (targetChapterStr.contains(":")) {
                 // It's a resource location like "eidolon:void_amulet"
                 targetChapter = ResourceLocation.tryParse(targetChapterStr);
@@ -195,11 +195,23 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                 targetChapter = ResourceLocation.tryParse("eidolonunchained:" + targetChapterStr.toLowerCase());
                 LOGGER.info("Converted field name to our custom resource location: {}", targetChapter);
             }
-            
+
             if (targetChapter == null) {
                 throw new JsonParseException("Invalid target_chapter format: " + targetChapterStr);
             }
-            
+
+            // Reject duplicate entry ids
+            if (ALL_ENTRIES.containsKey(entryId)) {
+                LOGGER.warn("Duplicate codex entry id '{}' detected, skipping", entryId);
+                return;
+            }
+
+            // Verify the target chapter exists before proceeding
+            if (!CUSTOM_CHAPTERS.containsKey(targetChapter) && !ResearchDataManager.hasResearchChapter(targetChapter)) {
+                LOGGER.warn("Codex entry {} references unresolved chapter {}", entryId, targetChapter);
+                return;
+            }
+
             LOGGER.info("About to create CodexEntry...");
 
             // Basic fields
@@ -256,8 +268,22 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
             // Pages
             List<JsonObject> pages = new ArrayList<>();
             JsonArray pagesArray = json.getAsJsonArray("pages");
-            for (JsonElement elem : pagesArray) {
-                pages.add(elem.getAsJsonObject());
+            for (int i = 0; i < pagesArray.size(); i++) {
+                JsonElement elem = pagesArray.get(i);
+                if (!elem.isJsonObject()) {
+                    LOGGER.warn("Invalid page data at index {} in entry {}", i, entryId);
+                    continue;
+                }
+                JsonObject pageObj = elem.getAsJsonObject();
+                if (!pageObj.has("type")) {
+                    LOGGER.warn("Page {} in entry {} missing 'type' field", i, entryId);
+                }
+                pages.add(pageObj);
+            }
+
+            if (pages.isEmpty()) {
+                LOGGER.warn("Codex entry {} has no valid pages", entryId);
+                return;
             }
 
             // Type
