@@ -85,7 +85,7 @@ public class DatapackCategoryExample {
                 CategoryDefinition categoryDef = loadCategoryDefinition(entry.getValue(), categoryKey);
 
                 if (categoryDef != null) {
-                    LOGGER.info("📁 Found category definition: {}", categoryDef.name);
+                    LOGGER.info("📁 Found category definition: {}", categoryDef.nameKey);
 
                     createCategoryFromDatapack(categories, dataManager,
                         categoryDef.key,
@@ -115,12 +115,14 @@ public class DatapackCategoryExample {
             JsonObject json = new Gson().fromJson(reader, JsonObject.class);
             if (json == null) return null;
 
-            String name = json.has("name") ? json.get("name").getAsString() : categoryKey;
+            String nameKey = json.has("name")
+                ? json.get("name").getAsString()
+                : EidolonUnchained.MODID + ".codex.category." + categoryKey;
             String icon = json.has("icon") ? json.get("icon").getAsString() : "minecraft:book";
             String color = json.has("color") ? json.get("color").getAsString() : "0x555555";
             String description = json.has("description") ? json.get("description").getAsString() : "";
 
-            return new CategoryDefinition(categoryKey, name, icon, color, description);
+            return new CategoryDefinition(categoryKey, nameKey, icon, color, description);
         } catch (Exception e) {
             LOGGER.error("Failed to load category definition for: {}", categoryKey, e);
             return null;
@@ -132,14 +134,14 @@ public class DatapackCategoryExample {
      */
     private static class CategoryDefinition {
         final String key;
-        final String name;
+        final String nameKey;
         final String icon;
         final String color;
         final String description;
-        
-        CategoryDefinition(String key, String name, String icon, String color, String description) {
+
+        CategoryDefinition(String key, String nameKey, String icon, String color, String description) {
             this.key = key;
-            this.name = name;
+            this.nameKey = nameKey;
             this.icon = icon;
             this.color = color;
             this.description = description;

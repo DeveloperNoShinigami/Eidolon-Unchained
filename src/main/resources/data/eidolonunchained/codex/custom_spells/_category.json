@@ -1,6 +1,6 @@
 {
   "key": "custom_spells",
-  "name": "Custom Spells",
+  "name": "eidolonunchained.codex.category.custom_spells",
   "icon": "minecraft:enchanted_book", 
   "color": "0x4169E1",
   "description": "Community-created magical techniques and spell combinations"
