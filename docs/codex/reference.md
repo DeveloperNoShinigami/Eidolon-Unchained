@@ -53,6 +53,17 @@ Displays a paragraph of text.
 ```
 Shows a bullet list of strings.
 
+### `item_showcase`
+```
+{
+  "type": "item_showcase",
+  "title": "Chainmail Properties",
+  "item": "eidolon:warped_sprouts",
+  "text": "Chainmail reinforced with magical wards offers superior protection."
+}
+```
+Highlights a single item with a title and descriptive text. The Warded Mail entry (`equipment/warded_mail.json`) uses this format to showcase the enchanted chainmail.
+
 ### `crafting`
 ```
 {
@@ -140,5 +151,11 @@ References a predefined ritual by ID.
 { "type": "image", "image": "eidolonunchained:textures/gui/codex/shadow_diagram.png", "width": 128, "height": 96 }
 ```
 Embeds a texture into the page.
+
+### `item_showcase`
+```
+{ "type": "item_showcase", "title": "Arcane Alloy", "item": "eidolon:arcane_gold_ingot", "text": "A gleaming ingot brimming with latent power." }
+```
+Displays a single item with a title and description.
 
 These examples are pulled directly from the sample codex data shipped with the project and represent the currently supported page types.
