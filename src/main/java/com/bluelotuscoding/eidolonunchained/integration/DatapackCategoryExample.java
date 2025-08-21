@@ -22,22 +22,36 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * JSON Datapack-driven category creation system
- * 
- * 🔄 CURRENT STATUS: FULLY IMPLEMENTED USING REFLECTION
- * 
- * CURRENT VERSION (0.3.8+): 
- * ✅ Uses reflection to access Eidolon internals
- * ✅ Full JSON datapack functionality enabled
- * ✅ Creates custom categories with chapters from JSON
- * 
- * FUTURE VERSION MIGRATION: When CodexEvents become available:
- * - Replace reflection with direct event API access
- * - Keep all JSON datapack functionality as-is
- * - Simply change internal implementation, not external behavior
- * 
- * DETECTION: Check if class "elucent.eidolon.codex.CodexEvents" exists
- * BENEFIT AFTER MIGRATION: Same functionality, cleaner code, no reflection!
+ * JSON datapack-driven category creation system.
+ *
+ * <p>This example still simulates file loading and uses reflection to
+ * interact with Eidolon internals. The public JSON format is stable and
+ * will be loaded from actual datapack files once a real {@code ResourceManager}
+ * implementation replaces the stubs.</p>
+ *
+ * <p>Final format summary:</p>
+ * <pre>
+ * data/<namespace>/codex/<category>/_category.json
+ * {
+ *   "key": "yourmod.codex.category.magic",
+ *   "name": "yourmod.codex.category.magic.name",
+ *   "icon": "minecraft:book",
+ *   "color": "0x9966FF",
+ *   "description": "Optional description"
+ * }
+ *
+ * data/<namespace>/codex/<category>/<chapter>.json
+ * {
+ *   "title_key": "yourmod.codex.chapter.fire.title",
+ *   "title": "Fire Mastery",          // fallback
+ *   "icon": "minecraft:flint_and_steel",
+ *   "pages": [ { ... page data ... } ]
+ * }
+ * </pre>
+ * Translation keys should follow the pattern
+ * {@code <namespace>.codex.<category>.<chapter>.<suffix>} and research
+ * prerequisites may be supplied via the {@code prerequisites} array inside
+ * each chapter file.</p>
  */
 public class DatapackCategoryExample {
     private static final Logger LOGGER = LogUtils.getLogger();

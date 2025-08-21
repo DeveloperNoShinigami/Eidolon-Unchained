@@ -32,8 +32,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
- * Manages loading and registration of custom codex entries that extend existing Eidolon chapters.
- * This allows addon developers and users to add new entries to existing chapters via JSON files.
+ * Manages loading and registration of custom codex categories, chapters and
+ * entries supplied through datapacks.
+ * <p>
+ * Files follow the format described in {@code docs/datapack_overview.md}:
+ * categories reside in {@code codex_categories/}, chapters in
+ * {@code codex_chapters/} and individual entries in
+ * {@code codex_entries/}. Translation keys should use the pattern
+ * {@code <namespace>.codex.<category>.<chapter>.<suffix>} so that names and
+ * page text can be localised. Research requirements can be declared through
+ * each entry's {@code prerequisites} array.</p>
  */
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class CodexDataManager extends SimpleJsonResourceReloadListener {

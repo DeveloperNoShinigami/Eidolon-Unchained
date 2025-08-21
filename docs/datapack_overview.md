@@ -50,6 +50,17 @@ data/
 
 For more about research entry fields and available gating options, see [research_entries.md](research_entries.md) and [RESEARCH_CONDITIONS.md](RESEARCH_CONDITIONS.md).
 
+### Translation Key Conventions
+
+- Categories: `<namespace>.codex.category.<id>.name`
+- Chapters: `<namespace>.codex.chapter.<id>.title`
+- Entries and page text: `<namespace>.codex.entry.<id>.*`
+
+Keep keys lowercase and namespaced to avoid conflicts. Research chapters
+may optionally gate codex chapters; declare their relationship via the
+research chapter's `category` field and use the `prerequisites` array in
+codex chapter JSON to require specific research IDs.
+
 ## Best Practices
 
 - Use **lowercase IDs** for file names and references.
