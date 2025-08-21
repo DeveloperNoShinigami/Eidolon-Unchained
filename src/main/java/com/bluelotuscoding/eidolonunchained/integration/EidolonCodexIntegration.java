@@ -94,7 +94,8 @@ public class EidolonCodexIntegration {
                 LOGGER.info("No research chapter for {} - using fallback metadata", chapterId);
             }
 
-            Chapter chapter = new Chapter(title, new TitlePage(title));
+            String renderedTitle = title.getString();
+            Chapter chapter = new Chapter(renderedTitle, new TitlePage(renderedTitle));
             LOGGER.info("Created chapter {} for codex integration", chapterId);
 
             LOGGER.info("✓ Injecting {} entries into chapter {}", entries.size(), chapterId);

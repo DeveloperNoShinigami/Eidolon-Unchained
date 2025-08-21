@@ -120,6 +120,21 @@ public class EidolonPageConverter {
      * Translate text if it's a translation key, otherwise return as-is
      */
     private static String translateText(String text) {
+        // If text contains a namespace, treat it as a translation key
+        if (text.contains(":")) {
+            LOGGER.info("[DEBUG] Requested translation for key: {}", text);
+            try {
+                String result = Component.translatable(text).getString();
+                LOGGER.info("[DEBUG] Component translation attempt: '{}' -> '{}'", text, result);
+                if (!result.equals(text) && !result.contains("translation.key.not.found")) {
+                    return result;
+                }
+            } catch (Exception e) {
+                LOGGER.info("[DEBUG] Component translation failed for: {}, error: {}", text, e.getMessage());
+            }
+            return text;
+        }
+
         // If text looks like a translation key (contains dots and starts with mod name)
         if (text.contains(".") && (text.startsWith("eidolonunchained.") || text.startsWith("eidolon."))) {
             LOGGER.info("[DEBUG] Requested translation for key: {}", text);
