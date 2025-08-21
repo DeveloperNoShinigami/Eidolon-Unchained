@@ -33,5 +33,5 @@ Translation keys referenced by your codex and research files belong in the langu
 JSON shown above.
 
 For more detailed explanations of the JSON formats see:
-- [Codex Reference](../codex_reference.md)
-- [Research Entries](../research_entries.md)
+- [Codex Reference](../codex/reference.md)
+- [Research Entries](../research/entry_reference.md)

@@ -29,15 +29,15 @@ An addon mod for **Eidolon: Repraised** that expands the mystical world with new
 Comprehensive guides live in the [docs/](docs/) directory:
 
 - [Documentation Index](docs/README.md)
-- [Complete System Summary](docs/COMPLETE_SYSTEM_SUMMARY.md)
-- [Datapack Overview](docs/datapack_overview.md)
-- [Datapack Structure](docs/DATAPACK_STRUCTURE.md)
-- [Research Conditions](docs/RESEARCH_CONDITIONS.md)
-- [Research Entries](docs/research_entries.md)
-- [Codex Reference](docs/codex_reference.md)
-- [Codex Tutorial](docs/codex_tutorial.md)
-- [Best Practices](docs/best_practices.md)
-- [UI Customization](docs/ui_customization.md)
+- [System Summary](docs/misc/system_summary.md)
+- [Datapack Overview](docs/datapack/overview.md)
+- [Datapack Structure](docs/datapack/structure.md)
+- [Research Conditions](docs/research/condition_types.md)
+- [Research Entries](docs/research/entry_reference.md)
+- [Codex Reference](docs/codex/reference.md)
+- [Codex Tutorial](docs/codex/tutorial.md)
+- [Best Practices](docs/datapack/best_practices.md)
+- [UI Customization](docs/misc/ui_texture_customization.md)
 - [Example Complete Codex Entry](docs/EXAMPLE_COMPLETE_CODEX_ENTRY.json)
 
 ## Dependencies
@@ -60,7 +60,7 @@ This mod requires the following mods to function:
 
 ## Codex Development Guide
 
-For a step-by-step tutorial see [Codex Tutorial](docs/codex_tutorial.md). For a comprehensive reference see [Codex Reference](docs/codex_reference.md).
+For a step-by-step tutorial see [Codex Tutorial](docs/codex/tutorial.md). For a comprehensive reference see [Codex Reference](docs/codex/reference.md).
 
 ### Creating New Codex Entries
 
@@ -111,12 +111,18 @@ The TitlePage system automatically handles title generation:
 This means each title page displays both the title and introductory content together.
 
 #### 4. Page Types
-Available page types:
-- **`title`**: Creates a page with both title and content
-- **`text`**: Plain text content
-- **`entity`**: Displays an entity with information
-- **`crafting`**: Shows a crafting recipe
-- **`ritual`**: Displays ritual information
+Supported page types include:
+- **`title`** – shows a title and introductory text on the same page
+- **`text`** – renders a block of formatted text
+- **`entity`** – displays a 3D entity model
+- **`crafting`** – renders a standard crafting grid
+- **`crucible`** – displays crucible transformations
+- **`list`** – shows a bullet list of text lines
+- **`workbench`** – renders a workbench-style recipe
+- **`crafting_recipe`** – links a recipe ID directly
+- **`ritual_recipe`** – links a ritual recipe by ID
+- **`image`** – shows a static image asset
+- **`item_showcase`** – displays a standalone item
 
 #### 5. Translation Best Practices
 - Use consistent naming: `eidolonunchained.codex.entry.[entry_name].[section]`
