@@ -16,13 +16,18 @@ import elucent.eidolon.codex.RitualPage;
 import elucent.eidolon.codex.TextPage;
 import elucent.eidolon.codex.TitlePage;
 import elucent.eidolon.codex.WorktablePage;
+import elucent.eidolon.codex.CodexGui;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -32,6 +37,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Converts JSON page definitions to Eidolon Page objects using the exact same structure as Eidolon.
@@ -306,79 +312,19 @@ public class EidolonPageConverter {
             return createFallbackTextPage(pageJson);
         }
 
-        Item item = null;
-
-        // Try to parse as direct item ID first
-        ResourceLocation itemResource = ResourceLocation.tryParse(itemId);
-        if (itemResource != null) {
-            item = ForgeRegistries.ITEMS.getValue(itemResource);
-            LOGGER.debug("Direct item lookup for {}: {}", itemId, item);
+        ItemStack resultStack = getRecipeOutput(itemId);
+        if (!resultStack.isEmpty()) {
+            LOGGER.info("Resolved recipe {} via registry lookup", itemId);
+            return new CraftingPage(resultStack);
         }
+        LOGGER.info("Registry lookup failed for {}, falling back to heuristics", itemId);
 
-        // If direct lookup failed, try some common recipe->item mappings
-        if (item == null) {
-            LOGGER.info("Direct item lookup failed for {}, trying recipe mappings", itemId);
-
-            // Common Eidolon recipe mappings
-            if (itemId.equals("eidolon:arcane_gold_ingot")) {
-                // This is a regular crafting recipe that produces arcane gold ingots
-                item = ForgeRegistries.ITEMS.getValue(new ResourceLocation("eidolon", "arcane_gold_ingot"));
-                LOGGER.info("Mapped crafting recipe to result: {} -> eidolon:arcane_gold_ingot", itemId);
-            } else if (itemId.equals("eidolon:arcane_gold_ingot_alchemy")) {
-                // This is a crucible recipe that produces arcane gold ingots
-                item = ForgeRegistries.ITEMS.getValue(new ResourceLocation("eidolon", "arcane_gold_ingot"));
-                LOGGER.info("Mapped crucible recipe to result: {} -> eidolon:arcane_gold_ingot", itemId);
-            } else if (itemId.equals("eidolon:crystallization")) {
-                // Try several possible result items for crystallization
-                String[] candidates = {
-                    "eidolon:arcane_gold_ingot",
-                    "eidolon:arcane_gold_block",
-                    "eidolon:soul_gem",
-                    "eidolon:crystalized_void",
-                    "minecraft:gold_ingot"
-                };
-
-                for (String candidate : candidates) {
-                    ResourceLocation candidateResource = ResourceLocation.tryParse(candidate);
-                    if (candidateResource != null) {
-                        Item candidateItem = ForgeRegistries.ITEMS.getValue(candidateResource);
-                        if (candidateItem != null) {
-                            item = candidateItem;
-                            LOGGER.info("Found recipe result item: {} -> {}", itemId, candidate);
-                            break;
-                        }
-                    }
-                }
-            } else if (itemId.startsWith("eidolon:")) {
-                // For other eidolon recipes, try to guess the result item
-                String recipeName = itemId.substring(8); // Remove "eidolon:" prefix
-                String[] guesses = {
-                    "eidolon:" + recipeName,
-                    "eidolon:" + recipeName + "_ingot",
-                    "eidolon:" + recipeName + "_gem",
-                    "eidolon:" + recipeName + "_crystal"
-                };
-
-                for (String guess : guesses) {
-                    ResourceLocation guessResource = ResourceLocation.tryParse(guess);
-                    if (guessResource != null) {
-                        Item guessItem = ForgeRegistries.ITEMS.getValue(guessResource);
-                        if (guessItem != null) {
-                            item = guessItem;
-                            LOGGER.info("Guessed recipe result item: {} -> {}", itemId, guess);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
+        Item item = resolveItemFromId(itemId);
         if (item == null) {
             LOGGER.warn("Could not resolve item for recipe/item: {}, using fallback", itemId);
             return createFallbackTextPage(pageJson);
         }
 
-        // Create CraftingPage with ItemStack parameter
         ItemStack itemStack = new ItemStack(item);
         LOGGER.info("Successfully creating CraftingPage with item: {} ({})", item, itemStack);
         return new CraftingPage(itemStack);
@@ -400,7 +346,13 @@ public class EidolonPageConverter {
             return createFallbackTextPage(pageJson);
         }
 
-        Item item = ForgeRegistries.ITEMS.getValue(recipeResource);
+        ItemStack resultStack = getRecipeOutput(recipeId);
+        if (!resultStack.isEmpty()) {
+            LOGGER.info("Resolved crafting recipe {} via registry lookup", recipeId);
+            return new CraftingPage(resultStack, recipeResource);
+        }
+
+        Item item = resolveItemFromId(recipeId);
         if (item == null) {
             LOGGER.warn("Item not found for crafting recipe {}, using fallback", recipeId);
             return createFallbackTextPage(pageJson);
@@ -586,6 +538,101 @@ public class EidolonPageConverter {
         }
 
         return new WorktablePage(new ItemStack(item));
+    }
+
+    /**
+     * Attempt to resolve a recipe's output using its ResourceLocation and registered serializer
+     */
+    private static ItemStack getRecipeOutput(String recipeId) {
+        ResourceLocation recipeResource = ResourceLocation.tryParse(recipeId);
+        if (recipeResource == null) return ItemStack.EMPTY;
+
+        try {
+            ResourceLocation file = new ResourceLocation(recipeResource.getNamespace(),
+                    "recipes/" + recipeResource.getPath() + ".json");
+            Optional<Resource> resourceOpt = Minecraft.getInstance().getResourceManager().getResource(file);
+            if (resourceOpt.isEmpty()) return ItemStack.EMPTY;
+
+            try (InputStream stream = resourceOpt.get().open();
+                 InputStreamReader reader = new InputStreamReader(stream)) {
+                JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+                if (!json.has("type")) return ItemStack.EMPTY;
+                ResourceLocation typeLoc = ResourceLocation.tryParse(json.get("type").getAsString());
+                if (typeLoc == null) return ItemStack.EMPTY;
+                RecipeSerializer<?> serializer = ForgeRegistries.RECIPE_SERIALIZERS.getValue(typeLoc);
+                if (serializer == null) return ItemStack.EMPTY;
+                Recipe<?> recipe = serializer.fromJson(recipeResource, json);
+                RegistryAccess access = Minecraft.getInstance().level != null
+                        ? Minecraft.getInstance().level.registryAccess()
+                        : RegistryAccess.EMPTY;
+                return recipe.getResultItem(access);
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to load recipe {}: {}", recipeId, e.getMessage());
+        }
+        return ItemStack.EMPTY;
+    }
+
+    /**
+     * Heuristic item resolution used when registry lookup fails
+     */
+    private static Item resolveItemFromId(String itemId) {
+        Item item = null;
+
+        ResourceLocation itemResource = ResourceLocation.tryParse(itemId);
+        if (itemResource != null) {
+            item = ForgeRegistries.ITEMS.getValue(itemResource);
+            LOGGER.debug("Direct item lookup for {}: {}", itemId, item);
+        }
+        if (item != null) return item;
+
+        LOGGER.info("Direct item lookup failed for {}, trying recipe mappings", itemId);
+
+        if (itemId.equals("eidolon:arcane_gold_ingot") || itemId.equals("eidolon:arcane_gold_ingot_alchemy")) {
+            item = ForgeRegistries.ITEMS.getValue(new ResourceLocation("eidolon", "arcane_gold_ingot"));
+            if (item != null) {
+                LOGGER.info("Mapped recipe to result: {} -> eidolon:arcane_gold_ingot", itemId);
+            }
+        } else if (itemId.equals("eidolon:crystallization")) {
+            String[] candidates = {
+                    "eidolon:arcane_gold_ingot",
+                    "eidolon:arcane_gold_block",
+                    "eidolon:soul_gem",
+                    "eidolon:crystalized_void",
+                    "minecraft:gold_ingot"
+            };
+            for (String candidate : candidates) {
+                ResourceLocation candidateResource = ResourceLocation.tryParse(candidate);
+                if (candidateResource != null) {
+                    Item candidateItem = ForgeRegistries.ITEMS.getValue(candidateResource);
+                    if (candidateItem != null) {
+                        item = candidateItem;
+                        LOGGER.info("Found recipe result item: {} -> {}", itemId, candidate);
+                        break;
+                    }
+                }
+            }
+        } else if (itemId.startsWith("eidolon:")) {
+            String recipeName = itemId.substring(8);
+            String[] guesses = {
+                    "eidolon:" + recipeName,
+                    "eidolon:" + recipeName + "_ingot",
+                    "eidolon:" + recipeName + "_gem",
+                    "eidolon:" + recipeName + "_crystal"
+            };
+            for (String guess : guesses) {
+                ResourceLocation guessResource = ResourceLocation.tryParse(guess);
+                if (guessResource != null) {
+                    Item guessItem = ForgeRegistries.ITEMS.getValue(guessResource);
+                    if (guessItem != null) {
+                        item = guessItem;
+                        LOGGER.info("Guessed recipe result item: {} -> {}", itemId, guess);
+                        break;
+                    }
+                }
+            }
+        }
+        return item;
     }
 
     /**
