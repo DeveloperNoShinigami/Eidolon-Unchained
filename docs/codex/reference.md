@@ -47,11 +47,25 @@ Displays a paragraph of text.
 ```
 {
   "type": "list",
-  "content": "New Features",
-  "data": { "items": ["Advanced Soul Manipulation", "Dimensional Rift Magic"] }
+  "text": "eidolon.codex.altar_overview",
+  "entries": [
+    { "item": "minecraft:gold_block", "text": "Gold Block" },
+    { "item": "minecraft:lapis_block", "text": "Lapis Block" }
+  ]
 }
 ```
-Shows a bullet list of strings.
+Displays a list of items and shows each one's altar power and capacity based on its `AltarEntry`.
+
+### `item_showcase`
+```
+{
+  "type": "item_showcase",
+  "title": "Chainmail Properties",
+  "item": "eidolon:warped_sprouts",
+  "text": "Chainmail reinforced with magical wards offers superior protection."
+}
+```
+Highlights a single item with a title and descriptive text. The Warded Mail entry (`equipment/warded_mail.json`) uses this format to showcase the enchanted chainmail.
 
 ### `crafting`
 ```
@@ -87,23 +101,10 @@ Specialized recipe page for crucible crafting.
 
 ### `ritual`
 ```
-{
-  "type": "ritual",
-  "content": "Greater Summoning Circle",
-  "data": {
-    "circle_size": 5,
-    "participants": 3,
-    "components": [
-      {"item": "minecraft:bell", "count": 1},
-      {"item": "minecraft:soul_sand", "count": 32},
-      {"item": "minecraft:wither_skeleton_skull", "count": 3},
-      {"item": "minecraft:nether_star", "count": 1}
-    ],
-    "description": "Summons a powerful ally to aid the community"
-  }
-}
+{ "type": "ritual", "ritual": "<id>" }
 ```
-Shows a top‑down ritual circle with components.
+Displays the full ritual layout for the given ritual ID.
+
 
 ### `workbench`
 ```
@@ -133,12 +134,20 @@ Links to an existing crafting recipe ID.
 ```
 { "type": "ritual_recipe", "ritual": "eidolonunchained:shadow_bind", "text": "The Shadow Bind ritual allows you to temporarily merge with your own shadow." }
 ```
-References a predefined ritual by ID.
+References a predefined ritual by ID without displaying the layout.
+
+Use `ritual` when you need to show the full ritual circle. Use `ritual_recipe` for quick references to an existing ritual.
 
 ### `image`
 ```
 { "type": "image", "image": "eidolonunchained:textures/gui/codex/shadow_diagram.png", "width": 128, "height": 96 }
 ```
 Embeds a texture into the page.
+
+### `item_showcase`
+```
+{ "type": "item_showcase", "title": "Arcane Alloy", "item": "eidolon:arcane_gold_ingot", "text": "A gleaming ingot brimming with latent power." }
+```
+Displays a single item with a title and description.
 
 These examples are pulled directly from the sample codex data shipped with the project and represent the currently supported page types.

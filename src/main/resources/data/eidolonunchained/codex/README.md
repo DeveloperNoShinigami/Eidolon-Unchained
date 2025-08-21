@@ -155,16 +155,13 @@ Use any Minecraft item ID:
 ```
 
 ### Page Data Objects
-Each page type supports a `data` object for structured content:
+Each `ritual` page requires both the ritual ID and a translation key base for the
+title:
 ```json
 {
   "type": "ritual",
-  "content": "Ritual Name", 
-  "data": {
-    "circle_size": 3,
-    "components": [...],
-    "description": "What this ritual does"
-  }
+  "ritual": "eidolon:crystallization",
+  "text": "eidolonunchained.codex.page.crystal_ritual"
 }
 ```
 

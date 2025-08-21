@@ -13,6 +13,7 @@ import elucent.eidolon.codex.TextPage;
 import elucent.eidolon.codex.TitlePage;
 import elucent.eidolon.registries.Researches;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -88,13 +89,12 @@ public class EidolonCodexIntegration {
             } else {
                 titleComponent = Component.literal(chapterId.getPath());
             }
-            String title = titleComponent.getString();
 
             if (research == null) {
                 LOGGER.info("No research chapter for {} - using fallback metadata", chapterId);
             }
 
-            String renderedTitle = title.getString();
+            String renderedTitle = titleComponent.getString();
             Chapter chapter = new Chapter(renderedTitle, new TitlePage(renderedTitle));
             LOGGER.info("Created chapter {} for codex integration", chapterId);
 
@@ -125,7 +125,12 @@ public class EidolonCodexIntegration {
 
             // Title and icon
             if (entry.getTitle() != null && !entry.getTitle().getString().isEmpty()) {
-                TitlePage tp = new TitlePage(entry.getTitle().getString());
+                TitlePage tp;
+                if (entry.getTitle().getContents() instanceof TranslatableContents translatable) {
+                    tp = new TitlePage(translatable.getKey());
+                } else {
+                    tp = new TitlePage(entry.getTitle().getString());
+                }
                 chapter.addPage(tp);
             }
 

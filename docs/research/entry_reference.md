@@ -35,7 +35,7 @@ Research nodes live inside chapters that group related topics and control orderi
 | `secret` | If `true`, hides the chapter until unlocked. | `true` for Wicked Sign【F:src/main/resources/data/eidolonunchained/research_chapters/wicked_sign.json†L9-L10】 |
 
 ## 🔗 Interaction with the Codex
-Codex entries can require completed research nodes before becoming visible. Each codex entry lists research prerequisites, allowing research progression to unlock deeper lore or recipes. The codex reference highlights this linkage: `"prerequisites"` is a list of research IDs needed to view an entry【F:docs/codex_reference.md†L7-L16】. When a player completes a node such as `eidolonunchained:void_manipulation`, any codex entry that names this ID in its `prerequisites` array will appear in the codex.
+Codex entries can require completed research nodes before becoming visible. Each codex entry lists research prerequisites, allowing research progression to unlock deeper lore or recipes. The codex reference highlights this linkage: `"prerequisites"` is a list of research IDs needed to view an entry【F:docs/codex/reference.md†L7-L16】. When a player completes a node such as `eidolonunchained:void_manipulation`, any codex entry that names this ID in its `prerequisites` array will appear in the codex.
 
 ## 🛠️ Effects and Rewards
 Completing a node may trigger gameplay effects:
