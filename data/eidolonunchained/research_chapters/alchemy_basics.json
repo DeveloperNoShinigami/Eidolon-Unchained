@@ -1,9 +1,0 @@
-{
-  "id": "eidolonunchained:alchemy_basics",
-  "title": "Alchemy Basics",
-  "description": "Foundational studies in alchemy.",
-  "category": "alchemy",
-  "icon": {
-    "item": "minecraft:glass_bottle"
-  }
-}
