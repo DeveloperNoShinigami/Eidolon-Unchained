@@ -8,11 +8,12 @@ contains gameplay JSON while `assets/` stores language and other client resource
 ```text
 📦 data/
 └── 📁 eidolonunchained/                # Your namespace
-    ├── 📁 codex/                       # Category folders for new codex tabs
+    ├── 📁 codex/                       # Category folders with `_category.json`
     │   └── 📁 custom_spells/           # Example category folder
-    │       ├── 📄 _category.json       # Category metadata
-    │       └── 📄 fire_mastery.json    # Example entry inside the category
-    ├── 📁 codex_entries/               # 📖 Pages for built-in categories
+    │       └── 📄 _category.json       # Category definition file
+    ├── 📁 codex_chapters/              # Optional new chapter definitions
+    │   └── 📄 mythology.json           # Example chapter file
+    ├── 📁 codex_entries/               # 📖 Codex pages live here
     │   └── 📄 ritual_mastery.json      # Example codex entry
     ├── 📁 codex_chapters/              # Optional codex chapter definitions
     │   └── 📄 mythology.json           # Example chapter file
@@ -22,10 +23,20 @@ contains gameplay JSON while `assets/` stores language and other client resource
         └── 📄 ritual_master.json       # Example research entry
 ```
 
-*Use `codex_entries/` to add pages to existing categories.  Place new categories
-and their entries under `codex/` in folders with a `_category.json` file.
-`research_entries/` hold individual research nodes, while `research_chapters/`
-define the chapters that group them.*
+*`codex/`, `codex_entries/`, and `research_entries/` hold the JSON that adds new
+categories, pages, and progression to the mod.*
+
+Example `custom_spells/_category.json`:
+
+```json
+{
+  "key": "custom_spells",
+  "name": "eidolonunchained.codex.category.custom_spells",
+  "icon": "minecraft:enchanted_book",
+  "color": "0x4169E1",
+  "description": "Community-created magical techniques"
+}
+```
 
 ## `assets/`
 
