@@ -81,7 +81,7 @@ public class EidolonCodexIntegration {
 
             String title;
             if (metadata != null) {
-                title = metadata.getTitle();
+                title = metadata.getTitle().getString();
             } else if (research != null) {
                 title = research.getTitle().getString();
             } else {
