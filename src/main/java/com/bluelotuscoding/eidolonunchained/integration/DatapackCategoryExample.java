@@ -2,15 +2,22 @@ package com.bluelotuscoding.eidolonunchained.integration;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.data.CodexDataManager;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.mojang.logging.LogUtils;
 import elucent.eidolon.codex.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistries;
-import com.mojang.logging.LogUtils;
-import com.google.gson.JsonObject;
 import org.slf4j.Logger;
+
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -47,41 +54,40 @@ public class DatapackCategoryExample {
         
         try {
             CodexDataManager dataManager = new CodexDataManager();
-            
-            // Base directory for all categories
-            String baseDir = "data/eidolonunchained/codex/";
-            
-            // Scan for category directories (this would use ResourceManager in production)
-            String[] possibleCategories = {
-                "custom_spells", "community_rituals", "expansions"
-            };
-            
+            ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
+
+            Map<ResourceLocation, Resource> categoryFiles = resourceManager.listResources("codex",
+                loc -> loc.getPath().endsWith("_category.json"));
+
             int categoriesCreated = 0;
-            
-            for (String categoryKey : possibleCategories) {
-                String categoryDir = baseDir + categoryKey + "/";
-                
-                // Try to load category definition from _category.json
-                CategoryDefinition categoryDef = loadCategoryDefinition(categoryKey, categoryDir);
-                
+
+            for (Map.Entry<ResourceLocation, Resource> entry : categoryFiles.entrySet()) {
+                ResourceLocation resLoc = entry.getKey();
+                if (!resLoc.getNamespace().equals(EidolonUnchained.MODID)) continue;
+
+                String path = resLoc.getPath();
+                String categoryKey = path.substring("codex/".length(), path.length() - "/_category.json".length());
+
+                CategoryDefinition categoryDef = loadCategoryDefinition(entry.getValue(), categoryKey);
+
                 if (categoryDef != null) {
                     LOGGER.info("📁 Found category definition: {}", categoryDef.name);
-                    
+
                     createCategoryFromDatapack(categories, dataManager,
-                        categoryDef.key, 
-                        categoryDef.getIconStack(), 
-                        categoryDef.getColorInt(), 
-                        categoryDir
+                        categoryDef.key,
+                        categoryDef.getIconStack(),
+                        categoryDef.getColorInt(),
+                        "codex/" + categoryDef.key
                     );
-                    
+
                     categoriesCreated++;
                 } else {
                     LOGGER.warn("⚠️ No _category.json found for: {}", categoryKey);
                 }
             }
-            
+
             LOGGER.info("✅ Created {} datapack categories from JSON definitions!", categoriesCreated);
-            
+
         } catch (Exception e) {
             LOGGER.error("❌ Failed to create datapack categories", e);
         }
@@ -90,43 +96,17 @@ public class DatapackCategoryExample {
     /**
      * Load category definition from _category.json file
      */
-    private static CategoryDefinition loadCategoryDefinition(String categoryKey, String categoryDir) {
-        try {
-            // In production, this would use ResourceManager to load the actual file
-            // For now, we'll simulate loading from our created _category.json files
-            
-            LOGGER.info("🔍 Looking for category definition: {}_category.json", categoryKey);
-            
-            // Simulate the JSON content based on what we created
-            switch (categoryKey) {
-                case "community_rituals":
-                    return new CategoryDefinition(
-                        "community_rituals",
-                        "Community Rituals", 
-                        "minecraft:cauldron",
-                        "0xCC33FF",
-                        "Collaborative magical workings that require multiple practitioners"
-                    );
-                case "custom_spells":
-                    return new CategoryDefinition(
-                        "custom_spells",
-                        "Custom Spells",
-                        "minecraft:enchanted_book", 
-                        "0x4169E1",
-                        "Community-created magical techniques and spell combinations"
-                    );
-                case "expansions":
-                    return new CategoryDefinition(
-                        "expansions",
-                        "Expansions",
-                        "minecraft:end_crystal",
-                        "0x9966FF", 
-                        "Additional content packs and expansion modules"
-                    );
-                default:
-                    return null;
-            }
-            
+    private static CategoryDefinition loadCategoryDefinition(Resource resource, String categoryKey) {
+        try (InputStreamReader reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
+            JsonObject json = new Gson().fromJson(reader, JsonObject.class);
+            if (json == null) return null;
+
+            String name = json.has("name") ? json.get("name").getAsString() : categoryKey;
+            String icon = json.has("icon") ? json.get("icon").getAsString() : "minecraft:book";
+            String color = json.has("color") ? json.get("color").getAsString() : "0x555555";
+            String description = json.has("description") ? json.get("description").getAsString() : "";
+
+            return new CategoryDefinition(categoryKey, name, icon, color, description);
         } catch (Exception e) {
             LOGGER.error("Failed to load category definition for: {}", categoryKey, e);
             return null;
@@ -208,7 +188,8 @@ public class DatapackCategoryExample {
         
         try {
             // Load entries from JSON files in the directory
-            List<CodexDataManager.DatapackEntry> entries = dataManager.loadEntriesFromDirectory(jsonDirectory);
+            ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
+            List<CodexDataManager.DatapackEntry> entries = dataManager.loadEntriesFromDirectory(resourceManager, jsonDirectory);
             
             if (entries.isEmpty()) {
                 LOGGER.warn("No JSON entries found in directory: {}", jsonDirectory);
