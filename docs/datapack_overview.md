@@ -14,7 +14,7 @@ data/
 
 ## Content Flow: Category → Chapter → Page
 
-1. **Category** (`codex_categories/`)
+1. **Category** (`codex/`)
    - Groups related chapters under a shared icon and name.
    - Lists chapter IDs via `chapters`.
 2. **Chapter** (`codex_chapters/`)
