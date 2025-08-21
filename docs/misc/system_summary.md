@@ -6,7 +6,10 @@ The codex extension system lets datapacks add custom knowledge entries to Eidolo
 ## Current Metrics
 - **Codex entries**: 56 JSON files loaded from `data/eidolonunchained/codex_entries` and `data/eidolonunchained/codex`.
 - **Chapters**: Content spans 10 chapters (8 base Eidolon chapters plus 2 custom mod chapters; a third custom chapter is available for future use).
-- **Supported page types**: 12 – `text`, `title`, `entity`, `crafting`, `crafting_recipe`, `ritual`, `ritual_recipe`, `crucible`, `list`, `image`, `item_showcase`, and `workbench`.
+- **Supported page types**: 10 – `text`, `title`, `entity`, `crafting`, `ritual`, `ritual_recipe`, `crucible`, `list`, `smelting`, and `workbench`.
+  - `ritual` shows the full ritual circle using a ritual ID
+  - `ritual_recipe` references a ritual by ID without the circle
+
 
 ## Example Entry
 ```json

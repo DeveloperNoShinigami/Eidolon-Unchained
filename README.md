@@ -90,6 +90,10 @@ and place the category's entry files inside it.
     {
       "type": "crafting",
       "recipe": "eidolon:arcane_gold_ingot"
+    },
+    {
+      "type": "ritual",
+      "ritual": "eidolon:summon_wraith"
     }
   ]
 }
@@ -115,6 +119,7 @@ The TitlePage system automatically handles title generation:
 This means each title page displays both the title and introductory content together.
 
 #### 4. Page Types
+
 Supported page types include:
 - **`title`** – shows a title and introductory text on the same page
 - **`text`** – renders a block of formatted text
@@ -123,6 +128,7 @@ Supported page types include:
 - **`crucible`** – displays crucible transformations
 - **`list`** – shows a bullet list of text lines
 - **`workbench`** – renders a workbench-style recipe
+- **`ritual`**: Shows the full ritual layout from a ritual ID
 - **`crafting_recipe`** – links a recipe ID directly
 - **`ritual_recipe`** – links a ritual recipe by ID
 - **`image`** – shows a static image asset
