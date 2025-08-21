@@ -10,12 +10,25 @@ import elucent.eidolon.codex.CruciblePage;
 import elucent.eidolon.codex.EntityPage;
 import elucent.eidolon.codex.ListPage;
 import elucent.eidolon.codex.Page;
+import elucent.eidolon.codex.CodexGui;
 import elucent.eidolon.codex.TitledRitualPage;
 import elucent.eidolon.codex.SmeltingPage;
+import elucent.eidolon.codex.SignPage;
+import elucent.eidolon.codex.ChantPage;
+import elucent.eidolon.codex.RuneDescPage;
+import elucent.eidolon.codex.RuneIndexPage;
+import elucent.eidolon.codex.SignIndexPage;
+import elucent.eidolon.codex.IndexPage;
+import elucent.eidolon.codex.TitledIndexPage;
+import elucent.eidolon.codex.Chapter;
 import elucent.eidolon.codex.RitualPage;
 import elucent.eidolon.codex.TextPage;
 import elucent.eidolon.codex.TitlePage;
 import elucent.eidolon.codex.WorktablePage;
+import elucent.eidolon.api.spells.Sign;
+import elucent.eidolon.api.spells.Spell;
+import elucent.eidolon.registries.Signs;
+import elucent.eidolon.registries.Spells;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -61,7 +74,7 @@ public class EidolonPageConverter {
      * Get list of supported page types - for compatibility with EidolonCodexIntegration
      */
     public static String[] getSupportedPageTypes() {
-        return new String[]{"text", "title", "entity", "crafting", "crafting_recipe", "ritual", "ritual_recipe", "crucible", "list", "image", "item_showcase", "workbench"};
+        return new String[]{"text", "title", "entity", "crafting", "crafting_recipe", "ritual", "ritual_recipe", "crucible", "list", "image", "item_showcase", "workbench", "smelting", "sign", "chant", "rune_desc", "rune_index", "sign_index", "index", "titled_index"};
     }
 
     /**
@@ -95,6 +108,22 @@ public class EidolonPageConverter {
                 return createItemShowcasePage(pageJson);
             case "workbench":
                 return createWorkbenchPage(pageJson);
+            case "smelting":
+                return createSmeltingPage(pageJson);
+            case "sign":
+                return createSignPage(pageJson);
+            case "chant":
+                return createChantPage(pageJson);
+            case "rune_desc":
+                return createRuneDescPage(pageJson);
+            case "rune_index":
+                return createRuneIndexPage(pageJson);
+            case "sign_index":
+                return createSignIndexPage(pageJson);
+            case "index":
+                return createIndexPage(pageJson);
+            case "titled_index":
+                return createTitledIndexPage(pageJson);
             default:
                 LOGGER.warn("Unknown page type: {}, falling back to text", type);
                 return createTextPage(pageJson);
@@ -586,6 +615,197 @@ public class EidolonPageConverter {
         }
 
         return new WorktablePage(new ItemStack(item));
+    }
+
+    /**
+     * Create a SmeltingPage showing furnace-like recipes
+     */
+    private static Page createSmeltingPage(JsonObject pageJson) {
+        String resultId = pageJson.has("result") ? pageJson.get("result").getAsString() : "";
+        String inputId = pageJson.has("input") ? pageJson.get("input").getAsString() : "";
+        String recipeId = pageJson.has("recipe") ? pageJson.get("recipe").getAsString() : "";
+
+        if (resultId.isEmpty() || inputId.isEmpty()) {
+            LOGGER.warn("Smelting page missing result or input");
+            return createFallbackTextPage(pageJson);
+        }
+
+        Item resultItem = ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(resultId));
+        Item inputItem = ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(inputId));
+        if (resultItem == null || inputItem == null) {
+            LOGGER.warn("Invalid items for smelting page: result={}, input={}", resultId, inputId);
+            return createFallbackTextPage(pageJson);
+        }
+
+        ItemStack resultStack = new ItemStack(resultItem);
+        ItemStack inputStack = new ItemStack(inputItem);
+
+        if (!recipeId.isEmpty()) {
+            ResourceLocation recipeRes = ResourceLocation.tryParse(recipeId);
+            if (recipeRes != null) {
+                return new SmeltingPage(resultStack, inputStack, recipeRes);
+            }
+        }
+
+        return new SmeltingPage(resultStack, inputStack);
+    }
+
+    /**
+     * Create a SignPage displaying a magical sign
+     */
+    private static Page createSignPage(JsonObject pageJson) {
+        String signId = pageJson.has("sign") ? pageJson.get("sign").getAsString() : "";
+        if (signId.isEmpty()) {
+            LOGGER.warn("Sign page missing sign ID");
+            return createFallbackTextPage(pageJson);
+        }
+
+        ResourceLocation signRes = ResourceLocation.tryParse(signId);
+        if (signRes == null) {
+            LOGGER.warn("Invalid sign ID: {}", signId);
+            return createFallbackTextPage(pageJson);
+        }
+
+        Sign sign = Signs.find(signRes);
+        if (sign == null) {
+            LOGGER.warn("Sign not found: {}", signId);
+            return createFallbackTextPage(pageJson);
+        }
+
+        return new SignPage(sign);
+    }
+
+    /**
+     * Create a ChantPage for spell chants
+     */
+    private static Page createChantPage(JsonObject pageJson) {
+        String text = pageJson.has("text") ? pageJson.get("text").getAsString() : "";
+        String spellId = pageJson.has("spell") ? pageJson.get("spell").getAsString() : "";
+        if (spellId.isEmpty()) {
+            LOGGER.warn("Chant page missing spell ID");
+            return createFallbackTextPage(pageJson);
+        }
+
+        ResourceLocation spellRes = ResourceLocation.tryParse(spellId);
+        if (spellRes == null) {
+            LOGGER.warn("Invalid spell ID: {}", spellId);
+            return createFallbackTextPage(pageJson);
+        }
+
+        Spell spell = Spells.find(spellRes);
+        if (spell == null) {
+            LOGGER.warn("Spell not found: {}", spellId);
+            return createFallbackTextPage(pageJson);
+        }
+
+        return new ChantPage(text, spell);
+    }
+
+    /**
+     * Create a RuneDescPage showing rune descriptions
+     */
+    private static Page createRuneDescPage(JsonObject pageJson) {
+        return new RuneDescPage();
+    }
+
+    /**
+     * Create a RuneIndexPage listing runes
+     */
+    private static Page createRuneIndexPage(JsonObject pageJson) {
+        return new RuneIndexPage();
+    }
+
+    /**
+     * Create a SignIndexPage listing signs and chapters
+     */
+    private static Page createSignIndexPage(JsonObject pageJson) {
+        if (!pageJson.has("entries") || !pageJson.get("entries").isJsonArray()) {
+            LOGGER.warn("Sign index page missing entries array");
+            return createFallbackTextPage(pageJson);
+        }
+
+        JsonArray arr = pageJson.getAsJsonArray("entries");
+        SignIndexPage.SignEntry[] entries = new SignIndexPage.SignEntry[arr.size()];
+        for (int i = 0; i < arr.size(); i++) {
+            JsonObject obj = arr.get(i).getAsJsonObject();
+            String chapterId = obj.has("chapter") ? obj.get("chapter").getAsString() : "";
+            String signId = obj.has("sign") ? obj.get("sign").getAsString() : "";
+
+            ResourceLocation signRes = ResourceLocation.tryParse(signId);
+            Sign sign = signRes != null ? Signs.find(signRes) : null;
+            if (sign == null) {
+                LOGGER.warn("Invalid sign for sign index entry: {}", signId);
+                return createFallbackTextPage(pageJson);
+            }
+
+            Chapter chapter = new Chapter(chapterId);
+            entries[i] = new SignIndexPage.SignEntry(chapter, sign);
+        }
+
+        return new SignIndexPage(entries);
+    }
+
+    /**
+     * Create an IndexPage linking to chapters
+     */
+    private static Page createIndexPage(JsonObject pageJson) {
+        if (!pageJson.has("entries") || !pageJson.get("entries").isJsonArray()) {
+            LOGGER.warn("Index page missing entries array");
+            return createFallbackTextPage(pageJson);
+        }
+
+        JsonArray arr = pageJson.getAsJsonArray("entries");
+        IndexPage.IndexEntry[] entries = new IndexPage.IndexEntry[arr.size()];
+        for (int i = 0; i < arr.size(); i++) {
+            JsonObject obj = arr.get(i).getAsJsonObject();
+            String chapterId = obj.has("chapter") ? obj.get("chapter").getAsString() : "";
+            String itemId = obj.has("item") ? obj.get("item").getAsString() : "";
+
+            Item item = null;
+            if (!itemId.isEmpty()) {
+                ResourceLocation itemRes = ResourceLocation.tryParse(itemId);
+                if (itemRes != null) {
+                    item = ForgeRegistries.ITEMS.getValue(itemRes);
+                }
+            }
+            ItemStack stack = item != null ? new ItemStack(item) : ItemStack.EMPTY;
+            Chapter chapter = new Chapter(chapterId);
+            entries[i] = new IndexPage.IndexEntry(chapter, stack);
+        }
+
+        return new IndexPage(entries);
+    }
+
+    /**
+     * Create a TitledIndexPage linking to chapters with a title
+     */
+    private static Page createTitledIndexPage(JsonObject pageJson) {
+        if (!pageJson.has("entries") || !pageJson.get("entries").isJsonArray()) {
+            LOGGER.warn("Titled index page missing entries array");
+            return createFallbackTextPage(pageJson);
+        }
+
+        String text = pageJson.has("text") ? pageJson.get("text").getAsString() : "";
+        JsonArray arr = pageJson.getAsJsonArray("entries");
+        IndexPage.IndexEntry[] entries = new IndexPage.IndexEntry[arr.size()];
+        for (int i = 0; i < arr.size(); i++) {
+            JsonObject obj = arr.get(i).getAsJsonObject();
+            String chapterId = obj.has("chapter") ? obj.get("chapter").getAsString() : "";
+            String itemId = obj.has("item") ? obj.get("item").getAsString() : "";
+
+            Item item = null;
+            if (!itemId.isEmpty()) {
+                ResourceLocation itemRes = ResourceLocation.tryParse(itemId);
+                if (itemRes != null) {
+                    item = ForgeRegistries.ITEMS.getValue(itemRes);
+                }
+            }
+            ItemStack stack = item != null ? new ItemStack(item) : ItemStack.EMPTY;
+            Chapter chapter = new Chapter(chapterId);
+            entries[i] = new IndexPage.IndexEntry(chapter, stack);
+        }
+
+        return new TitledIndexPage(text, entries);
     }
 
     /**
