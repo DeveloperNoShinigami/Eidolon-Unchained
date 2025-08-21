@@ -1,0 +1,31 @@
+{
+  "title": "eidolonunchained.codex.entry.shadow_manipulation.title",
+  "icon": "minecraft:coal_block",
+  "target_chapter": "rituals",
+  "pages": [
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.shadow_manipulation.intro"
+    },
+    {
+      "type": "crafting_recipe",
+      "recipe": "eidolonunchained:shadow_crystal",
+      "text": "eidolonunchained.codex.entry.shadow_manipulation.shadow_crystal"
+    },
+    {
+      "type": "ritual_recipe",
+      "ritual": "eidolonunchained:shadow_bind",
+      "text": "eidolonunchained.codex.entry.shadow_manipulation.shadow_bind"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.shadow_manipulation.warning"
+    },
+    {
+      "type": "image",
+      "image": "eidolonunchained:textures/gui/codex/shadow_diagram.png",
+      "width": 128,
+      "height": 96
+    }
+  ]
+}
