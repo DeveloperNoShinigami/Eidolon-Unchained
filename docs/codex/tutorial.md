@@ -13,7 +13,7 @@ Path: `data/eidolonunchained/codex_entries/rituals/advanced_wraith_summoning.jso
   "icon": { "item": "eidolon:wraith_spawn_egg" },
   "pages": [
     { "type": "text", "text": "eidolonunchained.codex.entry.advanced_wraith_summoning.intro" },
-    { "type": "ritual", "ritual": "eidolonunchained:advanced_wraith_summoning" }
+    { "type": "ritual", "ritual": "eidolonunchained:advanced_wraith_summoning", "text": "eidolonunchained.codex.entry.advanced_wraith_summoning.ritual" }
   ]
 }
 ```
@@ -25,7 +25,8 @@ Path: `assets/eidolonunchained/lang/en_us.json`
 ```json
 {
   "eidolonunchained.codex.entry.advanced_wraith_summoning.title": "Advanced Wraith Summoning",
-  "eidolonunchained.codex.entry.advanced_wraith_summoning.intro": "Bind wraiths with refined ritual techniques."
+  "eidolonunchained.codex.entry.advanced_wraith_summoning.intro": "Bind wraiths with refined ritual techniques.",
+  "eidolonunchained.codex.entry.advanced_wraith_summoning.ritual.title": "Advanced Wraith Summoning Ritual"
 }
 ```
 

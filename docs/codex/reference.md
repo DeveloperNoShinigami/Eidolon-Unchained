@@ -47,11 +47,25 @@ Displays a paragraph of text.
 ```
 {
   "type": "list",
-  "content": "New Features",
-  "data": { "items": ["Advanced Soul Manipulation", "Dimensional Rift Magic"] }
+  "text": "eidolon.codex.altar_overview",
+  "entries": [
+    { "item": "minecraft:gold_block", "text": "Gold Block" },
+    { "item": "minecraft:lapis_block", "text": "Lapis Block" }
+  ]
 }
 ```
-Shows a bullet list of strings.
+Displays a list of items and shows each one's altar power and capacity based on its `AltarEntry`.
+
+### `item_showcase`
+```
+{
+  "type": "item_showcase",
+  "title": "Chainmail Properties",
+  "item": "eidolon:warped_sprouts",
+  "text": "Chainmail reinforced with magical wards offers superior protection."
+}
+```
+Highlights a single item with a title and descriptive text. The Warded Mail entry (`equipment/warded_mail.json`) uses this format to showcase the enchanted chainmail.
 
 ### `crafting`
 ```
@@ -89,21 +103,13 @@ Specialized recipe page for crucible crafting.
 ```
 {
   "type": "ritual",
-  "content": "Greater Summoning Circle",
-  "data": {
-    "circle_size": 5,
-    "participants": 3,
-    "components": [
-      {"item": "minecraft:bell", "count": 1},
-      {"item": "minecraft:soul_sand", "count": 32},
-      {"item": "minecraft:wither_skeleton_skull", "count": 3},
-      {"item": "minecraft:nether_star", "count": 1}
-    ],
-    "description": "Summons a powerful ally to aid the community"
-  }
+  "ritual": "eidolon:crystallization",
+  "text": "eidolonunchained.codex.page.crystal_ritual"
 }
 ```
-Shows a top‑down ritual circle with components.
+Shows a top‑down ritual circle for the specified ritual. The `text` field is a
+translation key base; the game will automatically append `.title` when looking
+up the display title.
 
 ### `workbench`
 ```
@@ -140,5 +146,11 @@ References a predefined ritual by ID.
 { "type": "image", "image": "eidolonunchained:textures/gui/codex/shadow_diagram.png", "width": 128, "height": 96 }
 ```
 Embeds a texture into the page.
+
+### `item_showcase`
+```
+{ "type": "item_showcase", "title": "Arcane Alloy", "item": "eidolon:arcane_gold_ingot", "text": "A gleaming ingot brimming with latent power." }
+```
+Displays a single item with a title and description.
 
 These examples are pulled directly from the sample codex data shipped with the project and represent the currently supported page types.
