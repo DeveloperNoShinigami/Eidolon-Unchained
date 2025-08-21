@@ -322,9 +322,12 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                     path = path.substring("codex_chapters/".length(), path.length() - 5); // remove directory and .json
                     ResourceLocation chapterId = new ResourceLocation(resLoc.getNamespace(), path);
 
-                    Component chapterTitle = Component.translatable(titleKey);
+                    Component chapterTitle =
+                        (titleKey.contains(":") || titleKey.contains("."))
+                            ? Component.translatable(titleKey)
+                            : Component.literal(titleKey);
 
-                    LOGGER.info("Registering custom chapter: {} (title: {}, icon: {})", chapterId, chapterTitle.getString(), icon);
+                    LOGGER.info("Registering custom chapter: {} (title: {}, icon: {})", chapterId, chapterTitle, icon);
                     CUSTOM_CHAPTERS.put(chapterId, new ChapterDefinition(chapterTitle, icon));
                     LOGGER.info("Loaded custom chapter definition {}", chapterId);
                 } catch (IOException e) {
