@@ -4,9 +4,12 @@ All paths below are relative to the repository root.
 
 ## Directory Structure
 
-- `src/main/resources/data/eidolonunchained/codex/<category>/_category.json` – defines a codex category.
+- `src/main/resources/data/eidolonunchained/codex/<category>/_category.json` – defines a **custom** codex category.
+- `src/main/resources/data/eidolonunchained/codex/<category>/<entry>.json` – entry file that lives inside that custom category.
+- `src/main/resources/data/eidolonunchained/codex_entries/<entry>.json` – adds a page to one of the **built-in** categories. Organize these files in subfolders as desired; the category is determined by `target_chapter`.
 - `src/main/resources/data/eidolonunchained/codex_chapters/<chapter>.json` – declares a chapter that entries can target.
-- `src/main/resources/data/eidolonunchained/codex/<category>/<entry>.json` – codex entry file representing a page within the category. Each entry specifies `target_chapter` to link to a chapter and provides page content via its `pages` array.
+
+Research uses a parallel structure with `research_chapters/` and `research_entries/`.
 
 ## Example
 
