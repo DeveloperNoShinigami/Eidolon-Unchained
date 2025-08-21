@@ -264,11 +264,11 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
             CodexEntry.EntryType type = CodexEntry.EntryType.TEXT;
             if (json.has("type")) {
                 String typeStr = json.get("type").getAsString();
-                for (CodexEntry.EntryType t : CodexEntry.EntryType.values()) {
-                    if (t.getName().equalsIgnoreCase(typeStr)) {
-                        type = t;
-                        break;
-                    }
+                CodexEntry.EntryType parsed = CodexEntry.EntryType.fromName(typeStr);
+                if (parsed != null) {
+                    type = parsed;
+                } else {
+                    LOGGER.warn("Unknown codex entry type '{}' in {}, defaulting to TEXT", typeStr, entryId);
                 }
             }
 
