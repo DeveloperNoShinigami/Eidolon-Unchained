@@ -314,7 +314,7 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                         return;
                     }
 
-                    String titleStr = json.get("title").getAsString();
+                    String titleKey = json.get("title").getAsString();
                     String iconStr = json.has("icon") ? json.get("icon").getAsString() : "minecraft:book";
                     ResourceLocation icon = ResourceLocation.tryParse(iconStr);
 
@@ -322,12 +322,9 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                     path = path.substring("codex_chapters/".length(), path.length() - 5); // remove directory and .json
                     ResourceLocation chapterId = new ResourceLocation(resLoc.getNamespace(), path);
 
-                    // Store the translation key or literal for the chapter title
-                    String chapterTitle = (titleStr.contains(".") || titleStr.startsWith("eidolonunchained:"))
-                        ? Component.translatable(titleStr).getString()
-                        : titleStr;
+                    Component chapterTitle = Component.translatable(titleKey);
 
-                    LOGGER.info("Registering custom chapter: {} (title: {}, icon: {})", chapterId, chapterTitle, icon);
+                    LOGGER.info("Registering custom chapter: {} (title: {}, icon: {})", chapterId, chapterTitle.getString(), icon);
                     CUSTOM_CHAPTERS.put(chapterId, new ChapterDefinition(chapterTitle, icon));
                     LOGGER.info("Loaded custom chapter definition {}", chapterId);
                 } catch (IOException e) {
@@ -415,15 +412,15 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
      * Represents a datapack-defined chapter with title and icon
      */
     public static class ChapterDefinition {
-        private final String title;
+        private final Component title;
         private final ResourceLocation icon;
 
-        public ChapterDefinition(String title, ResourceLocation icon) {
+        public ChapterDefinition(Component title, ResourceLocation icon) {
             this.title = title;
             this.icon = icon;
         }
 
-        public String getTitle() {
+        public Component getTitle() {
             return title;
         }
 
