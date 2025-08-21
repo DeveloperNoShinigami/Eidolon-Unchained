@@ -6,7 +6,7 @@ The codex extension system lets datapacks add custom knowledge entries to Eidolo
 ## Current Metrics
 - **Codex entries**: 56 JSON files loaded from `data/eidolonunchained/codex_entries` and `data/eidolonunchained/codex`.
 - **Chapters**: Content spans 10 chapters (8 base Eidolon chapters plus 2 custom mod chapters; a third custom chapter is available for future use).
-- **Supported page types**: 9 – `text`, `title`, `entity`, `crafting`, `ritual`, `crucible`, `list`, `smelting`, and `workbench`.
+- **Supported page types**: 9 – `text`, `title`, `entity`, `crafting`, `ritual`, `crucible`, `list`, `smelting`, `workbench`.
 
 ## Example Entry
 ```json
@@ -27,12 +27,12 @@ The codex extension system lets datapacks add custom knowledge entries to Eidolo
 
 ## Further Documentation
 - [Documentation Index](../README.md)
-- [Datapack Overview](../datapack_overview.md)
-- [Datapack Structure](../DATAPACK_STRUCTURE.md)
-- [Research Conditions](../RESEARCH_CONDITIONS.md)
-- [Research Entries](../research_entries.md)
-- [Codex Reference](../codex_reference.md)
-- [Codex Tutorial](../codex_tutorial.md)
-- [Best Practices](../best_practices.md)
-- [UI Customization](../ui_customization.md)
+- [Datapack Overview](../datapack/overview.md)
+- [Datapack Structure](../datapack/structure.md)
+- [Research Conditions](../research/condition_types.md)
+- [Research Entries](../research/entry_reference.md)
+- [Codex Reference](../codex/reference.md)
+- [Codex Tutorial](../codex/tutorial.md)
+- [Best Practices](../datapack/best_practices.md)
+- [UI Customization](ui_texture_customization.md)
 - [Example Complete Codex Entry](../EXAMPLE_COMPLETE_CODEX_ENTRY.json)
