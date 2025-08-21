@@ -13,7 +13,6 @@ import elucent.eidolon.codex.TextPage;
 import elucent.eidolon.codex.TitlePage;
 import elucent.eidolon.registries.Researches;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -24,7 +23,6 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -78,17 +76,24 @@ public class EidolonCodexIntegration {
 
             LOGGER.info("Processing chapter {} with {} entries", chapterId, entries.size());
 
-            // Always create a new chapter from research metadata (datapack-driven)
             ResearchChapter research = ResearchDataManager.getResearchChapter(chapterId);
-            if (research == null) {
-                LOGGER.warn("✗ No research chapter for {} - skipping to avoid orphaned tab", chapterId);
-                continue;
+            CodexDataManager.ChapterDefinition metadata = CodexDataManager.getCustomChapter(chapterId);
+
+            String title;
+            if (metadata != null) {
+                title = metadata.getTitle();
+            } else if (research != null) {
+                title = research.getTitle().getString();
+            } else {
+                title = chapterId.getPath();
             }
 
-            ItemStack iconStack = research.getIcon() == null ? ItemStack.EMPTY : research.getIcon().copy();
-            String title = research.getTitle().getString();
+            if (research == null) {
+                LOGGER.info("No research chapter for {} - using fallback metadata", chapterId);
+            }
+
             Chapter chapter = new Chapter(title, new TitlePage(title));
-            LOGGER.info("Created new chapter {} from research data", chapterId);
+            LOGGER.info("Created chapter {} for codex integration", chapterId);
 
             LOGGER.info("✓ Injecting {} entries into chapter {}", entries.size(), chapterId);
             for (CodexEntry entry : entries) {
