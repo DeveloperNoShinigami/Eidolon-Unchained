@@ -53,6 +53,17 @@ Displays a paragraph of text.
 ```
 Shows a bullet list of strings.
 
+### `item_showcase`
+```
+{
+  "type": "item_showcase",
+  "title": "Chainmail Properties",
+  "item": "eidolon:warped_sprouts",
+  "text": "Chainmail reinforced with magical wards offers superior protection."
+}
+```
+Highlights a single item with a title and descriptive text. The Warded Mail entry (`equipment/warded_mail.json`) uses this format to showcase the enchanted chainmail.
+
 ### `crafting`
 ```
 {
