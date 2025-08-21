@@ -38,6 +38,56 @@ Each JSON file defines a chapter with:
 - `crucible`: Crucible processes
 - `list`: Bulleted lists
 - `entity`: Entity information pages
+-
+## 📦 Final JSON Structure
+
+When real file loading is in place, datapacks should mirror the following
+layout:
+
+```text
+data/<namespace>/codex/<category>/_category.json      # Category definition
+data/<namespace>/codex/<category>/<chapter>.json     # Chapter entries
+```
+
+### `_category.json`
+
+```json
+{
+  "key": "yourmod.codex.category.magic",
+  "name": "yourmod.codex.category.magic.name",
+  "icon": "minecraft:book",
+  "color": "0x9966FF",
+  "description": "Optional description",
+  "chapters": ["yourmod:rituals"]
+}
+```
+
+### `<chapter>.json`
+
+```json
+{
+  "title_key": "yourmod.codex.chapter.rituals.title",
+  "title": "Rituals",                 // fallback title
+  "icon": "minecraft:bell",           // optional
+  "prerequisites": ["yourmod:starter_research"],
+  "pages": [ { "type": "text", "content": "..." } ]
+}
+```
+
+### Translation Key Conventions
+
+- Categories: `yourmod.codex.category.<id>.name`
+- Chapters: `yourmod.codex.chapter.<id>.title`
+- Entries and page text: `yourmod.codex.entry.<id>.*`
+
+Place these keys in `assets/<namespace>/lang/<lang>.json`.
+
+### Research Chapters
+
+Codex chapters can be gated behind research. Use the `prerequisites`
+array in chapter JSON to require research IDs. Research chapters reside
+under `data/<namespace>/research_chapters/` and may reference the
+category via their own `category` field.
 
 ## 📝 Example JSON Structure
 
