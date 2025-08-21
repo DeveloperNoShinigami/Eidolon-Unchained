@@ -2,28 +2,28 @@
   "target_chapter": "eidolon:crystal_ritual",
   "pages": [
     {
-  "type": "title",
-  "text": "Crystal Rituals"
+      "type": "title",
+      "text": "eidolonunchained.codex.entry.crystal_rituals.title"
     },
     {
-  "type": "text",
-  "text": "Placement of crystals is crucial for the success of the ritual."
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.crystal_rituals.placement"
     },
     {
       "type": "crafting",
       "recipe": "eidolon:arcane_gold_ingot"
     },
     {
-  "type": "text",
-  "text": "Resonance between crystals amplifies magical effects."
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.crystal_rituals.resonance"
     },
     {
-  "type": "text",
-  "text": "Different types of crystals produce different magical outcomes."
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.crystal_rituals.types"
     },
     {
-  "type": "text",
-  "text": "Advanced rituals require rare crystals and precise arrangements."
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.crystal_rituals.advanced"
     }
   ]
 }

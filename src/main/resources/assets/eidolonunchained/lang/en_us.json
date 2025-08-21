@@ -121,6 +121,13 @@
   "eidolonunchained.codex.entry.sacred_sign.divine_inscriptions.purification_effects": "Purification Effects: Active sacred signs cleanse nearby areas of corruption and negative energy. Undead creatures suffer damage when approaching these blessed inscriptions.",
   "eidolonunchained.codex.entry.sacred_sign.divine_inscriptions.protective_properties": "Protective Properties: Sacred signs create auras of divine protection that strengthen allies and weaken enemies aligned with darkness. These effects are most powerful during daylight hours and holy celebrations.",
 
+  "eidolonunchained.codex.entry.warded_mail.protective_magic.title": "Protective Magic",
+  "eidolonunchained.codex.entry.warded_mail.protective_magic": "Warded mail is enchanted armor that protects the wearer from magical harm.",
+  "eidolonunchained.codex.entry.warded_mail.chainmail_properties.title": "Chainmail Properties",
+  "eidolonunchained.codex.entry.warded_mail.chainmail_properties": "Chainmail reinforced with magical wards offers superior protection.",
+  "eidolonunchained.codex.entry.warded_mail.crafting_warded_mail.title": "Crafting Warded Mail",
+  "eidolonunchained.codex.entry.warded_mail.crafting_warded_mail": "Crafting warded mail requires rare materials and precise technique.",
+
   "eidolonunchained.codex.entry.shadow_manipulation.title": "Shadow Manipulation",
   "eidolonunchained.codex.entry.shadow_manipulation.intro": "Shadow manipulation is an advanced magical technique that allows practitioners to bend darkness to their will. This ancient art requires both mental discipline and a deep understanding of the void.",
   "eidolonunchained.codex.entry.shadow_manipulation.shadow_crystal": "The Shadow Crystal serves as a focus for shadow-based spells. Its dark surface seems to absorb light itself.",

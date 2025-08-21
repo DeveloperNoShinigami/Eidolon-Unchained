@@ -1,39 +1,39 @@
 {
   "target_chapter": "eidolon:summon_ritual",
-  "title": "Advanced Summoning Techniques",
-  "description": "Master the advanced techniques of summoning powerful entities and controlling their manifestation.",
+  "title": "eidolonunchained.codex.entry.summon_ritual.advanced_techniques.title",
+  "description": "eidolonunchained.codex.entry.summon_ritual.advanced_techniques.description",
   "icon": {
     "item": "eidolon:wraith_spawn_egg",
     "count": 1
   },
   "pages": [
     {
-  "type": "text",
-  "text": "Advanced summoning rituals require precise incantations and a deep understanding of magical forces."
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.summon_ritual.advanced_techniques.introduction"
     },
     {
       "type": "ritual",
       "ritual": "eidolon:lesser_summoning"
     },
     {
-  "type": "text",
-  "text": "Binding protocols ensure the summoned entity remains under your control."
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.summon_ritual.advanced_techniques.binding_protocols"
     },
     {
-  "type": "text",
-  "text": "Timing requirements are strict; a single mistake can lead to disaster."
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.summon_ritual.advanced_techniques.timing_requirements"
     },
     {
       "type": "entity",
       "entity": "eidolon:wraith"
     },
     {
-  "type": "text",
-  "text": "A bound wraith is a powerful servant, but only the most skilled can maintain control."
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.summon_ritual.advanced_techniques.bound_wraith_details"
     },
     {
-  "type": "text",
-  "text": "Manifestation properties determine how the entity appears and interacts with the world."
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.summon_ritual.advanced_techniques.manifestation_properties"
     }
   ],
   "prerequisites": []
