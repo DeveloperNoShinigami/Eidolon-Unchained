@@ -47,11 +47,14 @@ Displays a paragraph of text.
 ```
 {
   "type": "list",
-  "content": "New Features",
-  "data": { "items": ["Advanced Soul Manipulation", "Dimensional Rift Magic"] }
+  "text": "eidolon.codex.altar_overview",
+  "entries": [
+    { "item": "minecraft:gold_block", "text": "Gold Block" },
+    { "item": "minecraft:lapis_block", "text": "Lapis Block" }
+  ]
 }
 ```
-Shows a bullet list of strings.
+Displays a list of items and shows each one's altar power and capacity based on its `AltarEntry`.
 
 ### `item_showcase`
 ```
