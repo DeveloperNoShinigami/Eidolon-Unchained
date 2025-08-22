@@ -349,9 +349,9 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                     ResourceLocation icon = ResourceLocation.tryParse(iconStr);
 
                     String path = resLoc.getPath();
-                    // Extract namespace and chapter name from full path
+                    // Extract namespace and chapter name from path: codex_chapters/chapter.json
                     String[] pathParts = path.split("/");
-                    String namespace = pathParts[1]; // data/namespace/codex_chapters/chapter.json
+                    String namespace = resLoc.getNamespace(); // Get namespace from ResourceLocation directly
                     String chapterName = pathParts[pathParts.length - 1].replace(".json", "");
                     ResourceLocation chapterId = new ResourceLocation(namespace, chapterName);
 
@@ -388,11 +388,11 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                     String iconStr = json.has("icon") ? json.get("icon").getAsString() : "minecraft:book";
                     ResourceLocation icon = ResourceLocation.tryParse(iconStr);
 
-                    // Extract category from folder structure: data/namespace/codex/category/chapter.json
+                    // Extract category from folder structure: codex/category/chapter.json (new format)
                     String path = resLoc.getPath();
                     String[] pathParts = path.split("/");
-                    String namespace = pathParts[1]; // data/namespace/codex/category/chapter.json
-                    String category = pathParts[3]; // category folder name
+                    String namespace = resLoc.getNamespace(); // Get namespace from ResourceLocation directly
+                    String category = pathParts[1]; // category folder name (codex/category/chapter.json)
                     String chapterName = pathParts[pathParts.length - 1].replace(".json", ""); // chapter file name
                     
                     ResourceLocation chapterId = new ResourceLocation(namespace, chapterName);

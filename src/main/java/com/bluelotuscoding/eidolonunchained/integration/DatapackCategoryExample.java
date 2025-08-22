@@ -95,7 +95,7 @@ public class DatapackCategoryExample {
                 if (!resLoc.getNamespace().equals(EidolonUnchained.MODID)) continue;
 
                 String path = resLoc.getPath();
-                // Path format: data/eidolonunchained/codex/category/_category.json
+                // Path format: codex/category/_category.json
                 // Extract category name from path
                 String[] pathParts = path.split("/");
                 if (pathParts.length >= 2 && path.contains("/codex/")) {
