@@ -102,6 +102,12 @@ public class EidolonCodexIntegration {
             for (CodexEntry entry : entries) {
                 injectEntryIntoChapter(chapter, entry);
             }
+
+            // Attach the constructed chapter to its category via reflection
+            if (research != null) {
+                EidolonCategoryExtension.attachChapterToCategory(research.getCategory(), chapter, research.getIcon());
+                LOGGER.info("Attached chapter {} to category {}", chapterId, research.getCategory());
+            }
         }
 
         LOGGER.info("Codex integration complete!");

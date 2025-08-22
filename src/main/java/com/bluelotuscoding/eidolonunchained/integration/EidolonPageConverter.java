@@ -291,6 +291,86 @@ public class EidolonPageConverter {
     }
 
     /**
+     * Resolve an item or recipe ID to an Item instance using registry lookup
+     * with heuristic fallbacks for common Eidolon recipes.
+     */
+    private static Item resolveItemFromId(String itemId) {
+        if (itemId == null || itemId.isEmpty()) {
+            return null;
+        }
+
+        ResourceLocation itemResource = ResourceLocation.tryParse(itemId);
+        if (itemResource != null) {
+            Item direct = ForgeRegistries.ITEMS.getValue(itemResource);
+            if (direct != null) {
+                return direct;
+            }
+        }
+
+        ItemStack recipeOutput = getRecipeOutput(itemId);
+        if (!recipeOutput.isEmpty()) {
+            return recipeOutput.getItem();
+        }
+
+        if (itemId.equals("eidolon:arcane_gold_ingot") || itemId.equals("eidolon:arcane_gold_ingot_alchemy")) {
+            return ForgeRegistries.ITEMS.getValue(new ResourceLocation("eidolon", "arcane_gold_ingot"));
+        } else if (itemId.equals("eidolon:crystallization")) {
+            String[] candidates = {
+                    "eidolon:arcane_gold_ingot",
+                    "eidolon:arcane_gold_block",
+                    "eidolon:soul_gem",
+                    "eidolon:crystalized_void",
+                    "minecraft:gold_ingot"
+            };
+            for (String candidate : candidates) {
+                ResourceLocation candidateRes = ResourceLocation.tryParse(candidate);
+                if (candidateRes != null) {
+                    Item candidateItem = ForgeRegistries.ITEMS.getValue(candidateRes);
+                    if (candidateItem != null) {
+                        return candidateItem;
+                    }
+                }
+            }
+        } else if (itemId.startsWith("eidolon:")) {
+            String recipeName = itemId.substring("eidolon:".length());
+            String[] guesses = {
+                    "eidolon:" + recipeName,
+                    "eidolon:" + recipeName + "_ingot",
+                    "eidolon:" + recipeName + "_gem",
+                    "eidolon:" + recipeName + "_crystal"
+            };
+            for (String guess : guesses) {
+                ResourceLocation guessRes = ResourceLocation.tryParse(guess);
+                if (guessRes != null) {
+                    Item guessItem = ForgeRegistries.ITEMS.getValue(guessRes);
+                    if (guessItem != null) {
+                        return guessItem;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Look up the output of a recipe in the current recipe manager.
+     */
+    private static ItemStack getRecipeOutput(String recipeId) {
+        if (recipeId == null || recipeId.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        ResourceLocation recipeRes = ResourceLocation.tryParse(recipeId);
+        if (recipeRes == null || Minecraft.getInstance().level == null) {
+            return ItemStack.EMPTY;
+        }
+        RecipeManager manager = Minecraft.getInstance().level.getRecipeManager();
+        return manager.byKey(recipeRes)
+                .map(r -> r.getResultItem(Minecraft.getInstance().level.registryAccess()))
+                .orElse(ItemStack.EMPTY);
+    }
+
+    /**
      * Create an EntityPage - takes just an EntityType parameter
      */
     private static Page createEntityPage(JsonObject pageJson) {
@@ -341,73 +421,7 @@ public class EidolonPageConverter {
             return createFallbackTextPage(pageJson);
         }
 
-        Item item = null;
-
-        // Try to parse as direct item ID first
-        ResourceLocation itemResource = ResourceLocation.tryParse(itemId);
-        if (itemResource != null) {
-            item = ForgeRegistries.ITEMS.getValue(itemResource);
-            LOGGER.debug("Direct item lookup for {}: {}", itemId, item);
-        }
-
-        // If direct lookup failed, try some common recipe->item mappings
-        if (item == null) {
-            LOGGER.info("Direct item lookup failed for {}, trying recipe mappings", itemId);
-
-            // Common Eidolon recipe mappings
-            if (itemId.equals("eidolon:arcane_gold_ingot")) {
-                // This is a regular crafting recipe that produces arcane gold ingots
-                item = ForgeRegistries.ITEMS.getValue(new ResourceLocation("eidolon", "arcane_gold_ingot"));
-                LOGGER.info("Mapped crafting recipe to result: {} -> eidolon:arcane_gold_ingot", itemId);
-            } else if (itemId.equals("eidolon:arcane_gold_ingot_alchemy")) {
-                // This is a crucible recipe that produces arcane gold ingots
-                item = ForgeRegistries.ITEMS.getValue(new ResourceLocation("eidolon", "arcane_gold_ingot"));
-                LOGGER.info("Mapped crucible recipe to result: {} -> eidolon:arcane_gold_ingot", itemId);
-            } else if (itemId.equals("eidolon:crystallization")) {
-                // Try several possible result items for crystallization
-                String[] candidates = {
-                    "eidolon:arcane_gold_ingot",
-                    "eidolon:arcane_gold_block",
-                    "eidolon:soul_gem",
-                    "eidolon:crystalized_void",
-                    "minecraft:gold_ingot"
-                };
-
-                for (String candidate : candidates) {
-                    ResourceLocation candidateResource = ResourceLocation.tryParse(candidate);
-                    if (candidateResource != null) {
-                        Item candidateItem = ForgeRegistries.ITEMS.getValue(candidateResource);
-                        if (candidateItem != null) {
-                            item = candidateItem;
-                            LOGGER.info("Found recipe result item: {} -> {}", itemId, candidate);
-                            break;
-                        }
-                    }
-                }
-            } else if (itemId.startsWith("eidolon:")) {
-                // For other eidolon recipes, try to guess the result item
-                String recipeName = itemId.substring(8); // Remove "eidolon:" prefix
-                String[] guesses = {
-                    "eidolon:" + recipeName,
-                    "eidolon:" + recipeName + "_ingot",
-                    "eidolon:" + recipeName + "_gem",
-                    "eidolon:" + recipeName + "_crystal"
-                };
-
-                for (String guess : guesses) {
-                    ResourceLocation guessResource = ResourceLocation.tryParse(guess);
-                    if (guessResource != null) {
-                        Item guessItem = ForgeRegistries.ITEMS.getValue(guessResource);
-                        if (guessItem != null) {
-                            item = guessItem;
-                            LOGGER.info("Guessed recipe result item: {} -> {}", itemId, guess);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
+        Item item = resolveItemFromId(itemId);
         if (item == null) {
             LOGGER.warn("Could not resolve item for recipe/item: {}, using fallback", itemId);
             return createFallbackTextPage(pageJson);
@@ -435,13 +449,17 @@ public class EidolonPageConverter {
             return createFallbackTextPage(pageJson);
         }
 
-        Item item = ForgeRegistries.ITEMS.getValue(recipeResource);
-        if (item == null) {
-            LOGGER.warn("Item not found for crafting recipe {}, using fallback", recipeId);
-            return createFallbackTextPage(pageJson);
+        ItemStack result = getRecipeOutput(recipeId);
+        if (result.isEmpty()) {
+            Item item = resolveItemFromId(recipeId);
+            if (item == null) {
+                LOGGER.warn("Item not found for crafting recipe {}, using fallback", recipeId);
+                return createFallbackTextPage(pageJson);
+            }
+            result = new ItemStack(item);
         }
 
-        return new CraftingPage(new ItemStack(item), recipeResource);
+        return new CraftingPage(result, recipeResource);
     }
 
     /**
@@ -684,20 +702,28 @@ public class EidolonPageConverter {
         String inputId = pageJson.has("input") ? pageJson.get("input").getAsString() : "";
         String recipeId = pageJson.has("recipe") ? pageJson.get("recipe").getAsString() : "";
 
-        if (resultId.isEmpty() || inputId.isEmpty()) {
-            LOGGER.warn("Smelting page missing result or input");
+        if (inputId.isEmpty() || (recipeId.isEmpty() && resultId.isEmpty())) {
+            LOGGER.warn("Smelting page missing result, input, or recipe");
             return createFallbackTextPage(pageJson);
         }
 
-        Item resultItem = ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(resultId));
-        Item inputItem = ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(inputId));
-        if (resultItem == null || inputItem == null) {
-            LOGGER.warn("Invalid items for smelting page: result={}, input={}", resultId, inputId);
+        ItemStack inputStack = resolveItemFromId(inputId);
+        if (inputStack.isEmpty()) {
+            LOGGER.warn("Invalid input item for smelting page: {}", inputId);
             return createFallbackTextPage(pageJson);
         }
 
-        ItemStack resultStack = new ItemStack(resultItem);
-        ItemStack inputStack = new ItemStack(inputItem);
+        ItemStack resultStack = ItemStack.EMPTY;
+        if (!recipeId.isEmpty()) {
+            resultStack = getRecipeOutput(recipeId);
+        }
+        if (resultStack.isEmpty()) {
+            resultStack = resolveItemFromId(resultId);
+        }
+        if (resultStack.isEmpty()) {
+            LOGGER.warn("Invalid result item for smelting page: {}", resultId);
+            return createFallbackTextPage(pageJson);
+        }
 
         if (!recipeId.isEmpty()) {
             ResourceLocation recipeRes = ResourceLocation.tryParse(recipeId);
@@ -707,6 +733,33 @@ public class EidolonPageConverter {
         }
 
         return new SmeltingPage(resultStack, inputStack);
+    }
+
+    private static ItemStack getRecipeOutput(String recipeId) {
+        if (recipeId == null || recipeId.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        ResourceLocation recipeRes = ResourceLocation.tryParse(recipeId);
+        Minecraft mc = Minecraft.getInstance();
+        if (recipeRes == null || mc == null || mc.level == null) {
+            return ItemStack.EMPTY;
+        }
+        RecipeManager manager = mc.level.getRecipeManager();
+        return manager.byKey(recipeRes)
+                .map(recipe -> recipe.getResultItem(mc.level.registryAccess()).copy())
+                .orElse(ItemStack.EMPTY);
+    }
+
+    private static ItemStack resolveItemFromId(String itemId) {
+        if (itemId == null || itemId.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        ResourceLocation itemRes = ResourceLocation.tryParse(itemId);
+        if (itemRes == null) {
+            return ItemStack.EMPTY;
+        }
+        Item item = ForgeRegistries.ITEMS.getValue(itemRes);
+        return item != null ? new ItemStack(item) : ItemStack.EMPTY;
     }
 
     /**
