@@ -333,6 +333,7 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
 
                     String titleKey = json.get("title").getAsString();
                     String iconStr = json.has("icon") ? json.get("icon").getAsString() : "minecraft:book";
+                    String category = json.has("category") ? json.get("category").getAsString() : "fundamentals";
                     ResourceLocation icon = ResourceLocation.tryParse(iconStr);
 
                     String path = resLoc.getPath();
@@ -344,8 +345,8 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                             ? Component.translatable(titleKey)
                             : Component.literal(titleKey);
 
-                    LOGGER.info("Registering custom chapter: {} (title: {}, icon: {})", chapterId, chapterTitle, icon);
-                    CUSTOM_CHAPTERS.put(chapterId, new ChapterDefinition(chapterTitle, icon));
+                    LOGGER.info("Registering custom chapter: {} (title: {}, icon: {}, category: {})", chapterId, chapterTitle, icon, category);
+                    CUSTOM_CHAPTERS.put(chapterId, new ChapterDefinition(chapterTitle, icon, category));
                     LOGGER.info("Loaded custom chapter definition {}", chapterId);
                 } catch (IOException e) {
                     LOGGER.error("Failed to load chapter definition at {}", resLoc, e);
@@ -429,15 +430,17 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
     }
 
     /**
-     * Represents a datapack-defined chapter with title and icon
+     * Represents a datapack-defined chapter with title, icon, and category
      */
     public static class ChapterDefinition {
         private final Component title;
         private final ResourceLocation icon;
+        private final String category;
 
-        public ChapterDefinition(Component title, ResourceLocation icon) {
+        public ChapterDefinition(Component title, ResourceLocation icon, String category) {
             this.title = title;
             this.icon = icon;
+            this.category = category;
         }
 
         public Component getTitle() {
@@ -446,6 +449,10 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
 
         public ResourceLocation getIcon() {
             return icon;
+        }
+
+        public String getCategory() {
+            return category;
         }
     }
     

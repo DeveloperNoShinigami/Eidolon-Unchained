@@ -1,4 +1,5 @@
 {
   "title": "eidolonunchained.codex.chapter.summon_ritual",
-  "icon": "minecraft:end_crystal"
+  "icon": "minecraft:end_crystal",
+  "category": "rituals"
 }

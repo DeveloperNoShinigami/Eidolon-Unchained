@@ -15,6 +15,9 @@ import elucent.eidolon.registries.Researches;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -53,6 +56,23 @@ public class EidolonCodexIntegration {
         LOGGER.info("Starting Eidolon codex integration...");
         EidolonPageConverter.initialize();
         injectCustomEntries();
+    }
+
+    /**
+     * Helper method to convert ResourceLocation to ItemStack
+     */
+    private static ItemStack createItemStackFromResourceLocation(ResourceLocation resourceLocation) {
+        if (resourceLocation == null) {
+            return new ItemStack(Items.BOOK);
+        }
+        
+        var item = ForgeRegistries.ITEMS.getValue(resourceLocation);
+        if (item == null) {
+            LOGGER.warn("Could not find item for resource location: {}, falling back to book", resourceLocation);
+            return new ItemStack(Items.BOOK);
+        }
+        
+        return new ItemStack(item);
     }
 
     /**
@@ -107,6 +127,15 @@ public class EidolonCodexIntegration {
             if (research != null) {
                 EidolonCategoryExtension.attachChapterToCategory(research.getCategory(), chapter, research.getIcon());
                 LOGGER.info("Attached chapter {} to category {}", chapterId, research.getCategory());
+            } else if (metadata != null && metadata.getCategory() != null) {
+                // Use metadata category information
+                ItemStack iconStack = createItemStackFromResourceLocation(metadata.getIcon());
+                EidolonCategoryExtension.attachChapterToCategory(metadata.getCategory(), chapter, iconStack);
+                LOGGER.info("Attached chapter {} to category {} (from metadata)", chapterId, metadata.getCategory());
+            } else {
+                // Last resort - attach to fundamentals with default icon
+                EidolonCategoryExtension.attachChapterToCategory("fundamentals", chapter, new ItemStack(Items.BOOK));
+                LOGGER.info("Attached chapter {} to category {} (default fallback)", chapterId, "fundamentals");
             }
         }
 

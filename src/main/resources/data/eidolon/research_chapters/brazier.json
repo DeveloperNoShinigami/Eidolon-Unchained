@@ -1,0 +1,11 @@
+{
+  "id": "eidolon:brazier",
+  "title": "Brazier",
+  "description": "The fundamental tool for conducting arcane rituals",
+  "category": "fundamentals",
+  "icon": {
+    "item": "eidolon:brazier"
+  },
+  "sort_order": 100,
+  "secret": false
+}
