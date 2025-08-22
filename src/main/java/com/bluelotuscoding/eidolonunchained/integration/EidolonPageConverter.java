@@ -29,6 +29,9 @@ import elucent.eidolon.api.spells.Sign;
 import elucent.eidolon.api.spells.Spell;
 import elucent.eidolon.registries.Signs;
 import elucent.eidolon.registries.Spells;
+import elucent.eidolon.recipe.WorktableRecipe;
+import elucent.eidolon.recipe.WorktableRegistry;
+import elucent.eidolon.util.RecipeUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -38,6 +41,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.core.RegistryAccess;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -608,15 +612,46 @@ public class EidolonPageConverter {
     private static Page createWorkbenchPage(JsonObject pageJson) {
         String itemId = pageJson.has("item") ? pageJson.get("item").getAsString() : "";
         String recipeId = pageJson.has("recipe") ? pageJson.get("recipe").getAsString() : "";
-
-        Item item = null;
+        ItemStack stack = ItemStack.EMPTY;
         if (!itemId.isEmpty()) {
-            item = resolveItemFromId(itemId);
+            ResourceLocation itemRes = ResourceLocation.tryParse(itemId);
+            if (itemRes != null) {
+                Item item = ForgeRegistries.ITEMS.getValue(itemRes);
+                if (item != null) {
+                    stack = new ItemStack(item);
+                }
+            }
         } else if (!recipeId.isEmpty()) {
-            item = resolveItemFromId(recipeId);
+            stack = getRecipeOutput(recipeId);
+            if (stack.isEmpty()) {
+                ResourceLocation recipeRes = ResourceLocation.tryParse(recipeId);
+                if (recipeRes != null) {
+                    String path = recipeRes.getPath();
+                    int slash = path.lastIndexOf('/');
+                    String base = slash >= 0 ? path.substring(slash + 1) : path;
+                    String namespace = recipeRes.getNamespace();
+                    String[] guesses = {
+                            namespace + ":" + base,
+                            namespace + ":" + base + "_ingot",
+                            namespace + ":" + base + "_gem",
+                            namespace + ":" + base + "_crystal"
+                    };
+                    for (String guess : guesses) {
+                        ResourceLocation guessRes = ResourceLocation.tryParse(guess);
+                        if (guessRes != null) {
+                            Item guessItem = ForgeRegistries.ITEMS.getValue(guessRes);
+                            if (guessItem != null) {
+                                stack = new ItemStack(guessItem);
+                                LOGGER.info("Guessed recipe result item: {} -> {}", recipeId, guess);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        if (item == null) {
+        if (stack.isEmpty()) {
             LOGGER.warn("Workbench page missing valid item or recipe");
             return createFallbackTextPage(pageJson);
         }
@@ -624,11 +659,39 @@ public class EidolonPageConverter {
         if (!recipeId.isEmpty()) {
             ResourceLocation recipeRes = ResourceLocation.tryParse(recipeId);
             if (recipeRes != null) {
-                return new WorktablePage(new ItemStack(item), recipeRes);
+                return new WorktablePage(stack, recipeRes);
             }
         }
 
-        return new WorktablePage(new ItemStack(item));
+        return new WorktablePage(stack);
+    }
+
+    /**
+     * Attempt to fetch the output ItemStack for a recipe ID.
+     */
+    private static ItemStack getRecipeOutput(String recipeId) {
+        ResourceLocation recipeRes = ResourceLocation.tryParse(recipeId);
+        if (recipeRes == null) return ItemStack.EMPTY;
+
+        RecipeManager manager = RecipeUtil.getRecipeManager();
+        if (manager != null) {
+            Recipe<?> recipe = manager.byKey(recipeRes).orElse(null);
+            if (recipe != null) {
+                try {
+                    ItemStack result = recipe.getResultItem(RegistryAccess.EMPTY);
+                    if (!result.isEmpty()) return result.copy();
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+
+        WorktableRecipe wt = WorktableRegistry.find(recipeRes);
+        if (wt != null) {
+            ItemStack result = wt.getResultItem();
+            if (!result.isEmpty()) return result.copy();
+        }
+
+        return ItemStack.EMPTY;
     }
 
     /**
