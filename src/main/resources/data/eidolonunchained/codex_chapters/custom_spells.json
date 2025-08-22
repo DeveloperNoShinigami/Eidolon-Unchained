@@ -1,5 +1,23 @@
 {
-  "title": "Custom Spells",
+  "title": "eidolonunchained.codex.chapter.custom_spells",
   "icon": "minecraft:end_crystal",
-  "category": "spells"
+  "category": "spells",
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolonunchained.codex.chapter.custom_spells"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.chapter.custom_spells.intro"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.chapter.custom_spells.creation"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.chapter.custom_spells.mastery"
+    }
+  ]
 }

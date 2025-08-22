@@ -1,4 +1,8 @@
 {
+  "eidolonunchained.codex.chapter.custom_spells": "Custom Spell Creation",
+  "eidolonunchained.codex.chapter.custom_spells.intro": "The art of creating new spells requires deep understanding of magical theory and precise execution. This chapter will guide you through the fundamental principles of spell creation.",
+  "eidolonunchained.codex.chapter.custom_spells.creation": "Spell creation begins with understanding the desired effect and working backwards to determine the necessary components, gestures, and incantations. Each element must be perfectly balanced to achieve the intended result.",
+  "eidolonunchained.codex.chapter.custom_spells.mastery": "Master spellcrafters can create entirely new categories of magic by combining disparate magical schools. This advanced technique requires years of study and experimentation.",
   "eidolonunchained.codex.chapter.community_rituals": "Community Rituals",
   "eidolonunchained.codex.chapter.rituals": "Rituals",
   "eidolonunchained.codex.chapter.summon_ritual": "Summon Ritual",

@@ -36,10 +36,10 @@ import java.util.*;
  * entries supplied through datapacks.
  * <p>
  * Files follow the format described in {@code docs/datapack/overview.md}:
- * categories reside in {@code codex_categories/}, chapters in
- * {@code codex_chapters/} and individual entries in
- * {@code codex_entries/}. Translation keys should use the pattern
- * {@code <namespace>.codex.<category>.<chapter>.<suffix>} so that names and
+ * categories reside in {@code codex_categories/}, chapters can be in either
+ * {@code codex_chapters/} (legacy) or {@code codex/category_name/} (new structure),
+ * and individual entries in {@code codex_entries/}. Translation keys should use 
+ * the pattern {@code <namespace>.codex.<category>.<chapter>.<suffix>} so that names and
  * page text can be localised. Research requirements can be declared through
  * each entry's {@code prerequisites} array.</p>
  */
@@ -320,6 +320,7 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
      * Loads custom chapter definitions from datapacks
      */
     private void loadCustomChapters(ResourceManager resourceManager) {
+        // Load from old codex_chapters structure
         LOGGER.info("Searching for custom codex chapters in 'codex_chapters'...");
         resourceManager.listResources("codex_chapters", path -> path.getPath().endsWith(".json"))
             .forEach((resLoc, resource) -> {
@@ -352,6 +353,45 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                     LOGGER.error("Failed to load chapter definition at {}", resLoc, e);
                 }
             });
+
+        // Load from new codex structure (codex/category/chapter.json)
+        LOGGER.info("Searching for custom codex chapters in 'codex' structure...");
+        resourceManager.listResources("codex", path -> path.getPath().endsWith(".json") && !path.getPath().endsWith("_category.json"))
+            .forEach((resLoc, resource) -> {
+                LOGGER.info("Found codex chapter resource: {} (namespace: {}, path: {})", resLoc, resLoc.getNamespace(), resLoc.getPath());
+                try (InputStreamReader reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
+                    JsonObject json = GSON.fromJson(reader, JsonObject.class);
+                    if (json == null || !json.has("title")) {
+                        LOGGER.warn("Skipping invalid chapter definition at {}", resLoc);
+                        return;
+                    }
+
+                    String titleKey = json.get("title").getAsString();
+                    String iconStr = json.has("icon") ? json.get("icon").getAsString() : "minecraft:book";
+                    ResourceLocation icon = ResourceLocation.tryParse(iconStr);
+
+                    // Extract category from folder structure: codex/category/chapter.json
+                    String path = resLoc.getPath();
+                    path = path.substring("codex/".length(), path.length() - 5); // remove "codex/" and ".json"
+                    String[] pathParts = path.split("/");
+                    String category = pathParts[0]; // First part is the category
+                    String chapterName = pathParts[pathParts.length - 1]; // Last part is the chapter name
+                    
+                    ResourceLocation chapterId = new ResourceLocation(resLoc.getNamespace(), chapterName);
+
+                    Component chapterTitle =
+                        (titleKey.contains(":") || titleKey.contains("."))
+                            ? Component.translatable(titleKey)
+                            : Component.literal(titleKey);
+
+                    LOGGER.info("Registering custom chapter: {} (title: {}, icon: {}, category: {})", chapterId, chapterTitle, icon, category);
+                    CUSTOM_CHAPTERS.put(chapterId, new ChapterDefinition(chapterTitle, icon, category));
+                    LOGGER.info("Loaded custom chapter definition {}", chapterId);
+                } catch (IOException e) {
+                    LOGGER.error("Failed to load chapter definition at {}", resLoc, e);
+                }
+            });
+            
         LOGGER.info("Custom chapter loading complete. Total loaded: {}", CUSTOM_CHAPTERS.size());
     }
     
