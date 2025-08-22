@@ -39,11 +39,11 @@ public class CodexDebugCommands {
     private static void testTranslations(CommandSourceStack source) {
         source.sendSuccess(() -> Component.literal("Testing translation system..."), false);
         
-        // Test some translation keys
+        // Test some translation keys that actually exist
         String[] testKeys = {
-            "eidolonunchained.codex.entry.crystal_rituals.title",
-            "eidolonunchained.codex.entry.advanced_monsters.title",
-            "eidolonunchained.codex.entry.void_mastery.title"
+            "eidolonunchained.codex.entry.text_example.title",
+            "eidolonunchained.codex.entry.recipe_example.title",
+            "eidolonunchained.codex.entry.entity_example.title"
         };
         
         LOGGER.info("=== TRANSLATION TEST START ===");

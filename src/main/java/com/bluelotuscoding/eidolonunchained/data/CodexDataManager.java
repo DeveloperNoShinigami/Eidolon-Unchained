@@ -126,8 +126,8 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
         // Find every codex entry JSON across all namespaces (builtin + datapack)
         LOGGER.info("Scanning for codex entries in all namespaces...");
         
-        // DEBUG: Check what files we can actually find
-        Map<ResourceLocation, Resource> allCodexEntryFiles = resourceManager.listResources("data", rl -> rl.getPath().contains("/codex_entries/") && rl.getPath().endsWith(".json"));
+        // DEBUG: Check what files we can actually find using the same approach as research system
+        Map<ResourceLocation, Resource> allCodexEntryFiles = resourceManager.listResources("codex_entries", rl -> rl.getPath().endsWith(".json"));
         LOGGER.info("DEBUG: Found {} codex entry files: {}", allCodexEntryFiles.size(), allCodexEntryFiles.keySet());
         
         allCodexEntryFiles.forEach((resLoc, resource) -> {
@@ -333,7 +333,7 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
     private void loadCustomChapters(ResourceManager resourceManager) {
         // Load from old codex_chapters structure
         LOGGER.info("Searching for custom codex chapters in 'codex_chapters'...");
-        resourceManager.listResources("data", path -> path.getPath().contains("/codex_chapters/") && path.getPath().endsWith(".json"))
+        resourceManager.listResources("codex_chapters", path -> path.getPath().endsWith(".json"))
             .forEach((resLoc, resource) -> {
                 LOGGER.info("Found codex chapter resource: {} (namespace: {}, path: {})", resLoc, resLoc.getNamespace(), resLoc.getPath());
                 try (InputStreamReader reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
@@ -371,8 +371,8 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
         // Load from new codex structure (codex/category/chapter.json)
         LOGGER.info("Searching for custom codex chapters in 'codex' structure...");
         
-        // DEBUG: Check what chapter files we can find
-        Map<ResourceLocation, Resource> allChapterFiles = resourceManager.listResources("data", path -> path.getPath().contains("/codex/") && path.getPath().endsWith(".json") && !path.getPath().endsWith("_category.json"));
+        // DEBUG: Check what chapter files we can find using better path scanning
+        Map<ResourceLocation, Resource> allChapterFiles = resourceManager.listResources("codex", path -> path.getPath().endsWith(".json") && !path.getPath().endsWith("_category.json"));
         LOGGER.info("DEBUG: Found {} chapter files: {}", allChapterFiles.size(), allChapterFiles.keySet());
         
         allChapterFiles.forEach((resLoc, resource) -> {

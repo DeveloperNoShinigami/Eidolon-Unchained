@@ -70,19 +70,19 @@ public class DatapackCategoryExample {
             CodexDataManager dataManager = new CodexDataManager();
             ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
 
-            // DEBUG: Let's see what resources are actually available
-            LOGGER.info("🔍 DEBUG: Scanning ALL resources containing 'codex'...");
-            Map<ResourceLocation, Resource> allCodexFiles = resourceManager.listResources("data",
-                loc -> loc.getPath().contains("codex"));
-            LOGGER.info("🔍 DEBUG: Found {} total files containing 'codex': {}", allCodexFiles.size(), allCodexFiles.keySet());
+            // DEBUG: Let's see what resources are actually available using the corrected approach
+            LOGGER.info("🔍 DEBUG: Scanning ALL codex resources...");
+            Map<ResourceLocation, Resource> allCodexFiles = resourceManager.listResources("codex",
+                loc -> true);
+            LOGGER.info("🔍 DEBUG: Found {} total codex files: {}", allCodexFiles.size(), allCodexFiles.keySet());
 
-            // DEBUG: Let's see what resources are in our namespace
-            Map<ResourceLocation, Resource> ourNamespaceFiles = resourceManager.listResources("data",
-                loc -> loc.getNamespace().equals(EidolonUnchained.MODID));
-            LOGGER.info("🔍 DEBUG: Found {} total files in our namespace: {}", ourNamespaceFiles.size(), ourNamespaceFiles.keySet());
+            // DEBUG: Let's see what codex_entries we can find
+            Map<ResourceLocation, Resource> entryFiles = resourceManager.listResources("codex_entries",
+                loc -> loc.getPath().endsWith(".json"));
+            LOGGER.info("🔍 DEBUG: Found {} codex_entries files: {}", entryFiles.size(), entryFiles.keySet());
 
-            Map<ResourceLocation, Resource> categoryFiles = resourceManager.listResources("data",
-                loc -> loc.getPath().contains("/codex/") && loc.getPath().endsWith("_category.json"));
+            Map<ResourceLocation, Resource> categoryFiles = resourceManager.listResources("codex",
+                loc -> loc.getPath().endsWith("_category.json"));
 
             int categoriesCreated = 0;
             

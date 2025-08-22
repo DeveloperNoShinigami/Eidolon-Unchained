@@ -130,7 +130,7 @@ public class EidolonPageConverter {
         LOGGER.info("Translation cache loaded with {} entries", cachedTranslations.size());
         
         // Log some sample translations for debugging
-        String testKey = "eidolonunchained.codex.entry.crystal_rituals.title";
+        String testKey = "eidolonunchained.codex.entry.text_example.title";
         String testTranslation = getDirectTranslation(testKey);
         LOGGER.info("Test translation for '{}': '{}'", testKey, testTranslation);
     }
