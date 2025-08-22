@@ -152,7 +152,7 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
         // Now that all resources are loaded, trigger category scanning
         LOGGER.info("Triggering category scanning now that resources are available...");
         try {
-            triggerCategoryScanning();
+            triggerCategoryScanning(resourceManager);
         } catch (Exception e) {
             LOGGER.error("Failed to trigger category scanning", e);
         }
@@ -622,14 +622,14 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
     /**
      * Trigger category scanning after resources are fully loaded
      */
-    private void triggerCategoryScanning() {
+    private void triggerCategoryScanning(ResourceManager resourceManager) {
         LOGGER.info("Triggering category scanning with loaded resources...");
         try {
             // Import the EidolonCategoryExtension class
             Class<?> extensionClass = Class.forName("com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension");
-            java.lang.reflect.Method triggerMethod = extensionClass.getDeclaredMethod("triggerCategoryScanningWithResources");
+            java.lang.reflect.Method triggerMethod = extensionClass.getDeclaredMethod("triggerCategoryScanningWithResources", ResourceManager.class);
             triggerMethod.setAccessible(true);
-            triggerMethod.invoke(null);
+            triggerMethod.invoke(null, resourceManager);
             LOGGER.info("Successfully triggered category scanning");
         } catch (Exception e) {
             LOGGER.error("Failed to trigger category scanning via reflection", e);

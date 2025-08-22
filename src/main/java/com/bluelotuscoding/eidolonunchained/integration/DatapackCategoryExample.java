@@ -62,13 +62,12 @@ public class DatapackCategoryExample {
      * ✅ TRULY DATAPACK-DRIVEN: Reads category definitions from _category.json files
      * 🔄 FUTURE MIGRATION: Replace reflection with direct CodexEvents API access
      */
-    public static void addDatapackCategories(java.util.List<Category> categories) {
+    public static void addDatapackCategories(java.util.List<Category> categories, net.minecraft.server.packs.resources.ResourceManager resourceManager) {
         
         LOGGER.info("🎯 Scanning for datapack category definitions...");
         
         try {
             CodexDataManager dataManager = new CodexDataManager();
-            ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
 
             // DEBUG: Let's see what resources are actually available using the corrected approach
             LOGGER.info("🔍 DEBUG: Scanning ALL codex resources...");
@@ -80,6 +79,15 @@ public class DatapackCategoryExample {
             Map<ResourceLocation, Resource> entryFiles = resourceManager.listResources("codex_entries",
                 loc -> loc.getPath().endsWith(".json"));
             LOGGER.info("🔍 DEBUG: Found {} codex_entries files: {}", entryFiles.size(), entryFiles.keySet());
+
+            // DEBUG: Try different ResourceManager approaches
+            LOGGER.info("🔍 DEBUG: Trying alternative scanning methods...");
+            try {
+                Map<ResourceLocation, Resource> allFiles = resourceManager.listResources("eidolonunchained", loc -> true);
+                LOGGER.info("🔍 DEBUG: Found {} files in eidolonunchained namespace: {}", allFiles.size(), allFiles.keySet());
+            } catch (Exception e) {
+                LOGGER.warn("🔍 DEBUG: Failed to scan eidolonunchained namespace: {}", e.getMessage());
+            }
 
             Map<ResourceLocation, Resource> categoryFiles = resourceManager.listResources("codex",
                 loc -> loc.getPath().endsWith("_category.json"));

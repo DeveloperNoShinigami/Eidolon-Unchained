@@ -482,7 +482,7 @@ public class EidolonCategoryExtension {
     /**
      * Trigger category scanning after resources are loaded (called from CodexDataManager)
      */
-    public static void triggerCategoryScanningWithResources() {
+    public static void triggerCategoryScanningWithResources(net.minecraft.server.packs.resources.ResourceManager resourceManager) {
         LOGGER.info("🎯 Category scanning triggered with loaded resources!");
         
         try {
@@ -499,7 +499,7 @@ public class EidolonCategoryExtension {
             
             // Create custom categories from JSON datapacks
             LOGGER.info("🎯 Creating custom categories from JSON datapacks...");
-            DatapackCategoryExample.addDatapackCategories(categories);
+            DatapackCategoryExample.addDatapackCategories(categories, resourceManager);
             
             // Add custom chapters to existing categories
             addChaptersToExistingCategories(categories);
