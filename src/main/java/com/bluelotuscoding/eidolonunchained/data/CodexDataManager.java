@@ -125,7 +125,7 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
 
         // Find every codex entry JSON across all namespaces (builtin + datapack)
         LOGGER.info("Scanning for codex entries in all namespaces...");
-        resourceManager.listResources("codex_entries", rl -> rl.getPath().endsWith(".json"))
+        resourceManager.listResources("data", rl -> rl.getPath().contains("/codex_entries/") && rl.getPath().endsWith(".json"))
                 .forEach((resLoc, resource) -> {
                     LOGGER.info("Processing codex entry file: {}", resLoc);
                     try (InputStreamReader reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
@@ -322,7 +322,7 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
     private void loadCustomChapters(ResourceManager resourceManager) {
         // Load from old codex_chapters structure
         LOGGER.info("Searching for custom codex chapters in 'codex_chapters'...");
-        resourceManager.listResources("codex_chapters", path -> path.getPath().endsWith(".json"))
+        resourceManager.listResources("data", path -> path.getPath().contains("/codex_chapters/") && path.getPath().endsWith(".json"))
             .forEach((resLoc, resource) -> {
                 LOGGER.info("Found codex chapter resource: {} (namespace: {}, path: {})", resLoc, resLoc.getNamespace(), resLoc.getPath());
                 try (InputStreamReader reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
@@ -338,8 +338,11 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                     ResourceLocation icon = ResourceLocation.tryParse(iconStr);
 
                     String path = resLoc.getPath();
-                    path = path.substring("codex_chapters/".length(), path.length() - 5); // remove directory and .json
-                    ResourceLocation chapterId = new ResourceLocation(resLoc.getNamespace(), path);
+                    // Extract namespace and chapter name from full path
+                    String[] pathParts = path.split("/");
+                    String namespace = pathParts[1]; // data/namespace/codex_chapters/chapter.json
+                    String chapterName = pathParts[pathParts.length - 1].replace(".json", "");
+                    ResourceLocation chapterId = new ResourceLocation(namespace, chapterName);
 
                     Component chapterTitle =
                         (titleKey.contains(":") || titleKey.contains("."))
@@ -356,7 +359,7 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
 
         // Load from new codex structure (codex/category/chapter.json)
         LOGGER.info("Searching for custom codex chapters in 'codex' structure...");
-        resourceManager.listResources("codex", path -> path.getPath().endsWith(".json") && !path.getPath().endsWith("_category.json"))
+        resourceManager.listResources("data", path -> path.getPath().contains("/codex/") && path.getPath().endsWith(".json") && !path.getPath().endsWith("_category.json"))
             .forEach((resLoc, resource) -> {
                 LOGGER.info("Found codex chapter resource: {} (namespace: {}, path: {})", resLoc, resLoc.getNamespace(), resLoc.getPath());
                 try (InputStreamReader reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
@@ -370,14 +373,14 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                     String iconStr = json.has("icon") ? json.get("icon").getAsString() : "minecraft:book";
                     ResourceLocation icon = ResourceLocation.tryParse(iconStr);
 
-                    // Extract category from folder structure: codex/category/chapter.json
+                    // Extract category from folder structure: data/namespace/codex/category/chapter.json
                     String path = resLoc.getPath();
-                    path = path.substring("codex/".length(), path.length() - 5); // remove "codex/" and ".json"
                     String[] pathParts = path.split("/");
-                    String category = pathParts[0]; // First part is the category
-                    String chapterName = pathParts[pathParts.length - 1]; // Last part is the chapter name
+                    String namespace = pathParts[1]; // data/namespace/codex/category/chapter.json
+                    String category = pathParts[3]; // category folder name
+                    String chapterName = pathParts[pathParts.length - 1].replace(".json", ""); // chapter file name
                     
-                    ResourceLocation chapterId = new ResourceLocation(resLoc.getNamespace(), chapterName);
+                    ResourceLocation chapterId = new ResourceLocation(namespace, chapterName);
 
                     Component chapterTitle =
                         (titleKey.contains(":") || titleKey.contains("."))

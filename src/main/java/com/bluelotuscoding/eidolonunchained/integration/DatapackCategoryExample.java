@@ -70,33 +70,42 @@ public class DatapackCategoryExample {
             CodexDataManager dataManager = new CodexDataManager();
             ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
 
-            Map<ResourceLocation, Resource> categoryFiles = resourceManager.listResources("codex",
+            Map<ResourceLocation, Resource> categoryFiles = resourceManager.listResources("data/" + EidolonUnchained.MODID + "/codex",
                 loc -> loc.getPath().endsWith("_category.json"));
 
             int categoriesCreated = 0;
+            
+            LOGGER.info("🔍 Found {} category files to scan", categoryFiles.size());
 
             for (Map.Entry<ResourceLocation, Resource> entry : categoryFiles.entrySet()) {
                 ResourceLocation resLoc = entry.getKey();
+                LOGGER.info("📂 Scanning category file: {}", resLoc);
+                
                 if (!resLoc.getNamespace().equals(EidolonUnchained.MODID)) continue;
 
                 String path = resLoc.getPath();
-                String categoryKey = path.substring("codex/".length(), path.length() - "/_category.json".length());
+                // Path format: data/eidolonunchained/codex/category/_category.json
+                // Extract category name from path
+                String[] pathParts = path.split("/");
+                if (pathParts.length >= 2 && path.contains("/codex/")) {
+                    String categoryKey = pathParts[pathParts.length - 2]; // Get folder name before _category.json
 
-                CategoryDefinition categoryDef = loadCategoryDefinition(entry.getValue(), categoryKey);
+                    CategoryDefinition categoryDef = loadCategoryDefinition(entry.getValue(), categoryKey);
 
-                if (categoryDef != null) {
-                    LOGGER.info("📁 Found category definition: {}", categoryDef.nameKey);
+                    if (categoryDef != null) {
+                        LOGGER.info("📁 Found category definition: {}", categoryDef.nameKey);
 
-                    createCategoryFromDatapack(categories, dataManager,
-                        categoryDef.key,
-                        categoryDef.getIconStack(),
-                        categoryDef.getColorInt(),
-                        "codex/" + categoryDef.key
-                    );
+                        createCategoryFromDatapack(categories, dataManager,
+                            categoryDef.key,
+                            categoryDef.getIconStack(),
+                            categoryDef.getColorInt(),
+                            "codex/" + categoryDef.key
+                        );
 
-                    categoriesCreated++;
-                } else {
-                    LOGGER.warn("⚠️ No _category.json found for: {}", categoryKey);
+                        categoriesCreated++;
+                    } else {
+                        LOGGER.warn("⚠️ No _category.json found for: {}", categoryKey);
+                    }
                 }
             }
 
