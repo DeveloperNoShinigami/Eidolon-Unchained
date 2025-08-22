@@ -107,7 +107,8 @@ public class DatapackCategoryExample {
                 // Path format: codex/category/_category.json
                 // Extract category name from path
                 String[] pathParts = path.split("/");
-                if (pathParts.length >= 2 && path.contains("/codex/")) {
+                LOGGER.info("🔍 DEBUG: Path: '{}', Parts: {}, Length: {}", path, java.util.Arrays.toString(pathParts), pathParts.length);
+                if (pathParts.length >= 2 && path.contains("codex/")) {
                     String categoryKey = pathParts[pathParts.length - 2]; // Get folder name before _category.json
                     LOGGER.info("🔍 DEBUG: Extracted category key: '{}'", categoryKey);
 
