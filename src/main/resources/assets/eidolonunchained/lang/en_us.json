@@ -1,0 +1,24 @@
+{
+  "eidolonunchained.codex.category.examples": "Examples",
+  "eidolonunchained.codex.chapter.getting_started": "Getting Started",
+  
+  "eidolonunchained.codex.entry.text_example.title": "Text Example",
+  "eidolonunchained.codex.entry.text_example.description": "This is a simple text example showing how to create codex entries.",
+  "eidolonunchained.codex.entry.text_example.details": "Text entries are the simplest type of codex content. They display formatted text to the reader.",
+  
+  "eidolonunchained.codex.entry.recipe_example.title": "Recipe Example", 
+  "eidolonunchained.codex.entry.recipe_example.description": "This example shows how to display crafting recipes in the codex.",
+  "eidolonunchained.codex.entry.recipe_example.details": "Recipe pages automatically display crafting grids and ingredients.",
+  
+  "eidolonunchained.codex.entry.entity_example.title": "Entity Example",
+  "eidolonunchained.codex.entry.entity_example.description": "This example demonstrates how to show entity information.",
+  "eidolonunchained.codex.entry.entity_example.details": "Entity pages can display creature stats, drops, and spawn information.",
+  
+  "eidolonunchained.research.zombie_hunter.title": "Zombie Hunter",
+  "eidolonunchained.research.zombie_hunter.description": "Learn to hunt the undead",
+  
+  "eidolonunchained.research.undead_researcher.title": "Undead Researcher", 
+  "eidolonunchained.research.undead_researcher.description": "Study the mysteries of the undead",
+  
+  "eidolonunchained.research.chapter.basic_combat": "Basic Combat"
+}
