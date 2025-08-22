@@ -18,6 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -37,7 +38,7 @@ import java.util.Map;
  * We prefer using the new event-driven system (EidolonCategoryExtension) for new content.
  * This class is kept for compatibility with existing content injection needs.
  */
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class EidolonCodexIntegration {
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -45,8 +46,9 @@ public class EidolonCodexIntegration {
     private static final Map<Chapter, List<CodexEntry>> DEFERRED_ENTRIES = new HashMap<>();
 
     @SubscribeEvent
-    public static void onClientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(EidolonCodexIntegration::attemptIntegrationIfNeeded);
+    public static void onServerStarted(ServerStartedEvent event) {
+        // Run integration after all data has been loaded
+        attemptIntegrationIfNeeded();
     }
 
     /**
