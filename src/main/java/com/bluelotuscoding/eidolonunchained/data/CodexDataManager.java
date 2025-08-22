@@ -120,8 +120,8 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
         // Load chapter definitions first so entries can reference them
         loadCustomChapters(resourceManager);
 
-        int loadedEntries = 0;
-        int errors = 0;
+    final int[] loadedEntries = {0};
+    final int[] errors = {0};
 
         // Find every codex entry JSON across all namespaces (builtin + datapack)
         LOGGER.info("Scanning for codex entries in all namespaces...");
@@ -135,15 +135,16 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                             return;
                         }
                         loadCodexEntry(resLoc, json);
-                        loadedEntries++;
-                        LOGGER.info("Successfully loaded entry! Total loaded: {}", loadedEntries);
+                        loadedEntries[0]++;
+                        LOGGER.info("Successfully loaded entry! Total loaded: {}", loadedEntries[0]);
                     } catch (Exception e) {
                         LOGGER.error("Error loading codex data from {}: {}", resLoc, e.getMessage(), e);
-                        errors++;
+                        errors[0]++;
                     }
                 });
 
         LOGGER.info("Loaded {} codex entries with {} errors", loadedEntries, errors);
+    LOGGER.info("Loaded {} codex entries with {} errors", loadedEntries[0], errors[0]);
     }
     
     /**
