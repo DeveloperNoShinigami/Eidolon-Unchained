@@ -1,18 +1,4 @@
 {
   "title": "eidolonunchained.codex.chapter.getting_started",
-  "icon": "minecraft:compass",
-  "pages": [
-    {
-      "type": "title",
-      "text": "eidolonunchained.codex.chapter.getting_started"
-    },
-    {
-      "type": "text", 
-      "text": "eidolonunchained.codex.chapter.getting_started.intro"
-    },
-    {
-      "type": "text",
-      "text": "eidolonunchained.codex.chapter.getting_started.basics"
-    }
-  ]
+  "icon": "minecraft:compass"
 }
