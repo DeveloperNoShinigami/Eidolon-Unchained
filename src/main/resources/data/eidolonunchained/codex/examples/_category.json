@@ -1,0 +1,7 @@
+{
+  "key": "examples",
+  "name": "eidolonunchained.codex.category.examples",
+  "icon": "minecraft:book",
+  "color": "0x4169E1",
+  "description": "Example content demonstrating the datapack system"
+}

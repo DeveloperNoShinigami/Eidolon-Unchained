@@ -1,0 +1,18 @@
+{
+  "title": "eidolonunchained.research.zombie_hunter.title",
+  "description": "eidolonunchained.research.zombie_hunter.description",
+  "icon": "minecraft:rotten_flesh",
+  "tasks": [
+    {
+      "type": "kill_entities",
+      "target": "minecraft:zombie",
+      "count": 1
+    }
+  ],
+  "rewards": [
+    {
+      "type": "item",
+      "item": "minecraft:iron_sword"
+    }
+  ]
+}

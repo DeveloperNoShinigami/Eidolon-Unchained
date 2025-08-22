@@ -1,0 +1,17 @@
+{
+  "target_chapter": "getting_started",
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolonunchained.codex.entry.text_example.title"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.text_example.description"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.text_example.details"
+    }
+  ]
+}

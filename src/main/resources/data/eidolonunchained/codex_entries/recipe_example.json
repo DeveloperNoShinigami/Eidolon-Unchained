@@ -1,0 +1,17 @@
+{
+  "target_chapter": "getting_started",
+  "pages": [
+    {
+      "type": "title", 
+      "text": "eidolonunchained.codex.entry.recipe_example.title"
+    },
+    {
+      "type": "recipe",
+      "recipe": "minecraft:crafting_table"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.recipe_example.explanation"
+    }
+  ]
+}

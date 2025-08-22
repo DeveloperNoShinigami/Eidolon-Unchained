@@ -1,0 +1,24 @@
+{
+  "title": "eidolonunchained.research.undead_researcher.title",
+  "description": "eidolonunchained.research.undead_researcher.description",
+  "icon": "minecraft:written_book",
+  "conditions": [
+    {
+      "type": "dimension",
+      "dimension": "minecraft:overworld"
+    }
+  ],
+  "tasks": [
+    {
+      "type": "kill_entities",
+      "target": "minecraft:zombie",
+      "count": 1
+    }
+  ],
+  "rewards": [
+    {
+      "type": "item",
+      "item": "minecraft:book"
+    }
+  ]
+}
