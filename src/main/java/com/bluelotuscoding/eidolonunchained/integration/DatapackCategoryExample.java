@@ -70,8 +70,8 @@ public class DatapackCategoryExample {
             CodexDataManager dataManager = new CodexDataManager();
             ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
 
-            Map<ResourceLocation, Resource> categoryFiles = resourceManager.listResources("data/" + EidolonUnchained.MODID + "/codex",
-                loc -> loc.getPath().endsWith("_category.json"));
+            Map<ResourceLocation, Resource> categoryFiles = resourceManager.listResources("data",
+                loc -> loc.getPath().contains("/codex/") && loc.getPath().endsWith("_category.json"));
 
             int categoriesCreated = 0;
             
