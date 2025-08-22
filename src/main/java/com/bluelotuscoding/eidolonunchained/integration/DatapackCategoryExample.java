@@ -100,7 +100,8 @@ public class DatapackCategoryExample {
                 ResourceLocation resLoc = entry.getKey();
                 LOGGER.info("📂 Scanning category file: {}", resLoc);
                 
-                if (!resLoc.getNamespace().equals(EidolonUnchained.MODID)) continue;
+                // DEBUG: Check namespace
+                LOGGER.info("� File namespace: '{}', Expected: '{}'", resLoc.getNamespace(), EidolonUnchained.MODID);
 
                 String path = resLoc.getPath();
                 // Path format: codex/category/_category.json
@@ -108,8 +109,10 @@ public class DatapackCategoryExample {
                 String[] pathParts = path.split("/");
                 if (pathParts.length >= 2 && path.contains("/codex/")) {
                     String categoryKey = pathParts[pathParts.length - 2]; // Get folder name before _category.json
+                    LOGGER.info("🔍 DEBUG: Extracted category key: '{}'", categoryKey);
 
                     CategoryDefinition categoryDef = loadCategoryDefinition(entry.getValue(), categoryKey);
+                    LOGGER.info("🔍 DEBUG: Loaded category definition: {}", categoryDef);
 
                     if (categoryDef != null) {
                         LOGGER.info("📁 Found category definition: {}", categoryDef.nameKey);
