@@ -333,7 +333,7 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
 
                     String titleKey = json.get("title").getAsString();
                     String iconStr = json.has("icon") ? json.get("icon").getAsString() : "minecraft:book";
-                    String category = json.has("category") ? json.get("category").getAsString() : "fundamentals";
+                    String category = json.has("category") ? json.get("category").getAsString() : "artifice";
                     ResourceLocation icon = ResourceLocation.tryParse(iconStr);
 
                     String path = resLoc.getPath();

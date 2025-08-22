@@ -2,7 +2,7 @@
   "id": "eidolon:brazier",
   "title": "Brazier",
   "description": "The fundamental tool for conducting arcane rituals",
-  "category": "fundamentals",
+  "category": "rituals",
   "icon": {
     "item": "eidolon:brazier"
   },

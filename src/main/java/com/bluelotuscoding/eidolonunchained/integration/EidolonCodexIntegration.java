@@ -133,9 +133,9 @@ public class EidolonCodexIntegration {
                 EidolonCategoryExtension.attachChapterToCategory(metadata.getCategory(), chapter, iconStack);
                 LOGGER.info("Attached chapter {} to category {} (from metadata)", chapterId, metadata.getCategory());
             } else {
-                // Last resort - attach to fundamentals with default icon
-                EidolonCategoryExtension.attachChapterToCategory("fundamentals", chapter, new ItemStack(Items.BOOK));
-                LOGGER.info("Attached chapter {} to category {} (default fallback)", chapterId, "fundamentals");
+                // Last resort - attach to artifice with default icon
+                EidolonCategoryExtension.attachChapterToCategory("artifice", chapter, new ItemStack(Items.BOOK));
+                LOGGER.info("Attached chapter {} to category {} (default fallback)", chapterId, "artifice");
             }
         }
 
