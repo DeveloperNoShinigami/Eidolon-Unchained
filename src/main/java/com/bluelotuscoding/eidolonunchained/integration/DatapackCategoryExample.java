@@ -70,6 +70,17 @@ public class DatapackCategoryExample {
             CodexDataManager dataManager = new CodexDataManager();
             ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
 
+            // DEBUG: Let's see what resources are actually available
+            LOGGER.info("🔍 DEBUG: Scanning ALL resources containing 'codex'...");
+            Map<ResourceLocation, Resource> allCodexFiles = resourceManager.listResources("data",
+                loc -> loc.getPath().contains("codex"));
+            LOGGER.info("🔍 DEBUG: Found {} total files containing 'codex': {}", allCodexFiles.size(), allCodexFiles.keySet());
+
+            // DEBUG: Let's see what resources are in our namespace
+            Map<ResourceLocation, Resource> ourNamespaceFiles = resourceManager.listResources("data",
+                loc -> loc.getNamespace().equals(EidolonUnchained.MODID));
+            LOGGER.info("🔍 DEBUG: Found {} total files in our namespace: {}", ourNamespaceFiles.size(), ourNamespaceFiles.keySet());
+
             Map<ResourceLocation, Resource> categoryFiles = resourceManager.listResources("data",
                 loc -> loc.getPath().contains("/codex/") && loc.getPath().endsWith("_category.json"));
 

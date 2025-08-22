@@ -66,15 +66,15 @@ graph TD
 - Multiple chapters per category
 
 ### 2. Chapter System  
-**Purpose**: Define content containers within categories
+**Purpose**: Define lightweight chapter containers within categories
 
 **Files**: `data/yourmod/codex/category_name/chapter.json`
 
 **Features**:
-- Base page content
-- Category assignment
-- Entry extension points
-- Research integration
+- Title and icon definitions only
+- Category assignment (by folder structure)
+- Entry attachment points
+- Research integration potential
 
 ### 3. Entry System
 **Purpose**: Add content to existing chapters

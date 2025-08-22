@@ -43,7 +43,7 @@ Special pages that display as section headers.
 - **`text`**: Translation key for the title
 
 ### Usage
-- Start chapters and entries with title pages
+- Start entries with title pages (chapters only have title/icon)
 - Use to divide long content into sections
 - Appears with special formatting in the codex
 
@@ -294,6 +294,6 @@ Advanced users can create custom page types by extending the system.
 ## 📚 Related Documentation
 
 - [Codex Entries](codex-entries.md) - Using pages in entries
-- [Chapters](chapters.md) - Organizing pages in chapters
+- [System Overview](system-overview.md) - Understanding the chapter system
 - [Examples](examples.md) - Working examples of each type
 - [Translations](translations.md) - Localizing page content

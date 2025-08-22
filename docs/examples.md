@@ -23,10 +23,10 @@ A complete category definition showing:
 ### 2. Chapter Example
 **File**: `codex/examples/getting_started.json`
 
-A foundation chapter containing:
-- Title page
-- Multiple informational text pages
-- Translation key usage
+A lightweight chapter definition containing:
+- Title translation key
+- Icon definition
+- Category placement (by folder structure)
 
 ### 3. Entry Examples
 
@@ -87,15 +87,28 @@ Let's examine each file in detail:
 ```json
 {
   "title": "eidolonunchained.codex.chapter.getting_started",
-  "icon": "minecraft:compass", 
+  "icon": "minecraft:compass"
+}
+```
+
+**Key Points**:
+- Chapters are lightweight definitions with just title and icon
+- No pages array - content is in separate entries
+- `title` references translation key
+- `icon` is a standard Minecraft item
+
+### Entry with Pages
+```json
+{
+  "target_chapter": "getting_started",
   "pages": [
     {
       "type": "title",
-      "text": "eidolonunchained.codex.chapter.getting_started"
+      "text": "eidolonunchained.codex.entry.text_example.title"
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.chapter.getting_started.intro"
+      "text": "eidolonunchained.codex.entry.text_example.description"
     }
   ]
 }

@@ -103,29 +103,9 @@ public class EidolonCategoryExtension {
      */
     @SubscribeEvent
     public static void onFMLLoadCompleteEvent(net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent event) {
-        LOGGER.info("🎯 EidolonCategoryExtension - Implementing FULL functionality via reflection (FMLLoadCompleteEvent)!");
-        try {
-
-            // Step 1: Get access to Eidolon's internal category system using reflection
-            if (!initializeEidolonCategoriesAccess()) {
-                LOGGER.error("❌ Failed to access Eidolon's category system via reflection");
-                return;
-            }
-
-            // Step 2: Create and add custom categories using our datapack system
-            LOGGER.info("📁 Creating custom categories from JSON datapacks...");
-            DatapackCategoryExample.addDatapackCategories(eidolonCategories);
-
-            // Step 3: Add chapters to existing categories (if needed)
-            LOGGER.info("📖 Adding custom chapters to existing categories...");
-            addChaptersToExistingCategories(eidolonCategories);
-
-            LOGGER.info("✅ Successfully implemented FULL category system via reflection!");
-            LOGGER.info("🚀 Ready for migration to event system when CodexEvents become available");
-
-        } catch (Exception e) {
-            LOGGER.error("❌ Failed to initialize custom categories via reflection", e);
-        }
+        LOGGER.info("🎯 EidolonCategoryExtension - FMLLoadCompleteEvent received");
+        LOGGER.info("⏳ Category scanning will be triggered later when resources are loaded via CodexDataManager");
+        LOGGER.info("🚀 Ready for migration to event system when CodexEvents become available");
     }
     
     /**
@@ -498,4 +478,36 @@ public class EidolonCategoryExtension {
      * ✅ IDE support and refactoring
      * ✅ Forward compatibility
      */
+    
+    /**
+     * Trigger category scanning after resources are loaded (called from CodexDataManager)
+     */
+    public static void triggerCategoryScanningWithResources() {
+        LOGGER.info("🎯 Category scanning triggered with loaded resources!");
+        
+        try {
+            LOGGER.info("🔄 Using reflection to access Eidolon's category system...");
+            Class<?> codexChaptersClass = Class.forName(CLASS_CODEX_CHAPTERS);
+            Field categoriesField = codexChaptersClass.getDeclaredField(FIELD_CATEGORIES);
+            categoriesField.setAccessible(true);
+            
+            @SuppressWarnings("unchecked")
+            java.util.List<Category> categories = (java.util.List<Category>) categoriesField.get(null);
+            
+            LOGGER.info("✅ Successfully accessed Eidolon internals via reflection");
+            LOGGER.info("   Categories list: {} entries", categories.size());
+            
+            // Create custom categories from JSON datapacks
+            LOGGER.info("🎯 Creating custom categories from JSON datapacks...");
+            DatapackCategoryExample.addDatapackCategories(categories);
+            
+            // Add custom chapters to existing categories
+            addChaptersToExistingCategories(categories);
+            
+            LOGGER.info("✅ Successfully completed category scanning with loaded resources!");
+            
+        } catch (Exception e) {
+            LOGGER.error("❌ Failed category scanning with reflection", e);
+        }
+    }
 }

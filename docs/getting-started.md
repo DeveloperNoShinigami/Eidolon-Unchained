@@ -62,19 +62,11 @@ your_datapack/
 ```json
 {
   "title": "yourmod.codex.chapter.crystal_magic",
-  "icon": "minecraft:amethyst_shard",
-  "pages": [
-    {
-      "type": "title",
-      "text": "yourmod.codex.chapter.crystal_magic"
-    },
-    {
-      "type": "text",
-      "text": "yourmod.codex.chapter.crystal_magic.intro"
-    }
-  ]
+  "icon": "minecraft:amethyst_shard"
 }
 ```
+
+**Note**: Chapters are lightweight definitions with just title and icon. Content goes in separate entries.
 
 ## 📝 Step 4: Add an Entry
 

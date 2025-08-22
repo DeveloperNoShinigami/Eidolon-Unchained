@@ -125,8 +125,12 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
 
         // Find every codex entry JSON across all namespaces (builtin + datapack)
         LOGGER.info("Scanning for codex entries in all namespaces...");
-        resourceManager.listResources("data", rl -> rl.getPath().contains("/codex_entries/") && rl.getPath().endsWith(".json"))
-                .forEach((resLoc, resource) -> {
+        
+        // DEBUG: Check what files we can actually find
+        Map<ResourceLocation, Resource> allCodexEntryFiles = resourceManager.listResources("data", rl -> rl.getPath().contains("/codex_entries/") && rl.getPath().endsWith(".json"));
+        LOGGER.info("DEBUG: Found {} codex entry files: {}", allCodexEntryFiles.size(), allCodexEntryFiles.keySet());
+        
+        allCodexEntryFiles.forEach((resLoc, resource) -> {
                     LOGGER.info("Processing codex entry file: {}", resLoc);
                     try (InputStreamReader reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
                         JsonObject json = GSON.fromJson(reader, JsonObject.class);
@@ -143,8 +147,15 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                     }
                 });
 
-        LOGGER.info("Loaded {} codex entries with {} errors", loadedEntries, errors);
-    LOGGER.info("Loaded {} codex entries with {} errors", loadedEntries[0], errors[0]);
+        LOGGER.info("Loaded {} codex entries with {} errors", loadedEntries[0], errors[0]);
+        
+        // Now that all resources are loaded, trigger category scanning
+        LOGGER.info("Triggering category scanning now that resources are available...");
+        try {
+            triggerCategoryScanning();
+        } catch (Exception e) {
+            LOGGER.error("Failed to trigger category scanning", e);
+        }
     }
     
     /**
@@ -359,8 +370,12 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
 
         // Load from new codex structure (codex/category/chapter.json)
         LOGGER.info("Searching for custom codex chapters in 'codex' structure...");
-        resourceManager.listResources("data", path -> path.getPath().contains("/codex/") && path.getPath().endsWith(".json") && !path.getPath().endsWith("_category.json"))
-            .forEach((resLoc, resource) -> {
+        
+        // DEBUG: Check what chapter files we can find
+        Map<ResourceLocation, Resource> allChapterFiles = resourceManager.listResources("data", path -> path.getPath().contains("/codex/") && path.getPath().endsWith(".json") && !path.getPath().endsWith("_category.json"));
+        LOGGER.info("DEBUG: Found {} chapter files: {}", allChapterFiles.size(), allChapterFiles.keySet());
+        
+        allChapterFiles.forEach((resLoc, resource) -> {
                 LOGGER.info("Found codex chapter resource: {} (namespace: {}, path: {})", resLoc, resLoc.getNamespace(), resLoc.getPath());
                 try (InputStreamReader reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
                     JsonObject json = GSON.fromJson(reader, JsonObject.class);
@@ -602,5 +617,22 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
         }
 
         return entries;
+    }
+    
+    /**
+     * Trigger category scanning after resources are fully loaded
+     */
+    private void triggerCategoryScanning() {
+        LOGGER.info("Triggering category scanning with loaded resources...");
+        try {
+            // Import the EidolonCategoryExtension class
+            Class<?> extensionClass = Class.forName("com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension");
+            java.lang.reflect.Method triggerMethod = extensionClass.getDeclaredMethod("triggerCategoryScanningWithResources");
+            triggerMethod.setAccessible(true);
+            triggerMethod.invoke(null);
+            LOGGER.info("Successfully triggered category scanning");
+        } catch (Exception e) {
+            LOGGER.error("Failed to trigger category scanning via reflection", e);
+        }
     }
 }
