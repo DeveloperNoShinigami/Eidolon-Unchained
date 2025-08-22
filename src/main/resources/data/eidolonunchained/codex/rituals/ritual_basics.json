@@ -1,0 +1,18 @@
+{
+  "title": "eidolonunchained.codex.chapter.ritual_basics",
+  "icon": "eidolon:brazier",
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolonunchained.codex.chapter.ritual_basics"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.chapter.ritual_basics.intro"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.chapter.ritual_basics.setup"
+    }
+  ]
+}

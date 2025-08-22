@@ -22,6 +22,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -125,6 +126,25 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                 loadedChapters++;
             } catch (Exception e) {
                 LOGGER.error("Failed to load research chapter from {}", chapter.getKey(), e);
+                errors++;
+            }
+        }
+
+        // Also convert chapters from CodexDataManager to research chapters
+        Map<ResourceLocation, CodexDataManager.ChapterDefinition> codexChapters = CodexDataManager.getAllCustomChapters();
+        LOGGER.info("Converting {} codex chapters to research chapters", codexChapters.size());
+        for (Map.Entry<ResourceLocation, CodexDataManager.ChapterDefinition> entry : codexChapters.entrySet()) {
+            try {
+                ResourceLocation chapterId = entry.getKey();
+                CodexDataManager.ChapterDefinition def = entry.getValue();
+                
+                // Create a ResearchChapter from the CodexDataManager chapter
+                ResearchChapter researchChapter = convertCodexChapterToResearchChapter(chapterId, def);
+                LOADED_RESEARCH_CHAPTERS.put(chapterId, researchChapter);
+                loadedChapters++;
+                LOGGER.info("Converted codex chapter {} to research chapter", chapterId);
+            } catch (Exception e) {
+                LOGGER.error("Failed to convert codex chapter {} to research chapter", entry.getKey(), e);
                 errors++;
             }
         }
@@ -593,5 +613,23 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
     public static void logLoadedData() {
         LOGGER.info("Server started - loaded {} custom research chapters and {} research entries", 
                    LOADED_RESEARCH_CHAPTERS.size(), LOADED_RESEARCH_ENTRIES.size());
+    }
+
+    /**
+     * Converts a CodexDataManager ChapterDefinition to a ResearchChapter
+     */
+    private static ResearchChapter convertCodexChapterToResearchChapter(ResourceLocation chapterId, CodexDataManager.ChapterDefinition def) {
+        // Create a simple research chapter with basic properties
+        return new ResearchChapter(
+            chapterId,
+            def.getTitle(),
+            Component.literal("Datapack chapter"), // Default description
+            new ItemStack(Items.BOOK), // Default icon
+            100, // Default sort order
+            false, // Not secret
+            new ResourceLocation("eidolon", "textures/gui/research_bg.png"), // Default background
+            def.getCategory(), // Use the category from the definition
+            new JsonObject() // Empty extra data
+        );
     }
 }

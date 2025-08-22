@@ -1,0 +1,18 @@
+{
+  "title": "eidolonunchained.codex.chapter.monsters",
+  "icon": "eidolon:tattered_cloth",
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolonunchained.codex.chapter.monsters"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.chapter.monsters.intro"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.chapter.monsters.advanced"
+    }
+  ]
+}

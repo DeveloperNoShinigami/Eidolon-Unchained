@@ -1,0 +1,18 @@
+{
+  "title": "eidolonunchained.codex.chapter.artifact_crafting",
+  "icon": "minecraft:golden_pickaxe",
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolonunchained.codex.chapter.artifact_crafting"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.chapter.artifact_crafting.intro"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.chapter.artifact_crafting.methods"
+    }
+  ]
+}

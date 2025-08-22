@@ -153,6 +153,29 @@
   "eidolonunchained.codex.category.community_rituals": "Community Rituals",
   "eidolonunchained.codex.category.expansions": "Expansions",
   "eidolonunchained.codex.category.advanced_techniques": "Advanced Techniques",
+  "eidolonunchained.codex.category.nature": "Nature & Creatures",
+  "eidolonunchained.codex.category.rituals": "Ritual Knowledge",
+  "eidolonunchained.codex.category.spells": "Spell Craft",
+  "eidolonunchained.codex.category.artifice": "Magical Artifice",
+
+  "_comment_new_chapters": "New chapter translations",
+  "eidolonunchained.codex.chapter.monsters": "Monster Studies",
+  "eidolonunchained.codex.chapter.monsters.intro": "Understanding the creatures that dwell in the shadows and the secrets they hold is essential for any practitioner of the dark arts.",
+  "eidolonunchained.codex.chapter.monsters.creatures": "Various undead and magical creatures populate our world, each with unique properties and behaviors that can be studied and understood.",
+  "eidolonunchained.codex.chapter.monsters.knowledge": "Through careful observation and documentation, patterns emerge that reveal the deeper nature of these beings and their connection to magical forces.",
+
+  "eidolonunchained.codex.chapter.ritual_basics": "Ritual Fundamentals",
+  "eidolonunchained.codex.chapter.ritual_basics.intro": "The foundation of all magical workings lies in understanding proper ritual techniques and the principles that govern them.",
+  "eidolonunchained.codex.chapter.ritual_basics.preparation": "Proper preparation involves not only gathering the correct materials but also achieving the right mental state and environmental conditions.",
+  "eidolonunchained.codex.chapter.ritual_basics.execution": "Execution requires precise timing, correct gestures, and unwavering focus to channel the desired magical energies effectively.",
+
+  "eidolonunchained.codex.chapter.spell_creation": "Spell Creation",
+  "eidolonunchained.codex.chapter.spell_creation.intro": "The art of creating new spells requires deep understanding of magical theory and the ability to weave disparate energies into coherent patterns.",
+  "eidolonunchained.codex.chapter.spell_creation.theory": "Spell theory involves understanding how different magical elements interact and how to balance opposing forces to achieve stable magical effects.",
+
+  "eidolonunchained.codex.chapter.artifact_crafting": "Artifact Crafting",
+  "eidolonunchained.codex.chapter.artifact_crafting.intro": "Creating magical artifacts requires combining mundane craftsmanship with deep magical knowledge to imbue objects with lasting power.",
+  "eidolonunchained.codex.chapter.artifact_crafting.methods": "Various methods exist for artifact creation, from simple enchantment of existing items to complex rituals that bind powerful entities to crafted objects.",
 
   "_comment_research": "=== Research System Translations ===",
   

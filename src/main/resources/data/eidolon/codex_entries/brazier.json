@@ -1,8 +1,0 @@
-{
-  "target_chapter": "eidolon:brazier",
-  "pages": [
-    { "type": "title", "text": "eidolon.codex.page.brazier.0" },
-    { "type": "text", "text": "eidolon.codex.page.brazier.1" },
-    { "type": "crafting", "item": "eidolon:brazier" }
-  ]
-}
