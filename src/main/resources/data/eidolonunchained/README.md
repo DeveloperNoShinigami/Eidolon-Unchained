@@ -1,62 +1,58 @@
-# Eidolon Unchained Datapack Examples
+# Eidolon Unchained Examples
 
-This directory contains comprehensive examples demonstrating the complete datapack system for Eidolon Unchained.
+This directory contains working examples demonstrating the Eidolon Unchained datapack system.
 
-## Structure Overview
+## 📚 Complete Documentation
 
-### Category System
-- **Location**: `data/eidolonunchained/codex/examples/_category.json`
-- **Purpose**: Defines a new category in the Eidolon codex
-- **Features**: Custom icon, color, name, and description
+For comprehensive documentation, please see the **[docs/](../../../../../../docs/)** folder:
 
-### Chapter System
-- **Location**: `data/eidolonunchained/codex/examples/getting_started.json`
-- **Purpose**: Defines a chapter within the examples category
-- **Features**: Title page, multiple text pages with translation support
+- **[Getting Started](../../../../../../docs/getting-started.md)** - Quick tutorial to get up and running
+- **[System Overview](../../../../../../docs/system-overview.md)** - Understanding the architecture  
+- **[Examples Guide](../../../../../../docs/examples.md)** - Detailed explanation of these examples
+- **[API Documentation](../../../../../../docs/api/)** - Developer integration guides
 
-### Codex Entry System
-Located in `data/eidolonunchained/codex_entries/`:
+## 🎯 What's In This Directory
 
-1. **text_example.json** - Demonstrates basic text pages
-2. **recipe_example.json** - Shows recipe page integration
-3. **entity_example.json** - Displays 3D entity rendering
+### Examples Category
+- **Category**: `examples` - Demonstrates category creation
+- **Chapter**: `getting_started` - Shows chapter structure
+- **Entries**: Multiple entries showing different page types
 
-All entries target the "getting_started" chapter and include multiple page types.
+### Research Examples
+- **Simple Research**: `zombie_hunter` - Basic kill task
+- **Conditional Research**: `undead_researcher` - With dimension requirement
 
-### Research System
-Located in `data/eidolonunchained/research_*`:
+## 🚀 Quick Start
 
-1. **research_chapters/basic_combat.json** - Research chapter containing entries
-2. **research_entries/zombie_hunter.json** - Simple research with kill task
-3. **research_entries/undead_researcher.json** - Research with dimension condition + kill task
+1. **Study the files** in this directory to understand the structure
+2. **Read the docs** for detailed explanations
+3. **Copy and modify** these examples for your own content
+4. **Test in-game** to see how everything works together
 
-### Translation System
-- **Location**: `assets/eidolonunchained/lang/en_us.json`
-- **Purpose**: Provides proper localization for all example content
-- **Coverage**: Category names, chapter titles, entry content, research descriptions
+## 📁 File Structure
 
-## Key Features Demonstrated
+```
+codex/examples/
+├── _category.json          # Category definition
+└── getting_started.json    # Chapter with base content
 
-1. **Category Creation**: Complete custom category with metadata
-2. **Chapter Management**: Organized content within categories
-3. **Multiple Page Types**: Text, recipe, entity rendering
-4. **Research Integration**: Tasks, conditions, and rewards
-5. **Translation Support**: Full localization compatibility
-6. **Resource Scanning**: Proper datapack file organization
+codex_entries/
+├── text_example.json       # Text page demonstration
+├── recipe_example.json     # Recipe page example
+└── entity_example.json     # Entity rendering example
 
-## File Naming Conventions
+research_chapters/
+└── basic_combat.json       # Research chapter
 
-- Categories: `_category.json` in category folders
-- Chapters: `{chapter_name}.json` in category folders
-- Entries: `{entry_name}.json` in `codex_entries/`
-- Research: `{research_name}.json` in `research_chapters/` or `research_entries/`
-- Translations: `en_us.json` in `assets/{namespace}/lang/`
+research_entries/
+├── zombie_hunter.json      # Simple research task
+└── undead_researcher.json  # Conditional research task
+```
 
-## Usage Instructions
+## 🔗 Next Steps
 
-1. Copy the example structure as a template
-2. Modify content to match your specific needs
-3. Update translation keys in the language file
-4. Test in-game to verify proper loading
+- **For tutorials**: Start with [Getting Started](../../../../../../docs/getting-started.md)
+- **For reference**: See [Page Types](../../../../../../docs/page-types.md)
+- **For advanced usage**: Check [System Overview](../../../../../../docs/system-overview.md)
 
-This example structure provides a complete foundation for creating custom Eidolon Unchained content through datapacks.
+This example system provides a complete foundation for understanding and building upon the Eidolon Unchained datapack system!
