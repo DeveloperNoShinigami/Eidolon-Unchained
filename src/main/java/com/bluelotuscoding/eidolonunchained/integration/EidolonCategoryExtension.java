@@ -358,12 +358,74 @@ public class EidolonCategoryExtension {
             }
             
         } catch (Exception e) {
-            LOGGER.error("❌ Failed to add research chapter '{}' to category via reflection", 
+            LOGGER.error("❌ Failed to add research chapter '{}' to category via reflection",
                         researchChapter.getId(), e);
         }
-    }    /* COMMENTED OUT: Hardcoded category creation examples
+    }
+
+    /**
+     * Attach an already constructed chapter to a category via reflection.
+     * Used by EidolonCodexIntegration after creating chapters dynamically.
+     */
+    public static void attachChapterToCategory(String categoryKey, Chapter chapter, ItemStack iconItem) {
+        try {
+            if (eidolonCategories == null && !initializeEidolonCategoriesAccess()) {
+                LOGGER.warn("Categories not initialized; cannot attach chapter '{}'", categoryKey);
+                return;
+            }
+
+            for (Category category : eidolonCategories) {
+                Field keyField = category.getClass().getDeclaredField("key");
+                keyField.setAccessible(true);
+                String key = (String) keyField.get(category);
+
+                if (!categoryKey.equals(key)) continue;
+
+                IndexPage.IndexEntry entry = new IndexPage.IndexEntry(chapter, iconItem);
+
+                Field chapterField = category.getClass().getDeclaredField("chapter");
+                chapterField.setAccessible(true);
+                Index categoryIndex = (Index) chapterField.get(category);
+
+                Field pagesField = Chapter.class.getDeclaredField("pages");
+                pagesField.setAccessible(true);
+                @SuppressWarnings("unchecked")
+                List<Page> pages = (List<Page>) pagesField.get(categoryIndex);
+
+                IndexPage indexPage = null;
+                for (Page page : pages) {
+                    if (page instanceof IndexPage) {
+                        indexPage = (IndexPage) page;
+                        break;
+                    }
+                }
+
+                if (indexPage == null) {
+                    LOGGER.warn("Category '{}' missing IndexPage; cannot attach chapter", categoryKey);
+                    return;
+                }
+
+                Field entriesField = IndexPage.class.getDeclaredField("entries");
+                entriesField.setAccessible(true);
+                @SuppressWarnings("unchecked")
+                List<IndexPage.IndexEntry> entries = (List<IndexPage.IndexEntry>) entriesField.get(indexPage);
+                entries.add(entry);
+
+                registeredChapters.add(chapter);
+                LOGGER.info("✅ Attached chapter to category '{}' via reflection", categoryKey);
+                return;
+            }
+
+            LOGGER.warn("Category '{}' not found; unable to attach chapter", categoryKey);
+
+        } catch (Exception e) {
+            LOGGER.error("❌ Failed to attach chapter to category '{}' via reflection", categoryKey, e);
+        }
+    }
+
+    /* COMMENTED OUT: Hardcoded category creation examples
      * We prefer JSON datapack-driven approach for maximum flexibility
-     * 
+     *
     /**
      * Add custom categories to the codex using the builder pattern
      * NOTE: This is commented out in favor of JSON datapack approach
