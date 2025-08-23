@@ -2,15 +2,15 @@
   "eidolon.codex.category.examples": "Examples",
   "eidolonunchained.codex.chapter.getting_started": "Getting Started",
   
-  "eidolonunchained.codex.entry.text_example.title": "Text Example",
+  "codex_entries/text_example.json.title": "Text Example",
   "eidolonunchained.codex.entry.text_example": "This is a simple text example showing how to create codex entries.",
   "eidolonunchained.codex.entry.text_example.details": "Text entries are the simplest type of codex content. They display formatted text to the reader.",
   
-  "eidolonunchained.codex.entry.recipe_example.title": "Recipe Example", 
+  "codex_entries/recipe_example.json.title": "Recipe Example",
   "eidolonunchained.codex.entry.recipe_example": "Learn how to display crafting recipes in your codex entries.",
   "eidolonunchained.codex.entry.recipe_example.explanation": "Recipe pages automatically display crafting grids and ingredients.",
   
-  "eidolonunchained.codex.entry.entity_example.title": "Entity Example",
+  "codex_entries/entity_example.json.title": "Entity Example",
   "eidolonunchained.codex.entry.entity_example": "This entry demonstrates how to display entities in the codex.",
   "eidolonunchained.codex.entry.entity_example.description": "This example demonstrates how to show entity information.",
   
@@ -51,7 +51,7 @@
   "task.eidolonunchained.weather.rain": "Complete during Rain",
   "task.eidolonunchained.weather.thunder": "Complete during Thunderstorm",
 
-  "eidolonunchained.codex.category.custom_research": "Custom Research",
+  "eidolon.codex.category.custom_research": "Custom Research",
   "eidolonunchained.codex.chapter.custom_research.title": "Custom Research",
   "eidolonunchained.research.chapter.simple_examples.title": "Simple Examples",
   "eidolonunchained.research.entry.simple_example.title": "Simple Research Example",
