@@ -3,8 +3,9 @@
   "target_chapter": "getting_started",
   "pages": [
     {
-      "type": "title", 
-      "text": "eidolonunchained.codex.entry.recipe_example.title"
+      "type": "title",
+      "title": "eidolonunchained.codex.entry.recipe_example.title",
+      "text": "eidolonunchained.codex.entry.recipe_example.intro"
     },
     {
       "type": "recipe",

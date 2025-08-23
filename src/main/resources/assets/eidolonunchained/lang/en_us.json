@@ -7,11 +7,46 @@
   "eidolonunchained.codex.entry.text_example.details": "Text entries are the simplest type of codex content. They display formatted text to the reader.",
   
   "eidolonunchained.codex.entry.recipe_example.title": "Recipe Example", 
+  "eidolonunchained.codex.entry.recipe_example.intro": "Learn how to display crafting recipes in your codex entries.",
   "eidolonunchained.codex.entry.recipe_example.explanation": "Recipe pages automatically display crafting grids and ingredients.",
   
   "eidolonunchained.codex.entry.entity_example.title": "Entity Example",
+  "eidolonunchained.codex.entry.entity_example.intro": "This entry demonstrates how to display entities in the codex.",
   "eidolonunchained.codex.entry.entity_example.description": "This example demonstrates how to show entity information.",
   
   "research.eidolonunchained.undead_hunter": "Undead Hunter",
-  "research.eidolonunchained.combat_mastery": "Combat Mastery"
+  "research.eidolonunchained.combat_mastery": "Combat Mastery",
+  "research.eidolonunchained.arcane_studies": "Arcane Studies",
+  "research.eidolonunchained.advanced_exploration": "Advanced Exploration",
+  "research.eidolonunchained.desert_mysteries": "Desert Mysteries",
+  "research.eidolonunchained.nether_expedition": "Nether Expedition",
+  
+  "task.eidolonunchained.enter_dimension.minecraft.nether": "Enter the Nether",
+  "task.eidolonunchained.enter_dimension.minecraft.the_end": "Enter the End",
+  "task.eidolonunchained.enter_dimension.minecraft.overworld": "Return to the Overworld",
+  "task.eidolonunchained.enter_dimension.generic": "Enter %s",
+  
+  "task.eidolonunchained.explore_biome.minecraft.desert": "Explore a Desert",
+  "task.eidolonunchained.explore_biome.minecraft.jungle": "Explore a Jungle", 
+  "task.eidolonunchained.explore_biome.minecraft.swamp": "Explore a Swamp",
+  "task.eidolonunchained.explore_biome.minecraft.taiga": "Explore a Taiga",
+  "task.eidolonunchained.explore_biome.minecraft.ocean": "Explore an Ocean",
+  "task.eidolonunchained.explore_biome.minecraft.mountains": "Explore Mountains",
+  "task.eidolonunchained.explore_biome.minecraft.plains": "Explore Plains",
+  "task.eidolonunchained.explore_biome.minecraft.forest": "Explore a Forest",
+  "task.eidolonunchained.explore_biome.generic": "Explore %s",
+  "task.eidolonunchained.explore_biome.multiple": "Explore %s %d times",
+  
+  "task.eidolonunchained.weather.clear": "Complete during Clear Weather",
+  "task.eidolonunchained.weather.rain": "Complete during Rain",
+  "task.eidolonunchained.weather.thunder": "Complete during Thunderstorm",
+  
+  "task.eidolonunchained.has_nbt.single": "User contains '%s'",
+  "task.eidolonunchained.has_nbt.multiple": "User contains %d data fields",
+  
+  "research.discovery.need_tools": "You sense something significant about this %s, but you need Note-Taking Tools to investigate further.",
+  "research.discovery.title": "Research Discovered!",
+  "research.discovery.location": "Location: %s",
+  "research.discovery.research": "Research: %s", 
+  "research.discovery.check_inventory": "Check your inventory for Research Notes!"
 }

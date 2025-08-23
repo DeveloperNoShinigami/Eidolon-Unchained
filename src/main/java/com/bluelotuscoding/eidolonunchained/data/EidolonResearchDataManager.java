@@ -8,15 +8,21 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import elucent.eidolon.api.research.Research;
 import elucent.eidolon.api.research.ResearchTask;
+import elucent.eidolon.api.spells.Spell;
+import elucent.eidolon.capability.IKnowledge;
 import elucent.eidolon.registries.Researches;
+import elucent.eidolon.registries.Spells;
 import elucent.eidolon.util.KnowledgeUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -311,13 +317,21 @@ public class EidolonResearchDataManager extends SimpleJsonResourceReloadListener
             Class<?> signsClass = Class.forName("elucent.eidolon.registries.Signs");
             Object sign = signsClass.getField(signName.toUpperCase() + "_SIGN").get(null);
             
-            // Grant the sign using KnowledgeUtil
-            Method grantSignMethod = KnowledgeUtil.class.getMethod("grantSign", ServerPlayer.class, Object.class);
+            // Grant the sign using KnowledgeUtil (correct method signature: Entity, Sign)
+            Class<?> signClass = Class.forName("elucent.eidolon.api.research.Sign");
+            Method grantSignMethod = KnowledgeUtil.class.getMethod("grantSign", Entity.class, signClass);
             grantSignMethod.invoke(null, player, sign);
             
             LOGGER.info("Granted sign {} to player {}", signName, player.getName().getString());
+            
+            // Send action bar notification for immediate feedback
+            player.connection.send(new ClientboundSetActionBarTextPacket(
+                Component.literal("§6✦ New mystical sign learned: " + signName.toUpperCase() + " ✦")
+            ));
         } catch (Exception e) {
             LOGGER.error("Failed to grant sign {} to player {}: {}", signName, player.getName().getString(), e.getMessage());
+            e.printStackTrace(); // This will help debug the specific issue
         }
     }
+}
 }

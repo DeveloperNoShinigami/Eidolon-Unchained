@@ -1,0 +1,39 @@
+{
+  "id": "desert_mysteries",
+  "stars": 3,
+  "triggers": [],
+  "conditions": [
+    {
+      "type": "dimension",
+      "dimension": "minecraft:overworld"
+    }
+  ],
+  "tasks": {
+    "1": [
+      {
+        "type": "item",
+        "item": "minecraft:sand",
+        "count": 32
+      }
+    ],
+    "2": [
+      {
+        "type": "explore_biomes",
+        "biome": "minecraft:desert",
+        "count": 3
+      }
+    ],
+    "3": [
+      {
+        "type": "weather",
+        "weather": "clear"
+      }
+    ]
+  },
+  "rewards": [
+    {
+      "type": "sign",
+      "sign": "sun"
+    }
+  ]
+}

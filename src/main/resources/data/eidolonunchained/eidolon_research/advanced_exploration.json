@@ -1,0 +1,47 @@
+{
+  "id": "advanced_exploration",
+  "stars": 4,
+  "triggers": [
+    "minecraft:compass"
+  ],
+  "conditions": [
+    {
+      "type": "dimension",
+      "dimension": "minecraft:overworld"
+    }
+  ],
+  "tasks": {
+    "1": [
+      {
+        "type": "enter_dimension",
+        "dimension": "minecraft:nether"
+      }
+    ],
+    "2": [
+      {
+        "type": "explore_biomes",
+        "biome": "minecraft:desert",
+        "count": 1
+      }
+    ],
+    "3": [
+      {
+        "type": "weather",
+        "weather": "rain"
+      }
+    ],
+    "4": [
+      {
+        "type": "item",
+        "item": "minecraft:ender_pearl",
+        "count": 4
+      }
+    ]
+  },
+  "rewards": [
+    {
+      "type": "sign",
+      "sign": "warding"
+    }
+  ]
+}

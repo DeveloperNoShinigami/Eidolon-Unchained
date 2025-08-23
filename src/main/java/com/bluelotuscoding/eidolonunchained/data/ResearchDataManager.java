@@ -550,7 +550,29 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
             }
         }
         if (task instanceof ExploreBiomesTask explore) {
-            Researches.addTask(rand -> new ResearchTask.XP(explore.getCount()));
+            Researches.addTask(rand -> new com.bluelotuscoding.eidolonunchained.research.integration.EidolonTaskWrapper.BiomeTaskWrapper(explore));
+            return;
+        }
+        if (task instanceof EnterDimensionTask dimension) {
+            Researches.addTask(rand -> new com.bluelotuscoding.eidolonunchained.research.integration.EidolonTaskWrapper.DimensionTaskWrapper(dimension));
+            return;
+        }
+        if (task instanceof WeatherTask weather) {
+            Researches.addTask(rand -> new com.bluelotuscoding.eidolonunchained.research.integration.EidolonTaskWrapper.WeatherTaskWrapper(weather));
+            return;
+        }
+        if (task instanceof HasNbtTask nbt) {
+            Researches.addTask(rand -> new com.bluelotuscoding.eidolonunchained.research.integration.EidolonTaskWrapper.NbtTaskWrapper(nbt));
+            return;
+        }
+        if (task instanceof KillEntitiesTask kill) {
+            // Keep using XP for kill tasks since they're tracked separately
+            Researches.addTask(rand -> new ResearchTask.XP(1));
+            return;
+        }
+        if (task instanceof KillEntityWithNbtTask killNbt) {
+            // Keep using XP for kill tasks since they're tracked separately  
+            Researches.addTask(rand -> new ResearchTask.XP(1));
             return;
         }
         // Fallback placeholder task to ensure registration

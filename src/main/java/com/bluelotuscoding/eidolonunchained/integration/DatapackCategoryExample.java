@@ -332,7 +332,7 @@ public class DatapackCategoryExample {
             
             // Create index page and category with the correct translation key
             Index index = new Index(categoryName, new IndexPage(entries));
-            Category category = new Category(categoryName, categoryIcon, categoryColor, index);
+            Category category = new Category(categoryKey, categoryIcon, categoryColor, index);
             
             LOGGER.info("✅ Built category '{}' with translation key '{}' and {} chapters", categoryKey, categoryName, categoryChapters.size());
             return category;

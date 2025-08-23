@@ -29,15 +29,15 @@
     "4": [
       {
         "type": "item",
-        "item": "eidolon:soul_gem",
+        "item": "eidolon:zombie_heart",
         "count": 1
       }
     ],
     "5": [
       {
         "type": "item",
-        "item": "eidolon:death_essence",
-        "count": 3
+        "item": "eidolon:wraith_heart",
+        "count": 1
       }
     ]
   },

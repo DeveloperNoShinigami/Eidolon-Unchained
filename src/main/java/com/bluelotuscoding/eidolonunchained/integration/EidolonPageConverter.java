@@ -198,14 +198,27 @@ public class EidolonPageConverter {
     }
 
     /**
-     * Create a TextPage - takes just a String parameter
+     * Create a TextPage - can handle both simple text and title+text combinations
      */
     private static Page createTextPage(JsonObject pageJson) {
         String text = pageJson.has("text") ? pageJson.get("text").getAsString() : "";
-        // Translate the text if it's a translation key
-        String translatedText = translateText(text);
-        LOGGER.debug("TextPage: {} -> {}", text, translatedText);
-        return new TextPage(translatedText);
+        
+        // Check if this page also has a title field
+        if (pageJson.has("title")) {
+            String title = pageJson.get("title").getAsString();
+            String translatedTitle = translateText(title);
+            String translatedText = translateText(text);
+            
+            // Create a combined text page with title and content
+            String combinedText = translatedTitle + "\n\n" + translatedText;
+            LOGGER.debug("TextPage with title: {} + {} -> {}", title, text, combinedText);
+            return new TextPage(combinedText);
+        } else {
+            // Standard text page without title
+            String translatedText = translateText(text);
+            LOGGER.debug("TextPage: {} -> {}", text, translatedText);
+            return new TextPage(translatedText);
+        }
     }
 
     /**
