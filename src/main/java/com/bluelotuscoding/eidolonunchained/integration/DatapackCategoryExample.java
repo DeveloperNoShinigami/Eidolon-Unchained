@@ -229,7 +229,7 @@ public class DatapackCategoryExample {
                 categories.add(category); // Direct addition - reflection handles the rest!
                 LOGGER.info("✅ Added datapack category '{}' with JSON content", categoryKey);
             } else {
-                LOGGER.warn("⚠️ Failed to create category '{}' - no valid JSON files found", categoryKey);
+                LOGGER.warn("⚠️ Failed to create category '{}' - unexpected error", categoryKey);
             }
             
         } catch (Exception e) {
@@ -265,7 +265,16 @@ public class DatapackCategoryExample {
             
             if (chaptersInCategory.isEmpty()) {
                 LOGGER.warn("No chapters found for category: {}", categoryKey);
-                return null;
+                // Still create an empty category - research chapters may appear later conditionally
+                LOGGER.info("Creating empty category '{}' for potential research chapters", categoryKey);
+                
+                // Create empty index for the category
+                IndexPage.IndexEntry[] emptyEntries = new IndexPage.IndexEntry[0];
+                Index emptyIndex = new Index(categoryName, new IndexPage(emptyEntries));
+                Category emptyCategory = new Category(categoryKey, categoryIcon, categoryColor, emptyIndex);
+                
+                LOGGER.info("✅ Created empty category '{}' with translation key '{}' ready for conditional content", categoryKey, categoryName);
+                return emptyCategory;
             }
             
             // Get all entries that target any chapter in this category
@@ -282,7 +291,16 @@ public class DatapackCategoryExample {
             
             if (entriesForCategory.isEmpty()) {
                 LOGGER.warn("No entries found for category: {}", categoryKey);
-                return null;
+                // Still create an empty category - research chapters may appear later conditionally
+                LOGGER.info("Creating empty category '{}' for potential research chapters", categoryKey);
+                
+                // Create empty index for the category
+                IndexPage.IndexEntry[] emptyEntries = new IndexPage.IndexEntry[0];
+                Index emptyIndex = new Index(categoryName, new IndexPage(emptyEntries));
+                Category emptyCategory = new Category(categoryKey, categoryIcon, categoryColor, emptyIndex);
+                
+                LOGGER.info("✅ Created empty category '{}' with translation key '{}' ready for conditional content", categoryKey, categoryName);
+                return emptyCategory;
             }
             
             LOGGER.info("Creating category '{}' with {} total entries", categoryKey, entriesForCategory.size());

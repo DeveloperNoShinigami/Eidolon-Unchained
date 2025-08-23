@@ -153,30 +153,14 @@ public class EidolonCategoryExtension {
         Map<ResourceLocation, ResearchChapter> customChapters = ResearchDataManager.getLoadedResearchChapters();
         LOGGER.info("Found {} custom research chapters to integrate", customChapters.size());
         
-        for (Category category : categories) {
-            try {
-                // ⚠️ REFLECTION: Access category.key field
-                // FUTURE: Replace with category.getKey() when available
-                Field keyField = safeGetField(category.getClass(), FIELD_CATEGORY_KEY);
-                if (keyField == null) {
-                    LOGGER.warn("Category structure changed; skipping chapter injection");
-                    continue;
-                }
-                String categoryKey = (String) keyField.get(category);
-
-                // Add research chapters that belong to this category
-                for (ResearchChapter researchChapter : customChapters.values()) {
-                    if (categoryKey.equals(researchChapter.getCategory())) {
-                        LOGGER.info("📖 Adding research chapter '{}' to {} category...",
-                                   researchChapter.getTitle().getString(), categoryKey.toUpperCase());
-                        addResearchChapterToCategory(category, researchChapter);
-                    }
-                }
-
-            } catch (Exception e) {
-                LOGGER.error("❌ Failed to add chapters to category via reflection", e);
-            }
-        }
+        // ⚠️ TEMPORARILY DISABLED: Research chapters should only appear when prerequisites are met
+        // This prevents research chapters from showing up immediately in categories
+        LOGGER.info("⚠️ Research chapter auto-integration disabled - chapters will appear only when prerequisites are met");
+        
+        // TODO: Implement conditional chapter visibility based on research prerequisites
+        // For now, research chapters are handled by the research system itself, not the codex system
+        
+        LOGGER.info("🔍 Custom chapter integration complete (research chapters excluded)");
     }
     
     /**

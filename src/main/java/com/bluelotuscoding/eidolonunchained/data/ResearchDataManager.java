@@ -209,7 +209,14 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                 throw new JsonParseException("Missing required 'id' field");
             }
 
-            ResourceLocation chapterId = ResourceLocation.tryParse(json.get("id").getAsString());
+            ResourceLocation chapterId;
+            String idStr = json.get("id").getAsString();
+            if (idStr.contains(":")) {
+                chapterId = ResourceLocation.tryParse(idStr);
+            } else {
+                // Default to our mod namespace if no namespace specified
+                chapterId = new ResourceLocation(EidolonUnchained.MODID, idStr);
+            }
             String titleStr = json.has("title") ? json.get("title").getAsString() : chapterId.getPath();
             Component title = (titleStr.contains(":") || titleStr.contains(".") || titleStr.startsWith("eidolonunchained:"))
                 ? Component.translatable(titleStr)
@@ -271,7 +278,14 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                 return;
             }
 
-            ResourceLocation entryId = ResourceLocation.tryParse(json.get("id").getAsString());
+            ResourceLocation entryId;
+            String idStr = json.get("id").getAsString();
+            if (idStr.contains(":")) {
+                entryId = ResourceLocation.tryParse(idStr);
+            } else {
+                // Default to our mod namespace if no namespace specified
+                entryId = new ResourceLocation(EidolonUnchained.MODID, idStr);
+            }
             if (entryId == null) {
                 LOGGER.warn("Invalid research entry id '{}' at {}", json.get("id").getAsString(), location);
                 return;
