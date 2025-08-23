@@ -20,6 +20,16 @@
   "research.eidolonunchained.advanced_exploration": "Advanced Exploration",
   "research.eidolonunchained.desert_mysteries": "Desert Mysteries",
   "research.eidolonunchained.nether_expedition": "Nether Expedition",
+  "research.eidolonunchained.test_death_essence": "Death Essence Study",
+  
+  "_comment": "Eidolon format research translations",
+  "eidolon.research.eidolonunchained.undead_hunter": "Undead Hunter",
+  "eidolon.research.eidolonunchained.combat_mastery": "Combat Mastery", 
+  "eidolon.research.eidolonunchained.arcane_studies": "Arcane Studies",
+  "eidolon.research.eidolonunchained.advanced_exploration": "Advanced Exploration",
+  "eidolon.research.eidolonunchained.desert_mysteries": "Desert Mysteries",
+  "eidolon.research.eidolonunchained.nether_expedition": "Nether Expedition",
+  "eidolon.research.eidolonunchained.test_death_essence": "Death Essence Study",
   
   "task.eidolonunchained.enter_dimension.minecraft.nether": "Enter the Nether",
   "task.eidolonunchained.enter_dimension.minecraft.the_end": "Enter the End",
@@ -40,6 +50,12 @@
   "task.eidolonunchained.weather.clear": "Complete during Clear Weather",
   "task.eidolonunchained.weather.rain": "Complete during Rain",
   "task.eidolonunchained.weather.thunder": "Complete during Thunderstorm",
+
+  "eidolonunchained.codex.category.custom_research": "Custom Research",
+  "eidolonunchained.codex.chapter.custom_research.title": "Custom Research",
+  "eidolonunchained.research.chapter.simple_examples.title": "Simple Examples",
+  "eidolonunchained.research.entry.simple_example.title": "Simple Research Example",
+  "eidolonunchained.research.entry.simple_example.description": "A basic example of the research system",
   
   "task.eidolonunchained.has_nbt.single": "User contains '%s'",
   "task.eidolonunchained.has_nbt.multiple": "User contains %d data fields",

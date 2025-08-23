@@ -1,0 +1,7 @@
+{
+  "key": "custom_research",
+  "name": "eidolonunchained.codex.category.custom_research",
+  "icon": "minecraft:writable_book",
+  "color": "0x9932CC",
+  "description": "Research chapters unlocked through gameplay progression"
+}

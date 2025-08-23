@@ -1,0 +1,9 @@
+{
+  "id": "simple_examples",
+  "title": "eidolonunchained.research.chapter.simple_examples.title",
+  "icon": "minecraft:book",
+  "category": "custom_research",
+  "entries": [
+    "simple_example_entry"
+  ]
+}

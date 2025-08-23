@@ -1,0 +1,9 @@
+{
+  "id": "simple_example_entry",
+  "title": "eidolonunchained.research.entry.simple_example.title",
+  "description": "eidolonunchained.research.entry.simple_example.description",
+  "target_chapter": "simple_examples",
+  "prerequisites": [
+    "eidolonunchained:simple_research_example"
+  ]
+}

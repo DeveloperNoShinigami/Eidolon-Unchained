@@ -44,6 +44,9 @@ public class EidolonCodexIntegration {
 
     // Entries whose prerequisites weren't found will be stored here for potential later use
     private static final Map<Chapter, List<CodexEntry>> DEFERRED_ENTRIES = new HashMap<>();
+    
+    // Flag to prevent duplicate integration
+    private static boolean integrationCompleted = false;
 
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
@@ -55,9 +58,15 @@ public class EidolonCodexIntegration {
      * Integrates custom entries into Eidolon's codex.
      */
     public static void attemptIntegrationIfNeeded() {
+        if (integrationCompleted) {
+            LOGGER.info("Codex integration already completed, skipping...");
+            return;
+        }
+        
         LOGGER.info("Starting Eidolon codex integration...");
         EidolonPageConverter.initialize();
         injectCustomEntries();
+        integrationCompleted = true;
     }
 
     /**
@@ -117,7 +126,8 @@ public class EidolonCodexIntegration {
             }
 
             String renderedTitle = titleComponent.getString();
-            Chapter chapter = new Chapter(renderedTitle, new TitlePage(renderedTitle));
+            // Create chapter without a title page - let entries provide their own titles
+            Chapter chapter = new Chapter(renderedTitle);
             LOGGER.info("Created chapter {} for codex integration", chapterId);
 
             LOGGER.info("✓ Injecting {} entries into chapter {}", entries.size(), chapterId);
@@ -125,7 +135,7 @@ public class EidolonCodexIntegration {
                 injectEntryIntoChapter(chapter, entry);
             }
 
-            // Attach the constructed chapter to its category via reflection
+            // Attach the constructed chapter to its category ONCE after all entries are added
             if (research != null) {
                 EidolonCategoryExtension.attachChapterToCategory(research.getCategory(), chapter, research.getIcon());
                 LOGGER.info("Attached chapter {} to category {}", chapterId, research.getCategory());

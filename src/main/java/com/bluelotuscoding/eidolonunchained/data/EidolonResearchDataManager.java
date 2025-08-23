@@ -334,4 +334,3 @@ public class EidolonResearchDataManager extends SimpleJsonResourceReloadListener
         }
     }
 }
-}
