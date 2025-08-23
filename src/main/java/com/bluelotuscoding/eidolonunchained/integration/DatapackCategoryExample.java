@@ -20,6 +20,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 /**
  * JSON datapack-driven category creation system.
@@ -225,7 +226,7 @@ public class DatapackCategoryExample {
     }
     
     /**
-     * Create a category populated from JSON files in a specific directory
+     * Create a category populated from JSON files that target chapters in this category
      * ✅ FULLY FUNCTIONAL: Uses reflection-compatible approach
      */
     private static Category createDatapackCategory(String categoryKey,
@@ -235,21 +236,50 @@ public class DatapackCategoryExample {
                                                   CodexDataManager dataManager) {
         
         try {
-            // Load entries from JSON files in the directory
-            ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
-            List<CodexDataManager.DatapackEntry> entries = dataManager.loadEntriesFromDirectory(resourceManager, jsonDirectory);
+            // Get entries that target chapters in this category
+            LOGGER.info("Looking for entries that target chapters in category: {}", categoryKey);
             
-            if (entries.isEmpty()) {
-                LOGGER.warn("No JSON entries found in directory: {}", jsonDirectory);
+            // Get all chapters that belong to this category
+            Map<ResourceLocation, CodexDataManager.ChapterDefinition> allChapters = CodexDataManager.getAllCustomChapters();
+            List<ResourceLocation> chaptersInCategory = new ArrayList<>();
+            
+            for (Map.Entry<ResourceLocation, CodexDataManager.ChapterDefinition> chapterEntry : allChapters.entrySet()) {
+                if (categoryKey.equals(chapterEntry.getValue().category)) {
+                    chaptersInCategory.add(chapterEntry.getKey());
+                    LOGGER.info("Found chapter in category '{}': {}", categoryKey, chapterEntry.getKey());
+                }
+            }
+            
+            if (chaptersInCategory.isEmpty()) {
+                LOGGER.warn("No chapters found for category: {}", categoryKey);
                 return null;
             }
+            
+            // Get all entries that target any chapter in this category
+            Map<ResourceLocation, List<CodexDataManager.DatapackEntry>> allChapterExtensions = CodexDataManager.getAllChapterExtensions();
+            List<CodexDataManager.DatapackEntry> entriesForCategory = new ArrayList<>();
+            
+            for (ResourceLocation chapterId : chaptersInCategory) {
+                List<CodexDataManager.DatapackEntry> entriesForChapter = allChapterExtensions.get(chapterId);
+                if (entriesForChapter != null) {
+                    entriesForCategory.addAll(entriesForChapter);
+                    LOGGER.info("Found {} entries for chapter '{}' in category '{}'", entriesForChapter.size(), chapterId, categoryKey);
+                }
+            }
+            
+            if (entriesForCategory.isEmpty()) {
+                LOGGER.warn("No entries found for category: {}", categoryKey);
+                return null;
+            }
+            
+            LOGGER.info("Creating category '{}' with {} total entries", categoryKey, entriesForCategory.size());
             
             CustomCategoryBuilder builder = new CustomCategoryBuilder(categoryKey)
                 .icon(categoryIcon)
                 .color(categoryColor);
             
             // Convert JSON entries to chapters
-            for (CodexDataManager.DatapackEntry entry : entries) {
+            for (CodexDataManager.DatapackEntry entry : entriesForCategory) {
                 Chapter chapter = convertJsonToChapter(entry, dataManager);
                 
                 if (chapter != null) {
