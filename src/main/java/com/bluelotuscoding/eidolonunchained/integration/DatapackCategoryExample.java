@@ -325,8 +325,6 @@ public class DatapackCategoryExample {
                         // Convert and add all pages from this entry
                         for (JsonObject pageData : entry.getPages()) {
                             // Process all pages including title pages as defined in the entry
-                            }
-                            
                             Page convertedPage = EidolonPageConverter.convertPage(pageData);
                             if (convertedPage != null) {
                                 chapter.addPage(convertedPage);
