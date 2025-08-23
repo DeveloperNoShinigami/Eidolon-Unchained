@@ -4,8 +4,7 @@
   "pages": [
     {
       "type": "title",
-      "title": "eidolonunchained.codex.entry.recipe_example.title",
-      "text": "eidolonunchained.codex.entry.recipe_example.intro"
+      "text": "eidolonunchained.codex.entry.recipe_example"
     },
     {
       "type": "recipe",

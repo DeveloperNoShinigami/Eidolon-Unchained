@@ -4,8 +4,7 @@
   "pages": [
     {
       "type": "title",
-      "title": "eidolonunchained.codex.entry.text_example.title",
-      "text": "eidolonunchained.codex.entry.text_example.description"
+      "text": "eidolonunchained.codex.entry.text_example"
     },
     {
       "type": "text",

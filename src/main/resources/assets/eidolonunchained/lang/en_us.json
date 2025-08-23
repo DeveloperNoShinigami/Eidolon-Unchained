@@ -3,15 +3,15 @@
   "eidolonunchained.codex.chapter.getting_started": "Getting Started",
   
   "eidolonunchained.codex.entry.text_example.title": "Text Example",
-  "eidolonunchained.codex.entry.text_example.description": "This is a simple text example showing how to create codex entries.",
+  "eidolonunchained.codex.entry.text_example": "This is a simple text example showing how to create codex entries.",
   "eidolonunchained.codex.entry.text_example.details": "Text entries are the simplest type of codex content. They display formatted text to the reader.",
   
   "eidolonunchained.codex.entry.recipe_example.title": "Recipe Example", 
-  "eidolonunchained.codex.entry.recipe_example.intro": "Learn how to display crafting recipes in your codex entries.",
+  "eidolonunchained.codex.entry.recipe_example": "Learn how to display crafting recipes in your codex entries.",
   "eidolonunchained.codex.entry.recipe_example.explanation": "Recipe pages automatically display crafting grids and ingredients.",
   
   "eidolonunchained.codex.entry.entity_example.title": "Entity Example",
-  "eidolonunchained.codex.entry.entity_example.intro": "This entry demonstrates how to display entities in the codex.",
+  "eidolonunchained.codex.entry.entity_example": "This entry demonstrates how to display entities in the codex.",
   "eidolonunchained.codex.entry.entity_example.description": "This example demonstrates how to show entity information.",
   
   "research.eidolonunchained.undead_hunter": "Undead Hunter",
@@ -51,7 +51,7 @@
   "task.eidolonunchained.weather.rain": "Complete during Rain",
   "task.eidolonunchained.weather.thunder": "Complete during Thunderstorm",
 
-  "eidolon.codex.category.custom_research": "Custom Research",
+  "eidolonunchained.codex.category.custom_research": "Custom Research",
   "eidolonunchained.codex.chapter.custom_research.title": "Custom Research",
   "eidolonunchained.research.chapter.simple_examples.title": "Simple Examples",
   "eidolonunchained.research.entry.simple_example.title": "Simple Research Example",
