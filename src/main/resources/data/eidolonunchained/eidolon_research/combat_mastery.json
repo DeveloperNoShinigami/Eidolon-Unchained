@@ -1,0 +1,50 @@
+{
+  "id": "combat_mastery",
+  "stars": 5,
+  "triggers": [
+    "eidolon:necromancer",
+    "minecraft:wither_skeleton"
+  ],
+  "tasks": {
+    "1": [
+      {
+        "type": "item",
+        "item": "minecraft:iron_sword",
+        "count": 1
+      }
+    ],
+    "2": [
+      {
+        "type": "xp",
+        "levels": 5
+      }
+    ],
+    "3": [
+      {
+        "type": "item",
+        "item": "minecraft:diamond",
+        "count": 2
+      }
+    ],
+    "4": [
+      {
+        "type": "item",
+        "item": "eidolon:soul_gem",
+        "count": 1
+      }
+    ],
+    "5": [
+      {
+        "type": "item",
+        "item": "eidolon:death_essence",
+        "count": 3
+      }
+    ]
+  },
+  "rewards": [
+    {
+      "type": "sign",
+      "sign": "death"
+    }
+  ]
+}

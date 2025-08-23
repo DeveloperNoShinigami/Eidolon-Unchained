@@ -8,6 +8,7 @@ import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
 import elucent.eidolon.codex.*;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -57,6 +58,7 @@ import java.util.ArrayList;
  */
 public class DatapackCategoryExample {
     private static final Logger LOGGER = LogUtils.getLogger();
+    private static final java.util.Set<String> addedCategories = new java.util.HashSet<>();
     
     /**
      * Create custom categories populated from JSON datapack files
@@ -120,14 +122,22 @@ public class DatapackCategoryExample {
                     if (categoryDef != null) {
                         LOGGER.info("📁 Found category definition: {}", categoryDef.nameKey);
 
-                        createCategoryFromDatapack(categories, dataManager,
-                            categoryDef.key,
-                            categoryDef.getIconStack(),
-                            categoryDef.getColorInt(),
-                            "codex/" + categoryDef.key
-                        );
-
-                        categoriesCreated++;
+                        // Check if we've already added this category to prevent duplicates
+                        if (!addedCategories.contains(categoryDef.key)) {
+                            createCategoryFromDatapack(categories, dataManager,
+                                categoryDef.key,
+                                categoryDef.nameKey,
+                                categoryDef.getIconStack(),
+                                categoryDef.getColorInt(),
+                                "codex/" + categoryDef.key
+                            );
+                            
+                            addedCategories.add(categoryDef.key);
+                            categoriesCreated++;
+                            LOGGER.info("✅ Added new category: {}", categoryDef.key);
+                        } else {
+                            LOGGER.info("🔄 Skipping duplicate category: {}", categoryDef.key);
+                        }
                     } else {
                         LOGGER.warn("⚠️ No _category.json found for: {}", categoryKey);
                     }
@@ -207,11 +217,12 @@ public class DatapackCategoryExample {
     private static void createCategoryFromDatapack(java.util.List<Category> categories,
                                                  CodexDataManager dataManager,
                                                  String categoryKey,
+                                                 String categoryName,
                                                  ItemStack categoryIcon,
                                                  int categoryColor,
                                                  String jsonDirectory) {
         try {
-            Category category = createDatapackCategory(categoryKey, categoryIcon, categoryColor, 
+            Category category = createDatapackCategory(categoryKey, categoryName, categoryIcon, categoryColor, 
                                                      jsonDirectory, dataManager);
             
             if (category != null) {
@@ -231,6 +242,7 @@ public class DatapackCategoryExample {
      * ✅ FULLY FUNCTIONAL: Uses reflection-compatible approach
      */
     private static Category createDatapackCategory(String categoryKey,
+                                                  String categoryName,
                                                   ItemStack categoryIcon,
                                                   int categoryColor,
                                                   String jsonDirectory,
@@ -275,9 +287,8 @@ public class DatapackCategoryExample {
             
             LOGGER.info("Creating category '{}' with {} total entries", categoryKey, entriesForCategory.size());
             
-            CustomCategoryBuilder builder = new CustomCategoryBuilder(categoryKey)
-                .icon(categoryIcon)
-                .color(categoryColor);
+            List<Chapter> categoryChapters = new ArrayList<>();
+            List<ItemStack> chapterIcons = new ArrayList<>();
             
             // Create chapters dynamically based on what chapters exist for this category
             for (ResourceLocation chapterId : chaptersInCategory) {
@@ -309,11 +320,22 @@ public class DatapackCategoryExample {
                     }
                 }
                 
-                // Add this chapter to the category with a book icon
-                builder.addChapter(chapter, new ItemStack(Items.BOOK));
+                categoryChapters.add(chapter);
+                chapterIcons.add(new ItemStack(Items.BOOK));
             }
             
-            return builder.build();
+            // Create index entries for the category
+            IndexPage.IndexEntry[] entries = new IndexPage.IndexEntry[categoryChapters.size()];
+            for (int i = 0; i < categoryChapters.size(); i++) {
+                entries[i] = new IndexPage.IndexEntry(categoryChapters.get(i), chapterIcons.get(i));
+            }
+            
+            // Create index page and category with the correct translation key
+            Index index = new Index(categoryName, new IndexPage(entries));
+            Category category = new Category(categoryName, categoryIcon, categoryColor, index);
+            
+            LOGGER.info("✅ Built category '{}' with translation key '{}' and {} chapters", categoryKey, categoryName, categoryChapters.size());
+            return category;
             
         } catch (Exception e) {
             LOGGER.error("Failed to create datapack category '{}'", categoryKey, e);
@@ -322,12 +344,27 @@ public class DatapackCategoryExample {
     }
     
     /**
-     * Get a display name for an entry from its title
+     * Get a display name for an entry from its title with proper translation
      */
     private static String getEntryDisplayName(CodexEntry entry) {
         String title = entry.getTitle().getString();
+        
+        // Try to translate the title if it looks like a translation key
+        if (title.contains(".") && title.startsWith("eidolonunchained.")) {
+            try {
+                Component translated = Component.translatable(title);
+                String result = translated.getString();
+                // Only use the translation if it's actually different from the key
+                if (!result.equals(title) && !result.startsWith("translation{key=")) {
+                    return result;
+                }
+            } catch (Exception e) {
+                LOGGER.warn("Failed to translate entry title: {}", title, e);
+            }
+        }
+        
+        // Fallback: extract readable name from translation key
         if (title.startsWith("eidolonunchained.codex.entry.")) {
-            // Extract the entry name from the translation key
             String entryKey = title.replace("eidolonunchained.codex.entry.", "").replace(".title", "");
             String displayName = entryKey.replace("_", " ");
             // Capitalize first letter of each word

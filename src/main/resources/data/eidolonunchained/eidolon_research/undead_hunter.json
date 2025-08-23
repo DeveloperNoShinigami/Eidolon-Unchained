@@ -1,0 +1,43 @@
+{
+  "id": "undead_hunter",
+  "stars": 3,
+  "triggers": [
+    "minecraft:stray",
+    "eidolon:wraith",
+    "minecraft:zombie"
+  ],
+  "tasks": {
+    "1": [
+      {
+        "type": "item",
+        "item": "minecraft:bone",
+        "count": 5
+      }
+    ],
+    "2": [
+      {
+        "type": "item",
+        "item": "minecraft:rotten_flesh",
+        "count": 3
+      },
+      {
+        "type": "xp",
+        "levels": 2
+      }
+    ],
+    "3": [
+      {
+        "type": "item",
+        "item": "eidolon:wraith_heart",
+        "count": 1
+      }
+    ]
+  },
+  "rewards": [
+    {
+      "type": "item",
+      "item": "minecraft:iron_sword",
+      "count": 1
+    }
+  ]
+}

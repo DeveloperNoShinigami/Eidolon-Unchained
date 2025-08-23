@@ -501,6 +501,10 @@ public class EidolonCategoryExtension {
             LOGGER.info("🎯 Creating custom categories from JSON datapacks...");
             DatapackCategoryExample.addDatapackCategories(categories, resourceManager);
             
+            // Register custom research chapters
+            LOGGER.info("🔬 Registering custom research chapters...");
+            DatapackResearchExample.addDatapackResearchChapters(resourceManager);
+            
             // Add custom chapters to existing categories
             addChaptersToExistingCategories(categories);
             

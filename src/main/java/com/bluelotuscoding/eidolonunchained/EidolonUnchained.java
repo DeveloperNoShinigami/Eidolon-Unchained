@@ -2,6 +2,7 @@ package com.bluelotuscoding.eidolonunchained;
 
 import com.bluelotuscoding.eidolonunchained.data.CodexDataManager;
 import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
+import com.bluelotuscoding.eidolonunchained.data.EidolonResearchDataManager;
 import com.bluelotuscoding.eidolonunchained.integration.ModIntegration;
 import com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection;
 import com.mojang.logging.LogUtils;
@@ -71,6 +72,7 @@ public class EidolonUnchained
         // Initialize data managers for codex and research extensions
         CodexDataManager.init();
         ResearchDataManager.init();
+        EidolonResearchDataManager.getInstance(); // Initialize the Eidolon research data manager
         
         // Initialize mod integrations
         ModIntegration.init();
