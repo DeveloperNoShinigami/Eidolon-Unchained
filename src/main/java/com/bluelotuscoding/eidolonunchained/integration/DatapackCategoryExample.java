@@ -284,7 +284,7 @@ public class DatapackCategoryExample {
                 CodexDataManager.ChapterDefinition chapterDef = allChapters.get(chapterId);
                 if (chapterDef == null) continue;
                 
-                String chapterTitle = chapterDef.getTitle();
+                String chapterTitle = chapterDef.getTitle().getString();
                 Chapter chapter = new Chapter(chapterTitle);
                 
                 // Add all entries that target this specific chapter
