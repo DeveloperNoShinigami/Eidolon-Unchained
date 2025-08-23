@@ -1,9 +1,8 @@
 {
-  "title": "codex_entries/entity_example.json",
   "target_chapter": "getting_started",
   "pages": [
     {
-      "type": "text",
+      "type": "title",
       "text": "eidolonunchained.codex.entry.entity_example"
     },
     {

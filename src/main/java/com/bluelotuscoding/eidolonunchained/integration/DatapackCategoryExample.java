@@ -320,14 +320,11 @@ public class DatapackCategoryExample {
                 List<CodexEntry> entriesForChapter = allChapterExtensions.get(chapterId);
                 if (entriesForChapter != null) {
                     for (CodexEntry entry : entriesForChapter) {
-                        // Add title page for this entry
-                        chapter.addPage(new TitlePage(getEntryDisplayName(entry)));
+                        // No automatic title page - let entries define their own title pages
                         
                         // Convert and add all pages from this entry
                         for (JsonObject pageData : entry.getPages()) {
-                            // Skip title pages since we already added one
-                            if (pageData.has("type") && "title".equals(pageData.get("type").getAsString())) {
-                                continue;
+                            // Process all pages including title pages as defined in the entry
                             }
                             
                             Page convertedPage = EidolonPageConverter.convertPage(pageData);

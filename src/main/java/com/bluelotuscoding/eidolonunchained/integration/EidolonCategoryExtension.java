@@ -177,8 +177,7 @@ public class EidolonCategoryExtension {
             String titleKey = "eidolonunchained.codex.chapter." + chapterTitle.toLowerCase().replace(" ", "_");
             Chapter customChapter = new Chapter(titleKey);
             
-            // Add title page - FUTURE: Use TitlePage(title, icon) when available
-            customChapter.addPage(new TitlePage(chapterTitle));
+            // No automatic title page - entries will add their own title pages
             
             // Add sample content
             customChapter.addPage(new TextPage("This is a custom chapter created by Eidolon Unchained!"));
@@ -255,8 +254,7 @@ public class EidolonCategoryExtension {
             String titleKey = "eidolonunchained.codex.chapter." + researchChapter.getId().getPath();
             Chapter codexChapter = new Chapter(titleKey);
             
-            // Add title page with research chapter info
-            codexChapter.addPage(new TitlePage(researchChapter.getTitle().getString()));
+            // No automatic title page - entries will add their own title pages
             
             // Add description if available
             if (!researchChapter.getDescription().getString().isEmpty()) {
