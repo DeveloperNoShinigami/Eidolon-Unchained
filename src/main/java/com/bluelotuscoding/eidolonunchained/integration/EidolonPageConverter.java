@@ -157,6 +157,8 @@ public class EidolonPageConverter {
                 return createEntityPage(pageJson);
             case "crafting":
                 return createCraftingPage(pageJson);
+            case "recipe":  // Alias for crafting
+                return createCraftingPage(pageJson);
             case "crafting_recipe":
                 return createCraftingRecipePage(pageJson);
             case "ritual":

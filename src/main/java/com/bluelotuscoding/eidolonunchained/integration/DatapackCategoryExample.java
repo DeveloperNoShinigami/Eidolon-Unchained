@@ -1,6 +1,7 @@
 package com.bluelotuscoding.eidolonunchained.integration;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
+import com.bluelotuscoding.eidolonunchained.codex.CodexEntry;
 import com.bluelotuscoding.eidolonunchained.data.CodexDataManager;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -244,7 +245,7 @@ public class DatapackCategoryExample {
             List<ResourceLocation> chaptersInCategory = new ArrayList<>();
             
             for (Map.Entry<ResourceLocation, CodexDataManager.ChapterDefinition> chapterEntry : allChapters.entrySet()) {
-                if (categoryKey.equals(chapterEntry.getValue().category)) {
+                if (categoryKey.equals(chapterEntry.getValue().getCategory())) {
                     chaptersInCategory.add(chapterEntry.getKey());
                     LOGGER.info("Found chapter in category '{}': {}", categoryKey, chapterEntry.getKey());
                 }
@@ -256,11 +257,11 @@ public class DatapackCategoryExample {
             }
             
             // Get all entries that target any chapter in this category
-            Map<ResourceLocation, List<CodexDataManager.DatapackEntry>> allChapterExtensions = CodexDataManager.getAllChapterExtensions();
-            List<CodexDataManager.DatapackEntry> entriesForCategory = new ArrayList<>();
+            Map<ResourceLocation, List<CodexEntry>> allChapterExtensions = CodexDataManager.getAllChapterExtensions();
+            List<CodexEntry> entriesForCategory = new ArrayList<>();
             
             for (ResourceLocation chapterId : chaptersInCategory) {
-                List<CodexDataManager.DatapackEntry> entriesForChapter = allChapterExtensions.get(chapterId);
+                List<CodexEntry> entriesForChapter = allChapterExtensions.get(chapterId);
                 if (entriesForChapter != null) {
                     entriesForCategory.addAll(entriesForChapter);
                     LOGGER.info("Found {} entries for chapter '{}' in category '{}'", entriesForChapter.size(), chapterId, categoryKey);
@@ -279,13 +280,13 @@ public class DatapackCategoryExample {
                 .color(categoryColor);
             
             // Convert JSON entries to chapters
-            for (CodexDataManager.DatapackEntry entry : entriesForCategory) {
+            for (CodexEntry entry : entriesForCategory) {
                 Chapter chapter = convertJsonToChapter(entry, dataManager);
                 
                 if (chapter != null) {
                     // Use entry icon or default to book
-                    ItemStack chapterIcon = entry.icon != null ? 
-                        new ItemStack(entry.icon) : 
+                    ItemStack chapterIcon = entry.getIcon() != null ? 
+                        entry.getIcon() : 
                         new ItemStack(Items.BOOK);
                     
                     builder.addChapter(chapter, chapterIcon);
@@ -304,33 +305,46 @@ public class DatapackCategoryExample {
      * Convert a JSON entry to an Eidolon Chapter with full page content
      * ✅ FULLY FUNCTIONAL: Uses reflection-compatible approach
      */
-    private static Chapter convertJsonToChapter(CodexDataManager.DatapackEntry entry, CodexDataManager dataManager) {
+    private static Chapter convertJsonToChapter(CodexEntry entry, CodexDataManager dataManager) {
         try {
-            Chapter chapter = new Chapter(entry.title_key);
+            // Use a more readable chapter name based on entry title
+            String chapterName = entry.getTitle().getString();
+            if (chapterName.startsWith("eidolonunchained.codex.entry.")) {
+                // Extract the entry name from the translation key
+                String entryKey = chapterName.replace("eidolonunchained.codex.entry.", "").replace(".title", "");
+                chapterName = entryKey.replace("_", " ");
+                // Capitalize first letter of each word
+                String[] words = chapterName.split(" ");
+                StringBuilder result = new StringBuilder();
+                for (String word : words) {
+                    if (word.length() > 0) {
+                        result.append(Character.toUpperCase(word.charAt(0)))
+                               .append(word.substring(1).toLowerCase())
+                               .append(" ");
+                    }
+                }
+                chapterName = result.toString().trim();
+            }
             
-            // Add title page
-            chapter.addPage(new TitlePage(entry.title));
+            Chapter chapter = new Chapter(chapterName);
             
             // Convert JSON pages to Eidolon pages using our converter
             EidolonPageConverter pageConverter = new EidolonPageConverter();
             
-            for (CodexDataManager.PageData pageData : entry.pages) {
-                // Convert PageData to JsonObject for the converter
-                JsonObject pageJson = convertPageDataToJson(pageData);
-                Page convertedPage = EidolonPageConverter.convertPage(pageJson);
+            for (JsonObject pageData : entry.getPages()) {
+                Page convertedPage = EidolonPageConverter.convertPage(pageData);
                 
                 if (convertedPage != null) {
                     chapter.addPage(convertedPage);
                 } else {
-                    LOGGER.warn("Failed to convert page of type '{}' for chapter '{}'", 
-                              pageData.type, entry.title);
+                    LOGGER.warn("Failed to convert page for chapter '{}'", chapterName);
                 }
             }
             
             return chapter;
             
         } catch (Exception e) {
-            LOGGER.error("Failed to convert JSON entry '{}' to chapter", entry.title, e);
+            LOGGER.error("Failed to convert JSON entry '{}' to chapter", entry.getTitle().getString(), e);
             return null;
         }
     }
@@ -338,17 +352,16 @@ public class DatapackCategoryExample {
     /**
      * Helper method to convert PageData to JsonObject for EidolonPageConverter
      */
-    private static JsonObject convertPageDataToJson(CodexDataManager.PageData pageData) {
+    private static JsonObject convertPageDataToJson(Object pageData) {
         JsonObject pageJson = new JsonObject();
-        pageJson.addProperty("type", pageData.type);
-        pageJson.addProperty("content", pageData.content);
         
-        // If PageData has additional JSON data, merge it
-        if (pageData.data != null) {
-            for (Map.Entry<String, com.google.gson.JsonElement> entry : pageData.data.entrySet()) {
-                pageJson.add(entry.getKey(), entry.getValue());
-            }
+        if (pageData instanceof JsonObject) {
+            return (JsonObject) pageData;
         }
+        
+        // For now, create a simple text page if we can't convert
+        pageJson.addProperty("type", "text");
+        pageJson.addProperty("content", pageData.toString());
         
         return pageJson;
     }

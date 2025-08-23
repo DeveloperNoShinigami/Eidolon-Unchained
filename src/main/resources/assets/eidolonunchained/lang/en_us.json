@@ -1,6 +1,8 @@
 {
   "eidolonunchained.codex.category.examples": "Examples",
+  "eidolonunchained.codex.category.examples.name": "Examples",
   "eidolonunchained.codex.chapter.getting_started": "Getting Started",
+  "eidolonunchained.codex.chapter.getting_started.title": "Getting Started",
   
   "eidolonunchained.codex.entry.text_example.title": "Text Example",
   "eidolonunchained.codex.entry.text_example.description": "This is a simple text example showing how to create codex entries.",
@@ -8,6 +10,7 @@
   
   "eidolonunchained.codex.entry.recipe_example.title": "Recipe Example", 
   "eidolonunchained.codex.entry.recipe_example.description": "This example shows how to display crafting recipes in the codex.",
+  "eidolonunchained.codex.entry.recipe_example.explanation": "Recipe pages automatically display crafting grids and ingredients.",
   "eidolonunchained.codex.entry.recipe_example.details": "Recipe pages automatically display crafting grids and ingredients.",
   
   "eidolonunchained.codex.entry.entity_example.title": "Entity Example",
@@ -20,5 +23,11 @@
   "eidolonunchained.research.undead_researcher.title": "Undead Researcher", 
   "eidolonunchained.research.undead_researcher.description": "Study the mysteries of the undead",
   
-  "eidolonunchained.research.chapter.basic_combat": "Basic Combat"
+  "eidolonunchained.research.chapter.basic_combat": "Basic Combat",
+  
+  "examples": "Examples",
+  "getting_started": "Getting Started",
+  "text_example": "Text Example",
+  "recipe_example": "Recipe Example",
+  "entity_example": "Entity Example"
 }
