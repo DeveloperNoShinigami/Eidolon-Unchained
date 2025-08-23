@@ -279,18 +279,38 @@ public class DatapackCategoryExample {
                 .icon(categoryIcon)
                 .color(categoryColor);
             
-            // Convert JSON entries to chapters
-            for (CodexEntry entry : entriesForCategory) {
-                Chapter chapter = convertJsonToChapter(entry, dataManager);
+            // Create chapters dynamically based on what chapters exist for this category
+            for (ResourceLocation chapterId : chaptersInCategory) {
+                CodexDataManager.ChapterDefinition chapterDef = allChapters.get(chapterId);
+                if (chapterDef == null) continue;
                 
-                if (chapter != null) {
-                    // Use entry icon or default to book
-                    ItemStack chapterIcon = entry.getIcon() != null ? 
-                        entry.getIcon() : 
-                        new ItemStack(Items.BOOK);
-                    
-                    builder.addChapter(chapter, chapterIcon);
+                String chapterTitle = chapterDef.getTitle();
+                Chapter chapter = new Chapter(chapterTitle);
+                
+                // Add all entries that target this specific chapter
+                List<CodexEntry> entriesForChapter = allChapterExtensions.get(chapterId);
+                if (entriesForChapter != null) {
+                    for (CodexEntry entry : entriesForChapter) {
+                        // Add title page for this entry
+                        chapter.addPage(new TitlePage(getEntryDisplayName(entry)));
+                        
+                        // Convert and add all pages from this entry
+                        for (JsonObject pageData : entry.getPages()) {
+                            // Skip title pages since we already added one
+                            if (pageData.has("type") && "title".equals(pageData.get("type").getAsString())) {
+                                continue;
+                            }
+                            
+                            Page convertedPage = EidolonPageConverter.convertPage(pageData);
+                            if (convertedPage != null) {
+                                chapter.addPage(convertedPage);
+                            }
+                        }
+                    }
                 }
+                
+                // Add this chapter to the category with a book icon
+                builder.addChapter(chapter, new ItemStack(Items.BOOK));
             }
             
             return builder.build();
@@ -299,6 +319,30 @@ public class DatapackCategoryExample {
             LOGGER.error("Failed to create datapack category '{}'", categoryKey, e);
             return null;
         }
+    }
+    
+    /**
+     * Get a display name for an entry from its title
+     */
+    private static String getEntryDisplayName(CodexEntry entry) {
+        String title = entry.getTitle().getString();
+        if (title.startsWith("eidolonunchained.codex.entry.")) {
+            // Extract the entry name from the translation key
+            String entryKey = title.replace("eidolonunchained.codex.entry.", "").replace(".title", "");
+            String displayName = entryKey.replace("_", " ");
+            // Capitalize first letter of each word
+            String[] words = displayName.split(" ");
+            StringBuilder result = new StringBuilder();
+            for (String word : words) {
+                if (word.length() > 0) {
+                    result.append(Character.toUpperCase(word.charAt(0)))
+                           .append(word.substring(1).toLowerCase())
+                           .append(" ");
+                }
+            }
+            return result.toString().trim();
+        }
+        return title;
     }
     
     /**
