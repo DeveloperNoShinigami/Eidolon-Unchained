@@ -1,6 +1,6 @@
 {
   "id": "simple_research_example",
-  "stars": 2,
+  "stars": 1,
   "triggers": [
     "minecraft:crafting_table"
   ],

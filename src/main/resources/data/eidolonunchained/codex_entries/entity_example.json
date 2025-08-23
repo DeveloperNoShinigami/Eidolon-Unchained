@@ -1,10 +1,10 @@
 {
   "title": "eidolonunchained.codex.entry.entity_example.title",
-  "target_chapter": "eidolon:wooden_stand",
+  "target_chapter": "getting_started",
   "pages": [
     {
       "type": "title",
-      "title": "eidolonunchained.codex.entry.entity_example.title",
+      "title": "eidolonunchained.codex.entry.entity_example",
       "text": "eidolonunchained.codex.entry.entity_example.intro"
     },
     {

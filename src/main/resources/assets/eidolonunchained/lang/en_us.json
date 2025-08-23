@@ -1,5 +1,5 @@
 {
-  "eidolonunchained.codex.category.examples": "Examples",
+  "eidolon.codex.category.examples": "Examples",
   "eidolonunchained.codex.chapter.getting_started": "Getting Started",
   
   "eidolonunchained.codex.entry.text_example.title": "Text Example",
@@ -51,7 +51,7 @@
   "task.eidolonunchained.weather.rain": "Complete during Rain",
   "task.eidolonunchained.weather.thunder": "Complete during Thunderstorm",
 
-  "eidolonunchained.codex.category.custom_research": "Custom Research",
+  "eidolon.codex.category.custom_research": "Custom Research",
   "eidolonunchained.codex.chapter.custom_research.title": "Custom Research",
   "eidolonunchained.research.chapter.simple_examples.title": "Simple Examples",
   "eidolonunchained.research.entry.simple_example.title": "Simple Research Example",
