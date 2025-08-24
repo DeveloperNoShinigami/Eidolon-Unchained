@@ -3,6 +3,7 @@ package com.bluelotuscoding.eidolonunchained.integration;
 import com.bluelotuscoding.eidolonunchained.chant.DatapackChant;
 import com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager;
 import com.bluelotuscoding.eidolonunchained.chant.DatapackChantSpell;
+import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import elucent.eidolon.api.spells.Sign;
 import elucent.eidolon.codex.*;
 import elucent.eidolon.util.ColorUtil;
@@ -30,11 +31,22 @@ public class CodexChantIntegration {
     public static void registerChants() {
         Map<String, DatapackChant> chants = DatapackChantManager.getAllChants();
         
-        // Group chants by category
+        // Group chants by category based on configuration
         Map<String, List<DatapackChant>> chantsByCategory = new HashMap<>();
+        
         for (DatapackChant chant : chants.values()) {
             if (chant.shouldShowInCodex()) {
-                chantsByCategory.computeIfAbsent(chant.getCategory(), k -> new ArrayList<>()).add(chant);
+                String categoryToUse;
+                
+                if (EidolonUnchainedConfig.COMMON.useIndividualCategories.get()) {
+                    // Use individual category from chant JSON
+                    categoryToUse = chant.getCategory();
+                } else {
+                    // Use default category from config
+                    categoryToUse = EidolonUnchainedConfig.COMMON.chantCodexCategory.get();
+                }
+                
+                chantsByCategory.computeIfAbsent(categoryToUse, k -> new ArrayList<>()).add(chant);
             }
         }
         

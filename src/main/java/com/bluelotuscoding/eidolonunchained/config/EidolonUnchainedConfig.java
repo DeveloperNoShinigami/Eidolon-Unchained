@@ -47,6 +47,7 @@ public class EidolonUnchainedConfig {
         public final ForgeConfigSpec.BooleanValue enableDatapackChants;
         public final ForgeConfigSpec.BooleanValue showChantsInCodex;
         public final ForgeConfigSpec.ConfigValue<String> chantCodexCategory;
+        public final ForgeConfigSpec.BooleanValue useIndividualCategories;
         public final ForgeConfigSpec.BooleanValue requireExactSignOrder;
         public final ForgeConfigSpec.IntValue chantCooldownSeconds;
         public final ForgeConfigSpec.BooleanValue allowChantCancellation;
@@ -170,8 +171,12 @@ public class EidolonUnchainedConfig {
                 .define("show_chants_in_codex", true);
             
             chantCodexCategory = builder
-                .comment("Codex category for custom chants")
-                .define("chant_codex_category", "eidolonunchained:custom_chants");
+                .comment("Default codex category for custom chants (used when use_individual_categories is false)")
+                .define("chant_codex_category", "examples");
+            
+            useIndividualCategories = builder
+                .comment("Allow chants to specify their own category in JSON (if false, all use default category)")
+                .define("use_individual_categories", true);
             
             requireExactSignOrder = builder
                 .comment("Require exact sign order for chants (disable for more flexible casting)")
