@@ -5,6 +5,7 @@ import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
 import com.bluelotuscoding.eidolonunchained.data.EidolonResearchDataManager;
 import com.bluelotuscoding.eidolonunchained.integration.ModIntegration;
 import com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection;
+import com.bluelotuscoding.eidolonunchained.integration.AIDeityIntegration;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.CreativeModeTab;
@@ -76,6 +77,9 @@ public class EidolonUnchained
         
         // Initialize mod integrations
         ModIntegration.init();
+        
+        // Initialize AI deity system
+        AIDeityIntegration.init(event);
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call

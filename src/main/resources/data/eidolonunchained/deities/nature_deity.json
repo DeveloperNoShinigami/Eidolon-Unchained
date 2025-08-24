@@ -1,0 +1,52 @@
+{
+  "id": "eidolonunchained:nature_deity",
+  "name": "Verdania, Guardian of Nature",
+  "description": "Ancient protector of forests and wildlife who speaks to those who honor the natural world",
+  "color": {
+    "red": 34,
+    "green": 139,
+    "blue": 34
+  },
+  "progression": {
+    "max_reputation": 100,
+    "stages": [
+      {
+        "id": "eidolonunchained:nature_novice",
+        "reputation": 10,
+        "major": false,
+        "rewards": [
+          { "type": "sign", "data": "eidolon:nature_sign" },
+          { "type": "item", "data": "minecraft:oak_sapling", "count": 4 }
+        ]
+      },
+      {
+        "id": "eidolonunchained:nature_adept",
+        "reputation": 25,
+        "major": false,
+        "rewards": [
+          { "type": "item", "data": "minecraft:bone_meal", "count": 8 },
+          { "type": "effect", "data": "minecraft:regeneration", "duration": 600, "amplifier": 1 }
+        ]
+      },
+      {
+        "id": "eidolonunchained:nature_guardian",
+        "reputation": 50,
+        "major": true,
+        "rewards": [
+          { "type": "sign", "data": "eidolon:warding_sign" },
+          { "type": "item", "data": "minecraft:golden_apple", "count": 2 }
+        ]
+      },
+      {
+        "id": "eidolonunchained:nature_master",
+        "reputation": 75,
+        "major": true,
+        "rewards": [
+          { "type": "sign", "data": "eidolon:soul_enchantment" },
+          { "type": "item", "data": "minecraft:enchanted_golden_apple", "count": 1 }
+        ]
+      }
+    ]
+  },
+  "prayer_types": ["blessing", "guidance", "nature_ritual", "plant_growth", "weather_request"]
+}
