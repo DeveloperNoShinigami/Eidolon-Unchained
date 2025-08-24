@@ -7,24 +7,38 @@
     "green": 85,
     "blue": 140
   },
-  "stage_rewards": {
-    "eidolonunchained:shadow_initiate": [
-      "give @p eidolon:soul_shard 3",
-      "effect give @p minecraft:night_vision 300"
-    ],
-    "eidolonunchained:dark_scholar": [
-      "give @p eidolon:death_essence 2",
-      "give @p eidolon:unholy_symbol 1"
-    ],
-    "eidolonunchained:shadow_master": [
-      "give @p eidolon:warped_sprouts 5",
-      "give @p eidolon:zombie_heart 1",
-      "effect give @p minecraft:strength 600 1"
+  "progression": {
+    "max_reputation": 100,
+    "stages": [
+      {
+        "id": "eidolonunchained:shadow_initiate",
+        "reputation": 10,
+        "major": false,
+        "rewards": [
+          { "type": "item", "data": "eidolon:soul_shard", "count": 3 },
+          { "type": "effect", "data": "minecraft:night_vision", "duration": 300, "amplifier": 0 }
+        ]
+      },
+      {
+        "id": "eidolonunchained:dark_scholar",
+        "reputation": 25,
+        "major": false,
+        "rewards": [
+          { "type": "item", "data": "eidolon:death_essence", "count": 2 },
+          { "type": "item", "data": "eidolon:unholy_symbol", "count": 1 }
+        ]
+      },
+      {
+        "id": "eidolonunchained:shadow_master",
+        "reputation": 50,
+        "major": true,
+        "rewards": [
+          { "type": "item", "data": "eidolon:warped_sprouts", "count": 5 },
+          { "type": "item", "data": "eidolon:zombie_heart", "count": 1 },
+          { "type": "effect", "data": "minecraft:strength", "duration": 600, "amplifier": 1 }
+        ]
+      }
     ]
   },
-  "reputation_stages": {
-    "10": "eidolonunchained:shadow_initiate",
-    "25": "eidolonunchained:dark_scholar", 
-    "50": "eidolonunchained:shadow_master"
-  }
+  "prayer_types": ["conversation", "blessing", "knowledge", "judgment"]
 }

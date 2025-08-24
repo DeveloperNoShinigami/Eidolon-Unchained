@@ -7,25 +7,39 @@
     "green": 230,
     "blue": 117
   },
-  "stage_rewards": {
-    "eidolonunchained:blessed_novice": [
-      "give @p minecraft:golden_apple 2",
-      "effect give @p minecraft:regeneration 300 0"
-    ],
-    "eidolonunchained:sacred_devotee": [
-      "give @p eidolon:gold_inlay 3",
-      "give @p eidolon:holy_symbol 1",
-      "effect give @p minecraft:resistance 600 0"
-    ],
-    "eidolonunchained:light_champion": [
-      "give @p minecraft:totem_of_undying 1",
-      "give @p eidolon:blessed_bone 2",
-      "effect give @p minecraft:absorption 1200 2"
+  "progression": {
+    "max_reputation": 100,
+    "stages": [
+      {
+        "id": "eidolonunchained:blessed_novice",
+        "reputation": 10,
+        "major": false,
+        "rewards": [
+          { "type": "item", "data": "minecraft:golden_apple", "count": 2 },
+          { "type": "effect", "data": "minecraft:regeneration", "duration": 300, "amplifier": 0 }
+        ]
+      },
+      {
+        "id": "eidolonunchained:sacred_devotee",
+        "reputation": 25,
+        "major": false,
+        "rewards": [
+          { "type": "item", "data": "eidolon:gold_inlay", "count": 3 },
+          { "type": "item", "data": "eidolon:holy_symbol", "count": 1 },
+          { "type": "effect", "data": "minecraft:resistance", "duration": 600, "amplifier": 0 }
+        ]
+      },
+      {
+        "id": "eidolonunchained:light_champion",
+        "reputation": 50,
+        "major": true,
+        "rewards": [
+          { "type": "item", "data": "minecraft:totem_of_undying", "count": 1 },
+          { "type": "item", "data": "eidolon:blessed_bone", "count": 2 },
+          { "type": "effect", "data": "minecraft:absorption", "duration": 1200, "amplifier": 2 }
+        ]
+      }
     ]
   },
-  "reputation_stages": {
-    "10": "eidolonunchained:blessed_novice",
-    "25": "eidolonunchained:sacred_devotee", 
-    "50": "eidolonunchained:light_champion"
-  }
+  "prayer_types": ["conversation", "blessing", "knowledge", "balance"]
 }

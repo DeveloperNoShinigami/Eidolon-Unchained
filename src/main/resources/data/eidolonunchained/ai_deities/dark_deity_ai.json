@@ -48,6 +48,7 @@
   
   "prayer_configs": {
     "conversation": {
+      "base_prompt": "Player {player} approaches your dark altar seeking communion with the shadows. Their devotion to darkness: {reputation}/100. They are in {biome} at {location}. Time: {time}. Weather: {weather}. Respond as Nyxathel the Shadow Lord, speaking in cryptic riddles and testing their commitment to forbidden knowledge. Keep your dark wisdom under 50 words.",
       "reputation_required": 0,
       "cooldown_minutes": 5,
       "max_commands": 2,
@@ -73,6 +74,7 @@
       }
     },
     "blessing": {
+      "base_prompt": "Player {player} seeks a dark blessing from the Shadow Lord. Their allegiance to darkness: {reputation}/100. Current location: {location} in {biome}. Time: {time}. Weather: {weather}. As Nyxathel, judge their worthiness for forbidden power and dark gifts. Grant blessings that reflect their devotion to shadow magic. Respond in under 45 words.",
       "reputation_required": 10,
       "cooldown_minutes": 15,
       "max_commands": 3,
@@ -98,6 +100,7 @@
       }
     },
     "knowledge": {
+      "base_prompt": "Player {player} seeks forbidden knowledge from the depths of shadow. Their mastery of darkness: {reputation}/100. They stand in {biome} at {location}. Time: {time}. As Nyxathel, decide if they have proven worthy of dark secrets, necromantic wisdom, or forbidden lore. Share cryptic knowledge befitting their devotion. Keep your mysterious teachings under 40 words.",
       "reputation_required": 25,
       "cooldown_minutes": 30,
       "max_commands": 1,

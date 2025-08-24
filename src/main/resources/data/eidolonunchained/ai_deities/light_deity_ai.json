@@ -56,6 +56,7 @@
   
   "prayer_configs": {
     "conversation": {
+      "base_prompt": "Player {player} approaches your sacred altar seeking communion. Their reputation with you is {reputation}/100. They are currently in {biome} at {location}. Time: {time}. Weather: {weather}. Respond as Lumina, the Sacred Guardian, offering hope, healing wisdom, and divine guidance. Keep your compassionate response under 50 words and stay in character.",
       "reputation_required": 0,
       "cooldown_minutes": 3,
       "max_commands": 2,
@@ -79,6 +80,7 @@
       }
     },
     "blessing": {
+      "base_prompt": "Player {player} requests your divine blessing. Their devotion to the light: {reputation}/100. Location: {location} in {biome}. Time: {time}. Weather: {weather}. As Lumina, judge their worthiness and respond with healing light and protection based on their goodness and compassion. Keep your divine response under 45 words.",
       "reputation_required": 5,
       "cooldown_minutes": 10,
       "max_commands": 3,
@@ -103,6 +105,7 @@
       }
     },
     "guidance": {
+      "base_prompt": "Player {player} seeks divine guidance and wisdom. Their standing in the light: {reputation}/100. They are in {biome} at {location}. Time: {time}. As Lumina, offer holy wisdom, moral guidance, and righteous counsel appropriate to their devotion level. Share your divine insights in under 40 words.",
       "reputation_required": 15,
       "cooldown_minutes": 20,
       "max_commands": 2,
@@ -126,6 +129,7 @@
       }
     },
     "purification": {
+      "base_prompt": "Player {player} seeks purification from darkness and corruption. Their light within: {reputation}/100. Current realm: {biome} at {location}. Time: {time}. Weather: {weather}. As Lumina, cleanse them of negative effects and corruption based on their purity of heart. Respond with divine cleansing in under 50 words.",
       "reputation_required": 20,
       "cooldown_minutes": 25,
       "max_commands": 4,
@@ -154,7 +158,7 @@
   },
   
   "api_settings": {
-    "api_key_env": "AIzaSyCn4jsRM9E3wJ_d8hIxQq-wEn75S73Nm6M",
+    "api_key_env": "GEMINI_API_KEY",
     "timeout_seconds": 30,
     "generation_config": {
       "temperature": 0.6,

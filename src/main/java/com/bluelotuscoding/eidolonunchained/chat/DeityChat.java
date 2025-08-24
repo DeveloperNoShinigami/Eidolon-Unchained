@@ -7,6 +7,7 @@ import com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig;
 import com.bluelotuscoding.eidolonunchained.ai.PrayerAIConfig;
 import com.bluelotuscoding.eidolonunchained.ai.PlayerContext;
 import com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiAPIClient;
+import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -16,10 +17,11 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -27,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Mod.EventBusSubscriber(modid = "eidolonunchained")
 public class DeityChat {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LogUtils.getLogger();
     
     // Track active conversations: player UUID -> deity ID
     private static final Map<UUID, ResourceLocation> activeConversations = new ConcurrentHashMap<>();
@@ -154,8 +156,17 @@ public class DeityChat {
             // Generate AI response
             String personality = aiConfig.buildDynamicPersonality(new PlayerContext(player, deity));
             
+            // Get API key using the API key manager
+            String apiKey = APIKeyManager.getAPIKey("gemini");
+            if (apiKey == null) {
+                LOGGER.error("No Gemini API key configured. Please set up API key using /eidolon-config or environment variables.");
+                player.sendSystemMessage(Component.literal("§cAI configuration incomplete. Please contact server administrator."));
+                endConversation(player);
+                return;
+            }
+            
             GeminiAPIClient client = new GeminiAPIClient(
-                System.getenv(aiConfig.apiSettings.apiKeyEnv),
+                apiKey,
                 aiConfig.apiSettings.model,
                 aiConfig.apiSettings.timeoutSeconds
             );

@@ -95,7 +95,18 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 JsonObject json = element.getAsJsonObject();
                 
                 // Get the deity this AI config applies to
-                String deityIdString = json.get("deity_id").getAsString();
+                if (!json.has("deity_id")) {
+                    LOGGER.error("AI config {} is missing required 'deity_id' field", location);
+                    continue;
+                }
+                
+                JsonElement deityIdElement = json.get("deity_id");
+                if (deityIdElement == null || deityIdElement.isJsonNull()) {
+                    LOGGER.error("AI config {} has null 'deity_id' field", location);
+                    continue;
+                }
+                
+                String deityIdString = deityIdElement.getAsString();
                 ResourceLocation deityId = ResourceLocation.tryParse(deityIdString);
                 if (deityId == null) {
                     throw new IllegalArgumentException("Invalid deity ID: " + deityIdString);
@@ -292,10 +303,20 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             
             PrayerAIConfig prayer = new PrayerAIConfig();
             prayer.type = prayerType;
-            prayer.basePrompt = prayerConfig.get("base_prompt").getAsString();
+            
+            // Base prompt is optional, use default if not present
+            if (prayerConfig.has("base_prompt")) {
+                prayer.base_prompt = prayerConfig.get("base_prompt").getAsString();
+                prayer.basePrompt = prayer.base_prompt; // Keep both for compatibility
+            } else {
+                // Use a sensible default based on prayer type
+                prayer.base_prompt = generateDefaultPrompt(prayerType);
+                prayer.basePrompt = prayer.base_prompt; // Keep both for compatibility
+            }
             
             if (prayerConfig.has("max_commands")) {
                 prayer.maxCommands = prayerConfig.get("max_commands").getAsInt();
+                prayer.max_commands = prayer.maxCommands; // Keep both for compatibility
             }
             
             if (prayerConfig.has("cooldown_minutes")) {
@@ -308,8 +329,11 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             
             if (prayerConfig.has("allowed_commands")) {
                 JsonArray commands = prayerConfig.getAsJsonArray("allowed_commands");
+                prayer.allowedCommands.clear(); // Clear defaults
+                prayer.allowed_commands.clear(); // Clear defaults
                 for (JsonElement cmd : commands) {
                     prayer.allowedCommands.add(cmd.getAsString());
+                    prayer.allowed_commands.add(cmd.getAsString()); // Keep both for compatibility
                 }
             }
             
@@ -407,5 +431,20 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
      */
     public java.util.Set<ResourceLocation> getAIEnabledDeities() {
         return aiConfigs.keySet();
+    }
+    
+    /**
+     * Generate a default prompt for a prayer type
+     */
+    private String generateDefaultPrompt(String prayerType) {
+        return switch (prayerType.toLowerCase()) {
+            case "conversation" -> "Player {player} approaches your sacred altar and speaks with you. They have {reputation} reputation with you. Respond as the deity in character, considering their standing and the current context.";
+            case "blessing" -> "Player {player} requests your blessing. Their reputation with you is {reputation}. Consider their worthiness and respond with appropriate divine favor or guidance.";
+            case "knowledge" -> "Player {player} seeks wisdom and knowledge from you. They have {reputation} reputation. Share divine insights appropriate to their standing with you.";
+            case "guidance" -> "Player {player} asks for your guidance on their mystical journey. Their reputation: {reputation}. Offer wisdom befitting your divine nature.";
+            case "ritual", "nature_ritual" -> "Player {player} wishes to perform a sacred ritual. Their standing with you: {reputation}. Guide them through an appropriate ceremonial experience.";
+            case "balance" -> "Player {player} seeks to restore balance in their life or surroundings. Reputation: {reputation}. Help them achieve harmony through your divine power.";
+            default -> "Player {player} prays to you seeking {prayer_type}. Their reputation with you is {reputation}. Respond as befits your divine nature and their standing.";
+        };
     }
 }
