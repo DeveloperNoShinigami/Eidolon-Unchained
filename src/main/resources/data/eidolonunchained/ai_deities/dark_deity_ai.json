@@ -125,7 +125,7 @@
   },
   
   "api_settings": {
-    "api_key_env": "AIzaSyCn4jsRM9E3wJ_d8hIxQq-wEn75S73Nm6M",
+    "api_key_env": "GEMINI_API_KEY",
     "timeout_seconds": 30,
     "generation_config": {
       "temperature": 0.8,

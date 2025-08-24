@@ -34,7 +34,7 @@ public class EffigyInteractionHandler {
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onEffigyRightClick(PlayerInteractEvent.RightClickBlock event) {
         // Check if effigy interaction is enabled in config
-        if (!com.bluelotuscoding.eidolonunchained.config.AIDeityConfig.ENABLE_EFFIGY_INTERACTION.get()) {
+        if (!com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.enableEffigyRightClick.get()) {
             return; // Feature disabled, let Eidolon handle it
         }
         // Only handle server-side interactions

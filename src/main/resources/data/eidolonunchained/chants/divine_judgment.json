@@ -1,0 +1,64 @@
+{
+  "name": "Divine Judgment",
+  "description": "Call upon Lumina the Sacred Guardian to judge the worthy and unworthy. A powerful blessing for the righteous, but brings consequences for the wicked.",
+  "category": "examples", 
+  "difficulty": 4,
+  "show_in_codex": true,
+  "linked_deity": "eidolonunchained:light_deity",
+  "signs": [
+    "eidolon:sacred",
+    "eidolon:warding",
+    "eidolon:sacred",
+    "eidolon:warding",
+    "eidolon:sacred"
+  ],
+  "requirements": [
+    "reputation:eidolonunchained:light_deity:40"
+  ],
+  "effects": [
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:absorption",
+      "duration": 1200,
+      "amplifier": 2
+    },
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:resistance",
+      "duration": 1200,
+      "amplifier": 2
+    },
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:glowing",
+      "duration": 800,
+      "amplifier": 0
+    },
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:slow_falling",
+      "duration": 600,
+      "amplifier": 0
+    },
+    {
+      "type": "run_command",
+      "command": "particle minecraft:totem_of_undying ~ ~2 ~ 1 2 1 0.2 50"
+    },
+    {
+      "type": "run_command",
+      "command": "particle minecraft:end_rod ~ ~1 ~ 0.5 1 0.5 0.1 30"
+    },
+    {
+      "type": "run_command",
+      "command": "playsound minecraft:entity.player.levelup player @s"
+    },
+    {
+      "type": "send_message",
+      "message": "§6§lDIVINE LIGHT DESCENDS!"
+    },
+    {
+      "type": "send_message",
+      "message": "§eYou stand in the presence of pure divine judgment..."
+    }
+  ]
+}

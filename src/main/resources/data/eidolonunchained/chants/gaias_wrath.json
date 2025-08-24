@@ -1,0 +1,57 @@
+{
+  "name": "Gaia's Wrath", 
+  "description": "Channel the fury of Verdania to protect nature from those who would harm it. Powerful but requires great wisdom to use responsibly.",
+  "category": "examples",
+  "difficulty": 4,
+  "show_in_codex": true,
+  "linked_deity": "eidolonunchained:nature_deity",
+  "signs": [
+    "eidolon:harmony",
+    "eidolon:warding",
+    "eidolon:harmony",
+    "eidolon:warding"
+  ],
+  "requirements": [
+    "reputation:eidolonunchained:nature_deity:30"
+  ],
+  "effects": [
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:strength",
+      "duration": 800,
+      "amplifier": 2
+    },
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:resistance",
+      "duration": 800,
+      "amplifier": 1
+    },
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:regeneration",
+      "duration": 600,
+      "amplifier": 2
+    },
+    {
+      "type": "run_command",
+      "command": "particle minecraft:angry_villager ~ ~1 ~ 2 1 2 0.1 40"
+    },
+    {
+      "type": "run_command",
+      "command": "particle minecraft:composter ~ ~ ~ 3 0.1 3 0.2 60"
+    },
+    {
+      "type": "run_command",
+      "command": "playsound minecraft:entity.ravager.roar player @s"
+    },
+    {
+      "type": "send_message",
+      "message": "§2§lNATURE'S FURY AWAKENS!"
+    },
+    {
+      "type": "send_message",
+      "message": "§aThe earth itself responds to defend its children..."
+    }
+  ]
+}

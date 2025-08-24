@@ -1,0 +1,46 @@
+{
+  "name": "Nature's Communion",
+  "description": "Connect with Verdania the Earth Mother, ancient deity of nature, growth, and the wild. Grants nature's gifts and opens communication with the green world.",
+  "category": "examples",
+  "difficulty": 2,
+  "show_in_codex": true,
+  "linked_deity": "eidolonunchained:nature_deity",
+  "signs": [
+    "eidolon:harmony",
+    "eidolon:harmony",
+    "eidolon:harmony"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:regeneration",
+      "duration": 400,
+      "amplifier": 1
+    },
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:saturation",
+      "duration": 100,
+      "amplifier": 0
+    },
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:speed",
+      "duration": 600,
+      "amplifier": 0
+    },
+    {
+      "type": "run_command",
+      "command": "particle minecraft:happy_villager ~ ~1 ~ 1 1 1 0.1 30"
+    },
+    {
+      "type": "run_command",
+      "command": "playsound minecraft:block.grass.step player @s"
+    },
+    {
+      "type": "send_message",
+      "message": "§aThe earth beneath your feet pulses with life as nature's embrace surrounds you..."
+    }
+  ]
+}

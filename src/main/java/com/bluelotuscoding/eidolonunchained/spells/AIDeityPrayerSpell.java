@@ -61,7 +61,7 @@ public class AIDeityPrayerSpell extends PrayerSpell {
         }
         
         // Check if the chant system is enabled in config
-        if (!com.bluelotuscoding.eidolonunchained.config.AIDeityConfig.ENABLE_CHANT_SYSTEM.get()) {
+        if (!com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.enableChantSystem.get()) {
             // Fall back to standard prayer behavior if chant system is disabled
             super.cast(world, pos, player);
             return;

@@ -1,0 +1,54 @@
+{
+  "name": "Forbidden Knowledge",
+  "description": "A dangerous ritual to seek the darkest secrets from Nyxathel. Grants temporary omniscience but at a cost. Only for the truly devoted.",
+  "category": "examples",
+  "difficulty": 5,
+  "show_in_codex": true,
+  "linked_deity": "eidolonunchained:dark_deity",
+  "signs": [
+    "eidolon:wicked",
+    "eidolon:soul",
+    "eidolon:wicked",
+    "eidolon:soul",
+    "eidolon:wicked"
+  ],
+  "requirements": [
+    "reputation:eidolonunchained:dark_deity:50"
+  ],
+  "effects": [
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:night_vision",
+      "duration": 2400,
+      "amplifier": 0
+    },
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:glowing",
+      "duration": 600,
+      "amplifier": 0
+    },
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:wither",
+      "duration": 60,
+      "amplifier": 0
+    },
+    {
+      "type": "run_command",
+      "command": "particle minecraft:soul_fire_flame ~ ~2 ~ 2 2 2 0.2 50"
+    },
+    {
+      "type": "run_command",
+      "command": "playsound minecraft:entity.wither.spawn player @s"
+    },
+    {
+      "type": "send_message",
+      "message": "§5§l⚠ FORBIDDEN KNOWLEDGE AWAKENS ⚠"
+    },
+    {
+      "type": "send_message",
+      "message": "§dThe shadows reveal their deepest secrets to you..."
+    }
+  ]
+}

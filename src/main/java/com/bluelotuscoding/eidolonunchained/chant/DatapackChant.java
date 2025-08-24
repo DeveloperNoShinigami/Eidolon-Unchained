@@ -24,11 +24,13 @@ public class DatapackChant {
     private final List<ChantEffect> effects;
     private final List<String> requirements;
     private final boolean showInCodex;
+    private final ResourceLocation linkedDeity; // Optional deity connection
     
     public DatapackChant(ResourceLocation id, String name, String description, 
                         List<ResourceLocation> signSequence, String category,
                         int difficulty, List<ChantEffect> effects,
-                        List<String> requirements, boolean showInCodex) {
+                        List<String> requirements, boolean showInCodex, 
+                        ResourceLocation linkedDeity) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -38,6 +40,7 @@ public class DatapackChant {
         this.effects = new ArrayList<>(effects);
         this.requirements = new ArrayList<>(requirements);
         this.showInCodex = showInCodex;
+        this.linkedDeity = linkedDeity;
     }
     
     public ResourceLocation getId() { return id; }
@@ -49,6 +52,8 @@ public class DatapackChant {
     public List<ChantEffect> getEffects() { return new ArrayList<>(effects); }
     public List<String> getRequirements() { return new ArrayList<>(requirements); }
     public boolean shouldShowInCodex() { return showInCodex; }
+    public ResourceLocation getLinkedDeity() { return linkedDeity; }
+    public boolean hasLinkedDeity() { return linkedDeity != null; }
     
     /**
      * Check if player meets requirements to perform this chant
@@ -76,6 +81,12 @@ public class DatapackChant {
         String category = json.has("category") ? json.get("category").getAsString() : "custom";
         int difficulty = json.has("difficulty") ? json.get("difficulty").getAsInt() : 1;
         boolean showInCodex = json.has("show_in_codex") ? json.get("show_in_codex").getAsBoolean() : true;
+        
+        // Parse optional linked deity
+        ResourceLocation linkedDeity = null;
+        if (json.has("linked_deity")) {
+            linkedDeity = new ResourceLocation(json.get("linked_deity").getAsString());
+        }
         
         // Parse sign sequence
         List<ResourceLocation> signSequence = new ArrayList<>();
@@ -105,7 +116,7 @@ public class DatapackChant {
         }
         
         return new DatapackChant(id, name, description, signSequence, category, 
-                               difficulty, effects, requirements, showInCodex);
+                               difficulty, effects, requirements, showInCodex, linkedDeity);
     }
     
     /**
@@ -118,6 +129,11 @@ public class DatapackChant {
         json.addProperty("category", category);
         json.addProperty("difficulty", difficulty);
         json.addProperty("show_in_codex", showInCodex);
+        
+        // Add optional linked deity
+        if (linkedDeity != null) {
+            json.addProperty("linked_deity", linkedDeity.toString());
+        }
         
         // Add sign sequence
         JsonArray signs = new JsonArray();

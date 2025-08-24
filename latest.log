@@ -1,0 +1,202 @@
+[24Aug2025 17:22:37.314] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgeclientuserdev, --version, MOD_DEV, --assetIndex, 5, --assetsDir, C:\Users\bluel\.gradle\caches\forge_gradle\assets, --gameDir, ., --fml.forgeVersion, 47.1.0, --fml.mcVersion, 1.20.1, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20230612.114412, -mixin, eidolonunchained.mixins.json]
+[24Aug2025 17:22:37.321] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher 10.0.9+10.0.9+main.dcd20f30 starting: java version 17.0.14 by Eclipse Adoptium; OS Windows 10 arch amd64 version 10.0
+[24Aug2025 17:22:37.590] [main/INFO] [net.minecraftforge.fml.loading.ImmediateWindowHandler/]: Loading ImmediateWindowProvider fmlearlywindow
+[24Aug2025 17:22:37.735] [main/INFO] [EARLYDISPLAY/]: Trying GL version 4.6
+[24Aug2025 17:22:38.364] [main/INFO] [EARLYDISPLAY/]: Requested GL version 4.6 got version 4.6
+[24Aug2025 17:22:38.461] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/C:/Users/bluel/.gradle/caches/modules-2/files-2.1/org.spongepowered/mixin/0.8.5/9d1c0c3a304ae6697ecd477218fa61b850bf57fc/mixin-0.8.5.jar%23128!/ Service=ModLauncher Env=CLIENT
+[24Aug2025 17:22:38.522] [pool-2-thread-1/INFO] [EARLYDISPLAY/]: GL info: NVIDIA GeForce RTX 3050/PCIe/SSE2 GL version 4.6.0 NVIDIA 576.28, NVIDIA Corporation
+[24Aug2025 17:22:38.960] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\.gradle\caches\modules-2\files-2.1\net.minecraftforge\javafmllanguage\1.20.1-47.1.0\a2cd58d15791eaac9983e30be0995e66bd48633e\javafmllanguage-1.20.1-47.1.0.jar is missing mods.toml file
+[24Aug2025 17:22:38.966] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\.gradle\caches\modules-2\files-2.1\net.minecraftforge\lowcodelanguage\1.20.1-47.1.0\f1f11b7217b8320f1b3eb81c746b7b8a70a9ba06\lowcodelanguage-1.20.1-47.1.0.jar is missing mods.toml file
+[24Aug2025 17:22:38.970] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\.gradle\caches\modules-2\files-2.1\net.minecraftforge\mclanguage\1.20.1-47.1.0\ff1b8eeb1bd00dfb130263b8952b931f5369252e\mclanguage-1.20.1-47.1.0.jar is missing mods.toml file
+[24Aug2025 17:22:38.975] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\.gradle\caches\modules-2\files-2.1\net.minecraftforge\fmlcore\1.20.1-47.1.0\69ca36ae5b8d45c377a5485dc38a7343e5ebf33c\fmlcore-1.20.1-47.1.0.jar is missing mods.toml file
+[24Aug2025 17:22:39.120] [main/INFO] [net.minecraftforge.fml.loading.moddiscovery.JarInJarDependencyLocator/]: No dependencies to load found. Skipping!
+[24Aug2025 17:22:40.970] [main/INFO] [mixin/]: Compatibility level set to JAVA_17
+[24Aug2025 17:22:40.985] [main/INFO] [cpw.mods.modlauncher.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgeclientuserdev' with arguments [--version, MOD_DEV, --gameDir, ., --assetsDir, C:\Users\bluel\.gradle\caches\forge_gradle\assets, --assetIndex, 5]
+[24Aug2025 17:22:41.132] [main/WARN] [mixin/]: Reference map 'eidolonunchained.refmap.json' for eidolonunchained.mixins.json could not be read. If this is a development environment you can ignore this message
+[24Aug2025 17:22:41.556] [main/INFO] [mixin/]: Remapping refMap curios.refmap.json using C:\Users\bluel\Downloads\eidolon_repraised-1.20.1-0.3.8.15\Eidolon-Unchained/build/createSrgToMcp/output.srg
+[24Aug2025 17:22:41.567] [main/INFO] [mixin/]: Remapping refMap eidolon.refmap.json using C:\Users\bluel\Downloads\eidolon_repraised-1.20.1-0.3.8.15\Eidolon-Unchained/build/createSrgToMcp/output.srg
+[24Aug2025 17:22:48.771] [Datafixer Bootstrap/INFO] [com.mojang.datafixers.DataFixerBuilder/]: 188 Datafixer optimizations took 262 milliseconds
+[24Aug2025 17:22:51.302] [Render thread/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/bluel/.gradle/caches/forge_gradle/minecraft_user_repo/net/minecraftforge/forge/1.20.1-47.1.0_mapped_official_1.20.1/forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar%23191!/assets/.mcassetsroot' uses unexpected schema
+[24Aug2025 17:22:51.303] [Render thread/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/bluel/.gradle/caches/forge_gradle/minecraft_user_repo/net/minecraftforge/forge/1.20.1-47.1.0_mapped_official_1.20.1/forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar%23191!/data/.mcassetsroot' uses unexpected schema
+[24Aug2025 17:22:51.329] [Render thread/INFO] [com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService/]: Environment: authHost='https://authserver.mojang.com', accountsHost='https://api.mojang.com', sessionHost='https://sessionserver.mojang.com', servicesHost='https://api.minecraftservices.com', name='PROD'
+[24Aug2025 17:22:51.338] [Render thread/INFO] [net.minecraft.client.Minecraft/]: Setting user: Dev
+[24Aug2025 17:22:51.480] [Render thread/INFO] [net.minecraft.client.Minecraft/]: Backend library: LWJGL version 3.3.1 build 7
+[24Aug2025 17:22:51.860] [modloading-worker-0/INFO] [net.minecraftforge.common.ForgeMod/FORGEMOD]: Forge mod loading, version 47.1.0, for MC 1.20.1 with MCP 20230612.114412
+[24Aug2025 17:22:51.860] [modloading-worker-0/INFO] [net.minecraftforge.common.MinecraftForge/FORGE]: MinecraftForge v47.1.0 Initialized
+[24Aug2025 17:22:51.950] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Eidolon Feature Detection Results:
+[24Aug2025 17:22:51.959] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ?? CodexEvents not found - using legacy compatibility mode
+[24Aug2025 17:22:51.970] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    Mode: Legacy - Reflection Required
+[24Aug2025 17:22:51.971] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    CodexEvents: ? Not Available
+[24Aug2025 17:22:51.981] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ?? Enhanced TitlePage constructor not available
+[24Aug2025 17:22:51.981] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    Enhanced TitlePage: ? Not Available
+[24Aug2025 17:22:51.998] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Public Category fields available
+[24Aug2025 17:22:51.998] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    Public Category Fields: ? Not Available
+[24Aug2025 17:22:51.999] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Running in Legacy Mode - using reflection where necessary
+[24Aug2025 17:22:51.999] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Migration Guide: See EIDOLON_VERSION_MIGRATION_GUIDE.md
+[24Aug2025 17:22:54.026] [Render thread/INFO] [net.minecraftforge.gametest.ForgeGameTestHooks/]: Enabled Gametest Namespaces: [eidolonunchained]
+[24Aug2025 17:22:54.370] [Render thread/INFO] [net.minecraft.server.packs.resources.ReloadableResourceManager/]: Reloading ResourceManager: vanilla, mod_resources
+[24Aug2025 17:22:54.416] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Configuration file C:\Users\bluel\Downloads\eidolon_repraised-1.20.1-0.3.8.15\Eidolon-Unchained\run\config\eidolonunchained-common.toml is not correct. Correcting
+[24Aug2025 17:22:54.419] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key ai_deities was corrected from null to its default, SimpleCommentedConfig:{}. 
+[24Aug2025 17:22:54.419] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key ai_deities.enable_ai_deities was corrected from null to its default, true. 
+[24Aug2025 17:22:54.419] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key ai_deities.ai_provider was corrected from null to its default, gemini. 
+[24Aug2025 17:22:54.420] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key ai_deities.gemini_api_key was corrected from null to its default, . 
+[24Aug2025 17:22:54.420] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key ai_deities.gemini_model was corrected from null to its default, gemini-1.5-flash. 
+[24Aug2025 17:22:54.420] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key ai_deities.gemini_timeout_seconds was corrected from null to its default, 30. 
+[24Aug2025 17:22:54.420] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key ai_deities.ai_temperature was corrected from null to its default, 0.7. 
+[24Aug2025 17:22:54.420] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key ai_deities.max_tokens was corrected from null to its default, 500. 
+[24Aug2025 17:22:54.420] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key ai_deities.log_ai_interactions was corrected from null to its default, false. 
+[24Aug2025 17:22:54.432] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key chant_system was corrected from null to its default, SimpleCommentedConfig:{}. 
+[24Aug2025 17:22:54.432] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key chant_system.enable_chant_system was corrected from null to its default, true. 
+[24Aug2025 17:22:54.432] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key chant_system.enable_datapack_chants was corrected from null to its default, true. 
+[24Aug2025 17:22:54.433] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key chant_system.show_chants_in_codex was corrected from null to its default, true. 
+[24Aug2025 17:22:54.433] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key chant_system.chant_codex_category was corrected from null to its default, examples. 
+[24Aug2025 17:22:54.433] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key chant_system.use_individual_categories was corrected from null to its default, true. 
+[24Aug2025 17:22:54.433] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key chant_system.require_exact_sign_order was corrected from null to its default, true. 
+[24Aug2025 17:22:54.433] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key chant_system.chant_cooldown_seconds was corrected from null to its default, 5. 
+[24Aug2025 17:22:54.434] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key chant_system.allow_chant_cancellation was corrected from null to its default, true. 
+[24Aug2025 17:22:54.439] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key deity_interaction was corrected from null to its default, SimpleCommentedConfig:{}. 
+[24Aug2025 17:22:54.440] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key deity_interaction.enable_effigy_right_click was corrected from null to its default, false. 
+[24Aug2025 17:22:54.440] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key deity_interaction.enable_chat_interaction was corrected from null to its default, true. 
+[24Aug2025 17:22:54.440] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key deity_interaction.require_chant_completion was corrected from null to its default, true. 
+[24Aug2025 17:22:54.440] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key deity_interaction.conversation_timeout_minutes was corrected from null to its default, 10. 
+[24Aug2025 17:22:54.440] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key deity_interaction.enable_reputation_messages was corrected from null to its default, true. 
+[24Aug2025 17:22:54.440] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key deity_interaction.enable_deity_notifications was corrected from null to its default, true. 
+[24Aug2025 17:22:54.447] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key prayer_system was corrected from null to its default, SimpleCommentedConfig:{}. 
+[24Aug2025 17:22:54.447] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key prayer_system.enable_prayer_system was corrected from null to its default, true. 
+[24Aug2025 17:22:54.447] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key prayer_system.prayer_cooldown_minutes was corrected from null to its default, 5. 
+[24Aug2025 17:22:54.447] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key prayer_system.enable_prayer_effects was corrected from null to its default, true. 
+[24Aug2025 17:22:54.447] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key prayer_system.enable_prayer_commands was corrected from null to its default, true. 
+[24Aug2025 17:22:54.447] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key prayer_system.max_prayers_per_day was corrected from null to its default, 10. 
+[24Aug2025 17:22:54.448] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key prayer_system.enable_prayer_history was corrected from null to its default, true. 
+[24Aug2025 17:22:54.451] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key integrations was corrected from null to its default, SimpleCommentedConfig:{}. 
+[24Aug2025 17:22:54.452] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key integrations.enable_eidolon_integration was corrected from null to its default, true. 
+[24Aug2025 17:22:54.452] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key integrations.enable_codex_integration was corrected from null to its default, true. 
+[24Aug2025 17:22:54.452] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key integrations.enable_research_integration was corrected from null to its default, true. 
+[24Aug2025 17:22:54.453] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key integrations.enable_kubejs_integration was corrected from null to its default, true. 
+[24Aug2025 17:22:54.453] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key integrations.enable_custom_deities was corrected from null to its default, true. 
+[24Aug2025 17:22:54.457] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key security was corrected from null to its default, SimpleCommentedConfig:{}. 
+[24Aug2025 17:22:54.457] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key security.required_op_level was corrected from null to its default, 4. 
+[24Aug2025 17:22:54.457] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key security.enable_permission_checks was corrected from null to its default, true. 
+[24Aug2025 17:22:54.457] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key security.log_security_events was corrected from null to its default, true. 
+[24Aug2025 17:22:54.457] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key security.encrypt_api_keys was corrected from null to its default, true. 
+[24Aug2025 17:22:54.460] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key debug was corrected from null to its default, SimpleCommentedConfig:{}. 
+[24Aug2025 17:22:54.461] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key debug.enable_debug_mode was corrected from null to its default, false. 
+[24Aug2025 17:22:54.462] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key debug.verbose_logging was corrected from null to its default, false. 
+[24Aug2025 17:22:54.462] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key debug.enable_data_generation was corrected from null to its default, true. 
+[24Aug2025 17:22:54.462] [modloading-worker-0/WARN] [net.minecraftforge.common.ForgeConfigSpec/CORE]: Incorrect key debug.validate_json_files was corrected from null to its default, true. 
+[24Aug2025 17:22:54.468] [modloading-worker-0/ERROR] [net.minecraftforge.fml.javafmlmod.FMLModContainer/]: Exception caught during firing event: Cannot get config value before config is loaded.
+This error is currently only thrown in the development environment, to avoid breaking published mods.
+In a future version, this will also throw in the production environment.
+
+	Index: 1
+	Listeners:
+		0: NORMAL
+		1: ASM: class com.bluelotuscoding.eidolonunchained.Config onLoad(Lnet/minecraftforge/fml/event/config/ModConfigEvent;)V
+java.lang.IllegalStateException: Cannot get config value before config is loaded.
+This error is currently only thrown in the development environment, to avoid breaking published mods.
+In a future version, this will also throw in the production environment.
+
+	at MC-BOOTSTRAP/com.google.common@31.1-jre/com.google.common.base.Preconditions.checkState(Preconditions.java:502)
+	at TRANSFORMER/forge@47.1.0/net.minecraftforge.common.ForgeConfigSpec$ConfigValue.get(ForgeConfigSpec.java:852)
+	at TRANSFORMER/eidolonunchained@1.0.0/com.bluelotuscoding.eidolonunchained.Config.onLoad(Config.java:30)
+	at TRANSFORMER/eidolonunchained@1.0.0/com.bluelotuscoding.eidolonunchained.__Config_onLoad_ModConfigEvent.invoke(.dynamic)
+	at MC-BOOTSTRAP/net.minecraftforge.eventbus/net.minecraftforge.eventbus.ASMEventHandler.invoke(ASMEventHandler.java:73)
+	at MC-BOOTSTRAP/net.minecraftforge.eventbus/net.minecraftforge.eventbus.EventBus.post(EventBus.java:315)
+	at MC-BOOTSTRAP/net.minecraftforge.eventbus/net.minecraftforge.eventbus.EventBus.post(EventBus.java:296)
+	at LAYER PLUGIN/javafmllanguage@1.20.1-47.1.0/net.minecraftforge.fml.javafmlmod.FMLModContainer.lambda$new$0(FMLModContainer.java:42)
+	at LAYER PLUGIN/fmlcore@1.20.1-47.1.0/net.minecraftforge.fml.ModContainer.lambda$dispatchConfigEvent$13(ModContainer.java:153)
+	at java.base/java.util.Optional.ifPresent(Optional.java:178)
+	at LAYER PLUGIN/fmlcore@1.20.1-47.1.0/net.minecraftforge.fml.ModContainer.dispatchConfigEvent(ModContainer.java:153)
+	at LAYER PLUGIN/fmlcore@1.20.1-47.1.0/net.minecraftforge.fml.config.ModConfig.fireEvent(ModConfig.java:77)
+	at LAYER PLUGIN/fmlcore@1.20.1-47.1.0/net.minecraftforge.fml.config.ConfigTracker.openConfig(ConfigTracker.java:62)
+	at LAYER PLUGIN/fmlcore@1.20.1-47.1.0/net.minecraftforge.fml.config.ConfigTracker.lambda$loadConfigs$1(ConfigTracker.java:50)
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75)
+	at java.base/java.util.Collections$SynchronizedCollection.forEach(Collections.java:2131)
+	at LAYER PLUGIN/fmlcore@1.20.1-47.1.0/net.minecraftforge.fml.config.ConfigTracker.loadConfigs(ConfigTracker.java:50)
+	at TRANSFORMER/forge@47.1.0/net.minecraftforge.fml.core.ModStateProvider.lambda$new$3(ModStateProvider.java:68)
+	at LAYER PLUGIN/fmlcore@1.20.1-47.1.0/net.minecraftforge.fml.ModLoader.handleInlineTransition(ModLoader.java:217)
+	at LAYER PLUGIN/fmlcore@1.20.1-47.1.0/net.minecraftforge.fml.ModLoader.lambda$dispatchAndHandleError$19(ModLoader.java:209)
+	at java.base/java.util.Optional.ifPresent(Optional.java:178)
+	at LAYER PLUGIN/fmlcore@1.20.1-47.1.0/net.minecraftforge.fml.ModLoader.dispatchAndHandleError(ModLoader.java:209)
+	at LAYER PLUGIN/fmlcore@1.20.1-47.1.0/net.minecraftforge.fml.ModLoader.lambda$loadMods$15(ModLoader.java:190)
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75)
+	at LAYER PLUGIN/fmlcore@1.20.1-47.1.0/net.minecraftforge.fml.ModLoader.loadMods(ModLoader.java:190)
+	at TRANSFORMER/forge@47.1.0/net.minecraftforge.client.loading.ClientModLoader.lambda$startModLoading$5(ClientModLoader.java:101)
+	at TRANSFORMER/forge@47.1.0/net.minecraftforge.client.loading.ClientModLoader.lambda$createRunnableWithCatch$4(ClientModLoader.java:93)
+	at TRANSFORMER/forge@47.1.0/net.minecraftforge.client.loading.ClientModLoader.startModLoading(ClientModLoader.java:101)
+	at TRANSFORMER/forge@47.1.0/net.minecraftforge.client.loading.ClientModLoader.lambda$onResourceReload$2(ClientModLoader.java:84)
+	at TRANSFORMER/forge@47.1.0/net.minecraftforge.client.loading.ClientModLoader.lambda$createRunnableWithCatch$4(ClientModLoader.java:93)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.exec(CompletableFuture.java:1796)
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:373)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1182)
+	at java.base/java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1655)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1622)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:165)
+
+[24Aug2025 17:22:54.658] [Worker-Main-8/INFO] [net.minecraft.client.gui.font.providers.UnihexProvider/]: Found unifont_all_no_pua-15.0.06.hex, loading
+[24Aug2025 17:22:55.392] [Render thread/ERROR] [net.minecraft.client.Minecraft/FATAL]: Reported exception thrown!
+net.minecraft.ReportedException: Rendering overlay
+	at net.minecraft.client.renderer.GameRenderer.render(GameRenderer.java:961) ~[forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar:?]
+	at net.minecraft.client.Minecraft.runTick(Minecraft.java:1146) ~[forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar:?]
+	at net.minecraft.client.Minecraft.run(Minecraft.java:718) ~[forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar:?]
+	at net.minecraft.client.main.Main.main(Main.java:218) ~[forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.lang.reflect.Method.invoke(Method.java:569) ~[?:?]
+	at net.minecraftforge.fml.loading.targets.CommonLaunchHandler.runTarget(CommonLaunchHandler.java:111) ~[fmlloader-1.20.1-47.1.0.jar:?]
+	at net.minecraftforge.fml.loading.targets.CommonLaunchHandler.clientService(CommonLaunchHandler.java:99) ~[fmlloader-1.20.1-47.1.0.jar:?]
+	at net.minecraftforge.fml.loading.targets.ForgeClientUserdevLaunchHandler.devService(ForgeClientUserdevLaunchHandler.java:19) ~[fmlloader-1.20.1-47.1.0.jar:?]
+	at net.minecraftforge.fml.loading.targets.CommonDevLaunchHandler.lambda$makeService$7(CommonDevLaunchHandler.java:135) ~[fmlloader-1.20.1-47.1.0.jar:?]
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:108) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:78) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141) ~[bootstraplauncher-1.1.2.jar:?]
+Caused by: java.lang.IllegalStateException: Cannot get config value before config is loaded.
+This error is currently only thrown in the development environment, to avoid breaking published mods.
+In a future version, this will also throw in the production environment.
+
+	at com.google.common.base.Preconditions.checkState(Preconditions.java:502) ~[guava-31.1-jre.jar%23106!/:?]
+	at net.minecraftforge.common.ForgeConfigSpec$ConfigValue.get(ForgeConfigSpec.java:852) ~[forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar%23190%23197!/:?]
+	at com.bluelotuscoding.eidolonunchained.Config.onLoad(Config.java:30) ~[%23196!/:?]
+	at com.bluelotuscoding.eidolonunchained.__Config_onLoad_ModConfigEvent.invoke(.dynamic) ~[%23196!/:?]
+	at net.minecraftforge.eventbus.ASMEventHandler.invoke(ASMEventHandler.java:73) ~[eventbus-6.0.5.jar%23115!/:?]
+	at net.minecraftforge.eventbus.EventBus.post(EventBus.java:315) ~[eventbus-6.0.5.jar%23115!/:?]
+	at net.minecraftforge.eventbus.EventBus.post(EventBus.java:296) ~[eventbus-6.0.5.jar%23115!/:?]
+	at net.minecraftforge.fml.javafmlmod.FMLModContainer.lambda$new$0(FMLModContainer.java:42) ~[javafmllanguage-1.20.1-47.1.0.jar%23192!/:?]
+	at net.minecraftforge.fml.ModContainer.lambda$dispatchConfigEvent$13(ModContainer.java:153) ~[fmlcore-1.20.1-47.1.0.jar%23195!/:?]
+	at java.util.Optional.ifPresent(Optional.java:178) ~[?:?]
+	at net.minecraftforge.fml.ModContainer.dispatchConfigEvent(ModContainer.java:153) ~[fmlcore-1.20.1-47.1.0.jar%23195!/:?]
+	at net.minecraftforge.fml.config.ModConfig.fireEvent(ModConfig.java:77) ~[fmlcore-1.20.1-47.1.0.jar%23195!/:?]
+	at net.minecraftforge.fml.config.ConfigTracker.openConfig(ConfigTracker.java:62) ~[fmlcore-1.20.1-47.1.0.jar%23195!/:?]
+	at net.minecraftforge.fml.config.ConfigTracker.lambda$loadConfigs$1(ConfigTracker.java:50) ~[fmlcore-1.20.1-47.1.0.jar%23195!/:?]
+	at java.lang.Iterable.forEach(Iterable.java:75) ~[?:?]
+	at java.util.Collections$SynchronizedCollection.forEach(Collections.java:2131) ~[?:?]
+	at net.minecraftforge.fml.config.ConfigTracker.loadConfigs(ConfigTracker.java:50) ~[fmlcore-1.20.1-47.1.0.jar%23195!/:?]
+	at net.minecraftforge.fml.core.ModStateProvider.lambda$new$3(ModStateProvider.java:68) ~[forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar%23190%23197!/:?]
+	at net.minecraftforge.fml.ModLoader.handleInlineTransition(ModLoader.java:217) ~[fmlcore-1.20.1-47.1.0.jar%23195!/:?]
+	at net.minecraftforge.fml.ModLoader.lambda$dispatchAndHandleError$19(ModLoader.java:209) ~[fmlcore-1.20.1-47.1.0.jar%23195!/:?]
+	at java.util.Optional.ifPresent(Optional.java:178) ~[?:?]
+	at net.minecraftforge.fml.ModLoader.dispatchAndHandleError(ModLoader.java:209) ~[fmlcore-1.20.1-47.1.0.jar%23195!/:?]
+	at net.minecraftforge.fml.ModLoader.lambda$loadMods$15(ModLoader.java:190) ~[fmlcore-1.20.1-47.1.0.jar%23195!/:?]
+	at java.lang.Iterable.forEach(Iterable.java:75) ~[?:?]
+	at net.minecraftforge.fml.ModLoader.loadMods(ModLoader.java:190) ~[fmlcore-1.20.1-47.1.0.jar%23195!/:?]
+	at net.minecraftforge.client.loading.ClientModLoader.lambda$startModLoading$5(ClientModLoader.java:101) ~[forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar%23190%23197!/:?]
+	at net.minecraftforge.client.loading.ClientModLoader.lambda$createRunnableWithCatch$4(ClientModLoader.java:93) ~[forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar%23190%23197!/:?]
+	at net.minecraftforge.client.loading.ClientModLoader.startModLoading(ClientModLoader.java:101) ~[forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar%23190%23197!/:?]
+	at net.minecraftforge.client.loading.ClientModLoader.lambda$onResourceReload$2(ClientModLoader.java:84) ~[forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar%23190%23197!/:?]
+	at net.minecraftforge.client.loading.ClientModLoader.lambda$createRunnableWithCatch$4(ClientModLoader.java:93) ~[forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar%23190%23197!/:?]
+	at java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804) ~[?:?]
+	at java.util.concurrent.CompletableFuture$AsyncRun.exec(CompletableFuture.java:1796) ~[?:?]
+	at java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:373) ~[?:?]
+	at java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1182) ~[?:?]
+	at java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1655) ~[?:?]
+	at java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1622) ~[?:?]
+	at java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:165) ~[?:?]
+[24Aug2025 17:22:55.436] [Render thread/FATAL] [net.minecraftforge.common.ForgeMod/]: Preparing crash report with UUID 8f61d193-3f1b-49c4-8e27-a80c48768fe4
+[24Aug2025 17:22:55.440] [Render thread/FATAL] [net.minecraftforge.common.ForgeMod/]: Preparing crash report with UUID 6a52fd72-aa35-4348-a07d-ee442ec4c9eb

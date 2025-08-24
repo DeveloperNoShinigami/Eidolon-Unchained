@@ -64,11 +64,41 @@ public class DatapackChantSpell extends PrayerSpell {
             return;
         }
         
-        // Execute the custom chant effects
-        executeChantEffects(serverPlayer, world, pos);
-        
-        // Show success message
-        serverPlayer.sendSystemMessage(Component.literal("§6✨ " + chantData.getName() + " completed successfully!"));
+        // Check if this chant is linked to a deity
+        if (chantData.hasLinkedDeity()) {
+            // Import the necessary classes for deity interaction
+            try {
+                var aiDeityManager = com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance();
+                var deityChat = com.bluelotuscoding.eidolonunchained.chat.DeityChat.class;
+                
+                // Check if effigy setup is required
+                var effigy = getEffigy(world, pos);
+                if (effigy == null) {
+                    serverPlayer.sendSystemMessage(Component.literal("§cNo effigy found nearby for deity communication"));
+                    return;
+                }
+                
+                // Execute chant effects first
+                executeChantEffects(serverPlayer, world, pos);
+                
+                // Then trigger deity conversation
+                java.lang.reflect.Method startConversation = deityChat.getDeclaredMethod("startConversation", 
+                    ServerPlayer.class, net.minecraft.resources.ResourceLocation.class);
+                startConversation.invoke(null, serverPlayer, chantData.getLinkedDeity());
+                
+                serverPlayer.sendSystemMessage(Component.literal("§6✨ " + chantData.getName() + " completed! The deity is listening..."));
+                
+            } catch (Exception e) {
+                LOGGER.error("Failed to trigger deity conversation for chant: {}", chantData.getId(), e);
+                // Fall back to normal chant execution
+                executeChantEffects(serverPlayer, world, pos);
+                serverPlayer.sendSystemMessage(Component.literal("§6✨ " + chantData.getName() + " completed successfully!"));
+            }
+        } else {
+            // Execute normal chant effects
+            executeChantEffects(serverPlayer, world, pos);
+            serverPlayer.sendSystemMessage(Component.literal("§6✨ " + chantData.getName() + " completed successfully!"));
+        }
         
         LOGGER.info("Player {} successfully performed chant: {}", 
                    serverPlayer.getName().getString(), chantData.getId());

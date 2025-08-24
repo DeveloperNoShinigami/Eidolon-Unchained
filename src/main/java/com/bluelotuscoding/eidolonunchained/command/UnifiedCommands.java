@@ -257,12 +257,34 @@ public class UnifiedCommands {
     
     // Chant system commands
     private static int listChants(CommandContext<CommandSourceStack> context) {
-        context.getSource().sendSuccess(() -> Component.literal("§6=== Available Chants ===\n§eChant listing feature coming soon"), false);
-        return 1;
+        try {
+            var chants = com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager.getAllChants();
+            
+            StringBuilder list = new StringBuilder("§6=== Available Chants ===\n");
+            
+            if (chants.isEmpty()) {
+                list.append("§7No chants loaded\n");
+            } else {
+                chants.forEach((id, chant) -> {
+                    list.append("§e").append(id).append(": §b").append(chant.getName());
+                    if (chant.hasLinkedDeity()) {
+                        list.append(" §a[→ ").append(chant.getLinkedDeity()).append("]");
+                    }
+                    list.append("\n  §7Category: ").append(chant.getCategory())
+                        .append(", Difficulty: ").append("★".repeat(chant.getDifficulty())).append("\n");
+                });
+            }
+            
+            context.getSource().sendSuccess(() -> Component.literal(list.toString()), false);
+            return 1;
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError listing chants: " + e.getMessage()));
+            return 0;
+        }
     }
     
     private static int reloadChants(CommandContext<CommandSourceStack> context) {
-        context.getSource().sendSuccess(() -> Component.literal("§aChants reloaded successfully"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§eChant reload requires server restart"), false);
         return 1;
     }
     
