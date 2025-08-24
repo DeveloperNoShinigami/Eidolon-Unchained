@@ -22,6 +22,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -64,34 +65,45 @@ public class InteractionResearchTriggers {
         }
     }
     
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onBlockInteract(PlayerInteractEvent.RightClickBlock event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         
+        System.out.println("DEBUG: Block interaction detected by " + player.getName().getString());
+        
         // Check if player is holding note-taking tools
         ItemStack heldItem = player.getItemInHand(event.getHand());
+        System.out.println("DEBUG: Player holding: " + heldItem.getItem());
         if (heldItem.getItem() != Registry.NOTETAKING_TOOLS.get()) {
+            System.out.println("DEBUG: Not holding note-taking tools, skipping research check");
             return; // Only trigger when using note-taking tools
         }
         
         Block targetBlock = event.getLevel().getBlockState(event.getPos()).getBlock();
         ResourceLocation blockId = ForgeRegistries.BLOCKS.getKey(targetBlock);
+        System.out.println("DEBUG: Right-clicked block: " + blockId);
         if (blockId == null) return;
         
         // Check all research entries for block interaction triggers
         for (ResearchEntry entry : ResearchDataManager.getLoadedResearchEntries().values()) {
             if (isBlockInTriggers(entry, blockId)) {
+                System.out.println("DEBUG: Found matching research for block " + blockId + ": " + entry.getId());
                 if (tryTriggerResearch(player, entry.getId(), blockId.toString(), new CompoundTag(), "interact")) {
+                    System.out.println("DEBUG: Successfully triggered research " + entry.getId() + " for block " + blockId);
                     // For container blocks, don't cancel the event to allow GUI opening
                     if (isContainerBlock(targetBlock)) {
+                        System.out.println("DEBUG: Container block detected, allowing GUI to open");
                         // Let the container open normally after research discovery
                         break;
                     } else {
+                        System.out.println("DEBUG: Non-container block, canceling interaction");
                         // For non-container blocks, cancel the event as before
                         event.setCancellationResult(InteractionResult.SUCCESS);
                         event.setCanceled(true);
                         break;
                     }
+                } else {
+                    System.out.println("DEBUG: Failed to trigger research " + entry.getId() + " for block " + blockId);
                 }
             }
         }
