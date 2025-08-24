@@ -211,6 +211,20 @@ public class DatapackCategoryExample {
     }
     
     /**
+     * Utility method to convert ResourceLocation icon to ItemStack
+     * Similar to CategoryDefinition.getIconStack() but static for general use
+     */
+    private static ItemStack getIconStackFromResourceLocation(ResourceLocation iconLocation) {
+        try {
+            Item item = ForgeRegistries.ITEMS.getValue(iconLocation);
+            return item != null ? new ItemStack(item) : new ItemStack(Items.BOOK);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to create icon from ResourceLocation '{}', using book fallback", iconLocation, e);
+            return new ItemStack(Items.BOOK);
+        }
+    }
+
+    /**
      * Helper method to create a category from datapack files and add it to the categories list
      * ✅ FULLY FUNCTIONAL: Uses reflection-compatible approach
      */
@@ -334,7 +348,9 @@ public class DatapackCategoryExample {
                 }
                 
                 categoryChapters.add(chapter);
-                chapterIcons.add(new ItemStack(Items.BOOK));
+                // Fix: Use the chapter's actual icon instead of hardcoded book
+                ItemStack chapterIcon = getIconStackFromResourceLocation(chapterDef.getIcon());
+                chapterIcons.add(chapterIcon);
             }
             
             // Create index entries for the category
