@@ -49,11 +49,14 @@ public class AIDeityIntegration {
     
     /**
      * Register reload listeners for datapack content
+     * Order matters: DatapackDeityManager must load before AIDeityManager
      */
     @SubscribeEvent
     public static void onAddReloadListeners(AddReloadListenerEvent event) {
         LOGGER.info("Registering AI deity data managers");
+        // Register DatapackDeityManager first to load base deities
         event.addListener(new DatapackDeityManager());
+        // Register AIDeityManager second to link AI configs to loaded deities
         event.addListener(new AIDeityManager());
     }
     

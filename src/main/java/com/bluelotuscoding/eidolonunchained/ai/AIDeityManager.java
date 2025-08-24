@@ -44,6 +44,7 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
     
     // Map deity IDs to their AI configurations
     private final Map<ResourceLocation, AIDeityConfig> aiConfigs = new ConcurrentHashMap<>();
+    private final Map<ResourceLocation, JsonObject> pendingConfigs = new ConcurrentHashMap<>();
     private boolean deitiesLoaded = false;
     
     public AIDeityManager() {
@@ -67,7 +68,8 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
     @SubscribeEvent
     public static void onDeitiesLoaded(DatapackDeitiesLoadedEvent event) {
         getInstance().deitiesLoaded = true;
-        LOGGER.info("Deities loaded, AI configurations can now be linked");
+        LOGGER.info("Deities loaded, linking AI configurations...");
+        getInstance().linkPendingConfigs();
     }
     
     @Override
@@ -75,11 +77,8 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                         ResourceManager resourceManager, ProfilerFiller profiler) {
         LOGGER.info("Loading AI deity configurations...");
         
-        if (!deitiesLoaded) {
-            LOGGER.warn("Deities not yet loaded, AI configurations may not link properly");
-        }
-        
         aiConfigs.clear();
+        pendingConfigs.clear();
         int loaded = 0;
         int errors = 0;
         
@@ -93,15 +92,33 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             }
             
             try {
-                loadAIConfig(location, element.getAsJsonObject());
+                JsonObject json = element.getAsJsonObject();
+                
+                // Get the deity this AI config applies to
+                String deityIdString = json.get("deity_id").getAsString();
+                ResourceLocation deityId = ResourceLocation.tryParse(deityIdString);
+                if (deityId == null) {
+                    throw new IllegalArgumentException("Invalid deity ID: " + deityIdString);
+                }
+                
+                // Store for later linking when deities are loaded
+                pendingConfigs.put(deityId, json);
                 loaded++;
+                
+                LOGGER.debug("Queued AI config for deity: {}", deityId);
+                
             } catch (Exception e) {
                 LOGGER.error("Failed to load AI config from {}", location, e);
                 errors++;
             }
         }
         
-        LOGGER.info("Loaded {} AI deity configurations with {} errors", loaded, errors);
+        LOGGER.info("Queued {} AI deity configurations with {} errors", loaded, errors);
+        
+        // If deities are already loaded, link immediately
+        if (deitiesLoaded) {
+            linkPendingConfigs();
+        }
     }
     
     private void loadAIConfig(ResourceLocation location, JsonObject json) {
@@ -149,6 +166,71 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
         // Store the configuration
         aiConfigs.put(deityId, config);
         LOGGER.info("Loaded AI configuration for deity: {}", deityId);
+    }
+    
+    /**
+     * Links pending AI configurations to loaded deities
+     */
+    private void linkPendingConfigs() {
+        LOGGER.info("Linking {} pending AI configurations to loaded deities", pendingConfigs.size());
+        
+        int linked = 0;
+        int failed = 0;
+        
+        for (Map.Entry<ResourceLocation, JsonObject> entry : pendingConfigs.entrySet()) {
+            ResourceLocation deityId = entry.getKey();
+            JsonObject json = entry.getValue();
+            
+            try {
+                // Verify the deity exists now that deities are loaded
+                Deity deity = Deities.find(deityId);
+                if (deity == null) {
+                    LOGGER.warn("AI config references non-existent deity: {}", deityId);
+                    failed++;
+                    continue;
+                }
+                
+                if (!(deity instanceof DatapackDeity)) {
+                    LOGGER.warn("AI config can only be applied to DatapackDeity instances: {}", deityId);
+                    failed++;
+                    continue;
+                }
+                
+                // Parse and store AI configuration
+                AIDeityConfig config = new AIDeityConfig();
+                config.deityId = deityId;
+                config.aiProvider = json.get("ai_provider").getAsString();
+                config.model = json.get("model").getAsString();
+                config.personality = json.get("personality").getAsString();
+                
+                // Parse behavior rules
+                if (json.has("behavior_rules")) {
+                    loadBehaviorRules(config, json.getAsJsonObject("behavior_rules"));
+                }
+                
+                // Parse prayer configurations
+                if (json.has("prayer_configs")) {
+                    loadPrayerConfigs(config, json.getAsJsonObject("prayer_configs"));
+                }
+                
+                // Parse API settings
+                if (json.has("api_settings")) {
+                    loadAPISettings(config, json.getAsJsonObject("api_settings"));
+                }
+                
+                // Store the configuration
+                aiConfigs.put(deityId, config);
+                linked++;
+                LOGGER.info("Successfully linked AI configuration for deity: {}", deityId);
+                
+            } catch (Exception e) {
+                LOGGER.error("Failed to link AI config for deity: {}", deityId, e);
+                failed++;
+            }
+        }
+        
+        LOGGER.info("Successfully linked {} AI configurations, {} failed", linked, failed);
+        pendingConfigs.clear();
     }
     
     private void loadBehaviorRules(AIDeityConfig config, JsonObject rules) {
