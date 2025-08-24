@@ -1,21 +1,191 @@
-# Quick Start Guide
+# Getting Started with Eidolon Unchained
 
-Get up and running with the Eidolon Unchained datapack system in just a few minutes!
+**Create your first custom codex entry in 5 minutes!**
 
-## 🚀 What You'll Create
+## Prerequisites
 
-By the end of this guide, you'll have:
-- A custom category in the Eidolon codex
-- A chapter with basic content
-- An entry that adds additional pages
-- Proper translations
+- Eidolon Unchained installed alongside Eidolon: Repraised
+- Basic understanding of JSON format
+- Text editor of your choice
 
-## 📋 Prerequisites
+## Your First Entry
 
-- Minecraft with Forge 1.20.1
-- Eidolon Repraised mod installed
-- Eidolon Unchained mod installed
-- Basic understanding of JSON files
+### Step 1: Create the Entry File
+
+Create a new datapack or use an existing one. Place this file at:
+```
+# Getting Started with Eidolon Unchained
+
+**Create your first custom codex entry in 5 minutes!**
+
+## Prerequisites
+
+- Eidolon Unchained installed alongside Eidolon: Repraised
+- Basic understanding of JSON format
+- Text editor of your choice
+
+## Your First Entry
+
+### Step 1: Create the Entry File
+
+The actual datapack structure used by Eidolon Unchained:
+```
+data/your_mod/codex_entries/my_first_entry.json
+```
+
+```json
+{
+  "target_chapter": "getting_started",
+  "pages": [
+    {
+      "type": "title",
+      "text": "your_mod.codex.entry.crystal_basics"
+    },
+    {
+      "type": "text", 
+      "text": "your_mod.codex.entry.crystal_basics.details"
+    },
+    {
+      "type": "recipe",
+      "recipe": "minecraft:crafting_table"
+    }
+  ]
+}
+```
+
+### Step 2: Add Translations
+
+Create your language file at:
+```
+assets/your_mod/lang/en_us.json
+```
+
+```json
+{
+  "your_mod.codex.entry.crystal_basics.title": "Crystal Basics",
+  "your_mod.codex.entry.crystal_basics": "Welcome to crystal magic! This entry covers the fundamentals.",
+  "your_mod.codex.entry.crystal_basics.details": "Crystals can amplify magical energies when properly prepared and placed."
+}
+```
+
+### Step 3: Test In-Game
+
+1. Launch Minecraft with your datapack loaded
+2. Open the Eidolon codex (default key: `G`)
+3. Navigate to **Fundamentals → Getting Started**
+4. Your entry appears as a new page in that chapter
+
+## Understanding the Structure
+
+### How It Works
+```
+Entry File → targets existing chapter → adds pages → translation system displays content
+```
+
+### Available Target Chapters
+Based on the current implementation, you can target these existing Eidolon chapters:
+- `getting_started` - Basic Eidolon introduction
+- `wooden_stand` - Workbench and basic crafting
+- `crucible` - Alchemy and brewing
+- `research_table` - Research mechanics
+- `soul_enchanter` - Enchanting with souls
+
+## Working Examples
+
+Check the actual working examples in the mod:
+```
+src/main/resources/data/eidolonunchained/codex_entries/
+├── text_example.json
+├── recipe_example.json  
+└── entity_example.json
+```
+
+These demonstrate the correct structure and page types that actually work.
+
+## Next Steps
+
+- **[Codex System Overview](codex-system/overview.md)** - Understand how entries work
+- **[Page Types Reference](codex-system/page-types.md)** - All available page types
+- **[Research System](research-system/overview.md)** - Add auto-discovery mechanics
+- **[Datapack Structure](datapack/structure.md)** - Organize larger projects
+```
+
+```json
+{
+  "target_chapter": "wooden_stand",
+  "pages": [
+    {
+      "type": "title",
+      "text": "your_mod.codex.entry.crystal_basics"
+    },
+    {
+      "type": "text", 
+      "text": "your_mod.codex.entry.crystal_basics.discovery"
+    },
+    {
+      "type": "crafting",
+      "recipe": "eidolon:arcane_gold_ingot"
+    }
+  ]
+}
+```
+
+### Step 2: Add Translations
+
+Create or edit your language file at:
+```
+assets/your_mod/lang/en_us.json
+```
+
+```json
+{
+  "your_mod.codex.entry.crystal_basics.title": "Crystal Basics",
+  "your_mod.codex.entry.crystal_basics": "Welcome to the mystical world of crystal manipulation! This entry will teach you the fundamentals.",
+  "your_mod.codex.entry.crystal_basics.discovery": "Crystals can be found deep underground and amplify magical energies when properly prepared."
+}
+```
+
+### Step 3: Test In-Game
+
+1. Launch Minecraft with your datapack loaded
+2. Open the Eidolon codex
+3. Navigate to **Fundamentals → Wooden Stand**
+4. Your new entry should appear at the bottom
+
+## Understanding the Structure
+
+### Entry Flow
+```
+Entry File → Target Chapter → Pages → Translation Keys → Display
+```
+
+### Page Types Quick Reference
+- `title` - Entry header with title and intro text
+- `text` - Additional content pages  
+- `crafting` - Show crafting recipes
+- `ritual` - Display ritual information
+- `entity` - Show creature details
+
+## Common Mistakes
+
+❌ **Missing .title translation** - Always provide both base key and .title version  
+❌ **Wrong target_chapter** - Use exact chapter names from Eidolon  
+❌ **Invalid JSON** - Use a JSON validator to check syntax  
+❌ **Percent signs** - Use `%%` instead of `%` in translations
+
+## Next Steps
+
+- **[Page Types Reference](page-types.md)** - Learn about all 9 page types
+- **[Research System](research-system.md)** - Add auto-discovery mechanics  
+- **[Datapack Structure](datapack-structure.md)** - Organize larger projects
+
+## Working Example
+
+Check `bundle/eidolonunchained_datapack/` in the mod files for a complete working example including:
+- Proper file structure
+- Multiple page types
+- Translation patterns
+- Research integration
 
 ## 🛠️ Step 1: Create Your Datapack
 

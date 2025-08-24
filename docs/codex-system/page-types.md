@@ -6,17 +6,306 @@ Complete reference for all available page types in the Eidolon Unchained datapac
 
 Page types define how content is displayed within chapters and entries. Each page type has specific properties and use cases.
 
-## 📝 Text Pages
+# Page Types Reference
 
-The most common page type for explanatory content.
+**Complete guide to all 9 page types available in Eidolon Unchained**
 
-### Basic Text
+## Overview
+
+Each page type serves a specific purpose and has its own JSON structure. These are the page types currently implemented and working in the system.
+
+## 1. Title Page
+
+**Purpose**: Entry header with title and introductory content  
+**Usage**: Always use as the first page of an entry
+
+```json
+{
+  "type": "title",
+  "text": "your_mod.codex.entry.example"
+}
+```
+
+**Translation Requirements**:
+- `your_mod.codex.entry.example.title` - The title text
+- `your_mod.codex.entry.example` - Main content below the title
+
+---
+
+## 2. Text Page
+
+**Purpose**: Additional content pages with formatted text  
+**Usage**: Detailed explanations, lore, instructions
+
 ```json
 {
   "type": "text",
-  "text": "yourmod.codex.page.description"
+  "text": "your_mod.codex.entry.example.details"
 }
 ```
+
+**Features**:
+- Supports Minecraft text formatting codes
+- Automatic text wrapping
+- Line breaks with proper spacing
+
+---
+
+## 3. Recipe Page
+
+**Purpose**: Display any type of recipe (replaces crafting/smelting/etc.)  
+**Usage**: Show crafting, smelting, or any other recipe
+
+```json
+{
+  "type": "recipe",
+  "recipe": "minecraft:crafting_table"
+}
+```
+
+**Features**:
+- Auto-detects recipe type
+- Works with vanilla and modded recipes
+- Displays ingredients and result
+
+---
+
+## 4. Entity Page
+
+**Purpose**: Display creature information  
+**Usage**: Monster studies, creature documentation
+
+```json
+{
+  "type": "entity",
+  "entity": "minecraft:zombie"
+}
+```
+
+**Features**:
+- 3D rotating entity model
+- Entity information display
+- Works with vanilla and modded entities
+
+---
+
+## 5. List Page
+
+**Purpose**: Bullet-point lists of items or concepts  
+**Usage**: Ingredient lists, step-by-step instructions
+
+```json
+{
+  "type": "list",
+  "items": [
+    "your_mod.codex.list.step1",
+    "your_mod.codex.list.step2",
+    "your_mod.codex.list.step3"
+  ]
+}
+```
+
+**Features**:
+- Automatic bullet formatting
+- Each item can be a translation key
+- Supports multiple list items
+
+---
+
+## 6. Ritual Page
+
+**Purpose**: Show Eidolon ritual information  
+**Usage**: Document ritual procedures
+
+```json
+{
+  "type": "ritual",
+  "ritual": "eidolon:summon_wraith"
+}
+```
+
+**Features**:
+- Shows ritual structure and layout
+- Displays required ingredients
+- Integration with Eidolon's ritual system
+
+---
+
+## 7. Crucible Page
+
+**Purpose**: Display Eidolon crucible recipes  
+**Usage**: Show alchemical crafting
+
+```json
+{
+  "type": "crucible",
+  "recipe": "eidolon:arcane_gold_ingot"
+}
+```
+
+**Features**:
+- Shows crucible ingredients
+- Displays brewing process
+- Integration with Eidolon's crucible system
+
+---
+
+## 8. Workbench Page
+
+**Purpose**: Display Eidolon workbench recipes  
+**Usage**: Mystical item creation
+
+```json
+{
+  "type": "workbench",
+  "recipe": "eidolon:basic_amulet"
+}
+```
+
+**Features**:
+- Shows workbench layout
+- Displays required components
+- Integration with Eidolon's workbench
+
+---
+
+## 9. Smelting Page
+
+**Purpose**: Show furnace/smelting recipes  
+**Usage**: Metal processing, cooking recipes
+
+```json
+{
+  "type": "smelting",
+  "recipe": "minecraft:iron_ingot"
+}
+```
+
+**Features**:
+- Shows furnace interface
+- Displays input, fuel, and output
+- Works with modded smelting recipes
+
+---
+
+## Working Examples
+
+The mod includes actual working examples you can reference:
+
+### Text Example
+```json
+{
+  "target_chapter": "getting_started",
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolonunchained.codex.entry.text_example"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.text_example.content"
+    }
+  ]
+}
+```
+
+### Recipe Example
+```json
+{
+  "target_chapter": "getting_started", 
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolonunchained.codex.entry.recipe_example"
+    },
+    {
+      "type": "recipe",
+      "recipe": "minecraft:crafting_table"
+    }
+  ]
+}
+```
+
+### Entity Example
+```json
+{
+  "target_chapter": "getting_started",
+  "pages": [
+    {
+      "type": "title", 
+      "text": "eidolonunchained.codex.entry.entity_example"
+    },
+    {
+      "type": "entity",
+      "entity": "minecraft:zombie"
+    }
+  ]
+}
+```
+
+## Page Combinations
+
+### Basic Entry Structure
+```json
+{
+  "target_chapter": "wooden_stand",
+  "pages": [
+    {"type": "title", "text": "mod.entry.main"},
+    {"type": "text", "text": "mod.entry.main.details"},
+    {"type": "recipe", "recipe": "minecraft:iron_sword"}
+  ]
+}
+```
+
+### Multi-Page Entry
+```json
+{
+  "target_chapter": "crucible",
+  "pages": [
+    {"type": "title", "text": "mod.alchemy.basics"},
+    {"type": "text", "text": "mod.alchemy.basics.theory"},
+    {"type": "crucible", "recipe": "eidolon:arcane_gold_ingot"},
+    {"type": "text", "text": "mod.alchemy.basics.results"}
+  ]
+}
+```
+
+## Common Issues
+
+### Recipe Pages Show Nothing
+- Verify the recipe ID exists and is spelled correctly
+- Check that required mods are loaded
+- Test the recipe works in-game first
+
+### Entity Pages Empty
+- Confirm entity ID is correct
+- Check that the entity exists in the game
+- Verify entity can be spawned
+
+### Translation Missing
+- Check language file syntax
+- Ensure key names match exactly
+- Verify file is in correct location (`assets/modid/lang/`)
+
+## Best Practices
+
+### Page Ordering
+1. **Always start with `title`** - Sets the entry context
+2. **Follow with `text`** - Provide explanation
+3. **Add interactive content** - Recipes, entities, etc.
+4. **End with practical info** - Conclusions or applications
+
+### Translation Keys
+- Use descriptive keys: `mod.codex.entry.topic.section`
+- Always provide `.title` variants for title pages
+- Keep text concise but informative
+- Use `%%` for literal percent signs to avoid format errors
+
+## Next Steps
+
+- **[Translation Guide](translation-guide.md)** - Advanced translation techniques
+- **[Examples](examples.md)** - More working examples
+- **[Research Integration](../research-system/overview.md)** - Add progression mechanics
 
 ### Properties
 - **`type`**: Must be `"text"`
