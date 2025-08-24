@@ -82,9 +82,16 @@ public class InteractionResearchTriggers {
         for (ResearchEntry entry : ResearchDataManager.getLoadedResearchEntries().values()) {
             if (isBlockInTriggers(entry, blockId)) {
                 if (tryTriggerResearch(player, entry.getId(), blockId.toString(), new CompoundTag(), "interact")) {
-                    event.setCancellationResult(InteractionResult.SUCCESS);
-                    event.setCanceled(true);
-                    break; // Only trigger one research per interaction
+                    // For container blocks, don't cancel the event to allow GUI opening
+                    if (isContainerBlock(targetBlock)) {
+                        // Let the container open normally after research discovery
+                        break;
+                    } else {
+                        // For non-container blocks, cancel the event as before
+                        event.setCancellationResult(InteractionResult.SUCCESS);
+                        event.setCanceled(true);
+                        break;
+                    }
                 }
             }
         }
@@ -213,6 +220,50 @@ public class InteractionResearchTriggers {
         
         System.out.println("Interaction-triggered research '" + research.getRegistryName() + 
             "' for player " + player.getName().getString() + " by interacting with " + targetDisplayName);
+    }
+    
+    /**
+     * Check if a block is a container that opens a GUI when right-clicked
+     * This helps determine whether to cancel the interaction event or allow it to continue
+     */
+    private static boolean isContainerBlock(Block block) {
+        ResourceLocation blockId = ForgeRegistries.BLOCKS.getKey(block);
+        if (blockId == null) return false;
+        
+        String blockIdString = blockId.toString();
+        
+        // Common container blocks that should open GUIs
+        return blockIdString.equals("minecraft:crafting_table") ||
+               blockIdString.equals("minecraft:chest") ||
+               blockIdString.equals("minecraft:ender_chest") ||
+               blockIdString.equals("minecraft:trapped_chest") ||
+               blockIdString.equals("minecraft:furnace") ||
+               blockIdString.equals("minecraft:blast_furnace") ||
+               blockIdString.equals("minecraft:smoker") ||
+               blockIdString.equals("minecraft:brewing_stand") ||
+               blockIdString.equals("minecraft:enchanting_table") ||
+               blockIdString.equals("minecraft:anvil") ||
+               blockIdString.equals("minecraft:chipped_anvil") ||
+               blockIdString.equals("minecraft:damaged_anvil") ||
+               blockIdString.equals("minecraft:smithing_table") ||
+               blockIdString.equals("minecraft:cartography_table") ||
+               blockIdString.equals("minecraft:fletching_table") ||
+               blockIdString.equals("minecraft:grindstone") ||
+               blockIdString.equals("minecraft:loom") ||
+               blockIdString.equals("minecraft:stonecutter") ||
+               blockIdString.equals("minecraft:barrel") ||
+               blockIdString.equals("minecraft:hopper") ||
+               blockIdString.equals("minecraft:dropper") ||
+               blockIdString.equals("minecraft:dispenser") ||
+               blockIdString.equals("minecraft:shulker_box") ||
+               blockIdString.contains("shulker_box") || // Colored shulker boxes
+               // Eidolon containers
+               blockIdString.equals("eidolon:research_table") ||
+               blockIdString.equals("eidolon:crucible") ||
+               blockIdString.equals("eidolon:soul_enchanter") ||
+               blockIdString.equals("eidolon:altar") ||
+               blockIdString.equals("eidolon:brazier") ||
+               blockIdString.equals("eidolon:worktable");
     }
     
     private static ResourceLocation convertToEidolonId(ResourceLocation ourId) {
