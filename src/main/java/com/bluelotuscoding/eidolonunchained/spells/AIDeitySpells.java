@@ -10,9 +10,9 @@ import elucent.eidolon.api.spells.Spell;
 import elucent.eidolon.registries.Signs;
 import elucent.eidolon.registries.Spells;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 
@@ -25,7 +25,7 @@ import java.util.List;
  * These spells use specific sign sequences to trigger AI conversations instead of 
  * standard prayer effects.
  */
-@Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class AIDeitySpells {
     private static final Logger LOGGER = LogUtils.getLogger();
     
@@ -33,10 +33,9 @@ public class AIDeitySpells {
     private static final Map<ResourceLocation, AIDeityPrayerSpell> aiPrayerSpells = new HashMap<>();
     
     @SubscribeEvent
-    public static void onCommonSetup(FMLCommonSetupEvent event) {
-        event.enqueueWork(() -> {
-            registerAIDeitySpells();
-        });
+    public static void onServerStarted(ServerStartedEvent event) {
+        // Register spells after datapacks are fully loaded
+        registerAIDeitySpells();
     }
     
     /**
@@ -122,25 +121,25 @@ public class AIDeitySpells {
         
         if (personality.contains("dark") || personality.contains("shadow") || personality.contains("death")) {
             // Dark deity chant: WICKED_SIGN x3
-            return List.of("wicked_sign", "wicked_sign", "wicked_sign");
+            return List.of("wicked", "wicked", "wicked");
         } else if (personality.contains("light") || personality.contains("holy") || personality.contains("sacred")) {
             // Light deity chant: SACRED_SIGN x3  
-            return List.of("sacred_sign", "sacred_sign", "sacred_sign");
+            return List.of("sacred", "sacred", "sacred");
         } else if (personality.contains("nature") || personality.contains("forest") || personality.contains("earth")) {
-            // Nature deity chant: EARTH_SIGN x3
-            return List.of("earth_sign", "earth_sign", "earth_sign");
+            // Nature deity chant: HARMONY_SIGN x3 (closest to earth/nature)
+            return List.of("harmony", "harmony", "harmony");
         } else if (personality.contains("water") || personality.contains("ocean") || personality.contains("sea")) {
-            // Water deity chant: WATER_SIGN x3
-            return List.of("water_sign", "water_sign", "water_sign");
+            // Water deity chant: WINTER_SIGN x3 (ice/water related)
+            return List.of("winter", "winter", "winter");
         } else if (personality.contains("fire") || personality.contains("flame") || personality.contains("sun")) {
             // Fire deity chant: FLAME_SIGN x3
-            return List.of("flame_sign", "flame_sign", "flame_sign");
+            return List.of("flame", "flame", "flame");
         } else if (personality.contains("air") || personality.contains("wind") || personality.contains("sky")) {
-            // Air deity chant: AIR_SIGN x3
-            return List.of("air_sign", "air_sign", "air_sign");
+            // Air deity chant: WARDING_SIGN x3 (protection/air related)
+            return List.of("warding", "warding", "warding");
         } else {
             // Default generic deity chant: MAGIC_SIGN x3
-            return List.of("magic_sign", "magic_sign", "magic_sign");
+            return List.of("magic", "magic", "magic");
         }
     }
     

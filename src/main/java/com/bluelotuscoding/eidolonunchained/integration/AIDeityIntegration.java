@@ -1,6 +1,6 @@
 package com.bluelotuscoding.eidolonunchained.integration;
 
-import com.bluelotuscoding.eidolonunchained.command.PrayerCommands;
+import com.bluelotuscoding.eidolonunchained.command.UnifiedCommands;
 import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
 import com.bluelotuscoding.eidolonunchained.ai.AIDeityManager;
 import com.bluelotuscoding.eidolonunchained.prayer.PrayerSystem;
@@ -11,8 +11,8 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.common.MinecraftForge;
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID)
 public class AIDeityIntegration {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static ScheduledExecutorService cleanupExecutor;
     
     /**
@@ -64,8 +64,8 @@ public class AIDeityIntegration {
      */
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
-        LOGGER.info("Registering prayer commands");
-        PrayerCommands.register(event.getDispatcher());
+        LOGGER.info("Registering unified commands");
+        UnifiedCommands.register(event.getDispatcher());
     }
     
     /**

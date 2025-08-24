@@ -19,7 +19,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Handles effigy interactions to integrate AI deity responses
+ * Handles effigy interactions to integrate AI deity responses.
+ * 
+ * ⚠️ DEPRECATED: This handler is disabled by default.
+ * The preferred method is the chant system through AIDeityPrayerSpell.
+ * 
+ * To enable effigy interactions, set "enableEffigyInteraction" to true 
+ * in the eidolonunchained-ai.toml config file.
  */
 @Mod.EventBusSubscriber(modid = "eidolonunchained")
 public class EffigyInteractionHandler {
@@ -27,6 +33,10 @@ public class EffigyInteractionHandler {
     
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onEffigyRightClick(PlayerInteractEvent.RightClickBlock event) {
+        // Check if effigy interaction is enabled in config
+        if (!com.bluelotuscoding.eidolonunchained.config.AIDeityConfig.ENABLE_EFFIGY_INTERACTION.get()) {
+            return; // Feature disabled, let Eidolon handle it
+        }
         // Only handle server-side interactions
         if (event.getLevel().isClientSide()) {
             return;

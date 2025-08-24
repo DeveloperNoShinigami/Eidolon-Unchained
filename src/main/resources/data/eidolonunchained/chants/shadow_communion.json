@@ -1,0 +1,36 @@
+{
+  "name": "Shadow Communion", 
+  "description": "Reach into the darkness to speak with the Shadow Lord",
+  "category": "examples",
+  "difficulty": 3,
+  "show_in_codex": true,
+  "signs": [
+    "eidolon:wicked",
+    "eidolon:wicked",
+    "eidolon:sacred"
+  ],
+  "requirements": [
+    "reputation:eidolonunchained:dark_deity:10"
+  ],
+  "effects": [
+    {
+      "type": "start_conversation",
+      "deity": "eidolonunchained:dark_deity",
+      "prayer_type": "conversation"
+    },
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:night_vision",
+      "duration": 300,
+      "amplifier": 0
+    },
+    {
+      "type": "run_command",
+      "command": "particle minecraft:soul_fire_flame ~ ~1 ~ 0.5 0.5 0.5 0.1 20"
+    },
+    {
+      "type": "send_message",
+      "message": "§5The shadows whisper your name... what do you seek?"
+    }
+  ]
+}

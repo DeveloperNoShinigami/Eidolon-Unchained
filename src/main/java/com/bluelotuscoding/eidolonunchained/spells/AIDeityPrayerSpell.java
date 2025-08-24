@@ -60,6 +60,13 @@ public class AIDeityPrayerSpell extends PrayerSpell {
             return;
         }
         
+        // Check if the chant system is enabled in config
+        if (!com.bluelotuscoding.eidolonunchained.config.AIDeityConfig.ENABLE_CHANT_SYSTEM.get()) {
+            // Fall back to standard prayer behavior if chant system is disabled
+            super.cast(world, pos, player);
+            return;
+        }
+        
         // Check if the AI deity system can handle this prayer
         DatapackDeity aiDeity = DatapackDeityManager.getDeity(aiDeityId);
         if (aiDeity == null) {

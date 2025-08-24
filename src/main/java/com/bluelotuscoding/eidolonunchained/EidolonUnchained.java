@@ -1,8 +1,12 @@
 package com.bluelotuscoding.eidolonunchained;
 
+import com.bluelotuscoding.eidolonunchained.command.UnifiedCommands;
+import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.bluelotuscoding.eidolonunchained.data.CodexDataManager;
 import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
 import com.bluelotuscoding.eidolonunchained.data.EidolonResearchDataManager;
+import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
+import com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager;
 import com.bluelotuscoding.eidolonunchained.integration.ModIntegration;
 import com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection;
 import com.bluelotuscoding.eidolonunchained.integration.AIDeityIntegration;
@@ -12,6 +16,8 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.AddReloadListenerEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -54,8 +60,8 @@ public class EidolonUnchained
         // Register the Deferred Register to the mod event bus so tabs get registered
         CREATIVE_MODE_TABS.register(modEventBus);
 
-        // Register our mod's config
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        // Register our unified configuration
+        EidolonUnchainedConfig.register();
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
@@ -100,9 +106,28 @@ public class EidolonUnchained
             LOGGER.info("Calling attemptIntegrationIfNeeded...");
             com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration.attemptIntegrationIfNeeded();
             LOGGER.info("Integration call completed successfully");
+            
+            LOGGER.info("Initializing chant system integration...");
+            com.bluelotuscoding.eidolonunchained.integration.CodexChantIntegration.registerChants();
+            LOGGER.info("Chant system integration completed");
         } catch (Exception e) {
             LOGGER.error("Failed to integrate with Eidolon codex system", e);
         }
         LOGGER.info("Server starting event completed");
+    }
+    
+    // Register commands
+    @SubscribeEvent
+    public void onCommandsRegister(RegisterCommandsEvent event) {
+        UnifiedCommands.register(event.getDispatcher());
+        LOGGER.info("Eidolon Unchained unified commands registered");
+    }
+    
+    // Register reload listeners for datapack systems
+    @SubscribeEvent
+    public void onAddReloadListeners(AddReloadListenerEvent event) {
+        event.addListener(new DatapackDeityManager());
+        event.addListener(new DatapackChantManager());
+        LOGGER.info("Eidolon Unchained datapack managers registered");
     }
 }

@@ -1,0 +1,26 @@
+{
+  "name": "Nature's Blessing",
+  "description": "Commune with the spirits of nature to receive their blessing",
+  "category": "examples",
+  "difficulty": 2,
+  "show_in_codex": true,
+  "signs": [
+    "eidolon:harmony",
+    "eidolon:soul", 
+    "eidolon:sacred"
+  ],
+  "requirements": [
+    "reputation:eidolonunchained:nature_deity:10"
+  ],
+  "effects": [
+    {
+      "type": "start_conversation",
+      "deity": "eidolonunchained:nature_deity",
+      "prayer_type": "blessing"
+    },
+    {
+      "type": "send_message",
+      "message": "§aThe spirits of nature stir... speak your intentions."
+    }
+  ]
+}
