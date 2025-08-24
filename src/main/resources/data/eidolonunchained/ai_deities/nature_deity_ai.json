@@ -122,6 +122,7 @@
     "api_key_env": "AIzaSyCn4jsRM9E3wJ_d8hIxQq-wEn75S73Nm6M",
     "model": "gemini-1.5-pro",
     "timeout_seconds": 30,
+    "chant_sequence": ["earth_sign", "earth_sign", "earth_sign"],
     "safety_settings": {
       "harassment": "BLOCK_MEDIUM_AND_ABOVE",
       "hate_speech": "BLOCK_MEDIUM_AND_ABOVE", 

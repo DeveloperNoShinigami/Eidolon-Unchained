@@ -1,0 +1,31 @@
+{
+  "id": "eidolonunchained:light_deity",
+  "name": "Lumina the Sacred Guardian",
+  "description": "A benevolent deity of light, healing, and protection. Blesses those who perform the sacred chants with divine grace and shields them from harm.",
+  "colors": {
+    "red": 255,
+    "green": 230,
+    "blue": 117
+  },
+  "stage_rewards": {
+    "eidolonunchained:blessed_novice": [
+      "give @p minecraft:golden_apple 2",
+      "effect give @p minecraft:regeneration 300 0"
+    ],
+    "eidolonunchained:sacred_devotee": [
+      "give @p eidolon:gold_inlay 3",
+      "give @p eidolon:holy_symbol 1",
+      "effect give @p minecraft:resistance 600 0"
+    ],
+    "eidolonunchained:light_champion": [
+      "give @p minecraft:totem_of_undying 1",
+      "give @p eidolon:blessed_bone 2",
+      "effect give @p minecraft:absorption 1200 2"
+    ]
+  },
+  "reputation_stages": {
+    "10": "eidolonunchained:blessed_novice",
+    "25": "eidolonunchained:sacred_devotee", 
+    "50": "eidolonunchained:light_champion"
+  }
+}

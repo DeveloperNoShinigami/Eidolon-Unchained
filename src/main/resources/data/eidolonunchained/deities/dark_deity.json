@@ -1,0 +1,30 @@
+{
+  "id": "eidolonunchained:dark_deity",
+  "name": "Nyxathel the Shadow Lord",
+  "description": "An ancient deity of darkness, death, and forbidden knowledge. Whispers secrets to those brave enough to perform the dark chants.",
+  "colors": {
+    "red": 123,
+    "green": 85,
+    "blue": 140
+  },
+  "stage_rewards": {
+    "eidolonunchained:shadow_initiate": [
+      "give @p eidolon:soul_shard 3",
+      "effect give @p minecraft:night_vision 300"
+    ],
+    "eidolonunchained:dark_scholar": [
+      "give @p eidolon:death_essence 2",
+      "give @p eidolon:unholy_symbol 1"
+    ],
+    "eidolonunchained:shadow_master": [
+      "give @p eidolon:warped_sprouts 5",
+      "give @p eidolon:zombie_heart 1",
+      "effect give @p minecraft:strength 600 1"
+    ]
+  },
+  "reputation_stages": {
+    "10": "eidolonunchained:shadow_initiate",
+    "25": "eidolonunchained:dark_scholar", 
+    "50": "eidolonunchained:shadow_master"
+  }
+}
