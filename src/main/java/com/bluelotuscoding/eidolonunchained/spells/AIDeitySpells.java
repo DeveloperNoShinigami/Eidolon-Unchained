@@ -10,7 +10,7 @@ import elucent.eidolon.api.spells.Spell;
 import elucent.eidolon.registries.Signs;
 import elucent.eidolon.registries.Spells;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import com.mojang.logging.LogUtils;
@@ -33,9 +33,12 @@ public class AIDeitySpells {
     private static final Map<ResourceLocation, AIDeityPrayerSpell> aiPrayerSpells = new HashMap<>();
     
     @SubscribeEvent
-    public static void onServerStarted(ServerStartedEvent event) {
-        // Register spells after datapacks are fully loaded
-        registerAIDeitySpells();
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        // Register spells only when the first player joins to ensure the server is fully ready
+        // and handshake is complete - this prevents config registration interference
+        if (aiPrayerSpells.isEmpty()) {
+            registerAIDeitySpells();
+        }
     }
     
     /**

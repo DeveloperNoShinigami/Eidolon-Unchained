@@ -12,9 +12,8 @@ import org.slf4j.Logger;
 /**
  * Handles networking events for Eidolon Unchained
  * Ensures proper synchronization between client and server
- * CURRENTLY DISABLED - Troubleshooting login packet issues
  */
-// @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID)  // DISABLED
+@Mod.EventBusSubscriber(modid = EidolonUnchained.MODID)
 public class NetworkEventHandler {
     private static final Logger LOGGER = LogUtils.getLogger();
     
