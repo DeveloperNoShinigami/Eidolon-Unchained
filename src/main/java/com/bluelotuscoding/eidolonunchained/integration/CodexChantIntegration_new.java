@@ -61,7 +61,7 @@ public class CodexChantIntegration {
             chantChapters.put(chantId, chantChapter);
             
             // Get the target category from the chant's codex_category field (completely flexible)
-            String targetCategory = chant.getCategory();
+            String targetCategory = chant.getCodexCategory();
             
             // Get icon from chant configuration (datapack-driven, no hardcoding)
             ItemStack icon = getChantIcon(chant);

@@ -1,14 +1,15 @@
 {
   "name": "Divine Communion",
   "description": "A sacred chant that opens communication with the Light Deity, Lumina. Blesses the caster and allows direct conversation.",
-  "category": "examples", 
+  "category": "examples",
+  "codex_icon": "minecraft:glowstone",
   "difficulty": 2,
   "show_in_codex": true,
   "linked_deity": "eidolonunchained:light_deity",
   "signs": [
     "eidolon:sacred",
-    "eidolon:sacred",
-    "eidolon:harmony"
+    "eidolon:harmony",
+    "eidolon:warding"
   ],
   "requirements": [],
   "effects": [
@@ -31,6 +32,11 @@
     {
       "type": "send_message",
       "message": "§eA holy light surrounds you as divine presence draws near..."
+    },
+    {
+      "type": "communication",
+      "deity": "eidolonunchained:light_deity",
+      "prayer_type": "conversation"
     }
   ]
 }

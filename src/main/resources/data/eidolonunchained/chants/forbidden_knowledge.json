@@ -2,6 +2,7 @@
   "name": "Forbidden Knowledge",
   "description": "A dangerous ritual to seek the darkest secrets from Nyxathel. Grants temporary omniscience but at a cost. Only for the truly devoted.",
   "category": "examples",
+  "codex_icon": "minecraft:netherite_scrap",
   "difficulty": 5,
   "show_in_codex": true,
   "linked_deity": "eidolonunchained:dark_deity",

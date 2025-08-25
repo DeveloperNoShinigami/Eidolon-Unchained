@@ -153,23 +153,12 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
         
         LOGGER.info("Adding {} chants to codex", chants.size());
         
-        String mainCategory = EidolonUnchainedConfig.COMMON.chantCodexCategory.get();
-        
-        for (Map.Entry<String, List<DatapackChant>> entry : chantsByCategory.entrySet()) {
-            String category = entry.getKey();
-            List<DatapackChant> categoryChants = entry.getValue();
-            
-            try {
-                // Create codex category for this chant category
-                ResourceLocation categoryId = new ResourceLocation("eidolonunchained", "chants_" + category);
-                
-                // TODO: Implement codex integration
-                // CodexHelper.createCategory(categoryId, "Chants: " + category, categoryChants);
-                
-                LOGGER.debug("Added {} chants to codex category: {}", categoryChants.size(), category);
-            } catch (Exception e) {
-                LOGGER.error("Failed to add chants to codex for category {}: {}", category, e.getMessage());
-            }
+        // Use our CodexChantIntegration to properly register chants
+        try {
+            com.bluelotuscoding.eidolonunchained.integration.CodexChantIntegration.registerChants();
+            LOGGER.info("Successfully registered chants with codex integration");
+        } catch (Exception e) {
+            LOGGER.error("Failed to register chants with codex: {}", e.getMessage(), e);
         }
     }
     
@@ -196,6 +185,19 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
     
     public static Collection<String> getCategories() {
         return new ArrayList<>(chantsByCategory.keySet());
+    }
+    
+    /**
+     * Get all chants that are linked to a specific deity
+     */
+    public static List<DatapackChant> getChantsForDeity(ResourceLocation deityId) {
+        List<DatapackChant> result = new ArrayList<>();
+        for (DatapackChant chant : chants.values()) {
+            if (chant.hasLinkedDeity() && chant.getLinkedDeity().equals(deityId)) {
+                result.add(chant);
+            }
+        }
+        return result;
     }
     
     public static DatapackChant findChantBySignSequence(List<ResourceLocation> signSequence) {

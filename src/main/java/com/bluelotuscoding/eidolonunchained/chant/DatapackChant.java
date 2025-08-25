@@ -20,6 +20,7 @@ public class DatapackChant {
     private final String description;
     private final List<ResourceLocation> signSequence;
     private final String category;
+    private final ResourceLocation codexIcon; // Icon to use in codex
     private final int difficulty;
     private final List<ChantEffect> effects;
     private final List<String> requirements;
@@ -27,7 +28,7 @@ public class DatapackChant {
     private final ResourceLocation linkedDeity; // Optional deity connection
     
     public DatapackChant(ResourceLocation id, String name, String description, 
-                        List<ResourceLocation> signSequence, String category,
+                        List<ResourceLocation> signSequence, String category, ResourceLocation codexIcon,
                         int difficulty, List<ChantEffect> effects,
                         List<String> requirements, boolean showInCodex, 
                         ResourceLocation linkedDeity) {
@@ -36,6 +37,7 @@ public class DatapackChant {
         this.description = description;
         this.signSequence = new ArrayList<>(signSequence);
         this.category = category;
+        this.codexIcon = codexIcon;
         this.difficulty = difficulty;
         this.effects = new ArrayList<>(effects);
         this.requirements = new ArrayList<>(requirements);
@@ -48,6 +50,7 @@ public class DatapackChant {
     public String getDescription() { return description; }
     public List<ResourceLocation> getSignSequence() { return new ArrayList<>(signSequence); }
     public String getCategory() { return category; }
+    public ResourceLocation getCodexIcon() { return codexIcon; }
     public int getDifficulty() { return difficulty; }
     public List<ChantEffect> getEffects() { return new ArrayList<>(effects); }
     public List<String> getRequirements() { return new ArrayList<>(requirements); }
@@ -79,6 +82,13 @@ public class DatapackChant {
         String name = json.get("name").getAsString();
         String description = json.has("description") ? json.get("description").getAsString() : "";
         String category = json.has("category") ? json.get("category").getAsString() : "custom";
+        
+        // Parse codex icon
+        ResourceLocation codexIcon = null;
+        if (json.has("codex_icon")) {
+            codexIcon = new ResourceLocation(json.get("codex_icon").getAsString());
+        }
+        
         int difficulty = json.has("difficulty") ? json.get("difficulty").getAsInt() : 1;
         boolean showInCodex = json.has("show_in_codex") ? json.get("show_in_codex").getAsBoolean() : true;
         
@@ -115,7 +125,7 @@ public class DatapackChant {
             }
         }
         
-        return new DatapackChant(id, name, description, signSequence, category, 
+        return new DatapackChant(id, name, description, signSequence, category, codexIcon,
                                difficulty, effects, requirements, showInCodex, linkedDeity);
     }
     
@@ -191,6 +201,9 @@ public class DatapackChant {
                 case "start_conversation":
                     startConversation(player);
                     break;
+                case "communication":
+                    startConversation(player);
+                    break;
                 default:
                     // Unknown effect type
                     break;
@@ -262,9 +275,18 @@ public class DatapackChant {
         }
         
         private void startConversation(net.minecraft.server.level.ServerPlayer player) {
-            String deity = data.get("deity").getAsString();
-            player.sendSystemMessage(Component.literal("§aStarting conversation with " + deity));
-            // TODO: Start deity conversation
+            if (data.has("deity")) {
+                String deityId = data.get("deity").getAsString();
+                try {
+                    net.minecraft.resources.ResourceLocation deityLocation = new net.minecraft.resources.ResourceLocation(deityId);
+                    // Use the DeityChat system to start the conversation
+                    com.bluelotuscoding.eidolonunchained.chat.DeityChat.startConversation(player, deityLocation);
+                } catch (Exception e) {
+                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cFailed to start conversation with " + deityId + ": " + e.getMessage()));
+                }
+            } else {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cNo deity specified for conversation"));
+            }
         }
         
         public static ChantEffect fromJson(JsonObject json) {

@@ -1,7 +1,8 @@
 {
   "name": "Divine Judgment",
   "description": "Call upon Lumina the Sacred Guardian to judge the worthy and unworthy. A powerful blessing for the righteous, but brings consequences for the wicked.",
-  "category": "examples", 
+  "category": "examples",
+  "codex_icon": "minecraft:golden_sword",
   "difficulty": 4,
   "show_in_codex": true,
   "linked_deity": "eidolonunchained:light_deity",

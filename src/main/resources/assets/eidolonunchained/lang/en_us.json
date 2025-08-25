@@ -1,6 +1,38 @@
 {
   "eidolon.codex.category.examples": "Examples",
   "eidolonunchained.codex.chapter.getting_started": "Getting Started",
+  "eidolonunchained.codex.chapter.examples": "Example Chants",
+  
+  "_comment_chants": "Chant translations",
+  "eidolonunchained.codex.chapter.shadow_communion": "Shadow Communion",
+  "eidolonunchained.codex.page.shadow_communion": "Shadow Communion",
+  "eidolonunchained.codex.page.shadow_communion.chant": "Reach into the darkness to speak with Nyxathel the Shadow Lord. Draw the signs of Wicked, Death, and Blood to establish contact with the shadow realm.",
+  "eidolonunchained.codex.page.shadow_communion.description": "This chant grants dark powers and opens forbidden communication with the deity of shadows.",
+  
+  "eidolonunchained.codex.chapter.divine_communion": "Divine Communion", 
+  "eidolonunchained.codex.page.divine_communion": "Divine Communion",
+  "eidolonunchained.codex.page.divine_communion.chant": "A sacred chant that opens communication with the Light Deity, Lumina. Draw the signs of Sacred, Harmony, and Soul to call upon divine blessing.",
+  "eidolonunchained.codex.page.divine_communion.description": "Blesses the caster and allows direct conversation with the deity of light.",
+  
+  "eidolonunchained.codex.chapter.natures_communion": "Nature's Communion",
+  "eidolonunchained.codex.page.natures_communion": "Nature's Communion", 
+  "eidolonunchained.codex.page.natures_communion.chant": "Connect with the natural world and speak with Sylvana, the Nature Deity. Draw the signs of Harmony, Soul, and Magic to commune with nature.",
+  "eidolonunchained.codex.page.natures_communion.description": "Enhances your connection to the natural world and allows communication with nature's guardian.",
+  
+  "eidolonunchained.codex.chapter.divine_judgment": "Divine Judgment",
+  "eidolonunchained.codex.page.divine_judgment": "Divine Judgment",
+  "eidolonunchained.codex.page.divine_judgment.chant": "Channel the wrath of the divine to strike down evil. Draw the signs of Sacred, Flame, and Death to invoke divine judgment.",
+  "eidolonunchained.codex.page.divine_judgment.description": "A powerful offensive chant that calls upon divine power to destroy the wicked.",
+  
+  "eidolonunchained.codex.chapter.gaias_wrath": "Gaia's Wrath",
+  "eidolonunchained.codex.page.gaias_wrath": "Gaia's Wrath",
+  "eidolonunchained.codex.page.gaias_wrath.chant": "Unleash the fury of the earth itself. Draw the signs of Harmony, Flame, and Death to invoke nature's devastating power.",
+  "eidolonunchained.codex.page.gaias_wrath.description": "A destructive chant that channels the earth's anger against those who would harm the natural world.",
+  
+  "eidolonunchained.codex.chapter.forbidden_knowledge": "Forbidden Knowledge",
+  "eidolonunchained.codex.page.forbidden_knowledge": "Forbidden Knowledge",
+  "eidolonunchained.codex.page.forbidden_knowledge.chant": "Seek out secrets that should remain hidden. Draw the signs of Wicked, Mind, and Magic to access forbidden lore.",
+  "eidolonunchained.codex.page.forbidden_knowledge.description": "A dangerous chant that reveals hidden knowledge at a terrible price.",
   
   "eidolonunchained.codex.entry.text_example.title": "Text Example",
   "eidolonunchained.codex.entry.text_example": "This is a simple text example showing how to create codex entries.",

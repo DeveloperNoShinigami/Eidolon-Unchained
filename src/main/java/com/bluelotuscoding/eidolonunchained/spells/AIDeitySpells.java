@@ -66,84 +66,52 @@ public class AIDeitySpells {
                 continue; // Skip non-AI deities
             }
             
-            // Get chant configuration from AI config
-            List<String> chantSigns = getChantSequence(aiConfig);
-            if (chantSigns.isEmpty()) {
-                LOGGER.warn("No chant sequence configured for AI deity: {}", deityId);
+            // Find chant files that link to this deity instead of using AI config chant sequences
+            List<com.bluelotuscoding.eidolonunchained.chant.DatapackChant> linkedChants = 
+                com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager.getChantsForDeity(deityId);
+            if (linkedChants.isEmpty()) {
+                LOGGER.warn("No chant files linked to AI deity: {}", deityId);
                 continue;
             }
             
-            // Convert string signs to Sign objects
-            Sign[] signs = chantSigns.stream()
-                .map(signName -> Signs.find(new ResourceLocation("eidolon", signName)))
-                .filter(java.util.Objects::nonNull)
-                .toArray(Sign[]::new);
+            // Register spells for each linked chant
+            for (com.bluelotuscoding.eidolonunchained.chant.DatapackChant chant : linkedChants) {
+                // Convert ResourceLocation signs to Sign objects
+                Sign[] signs = chant.getSignSequence().stream()
+                    .map(signLoc -> Signs.find(signLoc))
+                    .filter(java.util.Objects::nonNull)
+                    .toArray(Sign[]::new);
             
-            if (signs.length == 0) {
-                LOGGER.warn("No valid signs found for AI deity: {}", deityId);
-                continue;
-            }
-            
-            // Create and register the AI prayer spell
-            ResourceLocation spellId = new ResourceLocation(EidolonUnchained.MODID, deityId.getPath() + "_ai_prayer");
-            AIDeityPrayerSpell spell = new AIDeityPrayerSpell(
-                spellId,
-                deityId,
-                0, // Base reputation requirement
-                1.0, // Power multiplier
-                signs
-            );
-            
-            // Register with Eidolon's spell system
-            Spell registeredSpell = Spells.register(spell);
-            if (registeredSpell != null) {
-                aiPrayerSpells.put(deityId, spell);
-                registered++;
-                LOGGER.info("Registered AI prayer spell for deity: {} with chant: {}", 
-                    deityId, String.join(", ", chantSigns));
-            } else {
-                LOGGER.error("Failed to register AI prayer spell for deity: {}", deityId);
+                if (signs.length == 0) {
+                    LOGGER.warn("No valid signs found for chant: {} of deity: {}", chant.getName(), deityId);
+                    continue;
+                }
+                
+                // Create and register the AI prayer spell for this specific chant
+                ResourceLocation spellId = new ResourceLocation(EidolonUnchained.MODID, 
+                    deityId.getPath() + "_" + chant.getId().getPath() + "_ai_prayer");
+                AIDeityPrayerSpell spell = new AIDeityPrayerSpell(
+                    spellId,
+                    deityId,
+                    0, // Base reputation requirement
+                    1.0, // Power multiplier
+                    signs
+                );
+                
+                // Register with Eidolon's spell system
+                Spell registeredSpell = Spells.register(spell);
+                if (registeredSpell != null) {
+                    aiPrayerSpells.put(deityId, spell);
+                    registered++;
+                    LOGGER.info("Registered AI prayer spell for deity: {} with chant: {} ({})", 
+                        deityId, chant.getName(), chant.getSignSequence());
+                } else {
+                    LOGGER.error("Failed to register AI prayer spell for deity: {} chant: {}", deityId, chant.getName());
+                }
             }
         }
         
         LOGGER.info("Successfully registered {} AI deity prayer spells", registered);
-    }
-    
-    /**
-     * Get the chant sequence for an AI deity from its configuration.
-     * Falls back to default sequences if not specified.
-     */
-    private static List<String> getChantSequence(AIDeityConfig aiConfig) {
-        // Check if the AI config specifies a custom chant sequence
-        if (aiConfig.apiSettings != null && aiConfig.apiSettings.chantSequence != null) {
-            return aiConfig.apiSettings.chantSequence;
-        }
-        
-        // Use default chant sequence based on deity personality/theme
-        String personality = aiConfig.personality.toLowerCase();
-        
-        if (personality.contains("dark") || personality.contains("shadow") || personality.contains("death")) {
-            // Dark deity chant: WICKED_SIGN x3
-            return List.of("wicked", "wicked", "wicked");
-        } else if (personality.contains("light") || personality.contains("holy") || personality.contains("sacred")) {
-            // Light deity chant: SACRED_SIGN x3  
-            return List.of("sacred", "sacred", "sacred");
-        } else if (personality.contains("nature") || personality.contains("forest") || personality.contains("earth")) {
-            // Nature deity chant: HARMONY_SIGN x3 (closest to earth/nature)
-            return List.of("harmony", "harmony", "harmony");
-        } else if (personality.contains("water") || personality.contains("ocean") || personality.contains("sea")) {
-            // Water deity chant: WINTER_SIGN x3 (ice/water related)
-            return List.of("winter", "winter", "winter");
-        } else if (personality.contains("fire") || personality.contains("flame") || personality.contains("sun")) {
-            // Fire deity chant: FLAME_SIGN x3
-            return List.of("flame", "flame", "flame");
-        } else if (personality.contains("air") || personality.contains("wind") || personality.contains("sky")) {
-            // Air deity chant: WARDING_SIGN x3 (protection/air related)
-            return List.of("warding", "warding", "warding");
-        } else {
-            // Default generic deity chant: MAGIC_SIGN x3
-            return List.of("magic", "magic", "magic");
-        }
     }
     
     /**

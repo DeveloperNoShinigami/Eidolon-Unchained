@@ -2,13 +2,14 @@
   "name": "Shadow Communion", 
   "description": "Reach into the darkness to speak with Nyxathel the Shadow Lord. Grants dark powers and opens forbidden communication.",
   "category": "examples",
+  "codex_icon": "minecraft:wither_skeleton_skull",
   "difficulty": 3,
   "show_in_codex": true,
   "linked_deity": "eidolonunchained:dark_deity",
   "signs": [
     "eidolon:wicked",
-    "eidolon:wicked",
-    "eidolon:wicked"
+    "eidolon:death",
+    "eidolon:blood"
   ],
   "requirements": [],
   "effects": [
@@ -35,6 +36,11 @@
     {
       "type": "send_message",
       "message": "§5The shadows whisper your name as dark power flows through you..."
+    },
+    {
+      "type": "communication",
+      "deity": "eidolonunchained:dark_deity",
+      "prayer_type": "conversation"
     }
   ]
 }
