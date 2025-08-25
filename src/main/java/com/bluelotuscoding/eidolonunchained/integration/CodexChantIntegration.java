@@ -108,26 +108,28 @@ public class CodexChantIntegration {
     }
     
     private static Chapter createChantChapter(DatapackChant chant) {
-        ResourceLocation chantLocation = new ResourceLocation("eidolonunchained", chant.getName());
+        // Use the sanitized ID path instead of display name for ResourceLocations
+        String chantId = chant.getId().getPath(); // This comes from the file name, already valid
+        ResourceLocation chantLocation = new ResourceLocation("eidolonunchained", chantId);
         DatapackChantSpell spell = DatapackChantManager.getSpellForChant(chantLocation);
         
         List<Page> pages = new ArrayList<>();
         
-        // Add title page
-        pages.add(new TitlePage("eidolonunchained.codex.page." + chant.getName()));
+        // Add title page - use sanitized chant ID for translation keys
+        pages.add(new TitlePage("eidolonunchained.codex.page." + chantId));
         
         // Add chant page showing the sign sequence
         if (spell != null) {
-            pages.add(new CustomChantPage("eidolonunchained.codex.page." + chant.getName() + ".chant", chant, spell));
+            pages.add(new CustomChantPage("eidolonunchained.codex.page." + chantId + ".chant", chant, spell));
         }
         
         // Add description page if there's extra lore
         if (!chant.getDescription().isEmpty()) {
-            pages.add(new TextPage("eidolonunchained.codex.page." + chant.getName() + ".description"));
+            pages.add(new TextPage("eidolonunchained.codex.page." + chantId + ".description"));
         }
         
         return new Chapter(
-            "eidolonunchained.codex.chapter." + chant.getName(),
+            "eidolonunchained.codex.chapter." + chantId,
             pages.toArray(new Page[0])
         );
     }
