@@ -76,6 +76,10 @@ public class EidolonUnchained
         LOGGER.info("Eidolon Unchained is loading!");
         LOGGER.info("Expanding the world of Eidolon with new chapters, rituals, and mystical content...");
         
+        // Initialize networking system first
+        com.bluelotuscoding.eidolonunchained.network.EidolonUnchainedNetworking.register();
+        LOGGER.info("Eidolon Unchained networking system initialized");
+        
         // Initialize data managers for codex and research extensions
         CodexDataManager.init();
         ResearchDataManager.init();
