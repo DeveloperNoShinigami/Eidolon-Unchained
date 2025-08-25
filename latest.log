@@ -1,294 +1,294 @@
-[24Aug2025 22:26:04.838] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgeclientuserdev, --version, MOD_DEV, --assetIndex, 5, --assetsDir, C:\Users\bluel\.gradle\caches\forge_gradle\assets, --gameDir, ., --fml.forgeVersion, 47.1.0, --fml.mcVersion, 1.20.1, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20230612.114412, -mixin, eidolonunchained.mixins.json]
-[24Aug2025 22:26:04.856] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher 10.0.9+10.0.9+main.dcd20f30 starting: java version 17.0.14 by Eclipse Adoptium; OS Windows 10 arch amd64 version 10.0
-[24Aug2025 22:26:05.208] [main/INFO] [net.minecraftforge.fml.loading.ImmediateWindowHandler/]: Loading ImmediateWindowProvider fmlearlywindow
-[24Aug2025 22:26:05.446] [main/INFO] [EARLYDISPLAY/]: Trying GL version 4.6
-[24Aug2025 22:26:06.168] [main/INFO] [EARLYDISPLAY/]: Requested GL version 4.6 got version 4.6
-[24Aug2025 22:26:06.318] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/C:/Users/bluel/.gradle/caches/modules-2/files-2.1/org.spongepowered/mixin/0.8.5/9d1c0c3a304ae6697ecd477218fa61b850bf57fc/mixin-0.8.5.jar%23128!/ Service=ModLauncher Env=CLIENT
-[24Aug2025 22:26:06.442] [pool-2-thread-1/INFO] [EARLYDISPLAY/]: GL info: NVIDIA GeForce RTX 3050/PCIe/SSE2 GL version 4.6.0 NVIDIA 576.28, NVIDIA Corporation
-[24Aug2025 22:26:06.938] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\.gradle\caches\modules-2\files-2.1\net.minecraftforge\javafmllanguage\1.20.1-47.1.0\a2cd58d15791eaac9983e30be0995e66bd48633e\javafmllanguage-1.20.1-47.1.0.jar is missing mods.toml file
-[24Aug2025 22:26:06.944] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\.gradle\caches\modules-2\files-2.1\net.minecraftforge\lowcodelanguage\1.20.1-47.1.0\f1f11b7217b8320f1b3eb81c746b7b8a70a9ba06\lowcodelanguage-1.20.1-47.1.0.jar is missing mods.toml file
-[24Aug2025 22:26:06.950] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\.gradle\caches\modules-2\files-2.1\net.minecraftforge\mclanguage\1.20.1-47.1.0\ff1b8eeb1bd00dfb130263b8952b931f5369252e\mclanguage-1.20.1-47.1.0.jar is missing mods.toml file
-[24Aug2025 22:26:06.955] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\.gradle\caches\modules-2\files-2.1\net.minecraftforge\fmlcore\1.20.1-47.1.0\69ca36ae5b8d45c377a5485dc38a7343e5ebf33c\fmlcore-1.20.1-47.1.0.jar is missing mods.toml file
-[24Aug2025 22:26:07.117] [main/INFO] [net.minecraftforge.fml.loading.moddiscovery.JarInJarDependencyLocator/]: No dependencies to load found. Skipping!
-[24Aug2025 22:26:09.984] [main/INFO] [mixin/]: Compatibility level set to JAVA_17
-[24Aug2025 22:26:10.000] [main/INFO] [cpw.mods.modlauncher.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgeclientuserdev' with arguments [--version, MOD_DEV, --gameDir, ., --assetsDir, C:\Users\bluel\.gradle\caches\forge_gradle\assets, --assetIndex, 5]
-[24Aug2025 22:26:10.122] [main/WARN] [mixin/]: Reference map 'eidolonunchained.refmap.json' for eidolonunchained.mixins.json could not be read. If this is a development environment you can ignore this message
-[24Aug2025 22:26:10.665] [main/INFO] [mixin/]: Remapping refMap curios.refmap.json using C:\Users\bluel\Downloads\eidolon_repraised-1.20.1-0.3.8.15\Eidolon-Unchained/build/createSrgToMcp/output.srg
-[24Aug2025 22:26:10.677] [main/INFO] [mixin/]: Remapping refMap eidolon.refmap.json using C:\Users\bluel\Downloads\eidolon_repraised-1.20.1-0.3.8.15\Eidolon-Unchained/build/createSrgToMcp/output.srg
-[24Aug2025 22:26:21.621] [Datafixer Bootstrap/INFO] [com.mojang.datafixers.DataFixerBuilder/]: 188 Datafixer optimizations took 480 milliseconds
-[24Aug2025 22:26:24.325] [Render thread/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/bluel/.gradle/caches/forge_gradle/minecraft_user_repo/net/minecraftforge/forge/1.20.1-47.1.0_mapped_official_1.20.1/forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar%23191!/assets/.mcassetsroot' uses unexpected schema
-[24Aug2025 22:26:24.326] [Render thread/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/bluel/.gradle/caches/forge_gradle/minecraft_user_repo/net/minecraftforge/forge/1.20.1-47.1.0_mapped_official_1.20.1/forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar%23191!/data/.mcassetsroot' uses unexpected schema
-[24Aug2025 22:26:24.349] [Render thread/INFO] [com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService/]: Environment: authHost='https://authserver.mojang.com', accountsHost='https://api.mojang.com', sessionHost='https://sessionserver.mojang.com', servicesHost='https://api.minecraftservices.com', name='PROD'
-[24Aug2025 22:26:24.356] [Render thread/INFO] [net.minecraft.client.Minecraft/]: Setting user: Dev
-[24Aug2025 22:26:24.554] [Render thread/INFO] [net.minecraft.client.Minecraft/]: Backend library: LWJGL version 3.3.1 build 7
-[24Aug2025 22:26:25.040] [modloading-worker-0/INFO] [net.minecraftforge.common.ForgeMod/FORGEMOD]: Forge mod loading, version 47.1.0, for MC 1.20.1 with MCP 20230612.114412
-[24Aug2025 22:26:25.042] [modloading-worker-0/INFO] [net.minecraftforge.common.MinecraftForge/FORGE]: MinecraftForge v47.1.0 Initialized
-[24Aug2025 22:26:25.085] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Eidolon Feature Detection Results:
-[24Aug2025 22:26:25.087] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ?? CodexEvents not found - using legacy compatibility mode
-[24Aug2025 22:26:25.089] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    Mode: Legacy - Reflection Required
-[24Aug2025 22:26:25.090] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    CodexEvents: ? Not Available
-[24Aug2025 22:26:25.095] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ?? Enhanced TitlePage constructor not available
-[24Aug2025 22:26:25.096] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    Enhanced TitlePage: ? Not Available
-[24Aug2025 22:26:25.103] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Public Category fields available
-[24Aug2025 22:26:25.104] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    Public Category Fields: ? Not Available
-[24Aug2025 22:26:25.104] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Running in Legacy Mode - using reflection where necessary
-[24Aug2025 22:26:25.105] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Migration Guide: See EIDOLON_VERSION_MIGRATION_GUIDE.md
-[24Aug2025 22:26:27.026] [Render thread/INFO] [net.minecraftforge.gametest.ForgeGameTestHooks/]: Enabled Gametest Namespaces: [eidolonunchained]
-[24Aug2025 22:26:27.644] [Render thread/INFO] [net.minecraft.server.packs.resources.ReloadableResourceManager/]: Reloading ResourceManager: vanilla, mod_resources
-[24Aug2025 22:26:27.834] [Worker-Main-7/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Eidolon Unchained is loading!
-[24Aug2025 22:26:27.834] [Worker-Main-7/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Expanding the world of Eidolon with new chapters, rituals, and mystical content...
-[24Aug2025 22:26:27.834] [Worker-Main-7/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Initializing CodexDataManager...
-[24Aug2025 22:26:27.834] [Worker-Main-7/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Initializing ResearchDataManager...
-[24Aug2025 22:26:27.882] [Forge Version Check/INFO] [net.minecraftforge.fml.VersionChecker/]: [forge] Starting version check at https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json
-[24Aug2025 22:26:28.085] [Worker-Main-7/INFO] [com.bluelotuscoding.eidolonunchained.integration.ModIntegration/]: Eidolon Repraised detected! Enabling Eidolon integrations...
-[24Aug2025 22:26:28.085] [Worker-Main-7/INFO] [com.bluelotuscoding.eidolonunchained.integration.ModIntegration/]: Curios API detected! Enabling Curios integrations...
-[24Aug2025 22:26:28.086] [Worker-Main-7/INFO] [com.bluelotuscoding.eidolonunchained.integration.AIDeityIntegration/]: Initializing AI Deity Integration
-[24Aug2025 22:26:28.087] [Worker-Main-7/INFO] [com.bluelotuscoding.eidolonunchained.integration.AIDeityIntegration/]: AI Deity Integration initialized
-[24Aug2025 22:26:28.267] [Worker-Main-3/INFO] [net.minecraft.client.gui.font.providers.UnihexProvider/]: Found unifont_all_no_pua-15.0.06.hex, loading
-[24Aug2025 22:26:28.538] [Forge Version Check/INFO] [net.minecraftforge.fml.VersionChecker/]: [forge] Found status: OUTDATED Current: 47.1.0 Target: 47.4.0
-[24Aug2025 22:26:29.177] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonResearchIntegration/]: Attempting to register 0 custom research chapters
-[24Aug2025 22:26:29.177] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonResearchIntegration/]: Attempting to inject 0 custom research entries
-[24Aug2025 22:26:29.177] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonResearchIntegration/]: Research integration complete!
-[24Aug2025 22:26:30.918] [Worker-Main-2/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? EidolonCategoryExtension - FMLLoadCompleteEvent received
-[24Aug2025 22:26:30.918] [Worker-Main-2/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Category scanning will be triggered later when resources are loaded via CodexDataManager
-[24Aug2025 22:26:30.919] [Worker-Main-2/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Ready for migration to event system when CodexEvents become available
-[24Aug2025 22:26:32.216] [Render thread/WARN] [net.minecraft.client.sounds.SoundEngine/]: Missing sound for event: minecraft:item.goat_horn.play
-[24Aug2025 22:26:32.216] [Render thread/WARN] [net.minecraft.client.sounds.SoundEngine/]: Missing sound for event: minecraft:entity.goat.screaming.horn_break
-[24Aug2025 22:26:32.262] [Render thread/INFO] [com.mojang.blaze3d.audio.Library/]: OpenAL initialized on device OpenAL Soft on Speakers (Logitech USB Headset H540)
-[24Aug2025 22:26:32.264] [Render thread/INFO] [net.minecraft.client.sounds.SoundEngine/SOUNDS]: Sound engine started
-[24Aug2025 22:26:32.434] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 1024x512x4 minecraft:textures/atlas/blocks.png-atlas
-[24Aug2025 22:26:32.447] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 256x256x4 minecraft:textures/atlas/signs.png-atlas
-[24Aug2025 22:26:32.450] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 512x512x4 minecraft:textures/atlas/banner_patterns.png-atlas
-[24Aug2025 22:26:32.451] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 512x512x4 minecraft:textures/atlas/shield_patterns.png-atlas
-[24Aug2025 22:26:32.451] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 1024x1024x4 minecraft:textures/atlas/armor_trims.png-atlas
-[24Aug2025 22:26:32.454] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 256x256x4 minecraft:textures/atlas/chest.png-atlas
-[24Aug2025 22:26:32.456] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 128x64x4 minecraft:textures/atlas/decorated_pot.png-atlas
-[24Aug2025 22:26:32.456] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 512x256x4 minecraft:textures/atlas/beds.png-atlas
-[24Aug2025 22:26:32.456] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 512x256x4 minecraft:textures/atlas/shulker_boxes.png-atlas
-[24Aug2025 22:26:32.716] [Render thread/WARN] [net.minecraft.client.renderer.ShaderInstance/]: Shader rendertype_entity_translucent_emissive could not find sampler named Sampler2 in the specified shader program.
-[24Aug2025 22:26:32.804] [Render thread/WARN] [net.minecraft.client.renderer.ShaderInstance/]: Shader eidolon:glowing_particle could not find sampler named Sampler2 in the specified shader program.
-[24Aug2025 22:26:32.807] [Render thread/WARN] [net.minecraft.client.renderer.ShaderInstance/]: Shader eidolon:sprite_particle could not find sampler named Sampler2 in the specified shader program.
-[24Aug2025 22:26:32.842] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 256x256x0 minecraft:textures/atlas/particles.png-atlas
-[24Aug2025 22:26:32.845] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 256x256x0 minecraft:textures/atlas/paintings.png-atlas
-[24Aug2025 22:26:32.848] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 256x128x0 minecraft:textures/atlas/mob_effects.png-atlas
-[24Aug2025 22:26:33.199] [Realms Notification Availability checker #1/INFO] [com.mojang.realmsclient.client.RealmsClient/]: Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: 0
-[24Aug2025 22:27:14.325] [Render thread/INFO] [net.minecraftforge.registries.GameData/REGISTRIES]: Injecting existing registry data into this CLIENT instance
-[24Aug2025 22:27:15.891] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Eidolon Unchained unified commands registered
-[24Aug2025 22:27:15.893] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.AIDeityIntegration/]: Registering unified commands
-[24Aug2025 22:27:15.925] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Eidolon Unchained datapack managers registered
-[24Aug2025 22:27:15.925] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Registered AI Deity reload listener
-[24Aug2025 22:27:15.925] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Registered Eidolon Unchained codex data reload listener
-[24Aug2025 22:27:15.925] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Registered Datapack Deity reload listener
-[24Aug2025 22:27:15.925] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.EidolonResearchDataManager/]: Registered Eidolon Research datapack reload listener
-[24Aug2025 22:27:15.925] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Registered Eidolon Unchained research data reload listener
-[24Aug2025 22:27:15.925] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.AIDeityIntegration/]: AI deity data managers will register themselves via their own event handlers
-[24Aug2025 22:27:16.828] [Render thread/INFO] [net.minecraft.world.item.crafting.RecipeManager/]: Skipping loading recipe eidolon:smelt_silver_dust as it's serializer returned null
-[24Aug2025 22:27:16.849] [Render thread/INFO] [net.minecraft.world.item.crafting.RecipeManager/]: Skipping loading recipe eidolon:smelt_lead_dust as it's serializer returned null
-[24Aug2025 22:27:16.860] [Render thread/INFO] [net.minecraft.world.item.crafting.RecipeManager/]: Loaded 15 recipes
-[24Aug2025 22:27:16.964] [Render thread/INFO] [net.minecraft.advancements.AdvancementList/]: Loaded 1349 advancements
-[24Aug2025 22:27:16.974] [Render thread/INFO] [top.theillusivec4.curios.Curios/]: Loaded 10 curio slots
-[24Aug2025 22:27:16.981] [Render thread/INFO] [top.theillusivec4.curios.Curios/]: Loaded 1 curio entities
-[24Aug2025 22:27:16.981] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Loading datapack deities...
-[24Aug2025 22:27:16.982] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Registered datapack deity: eidolonunchained:dark_deity (Nyxathel the Shadow Lord)
-[24Aug2025 22:27:16.982] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Registered datapack deity: eidolonunchained:light_deity (Lumina the Sacred Guardian)
-[24Aug2025 22:27:16.982] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Registered datapack deity: eidolonunchained:nature_deity (Verdania, Guardian of Nature)
-[24Aug2025 22:27:16.982] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Loaded 3 datapack deities with 0 errors
-[24Aug2025 22:27:16.982] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Deities loaded, linking AI configurations...
-[24Aug2025 22:27:16.982] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Linking 0 pending AI configurations to loaded deities
-[24Aug2025 22:27:16.982] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Successfully linked 0 AI configurations, 0 failed
-[24Aug2025 22:27:16.982] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager/]: Loading datapack chants...
-[24Aug2025 22:27:16.984] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager/]: Loaded 6 datapack chants in 1 categories
-[24Aug2025 22:27:16.984] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager/]: Registering 6 chants with Eidolon spell system
-[24Aug2025 22:27:16.986] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager/]: Adding 6 chants to codex
-[24Aug2025 22:27:16.987] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Loading AI deity configurations...
-[24Aug2025 22:27:16.987] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Queued 3 AI deity configurations with 0 errors
-[24Aug2025 22:27:16.987] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Linking 3 pending AI configurations to loaded deities
-[24Aug2025 22:27:16.992] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Successfully linked AI configuration for deity: eidolonunchained:dark_deity
-[24Aug2025 22:27:16.992] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Successfully linked AI configuration for deity: eidolonunchained:light_deity
-[24Aug2025 22:27:16.992] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Successfully linked AI configuration for deity: eidolonunchained:nature_deity
-[24Aug2025 22:27:16.992] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Successfully linked 3 AI configurations, 0 failed
-[24Aug2025 22:27:16.992] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: CodexDataManager.apply() reloading codex data
-[24Aug2025 22:27:16.992] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Searching for custom codex chapters in 'codex_chapters'...
-[24Aug2025 22:27:16.994] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Searching for custom codex chapters in 'codex' structure...
-[24Aug2025 22:27:16.998] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: DEBUG: Found 1 chapter files: [eidolonunchained:codex/examples/getting_started.json]
-[24Aug2025 22:27:16.999] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Found codex chapter resource: eidolonunchained:codex/examples/getting_started.json (namespace: eidolonunchained, path: codex/examples/getting_started.json)
-[24Aug2025 22:27:17.000] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Registering custom chapter: eidolonunchained:getting_started (title: translation{key='eidolonunchained.codex.chapter.getting_started', args=[]}, icon: minecraft:compass, category: examples)
-[24Aug2025 22:27:17.001] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Loaded custom chapter definition eidolonunchained:getting_started
-[24Aug2025 22:27:17.001] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Custom chapter loading complete. Total loaded: 1
-[24Aug2025 22:27:17.001] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Scanning for codex entries in all namespaces...
-[24Aug2025 22:27:17.004] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: DEBUG: Found 3 codex entry files: [eidolonunchained:codex_entries/entity_example.json, eidolonunchained:codex_entries/recipe_example.json, eidolonunchained:codex_entries/text_example.json]
-[24Aug2025 22:27:17.004] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Processing codex entry file: eidolonunchained:codex_entries/entity_example.json
-[24Aug2025 22:27:17.005] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Loading codex entry from eidolonunchained:codex_entries/entity_example.json
-[24Aug2025 22:27:17.008] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: JSON content keys: [target_chapter, pages]
-[24Aug2025 22:27:17.008] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Required fields present, proceeding with parsing...
-[24Aug2025 22:27:17.008] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Entry eidolonunchained:codex_entries/entity_example.json targets chapter: getting_started
-[24Aug2025 22:27:17.009] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Converted field name to our custom resource location: eidolonunchained:getting_started
-[24Aug2025 22:27:17.009] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: About to create CodexEntry...
-[24Aug2025 22:27:17.011] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: CodexEntry created successfully with 3 pages
-[24Aug2025 22:27:17.011] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: ? Successfully loaded codex entry 'eidolonunchained:codex_entries/entity_example.json' with 3 pages for chapter 'eidolonunchained:getting_started'
-[24Aug2025 22:27:17.012] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Successfully loaded entry! Total loaded: 1
-[24Aug2025 22:27:17.012] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Processing codex entry file: eidolonunchained:codex_entries/recipe_example.json
-[24Aug2025 22:27:17.013] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Loading codex entry from eidolonunchained:codex_entries/recipe_example.json
-[24Aug2025 22:27:17.013] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: JSON content keys: [target_chapter, pages]
-[24Aug2025 22:27:17.013] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Required fields present, proceeding with parsing...
-[24Aug2025 22:27:17.013] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Entry eidolonunchained:codex_entries/recipe_example.json targets chapter: getting_started
-[24Aug2025 22:27:17.014] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Converted field name to our custom resource location: eidolonunchained:getting_started
-[24Aug2025 22:27:17.014] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: About to create CodexEntry...
-[24Aug2025 22:27:17.014] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: CodexEntry created successfully with 3 pages
-[24Aug2025 22:27:17.014] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: ? Successfully loaded codex entry 'eidolonunchained:codex_entries/recipe_example.json' with 3 pages for chapter 'eidolonunchained:getting_started'
-[24Aug2025 22:27:17.014] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Successfully loaded entry! Total loaded: 2
-[24Aug2025 22:27:17.014] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Processing codex entry file: eidolonunchained:codex_entries/text_example.json
-[24Aug2025 22:27:17.015] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Loading codex entry from eidolonunchained:codex_entries/text_example.json
-[24Aug2025 22:27:17.016] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: JSON content keys: [target_chapter, pages]
-[24Aug2025 22:27:17.016] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Required fields present, proceeding with parsing...
-[24Aug2025 22:27:17.016] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Entry eidolonunchained:codex_entries/text_example.json targets chapter: getting_started
-[24Aug2025 22:27:17.016] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Converted field name to our custom resource location: eidolonunchained:getting_started
-[24Aug2025 22:27:17.016] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: About to create CodexEntry...
-[24Aug2025 22:27:17.016] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: CodexEntry created successfully with 2 pages
-[24Aug2025 22:27:17.016] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: ? Successfully loaded codex entry 'eidolonunchained:codex_entries/text_example.json' with 2 pages for chapter 'eidolonunchained:getting_started'
-[24Aug2025 22:27:17.016] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Successfully loaded entry! Total loaded: 3
-[24Aug2025 22:27:17.016] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Loaded 3 codex entries with 0 errors
-[24Aug2025 22:27:17.017] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Triggering category scanning now that resources are available...
-[24Aug2025 22:27:17.017] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Triggering category scanning with loaded resources...
-[24Aug2025 22:27:17.017] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Category scanning triggered with loaded resources!
-[24Aug2025 22:27:17.017] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Using reflection to access Eidolon's category system...
-[24Aug2025 22:27:17.017] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Successfully accessed Eidolon internals via reflection
-[24Aug2025 22:27:17.017] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]:    Categories list: 6 entries
-[24Aug2025 22:27:17.017] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Creating custom categories from JSON datapacks...
-[24Aug2025 22:27:17.020] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Scanning for datapack category definitions...
-[24Aug2025 22:27:17.020] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Scanning ALL codex resources...
-[24Aug2025 22:27:17.024] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Found 3 total codex files: [eidolonunchained:codex/custom_research/_category.json, eidolonunchained:codex/examples/_category.json, eidolonunchained:codex/examples/getting_started.json]
-[24Aug2025 22:27:17.027] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Found 3 codex_entries files: [eidolonunchained:codex_entries/entity_example.json, eidolonunchained:codex_entries/recipe_example.json, eidolonunchained:codex_entries/text_example.json]
-[24Aug2025 22:27:17.027] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Trying alternative scanning methods...
-[24Aug2025 22:27:17.030] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Found 0 files in eidolonunchained namespace: []
-[24Aug2025 22:27:17.034] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Found 2 category files to scan
-[24Aug2025 22:27:17.034] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Scanning category file: eidolonunchained:codex/custom_research/_category.json
-[24Aug2025 22:27:17.034] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? File namespace: 'eidolonunchained', Expected: 'eidolonunchained'
-[24Aug2025 22:27:17.034] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Path: 'codex/custom_research/_category.json', Parts: [codex, custom_research, _category.json], Length: 3
-[24Aug2025 22:27:17.034] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Extracted category key: 'custom_research'
-[24Aug2025 22:27:17.037] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Loaded category definition: com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample$CategoryDefinition@524945e2
-[24Aug2025 22:27:17.037] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Found category definition: eidolonunchained.codex.category.custom_research
-[24Aug2025 22:27:17.037] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: Looking for entries that target chapters in category: custom_research
-[24Aug2025 22:27:17.037] [Render thread/WARN] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: No chapters found for category: custom_research
-[24Aug2025 22:27:17.037] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: Creating empty category 'custom_research' for potential research chapters
-[24Aug2025 22:27:17.037] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Created empty category 'custom_research' with translation key 'eidolonunchained.codex.category.custom_research' ready for conditional content
-[24Aug2025 22:27:17.038] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Added datapack category 'custom_research' with JSON content
-[24Aug2025 22:27:17.038] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Added new category: custom_research
-[24Aug2025 22:27:17.038] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Scanning category file: eidolonunchained:codex/examples/_category.json
-[24Aug2025 22:27:17.038] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? File namespace: 'eidolonunchained', Expected: 'eidolonunchained'
-[24Aug2025 22:27:17.038] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Path: 'codex/examples/_category.json', Parts: [codex, examples, _category.json], Length: 3
-[24Aug2025 22:27:17.038] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Extracted category key: 'examples'
-[24Aug2025 22:27:17.039] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Loaded category definition: com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample$CategoryDefinition@73b63917
-[24Aug2025 22:27:17.039] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Found category definition: eidolonunchained.codex.category.examples
-[24Aug2025 22:27:17.039] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: Looking for entries that target chapters in category: examples
-[24Aug2025 22:27:17.039] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: Found chapter in category 'examples': eidolonunchained:getting_started
-[24Aug2025 22:27:17.039] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: Found 3 entries for chapter 'eidolonunchained:getting_started' in category 'examples'
-[24Aug2025 22:27:17.039] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: Creating category 'examples' with 3 total entries
-[24Aug2025 22:27:17.048] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: [DEBUG] Requested translation for key: eidolonunchained.codex.entry.entity_example.description
-[24Aug2025 22:27:17.048] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: [DEBUG] Component translation attempt: 'eidolonunchained.codex.entry.entity_example.description' -> 'This example demonstrates how to show entity information.'
-[24Aug2025 22:27:17.048] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: Creating crafting page for recipe: minecraft:crafting_table
-[24Aug2025 22:27:17.048] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: Successfully creating CraftingPage with item: 1 crafting_table
-[24Aug2025 22:27:17.048] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: [DEBUG] Requested translation for key: eidolonunchained.codex.entry.recipe_example.explanation
-[24Aug2025 22:27:17.048] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: [DEBUG] Component translation attempt: 'eidolonunchained.codex.entry.recipe_example.explanation' -> 'Recipe pages automatically display crafting grids and ingredients.'
-[24Aug2025 22:27:17.049] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: [DEBUG] Requested translation for key: eidolonunchained.codex.entry.text_example.details
-[24Aug2025 22:27:17.049] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: [DEBUG] Component translation attempt: 'eidolonunchained.codex.entry.text_example.details' -> 'Text entries are the simplest type of codex content. They display formatted text to the reader.'
-[24Aug2025 22:27:17.049] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Built category 'examples' with translation key 'eidolonunchained.codex.category.examples' and 1 chapters
-[24Aug2025 22:27:17.049] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Added datapack category 'examples' with JSON content
-[24Aug2025 22:27:17.049] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Added new category: examples
-[24Aug2025 22:27:17.049] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Created 2 datapack categories from JSON definitions!
-[24Aug2025 22:27:17.049] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Registering custom research chapters...
-[24Aug2025 22:27:17.051] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ? Scanning for research chapter definitions...
-[24Aug2025 22:27:17.054] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ? Found 1 research chapter files
-[24Aug2025 22:27:17.055] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ? Loading research chapter: eidolonunchained:research_chapters/simple_examples.json
-[24Aug2025 22:27:17.057] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ? Attempting to register research chapter 'simple_examples' with Eidolon...
-[24Aug2025 22:27:17.057] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ? ResearchChapters class not found, trying alternative...
-[24Aug2025 22:27:17.057] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ? Found CodexChapters class - may contain research registration
-[24Aug2025 22:27:17.058] [Render thread/WARN] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ?? Research chapter registration needs proper Eidolon API discovery
-[24Aug2025 22:27:17.058] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ? Would register: ID='simple_examples', Title='eidolonunchained.research.chapter.simple_examples.title', Icon='minecraft:book'
-[24Aug2025 22:27:17.058] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ? Registered research chapter: simple_examples
-[24Aug2025 22:27:17.058] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Adding custom chapters to existing categories via reflection...
-[24Aug2025 22:27:17.058] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: Found 0 custom research chapters to integrate
-[24Aug2025 22:27:17.058] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ?? Research chapter auto-integration disabled - chapters will appear only when prerequisites are met
-[24Aug2025 22:27:17.058] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Custom chapter integration complete (research chapters excluded)
-[24Aug2025 22:27:17.058] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Successfully completed category scanning with loaded resources!
-[24Aug2025 22:27:17.058] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Successfully triggered category scanning
-[24Aug2025 22:27:17.059] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Loading datapack deities...
-[24Aug2025 22:27:17.059] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Registered datapack deity: eidolonunchained:dark_deity (Nyxathel the Shadow Lord)
-[24Aug2025 22:27:17.059] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Registered datapack deity: eidolonunchained:light_deity (Lumina the Sacred Guardian)
-[24Aug2025 22:27:17.059] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Registered datapack deity: eidolonunchained:nature_deity (Verdania, Guardian of Nature)
-[24Aug2025 22:27:17.059] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Loaded 3 datapack deities with 0 errors
-[24Aug2025 22:27:17.059] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Deities loaded, linking AI configurations...
-[24Aug2025 22:27:17.059] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Linking 0 pending AI configurations to loaded deities
-[24Aug2025 22:27:17.059] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Successfully linked 0 AI configurations, 0 failed
-[24Aug2025 22:27:17.059] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.EidolonResearchDataManager/]: Loading datapack Eidolon research definitions...
-[24Aug2025 22:27:17.060] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.EidolonResearchDataManager/]: Registered research: eidolonunchained:simple_research_example (1?) with 1 triggers
-[24Aug2025 22:27:17.060] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.EidolonResearchDataManager/]: Loaded 1 Eidolon research definitions with 0 errors
-[24Aug2025 22:27:17.065] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Attempting to load research chapter from resource: eidolonunchained:research_chapters/simple_examples.json (namespace: eidolonunchained, path: research_chapters/simple_examples.json)
-[24Aug2025 22:27:17.065] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Registering research chapter: eidolonunchained:simple_examples (title: translation{key='eidolonunchained.research.chapter.simple_examples.title', args=[]}, icon: 0 air, sortOrder: 0, secret: false, background: null, category: custom_research)
-[24Aug2025 22:27:17.065] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Loaded research chapter eidolonunchained:simple_examples
-[24Aug2025 22:27:17.065] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Converting 1 codex chapters to research chapters
-[24Aug2025 22:27:17.065] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Converted codex chapter eidolonunchained:getting_started to research chapter
-[24Aug2025 22:27:17.066] [Render thread/WARN] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Research entry eidolonunchained:simple_example_entry missing or has invalid 'chapter' field
-[24Aug2025 22:27:17.066] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Loaded 2 research chapters, 1 research entries with 0 errors
-[24Aug2025 22:27:17.622] [Server thread/INFO] [net.minecraft.client.server.IntegratedServer/]: Starting integrated minecraft server version 1.20.1
-[24Aug2025 22:27:17.623] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Generating keypair
-[24Aug2025 22:27:20.295] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Preparing start region for dimension minecraft:overworld
-[24Aug2025 22:27:24.086] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 0%
-[24Aug2025 22:27:24.086] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 0%
-[24Aug2025 22:27:24.086] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 0%
-[24Aug2025 22:27:24.086] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 0%
-[24Aug2025 22:27:24.086] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 0%
-[24Aug2025 22:27:24.086] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 0%
-[24Aug2025 22:27:24.086] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 0%
-[24Aug2025 22:27:24.086] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 0%
-[24Aug2025 22:27:24.317] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 0%
-[24Aug2025 22:27:24.819] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 46%
-[24Aug2025 22:27:25.219] [Server thread/INFO] [net.minecraftforge.server.permission.PermissionAPI/]: Successfully initialized permission handler forge:default_handler
-[24Aug2025 22:27:25.219] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Eidolon Unchained server starting...
-[24Aug2025 22:27:25.220] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: About to log loaded data...
-[24Aug2025 22:27:25.220] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Server started - loaded 3 custom codex entries extending 1 chapters and 1 new chapters
-[24Aug2025 22:27:25.220] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Chapter 'eidolonunchained:getting_started' extended with 3 entries: [eidolonunchained:codex_entries/entity_example.json, eidolonunchained:codex_entries/recipe_example.json, eidolonunchained:codex_entries/text_example.json]
-[24Aug2025 22:27:25.220] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Custom chapters: [eidolonunchained:getting_started]
-[24Aug2025 22:27:25.220] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Server started - loaded 2 custom research chapters and 0 research entries
-[24Aug2025 22:27:25.220] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: About to attempt integration...
-[24Aug2025 22:27:25.220] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Calling attemptIntegrationIfNeeded...
-[24Aug2025 22:27:25.220] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Starting Eidolon codex integration...
-[24Aug2025 22:27:25.220] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: EidolonPageConverter initialized - using direct Eidolon class constructors
-[24Aug2025 22:27:25.222] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: Loaded 55 translation keys from language file
-[24Aug2025 22:27:25.223] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: Translation cache loaded with 55 entries
-[24Aug2025 22:27:25.223] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: [DEBUG] Looking up direct translation for key: eidolonunchained.codex.entry.text_example.title
-[24Aug2025 22:27:25.223] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: [DEBUG] Found direct translation for 'eidolonunchained.codex.entry.text_example.title': 'Text Example'
-[24Aug2025 22:27:25.223] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: Test translation for 'eidolonunchained.codex.entry.text_example.title': 'Text Example'
-[24Aug2025 22:27:25.223] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: === Starting custom entry injection ===
-[24Aug2025 22:27:25.223] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Found 1 loaded chapter extensions from CodexDataManager
-[24Aug2025 22:27:25.223] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Injecting entries for 1 chapters
-[24Aug2025 22:27:25.223] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Processing chapter eidolonunchained:getting_started with 3 entries
-[24Aug2025 22:27:25.224] [Server thread/WARN] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Failed to search for custom chapter 'eidolonunchained:getting_started': elucent.eidolon.codex.Codex
-[24Aug2025 22:27:25.224] [Server thread/ERROR] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Target chapter 'eidolonunchained:getting_started' not found in Eidolon chapters or custom chapters. Check chapter definitions.
-[24Aug2025 22:27:25.224] [Server thread/ERROR] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Available custom chapters: [eidolonunchained:getting_started]
-[24Aug2025 22:27:25.224] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: === Starting conditional research chapter injection ===
-[24Aug2025 22:27:25.224] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Found 2 research chapters to evaluate for conditional injection
-[24Aug2025 22:27:25.224] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Conditional research chapter injection complete!
-[24Aug2025 22:27:25.224] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Codex integration complete!
-[24Aug2025 22:27:25.224] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Integration call completed successfully
-[24Aug2025 22:27:25.225] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Server starting event completed
-[24Aug2025 22:27:25.225] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Server started - loaded 3 custom codex entries extending 1 chapters and 1 new chapters
-[24Aug2025 22:27:25.225] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Chapter 'eidolonunchained:getting_started' extended with 3 entries: [eidolonunchained:codex_entries/entity_example.json, eidolonunchained:codex_entries/recipe_example.json, eidolonunchained:codex_entries/text_example.json]
-[24Aug2025 22:27:25.225] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Custom chapters: [eidolonunchained:getting_started]
-[24Aug2025 22:27:25.225] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Server started - loaded 2 custom research chapters and 0 research entries
-[24Aug2025 22:27:25.226] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Custom research chapters: [eidolonunchained:simple_examples, eidolonunchained:getting_started]
-[24Aug2025 22:27:25.226] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Codex integration already completed, skipping...
-[24Aug2025 22:27:25.226] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.spells.AIDeitySpells/]: Registering AI deity prayer spells...
-[24Aug2025 22:27:25.229] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.spells.AIDeitySpells/]: Registered AI prayer spell for deity: eidolonunchained:dark_deity with chant: wicked, wicked, wicked
-[24Aug2025 22:27:25.229] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.spells.AIDeitySpells/]: Registered AI prayer spell for deity: eidolonunchained:nature_deity with chant: harmony, harmony, harmony
-[24Aug2025 22:27:25.230] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.spells.AIDeitySpells/]: Registered AI prayer spell for deity: eidolonunchained:light_deity with chant: sacred, sacred, sacred
-[24Aug2025 22:27:25.230] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.spells.AIDeitySpells/]: Successfully registered 3 AI deity prayer spells
-[24Aug2025 22:27:25.231] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Time elapsed: 4928 ms
-[24Aug2025 22:27:25.401] [Server thread/INFO] [net.minecraft.client.server.IntegratedServer/]: Changing view distance to 12, from 10
-[24Aug2025 22:27:25.403] [Server thread/INFO] [net.minecraft.client.server.IntegratedServer/]: Changing simulation distance to 12, from 0
-[24Aug2025 22:27:25.516] [Render thread/WARN] [io.netty.util.internal.SystemPropertyUtil/]: Unable to parse the boolean system property 'java.net.preferIPv6Addresses':system - using the default value: false
-[24Aug2025 22:27:25.988] [Netty Local Client IO #0/ERROR] [net.minecraft.network.Connection/]: Received class net.minecraft.network.protocol.game.ClientboundDisconnectPacket that couldn't be processed
-java.lang.ClassCastException: class net.minecraft.client.multiplayer.ClientHandshakePacketListenerImpl cannot be cast to class net.minecraft.network.protocol.game.ClientGamePacketListener (net.minecraft.client.multiplayer.ClientHandshakePacketListenerImpl and net.minecraft.network.protocol.game.ClientGamePacketListener are in module minecraft@1.20.1 of loader 'TRANSFORMER' @3468ee6e)
+[24Aug2025 23:10:51.550] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgeclientuserdev, --version, MOD_DEV, --assetIndex, 5, --assetsDir, C:\Users\bluel\.gradle\caches\forge_gradle\assets, --gameDir, ., --fml.forgeVersion, 47.1.0, --fml.mcVersion, 1.20.1, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20230612.114412, -mixin, eidolonunchained.mixins.json]
+[24Aug2025 23:10:51.556] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher 10.0.9+10.0.9+main.dcd20f30 starting: java version 17.0.14 by Eclipse Adoptium; OS Windows 10 arch amd64 version 10.0
+[24Aug2025 23:10:51.801] [main/INFO] [net.minecraftforge.fml.loading.ImmediateWindowHandler/]: Loading ImmediateWindowProvider fmlearlywindow
+[24Aug2025 23:10:51.984] [main/INFO] [EARLYDISPLAY/]: Trying GL version 4.6
+[24Aug2025 23:10:52.635] [main/INFO] [EARLYDISPLAY/]: Requested GL version 4.6 got version 4.6
+[24Aug2025 23:10:52.764] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/C:/Users/bluel/.gradle/caches/modules-2/files-2.1/org.spongepowered/mixin/0.8.5/9d1c0c3a304ae6697ecd477218fa61b850bf57fc/mixin-0.8.5.jar%23128!/ Service=ModLauncher Env=CLIENT
+[24Aug2025 23:10:52.833] [pool-2-thread-1/INFO] [EARLYDISPLAY/]: GL info: NVIDIA GeForce RTX 3050/PCIe/SSE2 GL version 4.6.0 NVIDIA 576.28, NVIDIA Corporation
+[24Aug2025 23:10:53.193] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\.gradle\caches\modules-2\files-2.1\net.minecraftforge\javafmllanguage\1.20.1-47.1.0\a2cd58d15791eaac9983e30be0995e66bd48633e\javafmllanguage-1.20.1-47.1.0.jar is missing mods.toml file
+[24Aug2025 23:10:53.196] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\.gradle\caches\modules-2\files-2.1\net.minecraftforge\lowcodelanguage\1.20.1-47.1.0\f1f11b7217b8320f1b3eb81c746b7b8a70a9ba06\lowcodelanguage-1.20.1-47.1.0.jar is missing mods.toml file
+[24Aug2025 23:10:53.199] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\.gradle\caches\modules-2\files-2.1\net.minecraftforge\mclanguage\1.20.1-47.1.0\ff1b8eeb1bd00dfb130263b8952b931f5369252e\mclanguage-1.20.1-47.1.0.jar is missing mods.toml file
+[24Aug2025 23:10:53.203] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\.gradle\caches\modules-2\files-2.1\net.minecraftforge\fmlcore\1.20.1-47.1.0\69ca36ae5b8d45c377a5485dc38a7343e5ebf33c\fmlcore-1.20.1-47.1.0.jar is missing mods.toml file
+[24Aug2025 23:10:53.313] [main/INFO] [net.minecraftforge.fml.loading.moddiscovery.JarInJarDependencyLocator/]: No dependencies to load found. Skipping!
+[24Aug2025 23:10:55.166] [main/INFO] [mixin/]: Compatibility level set to JAVA_17
+[24Aug2025 23:10:55.175] [main/INFO] [cpw.mods.modlauncher.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgeclientuserdev' with arguments [--version, MOD_DEV, --gameDir, ., --assetsDir, C:\Users\bluel\.gradle\caches\forge_gradle\assets, --assetIndex, 5]
+[24Aug2025 23:10:55.258] [main/WARN] [mixin/]: Reference map 'eidolonunchained.refmap.json' for eidolonunchained.mixins.json could not be read. If this is a development environment you can ignore this message
+[24Aug2025 23:10:55.706] [main/INFO] [mixin/]: Remapping refMap curios.refmap.json using C:\Users\bluel\Downloads\eidolon_repraised-1.20.1-0.3.8.15\Eidolon-Unchained/build/createSrgToMcp/output.srg
+[24Aug2025 23:10:55.719] [main/INFO] [mixin/]: Remapping refMap eidolon.refmap.json using C:\Users\bluel\Downloads\eidolon_repraised-1.20.1-0.3.8.15\Eidolon-Unchained/build/createSrgToMcp/output.srg
+[24Aug2025 23:11:00.793] [Datafixer Bootstrap/INFO] [com.mojang.datafixers.DataFixerBuilder/]: 188 Datafixer optimizations took 189 milliseconds
+[24Aug2025 23:11:03.002] [Render thread/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/bluel/.gradle/caches/forge_gradle/minecraft_user_repo/net/minecraftforge/forge/1.20.1-47.1.0_mapped_official_1.20.1/forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar%23191!/assets/.mcassetsroot' uses unexpected schema
+[24Aug2025 23:11:03.003] [Render thread/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/C:/Users/bluel/.gradle/caches/forge_gradle/minecraft_user_repo/net/minecraftforge/forge/1.20.1-47.1.0_mapped_official_1.20.1/forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar%23191!/data/.mcassetsroot' uses unexpected schema
+[24Aug2025 23:11:03.022] [Render thread/INFO] [com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService/]: Environment: authHost='https://authserver.mojang.com', accountsHost='https://api.mojang.com', sessionHost='https://sessionserver.mojang.com', servicesHost='https://api.minecraftservices.com', name='PROD'
+[24Aug2025 23:11:03.029] [Render thread/INFO] [net.minecraft.client.Minecraft/]: Setting user: Dev
+[24Aug2025 23:11:03.180] [Render thread/INFO] [net.minecraft.client.Minecraft/]: Backend library: LWJGL version 3.3.1 build 7
+[24Aug2025 23:11:03.546] [modloading-worker-0/INFO] [net.minecraftforge.common.ForgeMod/FORGEMOD]: Forge mod loading, version 47.1.0, for MC 1.20.1 with MCP 20230612.114412
+[24Aug2025 23:11:03.546] [modloading-worker-0/INFO] [net.minecraftforge.common.MinecraftForge/FORGE]: MinecraftForge v47.1.0 Initialized
+[24Aug2025 23:11:03.604] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Eidolon Feature Detection Results:
+[24Aug2025 23:11:03.605] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ?? CodexEvents not found - using legacy compatibility mode
+[24Aug2025 23:11:03.609] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    Mode: Legacy - Reflection Required
+[24Aug2025 23:11:03.609] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    CodexEvents: ? Not Available
+[24Aug2025 23:11:03.611] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ?? Enhanced TitlePage constructor not available
+[24Aug2025 23:11:03.611] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    Enhanced TitlePage: ? Not Available
+[24Aug2025 23:11:03.613] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Public Category fields available
+[24Aug2025 23:11:03.615] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    Public Category Fields: ? Not Available
+[24Aug2025 23:11:03.616] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Running in Legacy Mode - using reflection where necessary
+[24Aug2025 23:11:03.616] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Migration Guide: See EIDOLON_VERSION_MIGRATION_GUIDE.md
+[24Aug2025 23:11:05.935] [Render thread/INFO] [net.minecraftforge.gametest.ForgeGameTestHooks/]: Enabled Gametest Namespaces: [eidolonunchained]
+[24Aug2025 23:11:06.526] [Render thread/INFO] [net.minecraft.server.packs.resources.ReloadableResourceManager/]: Reloading ResourceManager: vanilla, mod_resources
+[24Aug2025 23:11:06.698] [Worker-Main-4/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Eidolon Unchained is loading!
+[24Aug2025 23:11:06.698] [Worker-Main-4/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Expanding the world of Eidolon with new chapters, rituals, and mystical content...
+[24Aug2025 23:11:06.824] [Forge Version Check/INFO] [net.minecraftforge.fml.VersionChecker/]: [forge] Starting version check at https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json
+[24Aug2025 23:11:06.965] [Worker-Main-4/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Eidolon Unchained networking system initialized
+[24Aug2025 23:11:06.965] [Worker-Main-4/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Initializing CodexDataManager...
+[24Aug2025 23:11:06.965] [Worker-Main-4/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Initializing ResearchDataManager...
+[24Aug2025 23:11:06.977] [Worker-Main-4/INFO] [com.bluelotuscoding.eidolonunchained.integration.ModIntegration/]: Eidolon Repraised detected! Enabling Eidolon integrations...
+[24Aug2025 23:11:06.977] [Worker-Main-4/INFO] [com.bluelotuscoding.eidolonunchained.integration.ModIntegration/]: Curios API detected! Enabling Curios integrations...
+[24Aug2025 23:11:06.977] [Worker-Main-4/INFO] [com.bluelotuscoding.eidolonunchained.integration.AIDeityIntegration/]: Initializing AI Deity Integration
+[24Aug2025 23:11:06.978] [Worker-Main-4/INFO] [com.bluelotuscoding.eidolonunchained.integration.AIDeityIntegration/]: AI Deity Integration initialized
+[24Aug2025 23:11:07.097] [Worker-Main-7/INFO] [net.minecraft.client.gui.font.providers.UnihexProvider/]: Found unifont_all_no_pua-15.0.06.hex, loading
+[24Aug2025 23:11:07.806] [Forge Version Check/INFO] [net.minecraftforge.fml.VersionChecker/]: [forge] Found status: OUTDATED Current: 47.1.0 Target: 47.4.0
+[24Aug2025 23:11:07.889] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonResearchIntegration/]: Attempting to register 0 custom research chapters
+[24Aug2025 23:11:07.897] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonResearchIntegration/]: Attempting to inject 0 custom research entries
+[24Aug2025 23:11:07.897] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonResearchIntegration/]: Research integration complete!
+[24Aug2025 23:11:09.855] [Worker-Main-7/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? EidolonCategoryExtension - FMLLoadCompleteEvent received
+[24Aug2025 23:11:09.855] [Worker-Main-7/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Category scanning will be triggered later when resources are loaded via CodexDataManager
+[24Aug2025 23:11:09.855] [Worker-Main-7/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Ready for migration to event system when CodexEvents become available
+[24Aug2025 23:11:10.941] [Render thread/WARN] [net.minecraft.client.sounds.SoundEngine/]: Missing sound for event: minecraft:item.goat_horn.play
+[24Aug2025 23:11:10.942] [Render thread/WARN] [net.minecraft.client.sounds.SoundEngine/]: Missing sound for event: minecraft:entity.goat.screaming.horn_break
+[24Aug2025 23:11:10.978] [Render thread/INFO] [com.mojang.blaze3d.audio.Library/]: OpenAL initialized on device OpenAL Soft on Speakers (Logitech USB Headset H540)
+[24Aug2025 23:11:10.980] [Render thread/INFO] [net.minecraft.client.sounds.SoundEngine/SOUNDS]: Sound engine started
+[24Aug2025 23:11:11.122] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 1024x512x4 minecraft:textures/atlas/blocks.png-atlas
+[24Aug2025 23:11:11.132] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 256x256x4 minecraft:textures/atlas/signs.png-atlas
+[24Aug2025 23:11:11.133] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 512x512x4 minecraft:textures/atlas/shield_patterns.png-atlas
+[24Aug2025 23:11:11.133] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 512x512x4 minecraft:textures/atlas/banner_patterns.png-atlas
+[24Aug2025 23:11:11.134] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 1024x1024x4 minecraft:textures/atlas/armor_trims.png-atlas
+[24Aug2025 23:11:11.136] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 128x64x4 minecraft:textures/atlas/decorated_pot.png-atlas
+[24Aug2025 23:11:11.138] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 256x256x4 minecraft:textures/atlas/chest.png-atlas
+[24Aug2025 23:11:11.138] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 512x256x4 minecraft:textures/atlas/shulker_boxes.png-atlas
+[24Aug2025 23:11:11.139] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 512x256x4 minecraft:textures/atlas/beds.png-atlas
+[24Aug2025 23:11:11.288] [Render thread/WARN] [net.minecraft.client.renderer.ShaderInstance/]: Shader rendertype_entity_translucent_emissive could not find sampler named Sampler2 in the specified shader program.
+[24Aug2025 23:11:11.359] [Render thread/WARN] [net.minecraft.client.renderer.ShaderInstance/]: Shader eidolon:glowing_particle could not find sampler named Sampler2 in the specified shader program.
+[24Aug2025 23:11:11.361] [Render thread/WARN] [net.minecraft.client.renderer.ShaderInstance/]: Shader eidolon:sprite_particle could not find sampler named Sampler2 in the specified shader program.
+[24Aug2025 23:11:11.377] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 256x256x0 minecraft:textures/atlas/particles.png-atlas
+[24Aug2025 23:11:11.379] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 256x256x0 minecraft:textures/atlas/paintings.png-atlas
+[24Aug2025 23:11:11.380] [Render thread/INFO] [net.minecraft.client.renderer.texture.TextureAtlas/]: Created: 256x128x0 minecraft:textures/atlas/mob_effects.png-atlas
+[24Aug2025 23:11:11.776] [Realms Notification Availability checker #1/INFO] [com.mojang.realmsclient.client.RealmsClient/]: Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: 0
+[24Aug2025 23:11:16.212] [Render thread/INFO] [net.minecraftforge.registries.GameData/REGISTRIES]: Injecting existing registry data into this CLIENT instance
+[24Aug2025 23:11:17.819] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Eidolon Unchained unified commands registered
+[24Aug2025 23:11:17.821] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.AIDeityIntegration/]: Registering unified commands
+[24Aug2025 23:11:17.856] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Eidolon Unchained datapack managers registered
+[24Aug2025 23:11:17.860] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Registered AI Deity reload listener
+[24Aug2025 23:11:17.861] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Registered Eidolon Unchained codex data reload listener
+[24Aug2025 23:11:17.861] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Registered Datapack Deity reload listener
+[24Aug2025 23:11:17.861] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.EidolonResearchDataManager/]: Registered Eidolon Research datapack reload listener
+[24Aug2025 23:11:17.861] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Registered Eidolon Unchained research data reload listener
+[24Aug2025 23:11:17.861] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.AIDeityIntegration/]: AI deity data managers will register themselves via their own event handlers
+[24Aug2025 23:11:18.592] [Render thread/INFO] [net.minecraft.world.item.crafting.RecipeManager/]: Skipping loading recipe eidolon:smelt_silver_dust as it's serializer returned null
+[24Aug2025 23:11:18.619] [Render thread/INFO] [net.minecraft.world.item.crafting.RecipeManager/]: Skipping loading recipe eidolon:smelt_lead_dust as it's serializer returned null
+[24Aug2025 23:11:18.635] [Render thread/INFO] [net.minecraft.world.item.crafting.RecipeManager/]: Loaded 15 recipes
+[24Aug2025 23:11:18.729] [Render thread/INFO] [net.minecraft.advancements.AdvancementList/]: Loaded 1349 advancements
+[24Aug2025 23:11:18.730] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Loading datapack deities...
+[24Aug2025 23:11:18.731] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Registered datapack deity: eidolonunchained:dark_deity (Nyxathel the Shadow Lord)
+[24Aug2025 23:11:18.731] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Registered datapack deity: eidolonunchained:light_deity (Lumina the Sacred Guardian)
+[24Aug2025 23:11:18.731] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Registered datapack deity: eidolonunchained:nature_deity (Verdania, Guardian of Nature)
+[24Aug2025 23:11:18.731] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Loaded 3 datapack deities with 0 errors
+[24Aug2025 23:11:18.731] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Deities loaded, linking AI configurations...
+[24Aug2025 23:11:18.731] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Linking 0 pending AI configurations to loaded deities
+[24Aug2025 23:11:18.731] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Successfully linked 0 AI configurations, 0 failed
+[24Aug2025 23:11:18.731] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager/]: Loading datapack chants...
+[24Aug2025 23:11:18.734] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager/]: Loaded 6 datapack chants in 1 categories
+[24Aug2025 23:11:18.734] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager/]: Registering 6 chants with Eidolon spell system
+[24Aug2025 23:11:18.736] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager/]: Adding 6 chants to codex
+[24Aug2025 23:11:18.743] [Render thread/INFO] [top.theillusivec4.curios.Curios/]: Loaded 10 curio slots
+[24Aug2025 23:11:18.746] [Render thread/INFO] [top.theillusivec4.curios.Curios/]: Loaded 1 curio entities
+[24Aug2025 23:11:18.747] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Loading AI deity configurations...
+[24Aug2025 23:11:18.747] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Queued 3 AI deity configurations with 0 errors
+[24Aug2025 23:11:18.747] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Linking 3 pending AI configurations to loaded deities
+[24Aug2025 23:11:18.752] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Successfully linked AI configuration for deity: eidolonunchained:dark_deity
+[24Aug2025 23:11:18.752] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Successfully linked AI configuration for deity: eidolonunchained:light_deity
+[24Aug2025 23:11:18.752] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Successfully linked AI configuration for deity: eidolonunchained:nature_deity
+[24Aug2025 23:11:18.752] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Successfully linked 3 AI configurations, 0 failed
+[24Aug2025 23:11:18.752] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: CodexDataManager.apply() reloading codex data
+[24Aug2025 23:11:18.752] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Searching for custom codex chapters in 'codex_chapters'...
+[24Aug2025 23:11:18.753] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Searching for custom codex chapters in 'codex' structure...
+[24Aug2025 23:11:18.755] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: DEBUG: Found 1 chapter files: [eidolonunchained:codex/examples/getting_started.json]
+[24Aug2025 23:11:18.755] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Found codex chapter resource: eidolonunchained:codex/examples/getting_started.json (namespace: eidolonunchained, path: codex/examples/getting_started.json)
+[24Aug2025 23:11:18.756] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Registering custom chapter: eidolonunchained:getting_started (title: translation{key='eidolonunchained.codex.chapter.getting_started', args=[]}, icon: minecraft:compass, category: examples)
+[24Aug2025 23:11:18.756] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Loaded custom chapter definition eidolonunchained:getting_started
+[24Aug2025 23:11:18.756] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Custom chapter loading complete. Total loaded: 1
+[24Aug2025 23:11:18.756] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Scanning for codex entries in all namespaces...
+[24Aug2025 23:11:18.758] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: DEBUG: Found 3 codex entry files: [eidolonunchained:codex_entries/entity_example.json, eidolonunchained:codex_entries/recipe_example.json, eidolonunchained:codex_entries/text_example.json]
+[24Aug2025 23:11:18.758] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Processing codex entry file: eidolonunchained:codex_entries/entity_example.json
+[24Aug2025 23:11:18.758] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Loading codex entry from eidolonunchained:codex_entries/entity_example.json
+[24Aug2025 23:11:18.760] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: JSON content keys: [target_chapter, pages]
+[24Aug2025 23:11:18.760] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Required fields present, proceeding with parsing...
+[24Aug2025 23:11:18.760] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Entry eidolonunchained:codex_entries/entity_example.json targets chapter: getting_started
+[24Aug2025 23:11:18.760] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Converted field name to our custom resource location: eidolonunchained:getting_started
+[24Aug2025 23:11:18.760] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: About to create CodexEntry...
+[24Aug2025 23:11:18.762] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: CodexEntry created successfully with 3 pages
+[24Aug2025 23:11:18.763] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: ? Successfully loaded codex entry 'eidolonunchained:codex_entries/entity_example.json' with 3 pages for chapter 'eidolonunchained:getting_started'
+[24Aug2025 23:11:18.763] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Successfully loaded entry! Total loaded: 1
+[24Aug2025 23:11:18.763] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Processing codex entry file: eidolonunchained:codex_entries/recipe_example.json
+[24Aug2025 23:11:18.764] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Loading codex entry from eidolonunchained:codex_entries/recipe_example.json
+[24Aug2025 23:11:18.764] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: JSON content keys: [target_chapter, pages]
+[24Aug2025 23:11:18.764] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Required fields present, proceeding with parsing...
+[24Aug2025 23:11:18.764] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Entry eidolonunchained:codex_entries/recipe_example.json targets chapter: getting_started
+[24Aug2025 23:11:18.764] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Converted field name to our custom resource location: eidolonunchained:getting_started
+[24Aug2025 23:11:18.764] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: About to create CodexEntry...
+[24Aug2025 23:11:18.764] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: CodexEntry created successfully with 3 pages
+[24Aug2025 23:11:18.765] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: ? Successfully loaded codex entry 'eidolonunchained:codex_entries/recipe_example.json' with 3 pages for chapter 'eidolonunchained:getting_started'
+[24Aug2025 23:11:18.765] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Successfully loaded entry! Total loaded: 2
+[24Aug2025 23:11:18.765] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Processing codex entry file: eidolonunchained:codex_entries/text_example.json
+[24Aug2025 23:11:18.765] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Loading codex entry from eidolonunchained:codex_entries/text_example.json
+[24Aug2025 23:11:18.766] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: JSON content keys: [target_chapter, pages]
+[24Aug2025 23:11:18.766] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Required fields present, proceeding with parsing...
+[24Aug2025 23:11:18.766] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Entry eidolonunchained:codex_entries/text_example.json targets chapter: getting_started
+[24Aug2025 23:11:18.766] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Converted field name to our custom resource location: eidolonunchained:getting_started
+[24Aug2025 23:11:18.766] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: About to create CodexEntry...
+[24Aug2025 23:11:18.766] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: CodexEntry created successfully with 2 pages
+[24Aug2025 23:11:18.766] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: ? Successfully loaded codex entry 'eidolonunchained:codex_entries/text_example.json' with 2 pages for chapter 'eidolonunchained:getting_started'
+[24Aug2025 23:11:18.766] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Successfully loaded entry! Total loaded: 3
+[24Aug2025 23:11:18.766] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Loaded 3 codex entries with 0 errors
+[24Aug2025 23:11:18.766] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Triggering category scanning now that resources are available...
+[24Aug2025 23:11:18.766] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Triggering category scanning with loaded resources...
+[24Aug2025 23:11:18.766] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Category scanning triggered with loaded resources!
+[24Aug2025 23:11:18.766] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Using reflection to access Eidolon's category system...
+[24Aug2025 23:11:18.767] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Successfully accessed Eidolon internals via reflection
+[24Aug2025 23:11:18.767] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]:    Categories list: 6 entries
+[24Aug2025 23:11:18.767] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Creating custom categories from JSON datapacks...
+[24Aug2025 23:11:18.769] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Scanning for datapack category definitions...
+[24Aug2025 23:11:18.769] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Scanning ALL codex resources...
+[24Aug2025 23:11:18.771] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Found 3 total codex files: [eidolonunchained:codex/custom_research/_category.json, eidolonunchained:codex/examples/_category.json, eidolonunchained:codex/examples/getting_started.json]
+[24Aug2025 23:11:18.772] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Found 3 codex_entries files: [eidolonunchained:codex_entries/entity_example.json, eidolonunchained:codex_entries/recipe_example.json, eidolonunchained:codex_entries/text_example.json]
+[24Aug2025 23:11:18.772] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Trying alternative scanning methods...
+[24Aug2025 23:11:18.772] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Found 0 files in eidolonunchained namespace: []
+[24Aug2025 23:11:18.774] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Found 2 category files to scan
+[24Aug2025 23:11:18.774] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Scanning category file: eidolonunchained:codex/custom_research/_category.json
+[24Aug2025 23:11:18.774] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? File namespace: 'eidolonunchained', Expected: 'eidolonunchained'
+[24Aug2025 23:11:18.774] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Path: 'codex/custom_research/_category.json', Parts: [codex, custom_research, _category.json], Length: 3
+[24Aug2025 23:11:18.774] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Extracted category key: 'custom_research'
+[24Aug2025 23:11:18.776] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Loaded category definition: com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample$CategoryDefinition@7671922b
+[24Aug2025 23:11:18.776] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Found category definition: eidolonunchained.codex.category.custom_research
+[24Aug2025 23:11:18.776] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: Looking for entries that target chapters in category: custom_research
+[24Aug2025 23:11:18.776] [Render thread/WARN] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: No chapters found for category: custom_research
+[24Aug2025 23:11:18.776] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: Creating empty category 'custom_research' for potential research chapters
+[24Aug2025 23:11:18.777] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Created empty category 'custom_research' with translation key 'eidolonunchained.codex.category.custom_research' ready for conditional content
+[24Aug2025 23:11:18.777] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Added datapack category 'custom_research' with JSON content
+[24Aug2025 23:11:18.777] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Added new category: custom_research
+[24Aug2025 23:11:18.777] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Scanning category file: eidolonunchained:codex/examples/_category.json
+[24Aug2025 23:11:18.777] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? File namespace: 'eidolonunchained', Expected: 'eidolonunchained'
+[24Aug2025 23:11:18.777] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Path: 'codex/examples/_category.json', Parts: [codex, examples, _category.json], Length: 3
+[24Aug2025 23:11:18.777] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Extracted category key: 'examples'
+[24Aug2025 23:11:18.778] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? DEBUG: Loaded category definition: com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample$CategoryDefinition@6829b897
+[24Aug2025 23:11:18.778] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Found category definition: eidolonunchained.codex.category.examples
+[24Aug2025 23:11:18.778] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: Looking for entries that target chapters in category: examples
+[24Aug2025 23:11:18.778] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: Found chapter in category 'examples': eidolonunchained:getting_started
+[24Aug2025 23:11:18.778] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: Found 3 entries for chapter 'eidolonunchained:getting_started' in category 'examples'
+[24Aug2025 23:11:18.778] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: Creating category 'examples' with 3 total entries
+[24Aug2025 23:11:18.784] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: [DEBUG] Requested translation for key: eidolonunchained.codex.entry.entity_example.description
+[24Aug2025 23:11:18.784] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: [DEBUG] Component translation attempt: 'eidolonunchained.codex.entry.entity_example.description' -> 'This example demonstrates how to show entity information.'
+[24Aug2025 23:11:18.784] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: Creating crafting page for recipe: minecraft:crafting_table
+[24Aug2025 23:11:18.784] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: Successfully creating CraftingPage with item: 1 crafting_table
+[24Aug2025 23:11:18.784] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: [DEBUG] Requested translation for key: eidolonunchained.codex.entry.recipe_example.explanation
+[24Aug2025 23:11:18.785] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: [DEBUG] Component translation attempt: 'eidolonunchained.codex.entry.recipe_example.explanation' -> 'Recipe pages automatically display crafting grids and ingredients.'
+[24Aug2025 23:11:18.785] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: [DEBUG] Requested translation for key: eidolonunchained.codex.entry.text_example.details
+[24Aug2025 23:11:18.785] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: [DEBUG] Component translation attempt: 'eidolonunchained.codex.entry.text_example.details' -> 'Text entries are the simplest type of codex content. They display formatted text to the reader.'
+[24Aug2025 23:11:18.785] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Built category 'examples' with translation key 'eidolonunchained.codex.category.examples' and 1 chapters
+[24Aug2025 23:11:18.785] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Added datapack category 'examples' with JSON content
+[24Aug2025 23:11:18.785] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Added new category: examples
+[24Aug2025 23:11:18.785] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackCategoryExample/]: ? Created 2 datapack categories from JSON definitions!
+[24Aug2025 23:11:18.785] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Registering custom research chapters...
+[24Aug2025 23:11:18.787] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ? Scanning for research chapter definitions...
+[24Aug2025 23:11:18.788] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ? Found 1 research chapter files
+[24Aug2025 23:11:18.788] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ? Loading research chapter: eidolonunchained:research_chapters/simple_examples.json
+[24Aug2025 23:11:18.790] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ? Attempting to register research chapter 'simple_examples' with Eidolon...
+[24Aug2025 23:11:18.790] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ? ResearchChapters class not found, trying alternative...
+[24Aug2025 23:11:18.790] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ? Found CodexChapters class - may contain research registration
+[24Aug2025 23:11:18.790] [Render thread/WARN] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ?? Research chapter registration needs proper Eidolon API discovery
+[24Aug2025 23:11:18.790] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ? Would register: ID='simple_examples', Title='eidolonunchained.research.chapter.simple_examples.title', Icon='minecraft:book'
+[24Aug2025 23:11:18.791] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.DatapackResearchExample/]: ? Registered research chapter: simple_examples
+[24Aug2025 23:11:18.791] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Adding custom chapters to existing categories via reflection...
+[24Aug2025 23:11:18.791] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: Found 0 custom research chapters to integrate
+[24Aug2025 23:11:18.791] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ?? Research chapter auto-integration disabled - chapters will appear only when prerequisites are met
+[24Aug2025 23:11:18.791] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Custom chapter integration complete (research chapters excluded)
+[24Aug2025 23:11:18.791] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension/]: ? Successfully completed category scanning with loaded resources!
+[24Aug2025 23:11:18.791] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Successfully triggered category scanning
+[24Aug2025 23:11:18.791] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Loading datapack deities...
+[24Aug2025 23:11:18.791] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Registered datapack deity: eidolonunchained:dark_deity (Nyxathel the Shadow Lord)
+[24Aug2025 23:11:18.791] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Registered datapack deity: eidolonunchained:light_deity (Lumina the Sacred Guardian)
+[24Aug2025 23:11:18.791] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Registered datapack deity: eidolonunchained:nature_deity (Verdania, Guardian of Nature)
+[24Aug2025 23:11:18.791] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager/]: Loaded 3 datapack deities with 0 errors
+[24Aug2025 23:11:18.791] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Deities loaded, linking AI configurations...
+[24Aug2025 23:11:18.791] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Linking 0 pending AI configurations to loaded deities
+[24Aug2025 23:11:18.791] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.ai.AIDeityManager/]: Successfully linked 0 AI configurations, 0 failed
+[24Aug2025 23:11:18.792] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.EidolonResearchDataManager/]: Loading datapack Eidolon research definitions...
+[24Aug2025 23:11:18.792] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.EidolonResearchDataManager/]: Registered research: eidolonunchained:simple_research_example (1?) with 1 triggers
+[24Aug2025 23:11:18.792] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.EidolonResearchDataManager/]: Loaded 1 Eidolon research definitions with 0 errors
+[24Aug2025 23:11:18.794] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Attempting to load research chapter from resource: eidolonunchained:research_chapters/simple_examples.json (namespace: eidolonunchained, path: research_chapters/simple_examples.json)
+[24Aug2025 23:11:18.794] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Registering research chapter: eidolonunchained:simple_examples (title: translation{key='eidolonunchained.research.chapter.simple_examples.title', args=[]}, icon: 0 air, sortOrder: 0, secret: false, background: null, category: custom_research)
+[24Aug2025 23:11:18.794] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Loaded research chapter eidolonunchained:simple_examples
+[24Aug2025 23:11:18.795] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Converting 1 codex chapters to research chapters
+[24Aug2025 23:11:18.795] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Converted codex chapter eidolonunchained:getting_started to research chapter
+[24Aug2025 23:11:18.795] [Render thread/WARN] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Research entry eidolonunchained:simple_example_entry missing or has invalid 'chapter' field
+[24Aug2025 23:11:18.795] [Render thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Loaded 2 research chapters, 1 research entries with 0 errors
+[24Aug2025 23:11:19.325] [Server thread/INFO] [net.minecraft.client.server.IntegratedServer/]: Starting integrated minecraft server version 1.20.1
+[24Aug2025 23:11:19.325] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Generating keypair
+[24Aug2025 23:11:21.357] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Preparing start region for dimension minecraft:overworld
+[24Aug2025 23:11:24.282] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 0%
+[24Aug2025 23:11:24.304] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 0%
+[24Aug2025 23:11:24.324] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 0%
+[24Aug2025 23:11:24.324] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 0%
+[24Aug2025 23:11:24.350] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 0%
+[24Aug2025 23:11:24.350] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 0%
+[24Aug2025 23:11:24.407] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 0%
+[24Aug2025 23:11:24.883] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 4%
+[24Aug2025 23:11:25.390] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 61%
+[24Aug2025 23:11:25.628] [Server thread/INFO] [net.minecraftforge.server.permission.PermissionAPI/]: Successfully initialized permission handler forge:default_handler
+[24Aug2025 23:11:25.628] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Eidolon Unchained server starting...
+[24Aug2025 23:11:25.628] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: About to log loaded data...
+[24Aug2025 23:11:25.629] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Server started - loaded 3 custom codex entries extending 1 chapters and 1 new chapters
+[24Aug2025 23:11:25.629] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Chapter 'eidolonunchained:getting_started' extended with 3 entries: [eidolonunchained:codex_entries/entity_example.json, eidolonunchained:codex_entries/recipe_example.json, eidolonunchained:codex_entries/text_example.json]
+[24Aug2025 23:11:25.629] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Custom chapters: [eidolonunchained:getting_started]
+[24Aug2025 23:11:25.629] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Server started - loaded 2 custom research chapters and 0 research entries
+[24Aug2025 23:11:25.629] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: About to attempt integration...
+[24Aug2025 23:11:25.629] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Calling attemptIntegrationIfNeeded...
+[24Aug2025 23:11:25.629] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Starting Eidolon codex integration...
+[24Aug2025 23:11:25.629] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: EidolonPageConverter initialized - using direct Eidolon class constructors
+[24Aug2025 23:11:25.630] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: Loaded 55 translation keys from language file
+[24Aug2025 23:11:25.630] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: Translation cache loaded with 55 entries
+[24Aug2025 23:11:25.630] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: [DEBUG] Looking up direct translation for key: eidolonunchained.codex.entry.text_example.title
+[24Aug2025 23:11:25.630] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: [DEBUG] Found direct translation for 'eidolonunchained.codex.entry.text_example.title': 'Text Example'
+[24Aug2025 23:11:25.630] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonPageConverter/]: Test translation for 'eidolonunchained.codex.entry.text_example.title': 'Text Example'
+[24Aug2025 23:11:25.631] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: === Starting custom entry injection ===
+[24Aug2025 23:11:25.631] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Found 1 loaded chapter extensions from CodexDataManager
+[24Aug2025 23:11:25.631] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Injecting entries for 1 chapters
+[24Aug2025 23:11:25.631] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Processing chapter eidolonunchained:getting_started with 3 entries
+[24Aug2025 23:11:25.631] [Server thread/WARN] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Failed to search for custom chapter 'eidolonunchained:getting_started': elucent.eidolon.codex.Codex
+[24Aug2025 23:11:25.631] [Server thread/ERROR] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Target chapter 'eidolonunchained:getting_started' not found in Eidolon chapters or custom chapters. Check chapter definitions.
+[24Aug2025 23:11:25.631] [Server thread/ERROR] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Available custom chapters: [eidolonunchained:getting_started]
+[24Aug2025 23:11:25.631] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: === Starting conditional research chapter injection ===
+[24Aug2025 23:11:25.631] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Found 2 research chapters to evaluate for conditional injection
+[24Aug2025 23:11:25.631] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Conditional research chapter injection complete!
+[24Aug2025 23:11:25.631] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Codex integration complete!
+[24Aug2025 23:11:25.631] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Integration call completed successfully
+[24Aug2025 23:11:25.631] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Server starting event completed
+[24Aug2025 23:11:25.631] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Server started - loaded 3 custom codex entries extending 1 chapters and 1 new chapters
+[24Aug2025 23:11:25.632] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Chapter 'eidolonunchained:getting_started' extended with 3 entries: [eidolonunchained:codex_entries/entity_example.json, eidolonunchained:codex_entries/recipe_example.json, eidolonunchained:codex_entries/text_example.json]
+[24Aug2025 23:11:25.632] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.CodexDataManager/]: Custom chapters: [eidolonunchained:getting_started]
+[24Aug2025 23:11:25.632] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Server started - loaded 2 custom research chapters and 0 research entries
+[24Aug2025 23:11:25.632] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.data.ResearchDataManager/]: Custom research chapters: [eidolonunchained:simple_examples, eidolonunchained:getting_started]
+[24Aug2025 23:11:25.632] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration/]: Codex integration already completed, skipping...
+[24Aug2025 23:11:25.632] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.spells.AIDeitySpells/]: Registering AI deity prayer spells...
+[24Aug2025 23:11:25.633] [Render thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Time elapsed: 4260 ms
+[24Aug2025 23:11:25.635] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.spells.AIDeitySpells/]: Registered AI prayer spell for deity: eidolonunchained:dark_deity with chant: wicked, wicked, wicked
+[24Aug2025 23:11:25.635] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.spells.AIDeitySpells/]: Registered AI prayer spell for deity: eidolonunchained:nature_deity with chant: harmony, harmony, harmony
+[24Aug2025 23:11:25.635] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.spells.AIDeitySpells/]: Registered AI prayer spell for deity: eidolonunchained:light_deity with chant: sacred, sacred, sacred
+[24Aug2025 23:11:25.635] [Server thread/INFO] [com.bluelotuscoding.eidolonunchained.spells.AIDeitySpells/]: Successfully registered 3 AI deity prayer spells
+[24Aug2025 23:11:25.769] [Server thread/INFO] [net.minecraft.client.server.IntegratedServer/]: Changing view distance to 12, from 10
+[24Aug2025 23:11:25.771] [Server thread/INFO] [net.minecraft.client.server.IntegratedServer/]: Changing simulation distance to 12, from 0
+[24Aug2025 23:11:25.872] [Render thread/WARN] [io.netty.util.internal.SystemPropertyUtil/]: Unable to parse the boolean system property 'java.net.preferIPv6Addresses':system - using the default value: false
+[24Aug2025 23:11:26.245] [Netty Local Client IO #0/ERROR] [net.minecraft.network.Connection/]: Received class net.minecraft.network.protocol.game.ClientboundDisconnectPacket that couldn't be processed
+java.lang.ClassCastException: class net.minecraft.client.multiplayer.ClientHandshakePacketListenerImpl cannot be cast to class net.minecraft.network.protocol.game.ClientGamePacketListener (net.minecraft.client.multiplayer.ClientHandshakePacketListenerImpl and net.minecraft.network.protocol.game.ClientGamePacketListener are in module minecraft@1.20.1 of loader 'TRANSFORMER' @345cbf40)
 	at net.minecraft.network.protocol.game.ClientboundDisconnectPacket.handle(ClientboundDisconnectPacket.java:7) ~[forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar%23191!/:?]
 	at net.minecraft.network.Connection.genericsFtw(Connection.java:174) ~[forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar%23191!/:?]
 	at net.minecraft.network.Connection.channelRead0(Connection.java:159) ~[forge-1.20.1-47.1.0_mapped_official_1.20.1-recomp.jar%23191!/:?]

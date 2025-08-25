@@ -49,14 +49,22 @@ public class DeitySyncPacket {
     public static void handle(DeitySyncPacket packet, Supplier<NetworkEvent.Context> context) {
         NetworkEvent.Context ctx = context.get();
         ctx.enqueueWork(() -> {
-            // Only handle on client side
-            if (ctx.getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
-                // Store deity data for client-side use
-                // This ensures the client has the same deity information as the server
-                packet.deityData.forEach((id, name) -> {
-                    // Client-side deity registry update would go here
-                    // For now, we're just ensuring the packet is handled properly
-                });
+            try {
+                // Only handle on client side and ensure we're in the correct phase
+                if (ctx.getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
+                    // Verify we're actually in the play phase, not login phase
+                    if (ctx.getSender() == null) { // Client side
+                        // Store deity data for client-side use
+                        // This ensures the client has the same deity information as the server
+                        packet.deityData.forEach((id, name) -> {
+                            // Client-side deity registry update would go here
+                            // For now, we're just ensuring the packet is handled properly
+                        });
+                    }
+                }
+            } catch (Exception e) {
+                // Log but don't crash - prevents login issues
+                System.err.println("Error handling DeitySyncPacket: " + e.getMessage());
             }
         });
         ctx.setPacketHandled(true);
