@@ -136,10 +136,11 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
                 // Create spell for this chant
                 DatapackChantSpell spell = new DatapackChantSpell(chant.getId(), chant, signs);
                 
-                // Register the spell with Eidolon
-                // TODO: Implement spell registration with Eidolon's system
+                // Register the spell with Eidolon's spell system
+                elucent.eidolon.registries.Spells.register(spell);
                 
-                LOGGER.debug("Registered chant spell: {}", chant.getId());
+                LOGGER.info("Successfully registered chant spell: {} with signs: {}", 
+                    chant.getId(), chant.getSignSequence());
             } catch (Exception e) {
                 LOGGER.error("Failed to register chant {}: {}", chant.getId(), e.getMessage());
             }

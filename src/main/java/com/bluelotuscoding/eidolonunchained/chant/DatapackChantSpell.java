@@ -71,11 +71,13 @@ public class DatapackChantSpell extends PrayerSpell {
                 var aiDeityManager = com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance();
                 var deityChat = com.bluelotuscoding.eidolonunchained.chat.DeityChat.class;
                 
-                // Check if effigy setup is required
+                // Check if effigy setup is available (recommended but not required for chants)
                 var effigy = getEffigy(world, pos);
                 if (effigy == null) {
-                    serverPlayer.sendSystemMessage(Component.literal("§cNo effigy found nearby for deity communication"));
-                    return;
+                    serverPlayer.sendSystemMessage(Component.literal("§eNo effigy found nearby - deity communication may be weaker"));
+                    LOGGER.warn("Chant {} performed without nearby effigy at {}", chantData.getId(), pos);
+                } else {
+                    LOGGER.info("Chant {} performed near effigy at {}", chantData.getId(), effigy.getBlockPos());
                 }
                 
                 // Execute chant effects first
