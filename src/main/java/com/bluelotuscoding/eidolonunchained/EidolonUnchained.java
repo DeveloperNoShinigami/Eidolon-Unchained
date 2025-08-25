@@ -106,13 +106,12 @@ public class EidolonUnchained
             LOGGER.info("Calling attemptIntegrationIfNeeded...");
             com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration.attemptIntegrationIfNeeded();
             LOGGER.info("Integration call completed successfully");
-            
-            LOGGER.info("Initializing chant system integration...");
-            com.bluelotuscoding.eidolonunchained.integration.CodexChantIntegration.registerChants();
-            LOGGER.info("Chant system integration completed");
         } catch (Exception e) {
             LOGGER.error("Failed to integrate with Eidolon codex system", e);
         }
+        
+        // Chant integration is handled by the datapack reload system, not here
+        // This prevents early initialization issues that can cause networking problems
         LOGGER.info("Server starting event completed");
     }
     

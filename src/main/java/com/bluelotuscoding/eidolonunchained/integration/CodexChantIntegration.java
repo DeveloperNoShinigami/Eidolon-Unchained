@@ -29,33 +29,56 @@ public class CodexChantIntegration {
      * Called after datapacks load to register chants in the codex
      */
     public static void registerChants() {
-        Map<String, DatapackChant> chants = DatapackChantManager.getAllChants();
-        
-        // Group chants by category based on configuration
-        Map<String, List<DatapackChant>> chantsByCategory = new HashMap<>();
-        
-        for (DatapackChant chant : chants.values()) {
-            if (chant.shouldShowInCodex()) {
-                String categoryToUse;
-                
-                if (EidolonUnchainedConfig.COMMON.useIndividualCategories.get()) {
-                    // Use individual category from chant JSON
-                    categoryToUse = chant.getCategory();
-                } else {
-                    // Use default category from config
-                    categoryToUse = EidolonUnchainedConfig.COMMON.chantCodexCategory.get();
-                }
-                
-                chantsByCategory.computeIfAbsent(categoryToUse, k -> new ArrayList<>()).add(chant);
-            }
-        }
-        
-        // Create codex entries for each category
-        for (Map.Entry<String, List<DatapackChant>> entry : chantsByCategory.entrySet()) {
-            String categoryName = entry.getKey();
-            List<DatapackChant> categoryChants = entry.getValue();
+        try {
+            Map<String, DatapackChant> chants = DatapackChantManager.getAllChants();
             
-            createCodexCategory(categoryName, categoryChants);
+            if (chants.isEmpty()) {
+                com.mojang.logging.LogUtils.getLogger().info("No chants loaded, skipping codex integration");
+                return;
+            }
+            
+            com.mojang.logging.LogUtils.getLogger().info("Registering {} chants with codex", chants.size());
+            
+            // Group chants by category based on configuration
+            Map<String, List<DatapackChant>> chantsByCategory = new HashMap<>();
+            
+            for (DatapackChant chant : chants.values()) {
+                try {
+                    if (chant.shouldShowInCodex()) {
+                        String categoryToUse;
+                        
+                        if (EidolonUnchainedConfig.COMMON.useIndividualCategories.get()) {
+                            // Use individual category from chant JSON
+                            categoryToUse = chant.getCategory();
+                        } else {
+                            // Use default category from config
+                            categoryToUse = EidolonUnchainedConfig.COMMON.chantCodexCategory.get();
+                        }
+                        
+                        chantsByCategory.computeIfAbsent(categoryToUse, k -> new ArrayList<>()).add(chant);
+                    }
+                } catch (Exception e) {
+                    com.mojang.logging.LogUtils.getLogger().error("Failed to process chant {}: {}", chant.getId(), e.getMessage());
+                }
+            }
+            
+            // Create codex entries for each category
+            for (Map.Entry<String, List<DatapackChant>> entry : chantsByCategory.entrySet()) {
+                String categoryName = entry.getKey();
+                List<DatapackChant> categoryChants = entry.getValue();
+                
+                try {
+                    createCodexCategory(categoryName, categoryChants);
+                    com.mojang.logging.LogUtils.getLogger().debug("Created codex category '{}' with {} chants", categoryName, categoryChants.size());
+                } catch (Exception e) {
+                    com.mojang.logging.LogUtils.getLogger().error("Failed to create codex category '{}': {}", categoryName, e.getMessage());
+                }
+            }
+            
+            com.mojang.logging.LogUtils.getLogger().info("Chant codex integration completed successfully");
+            
+        } catch (Exception e) {
+            com.mojang.logging.LogUtils.getLogger().error("Failed during chant codex integration: {}", e.getMessage());
         }
     }
     
@@ -111,16 +134,25 @@ public class CodexChantIntegration {
         // Use the sanitized ID path instead of display name for ResourceLocations
         String chantId = chant.getId().getPath(); // This comes from the file name, already valid
         ResourceLocation chantLocation = new ResourceLocation("eidolonunchained", chantId);
-        DatapackChantSpell spell = DatapackChantManager.getSpellForChant(chantLocation);
         
         List<Page> pages = new ArrayList<>();
         
         // Add title page - use sanitized chant ID for translation keys
         pages.add(new TitlePage("eidolonunchained.codex.page." + chantId));
         
-        // Add chant page showing the sign sequence
-        if (spell != null) {
-            pages.add(new CustomChantPage("eidolonunchained.codex.page." + chantId + ".chant", chant, spell));
+        // Try to get spell for chant page, but don't fail if it doesn't exist
+        try {
+            DatapackChantSpell spell = DatapackChantManager.getSpellForChant(chantLocation);
+            if (spell != null) {
+                pages.add(new CustomChantPage("eidolonunchained.codex.page." + chantId + ".chant", chant, spell));
+            } else {
+                // Add a text page if spell creation fails
+                pages.add(new TextPage("eidolonunchained.codex.page." + chantId + ".chant"));
+            }
+        } catch (Exception e) {
+            com.mojang.logging.LogUtils.getLogger().warn("Failed to create spell page for chant {}: {}", chantId, e.getMessage());
+            // Add a text page as fallback
+            pages.add(new TextPage("eidolonunchained.codex.page." + chantId + ".chant"));
         }
         
         // Add description page if there's extra lore
