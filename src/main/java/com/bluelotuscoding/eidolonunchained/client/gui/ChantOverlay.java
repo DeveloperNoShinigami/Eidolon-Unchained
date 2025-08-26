@@ -73,6 +73,8 @@ public class ChantOverlay implements IGuiOverlay {
      * Add a sign to the active chant with Eidolon's casting animation
      */
     public static void addSignToChant(Sign sign) {
+        System.out.println("DEBUG: addSignToChant called with sign: " + (sign != null ? sign.getRegistryName() : "null"));
+        
         if (sign == null) return;
         
         Minecraft mc = Minecraft.getInstance();
@@ -82,8 +84,11 @@ public class ChantOverlay implements IGuiOverlay {
         long currentTime = System.currentTimeMillis();
         ResourceLocation signId = sign.getRegistryName();
         if (signId != null && signId.equals(lastSignId) && (currentTime - lastSignAddTime) < 100) {
+            System.out.println("DEBUG: Skipping duplicate sign addition");
             return; // Skip duplicate
         }
+        
+        System.out.println("DEBUG: Setting isActive to true, current activeChant size: " + activeChant.size());
         
         // Activate the overlay if not already active
         if (!isActive) {
@@ -97,6 +102,8 @@ public class ChantOverlay implements IGuiOverlay {
         lastSignAddTime = currentTime;
         lastSignId = signId;
         autoCompleteTriggered = false;
+        
+        System.out.println("DEBUG: Added sign, new activeChant size: " + activeChant.size() + ", isActive: " + isActive);
         
         // Add floating sign data for custom animation (immediate)
         float angle = (activeChant.size() - 1) * (360.0f / Math.max(1, activeChant.size()));
@@ -195,10 +202,14 @@ public class ChantOverlay implements IGuiOverlay {
     
     @Override
     public void render(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
+        System.out.println("DEBUG: render() called, isActive: " + isActive + ", activeChant.size(): " + activeChant.size());
+        
         if (!isActive || activeChant.isEmpty()) return;
         
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
+        
+        System.out.println("DEBUG: About to render chant UI");
         
         // Check for auto-completion
         int autoCompleteDelayMs = EidolonUnchainedConfig.COMMON.chantAutoCompleteDelay.get() * 50; // Convert to milliseconds
