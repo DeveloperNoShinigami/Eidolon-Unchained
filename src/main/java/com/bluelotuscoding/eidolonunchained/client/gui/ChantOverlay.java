@@ -43,8 +43,7 @@ public class ChantOverlay implements IGuiOverlay {
     private static boolean autoCompleteTriggered = false;
     private static ChantCasterEntity activeEntity = null;
     
-    // Configuration
-    private static final int AUTO_COMPLETE_DELAY_MS = EidolonUnchainedConfig.COMMON.chantAutoCompleteDelay.get() * 50; // Convert to milliseconds
+    // Configuration - accessed dynamically to avoid early config loading issues
     
     /**
      * Add a sign to the active chant with Eidolon's casting animation
@@ -138,7 +137,8 @@ public class ChantOverlay implements IGuiOverlay {
      * Trigger auto-completion after a delay
      */
     private static void triggerAutoComplete() {
-        if (!autoCompleteTriggered && AUTO_COMPLETE_DELAY_MS > 0) {
+        int autoCompleteDelayMs = EidolonUnchainedConfig.COMMON.chantAutoCompleteDelay.get() * 50; // Convert to milliseconds
+        if (!autoCompleteTriggered && autoCompleteDelayMs > 0) {
             autoCompleteTriggered = true;
             autoCompleteStartTime = System.currentTimeMillis();
         }
@@ -190,8 +190,9 @@ public class ChantOverlay implements IGuiOverlay {
         if (mc.player == null || mc.level == null) return;
         
         // Check for auto-completion
-        if (autoCompleteTriggered && AUTO_COMPLETE_DELAY_MS > 0 && 
-            (System.currentTimeMillis() - autoCompleteStartTime) >= AUTO_COMPLETE_DELAY_MS) {
+        int autoCompleteDelayMs = EidolonUnchainedConfig.COMMON.chantAutoCompleteDelay.get() * 50; // Convert to milliseconds
+        if (autoCompleteTriggered && autoCompleteDelayMs > 0 && 
+            (System.currentTimeMillis() - autoCompleteStartTime) >= autoCompleteDelayMs) {
             executeChant();
             return;
         }
@@ -213,9 +214,10 @@ public class ChantOverlay implements IGuiOverlay {
         guiGraphics.drawString(mc.font, chantInfo, infoX, infoY, 0xFFFFFF);
         
         // Show auto-complete progress if triggered
-        if (autoCompleteTriggered && AUTO_COMPLETE_DELAY_MS > 0) {
+        int autoCompleteDelayMs = EidolonUnchainedConfig.COMMON.chantAutoCompleteDelay.get() * 50; // Convert to milliseconds
+        if (autoCompleteTriggered && autoCompleteDelayMs > 0) {
             long elapsed = System.currentTimeMillis() - autoCompleteStartTime;
-            float progress = Math.min(1.0f, elapsed / (float)AUTO_COMPLETE_DELAY_MS);
+            float progress = Math.min(1.0f, elapsed / (float)autoCompleteDelayMs);
             
             // Progress bar
             int barWidth = 200;
