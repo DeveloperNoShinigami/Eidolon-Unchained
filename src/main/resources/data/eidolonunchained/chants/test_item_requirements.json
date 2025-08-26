@@ -1,0 +1,33 @@
+{
+  "name": "Test Chant with Item Requirements",
+  "description": "A test chant that requires specific items to cast, demonstrating the new requirement system.",
+  "category": "examples",
+  "codex_icon": "minecraft:diamond",
+  "difficulty": 2,
+  "show_in_codex": true,
+  "signs": [
+    "eidolon:sacred",
+    "eidolon:soul"
+  ],
+  "requirements": [
+    "item:minecraft:diamond:1",
+    "item:minecraft:golden_apple:2",
+    "has_item:minecraft:enchanted_book"
+  ],
+  "effects": [
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:regeneration",
+      "duration": 600,
+      "amplifier": 1
+    },
+    {
+      "type": "send_message",
+      "message": "§6The diamonds and golden apples were consumed by the ritual!"
+    },
+    {
+      "type": "run_command",
+      "command": "particle minecraft:happy_villager ~ ~1 ~ 1 1 1 0.1 20"
+    }
+  ]
+}

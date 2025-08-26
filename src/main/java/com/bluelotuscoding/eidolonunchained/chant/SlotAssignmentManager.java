@@ -2,6 +2,8 @@ package com.bluelotuscoding.eidolonunchained.chant;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.config.ChantCastingConfig;
+import com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket;
+import com.bluelotuscoding.eidolonunchained.network.EidolonUnchainedNetworking;
 import com.mojang.logging.LogUtils;
 import elucent.eidolon.api.spells.Sign;
 import elucent.eidolon.registries.Signs;
@@ -201,12 +203,15 @@ public class SlotAssignmentManager {
             player.sendSystemMessage(Component.literal("§cSign no longer exists: " + assignment.id));
             return false;
         }
+
+        player.sendSystemMessage(Component.literal("§6Opening chant interface with sign: " + assignment.displayName));
         
-        player.sendSystemMessage(Component.literal("§6Casting sign: " + assignment.displayName));
+        // Send packet to client to open chant interface and add the sign
+        // This mimics clicking a sign in the codex
+        ChantSignTriggerPacket packet = new ChantSignTriggerPacket(assignment.id);
+        EidolonUnchainedNetworking.INSTANCE.sendTo(packet, player.connection.connection, net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT);
         
-        // TODO: Integrate with Eidolon's sign casting system
-        // This would involve creating a SignSequence and triggering the sign
-        LOGGER.info("Player {} cast sign {} from slot", player.getName().getString(), assignment.id);
+        LOGGER.info("Player {} triggered chant interface with sign {} from slot", player.getName().getString(), assignment.id);
         
         return true;
     }
@@ -215,6 +220,13 @@ public class SlotAssignmentManager {
         DatapackChant chant = DatapackChantManager.getChant(assignment.id);
         if (chant == null) {
             player.sendSystemMessage(Component.literal("§cChant no longer exists: " + assignment.id));
+            return false;
+        }
+        
+        // Check requirements before casting
+        if (!chant.canPerform(player)) {
+            player.sendSystemMessage(Component.literal("§cYou don't meet the requirements to cast this chant."));
+            player.sendSystemMessage(Component.literal("§7Requirements: " + String.join(", ", chant.getRequirements())));
             return false;
         }
         

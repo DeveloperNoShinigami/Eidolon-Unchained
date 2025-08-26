@@ -14,7 +14,9 @@
     "eidolon:sacred"
   ],
   "requirements": [
-    "reputation:eidolonunchained:light_deity:40"
+    "reputation:eidolonunchained:light_deity:40",
+    "item:minecraft:golden_sword:1",
+    "has_item:minecraft:diamond"
   ],
   "effects": [
     {

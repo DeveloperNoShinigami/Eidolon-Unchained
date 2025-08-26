@@ -62,7 +62,127 @@ public class DatapackChant {
      * Check if player meets requirements to perform this chant
      */
     public boolean canPerform(net.minecraft.server.level.ServerPlayer player) {
-        // TODO: Implement requirement checking (reputation, items, etc.)
+        for (String requirement : requirements) {
+            if (!checkRequirement(player, requirement)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Check a specific requirement for the player
+     */
+    private boolean checkRequirement(net.minecraft.server.level.ServerPlayer player, String requirement) {
+        if (requirement.startsWith("reputation:")) {
+            // Format: "reputation:deity_id:min_amount"
+            String[] parts = requirement.split(":");
+            if (parts.length >= 3) {
+                try {
+                    net.minecraft.resources.ResourceLocation deityId = new net.minecraft.resources.ResourceLocation(parts[1]);
+                    double minReputation = Double.parseDouble(parts[2]);
+                    
+                    // Get player's reputation with this deity using Eidolon's reputation system
+                    elucent.eidolon.capability.IReputation reputationCap = player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE).orElse(null);
+                    if (reputationCap != null) {
+                        double currentRep = reputationCap.getReputation(player.getUUID(), deityId);
+                        return currentRep >= minReputation;
+                    }
+                } catch (Exception e) {
+                    System.err.println("Invalid reputation requirement: " + requirement);
+                }
+            }
+            return false;
+        } else if (requirement.startsWith("item:")) {
+            // Format: "item:minecraft:diamond:count" or "item:minecraft:diamond:count:nbt"
+            String[] parts = requirement.split(":", 4);
+            if (parts.length >= 3) {
+                try {
+                    net.minecraft.resources.ResourceLocation itemId = new net.minecraft.resources.ResourceLocation(parts[1]);
+                    int requiredCount = Integer.parseInt(parts[2]);
+                    String nbtData = parts.length >= 4 ? parts[3] : null;
+                    
+                    return hasRequiredItem(player, itemId, requiredCount, nbtData);
+                } catch (Exception e) {
+                    System.err.println("Invalid item requirement: " + requirement);
+                }
+            }
+            return false;
+        } else if (requirement.startsWith("has_item:")) {
+            // Format: "has_item:minecraft:diamond" - just check if player has the item
+            String[] parts = requirement.split(":");
+            if (parts.length >= 2) {
+                try {
+                    net.minecraft.resources.ResourceLocation itemId = new net.minecraft.resources.ResourceLocation(parts[1]);
+                    return hasRequiredItem(player, itemId, 1, null);
+                } catch (Exception e) {
+                    System.err.println("Invalid has_item requirement: " + requirement);
+                }
+            }
+            return false;
+        }
+        
+        // Unknown requirement type - assume it passes (for backward compatibility)
+        System.err.println("Unknown requirement type: " + requirement);
+        return true;
+    }
+    
+    /**
+     * Check if player has required item with optional NBT matching
+     */
+    private boolean hasRequiredItem(net.minecraft.server.level.ServerPlayer player, net.minecraft.resources.ResourceLocation itemId, int requiredCount, String nbtData) {
+        net.minecraft.world.item.Item item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(itemId);
+        if (item == null) {
+            return false;
+        }
+        
+        int foundCount = 0;
+        
+        // Check player inventory
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            net.minecraft.world.item.ItemStack stack = player.getInventory().getItem(i);
+            if (stack.getItem() == item) {
+                // If NBT is required, check NBT match
+                if (nbtData != null && !nbtData.isEmpty()) {
+                    try {
+                        net.minecraft.nbt.CompoundTag requiredNbt = net.minecraft.nbt.TagParser.parseTag(nbtData);
+                        net.minecraft.nbt.CompoundTag stackNbt = stack.getTag();
+                        
+                        if (stackNbt == null || !nbtMatches(stackNbt, requiredNbt)) {
+                            continue; // Skip this stack if NBT doesn't match
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Invalid NBT data in requirement: " + nbtData);
+                        continue;
+                    }
+                }
+                
+                foundCount += stack.getCount();
+                if (foundCount >= requiredCount) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Check if stack NBT contains all required NBT data
+     */
+    private boolean nbtMatches(net.minecraft.nbt.CompoundTag stackNbt, net.minecraft.nbt.CompoundTag requiredNbt) {
+        for (String key : requiredNbt.getAllKeys()) {
+            if (!stackNbt.contains(key)) {
+                return false;
+            }
+            
+            net.minecraft.nbt.Tag stackValue = stackNbt.get(key);
+            net.minecraft.nbt.Tag requiredValue = requiredNbt.get(key);
+            
+            if (stackValue == null || !stackValue.equals(requiredValue)) {
+                return false;
+            }
+        }
         return true;
     }
     

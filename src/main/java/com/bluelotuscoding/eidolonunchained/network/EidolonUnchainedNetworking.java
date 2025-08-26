@@ -4,6 +4,7 @@ import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.keybind.ChantCastPacket;
 import com.bluelotuscoding.eidolonunchained.keybind.ChantSlotActivationPacket;
 import com.bluelotuscoding.eidolonunchained.keybind.ChantInterfacePacket;
+import com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
@@ -64,6 +65,15 @@ public class EidolonUnchainedNetworking {
                 ChantInterfacePacket::toBytes,
                 ChantInterfacePacket::new,
                 ChantInterfacePacket::handle
+            );
+            
+            // Register chant sign trigger packet
+            INSTANCE.registerMessage(
+                ++packetId,
+                ChantSignTriggerPacket.class,
+                ChantSignTriggerPacket::toBytes,
+                ChantSignTriggerPacket::new,
+                ChantSignTriggerPacket::handle
             );
             
             // Add more packets here as needed

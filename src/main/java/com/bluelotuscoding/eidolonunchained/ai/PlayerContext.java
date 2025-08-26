@@ -26,36 +26,6 @@ public class PlayerContext {
     public PlayerContext(ServerPlayer player, DatapackDeity deity) {
         this.playerName = player.getName().getString();
         this.reputation = deity.getPlayerReputation(player);
-        this.progressionLevel = deity.getProgressionLevel(player);
-        this.researchCount = deity.getResearchCount(player);
-        
-        // Initialize location and environmental context
-        this.biome = player.level().getBiome(player.blockPosition()).toString();
-        this.location = player.blockPosition().toString();
-        
-        // Initialize time context
-        long dayTime = player.level().getDayTime() % 24000;
-        if (dayTime < 6000) {
-            this.timeOfDay = "day";
-        } else if (dayTime < 12000) {
-            this.timeOfDay = "afternoon"; 
-        } else if (dayTime < 13000) {
-            this.timeOfDay = "dusk";
-        } else if (dayTime < 22000) {
-            this.timeOfDay = "night";
-        } else {
-            this.timeOfDay = "dawn";
-        }
-        
-        // Initialize weather context
-        if (player.level().isThundering()) {
-            this.weather = "thunder";
-        } else if (player.level().isRaining()) {
-            this.weather = "rain";
-        } else {
-            this.weather = "clear";
-        }
-        
         // Additional context can be added here
     }
 }
