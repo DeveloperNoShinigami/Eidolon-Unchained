@@ -1,8 +1,9 @@
 package com.bluelotuscoding.eidolonunchained.command;
 
-import com.bluelotuscoding.eidolonunchained.chant.ChantSlotManager;
+import com.bluelotuscoding.eidolonunchained.chant.SlotAssignmentManager;
 import com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager;
 import com.bluelotuscoding.eidolonunchained.chant.DatapackChant;
+import com.bluelotuscoding.eidolonunchained.config.ChantCastingConfig;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -17,14 +18,21 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.Collection;
 
 /**
- * Commands for managing flexible chant slot assignments.
- * Allows players to assign, clear, and view their chant configurations.
+ * Commands for managing flexible slot assignments.
+ * Supports both individual sign assignment and full chant assignment.
  */
 public class ChantSlotCommands {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("chant")
-            .then(Commands.literal("assign")
+            .then(Commands.literal("assign-sign")
+                .then(Commands.argument("slot", IntegerArgumentType.integer(1, 4))
+                    .then(Commands.argument("sign_id", ResourceLocationArgument.id())
+                        .executes(ChantSlotCommands::assignSign)
+                    )
+                )
+            )
+            .then(Commands.literal("assign-chant")
                 .then(Commands.argument("slot", IntegerArgumentType.integer(1, 4))
                     .then(Commands.argument("chant_id", ResourceLocationArgument.id())
                         .executes(ChantSlotCommands::assignChant)
@@ -33,13 +41,16 @@ public class ChantSlotCommands {
             )
             .then(Commands.literal("clear")
                 .then(Commands.argument("slot", IntegerArgumentType.integer(1, 4))
-                    .executes(ChantSlotCommands::clearChant)
+                    .executes(ChantSlotCommands::clearSlot)
                 )
             )
             .then(Commands.literal("list")
                 .executes(ChantSlotCommands::listAssignments)
             )
-            .then(Commands.literal("available")
+            .then(Commands.literal("available-signs")
+                .executes(ChantSlotCommands::listAvailableSigns)
+            )
+            .then(Commands.literal("available-chants")
                 .executes(ChantSlotCommands::listAvailableChants)
             )
             .then(Commands.literal("info")
@@ -47,7 +58,23 @@ public class ChantSlotCommands {
                     .executes(ChantSlotCommands::showChantInfo)
                 )
             )
+            .then(Commands.literal("mode")
+                .executes(ChantSlotCommands::showCurrentMode)
+            )
         );
+    }
+    
+    private static int assignSign(CommandContext<CommandSourceStack> context) {
+        if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+            context.getSource().sendFailure(Component.literal("This command can only be used by players"));
+            return 0;
+        }
+        
+        int slot = IntegerArgumentType.getInteger(context, "slot");
+        ResourceLocation signId = ResourceLocationArgument.getId(context, "sign_id");
+        
+        boolean success = SlotAssignmentManager.assignSignToSlot(player, slot, signId);
+        return success ? 1 : 0;
     }
     
     private static int assignChant(CommandContext<CommandSourceStack> context) {
@@ -59,18 +86,18 @@ public class ChantSlotCommands {
         int slot = IntegerArgumentType.getInteger(context, "slot");
         ResourceLocation chantId = ResourceLocationArgument.getId(context, "chant_id");
         
-        boolean success = ChantSlotManager.assignChantToSlot(player, slot, chantId);
+        boolean success = SlotAssignmentManager.assignChantToSlot(player, slot, chantId);
         return success ? 1 : 0;
     }
     
-    private static int clearChant(CommandContext<CommandSourceStack> context) {
+    private static int clearSlot(CommandContext<CommandSourceStack> context) {
         if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
             context.getSource().sendFailure(Component.literal("This command can only be used by players"));
             return 0;
         }
         
         int slot = IntegerArgumentType.getInteger(context, "slot");
-        boolean success = ChantSlotManager.clearChantSlot(player, slot);
+        boolean success = SlotAssignmentManager.clearSlot(player, slot);
         return success ? 1 : 0;
     }
     
@@ -80,10 +107,30 @@ public class ChantSlotCommands {
             return 0;
         }
         
-        String assignments = ChantSlotManager.getPlayerChantAssignments(player);
-        player.sendSystemMessage(Component.literal("§6=== Your Chant Assignments ==="));
-        player.sendSystemMessage(Component.literal("§7" + assignments));
+        player.sendSystemMessage(Component.literal("§6=== Your Slot Assignments ==="));
+        player.sendSystemMessage(Component.literal("§7Current mode: " + ChantCastingConfig.getCurrentMode()));
         
+        for (int i = 1; i <= 4; i++) {
+            SlotAssignmentManager.SlotAssignment assignment = SlotAssignmentManager.getSlotAssignment(player, i);
+            if (assignment != null) {
+                String typeDisplay = assignment.type == SlotAssignmentManager.SlotType.SIGN ? "Sign" : "Chant";
+                player.sendSystemMessage(Component.literal("§f• Slot " + i + ": " + typeDisplay + " - " + assignment.displayName));
+            } else {
+                player.sendSystemMessage(Component.literal("§7• Slot " + i + ": (empty)"));
+            }
+        }
+        
+        player.sendSystemMessage(Component.literal("§7Use /chant assign-sign or /chant assign-chant to configure slots"));
+        return 1;
+    }
+    
+    private static int listAvailableSigns(CommandContext<CommandSourceStack> context) {
+        if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+            context.getSource().sendFailure(Component.literal("This command can only be used by players"));
+            return 0;
+        }
+        
+        SlotAssignmentManager.listAvailableSigns(player);
         return 1;
     }
     
@@ -144,6 +191,37 @@ public class ChantSlotCommands {
         }
         
         player.sendSystemMessage(Component.literal("§7Difficulty: §f" + chant.getDifficulty() + "/5"));
+        
+        return 1;
+    }
+    
+    private static int showCurrentMode(CommandContext<CommandSourceStack> context) {
+        if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+            context.getSource().sendFailure(Component.literal("This command can only be used by players"));
+            return 0;
+        }
+        
+        ChantCastingConfig.CastingMode mode = ChantCastingConfig.getCurrentMode();
+        player.sendSystemMessage(Component.literal("§6=== Current Casting Mode ==="));
+        player.sendSystemMessage(Component.literal("§7Mode: §f" + mode));
+        
+        switch (mode) {
+            case INDIVIDUAL_SIGNS -> {
+                player.sendSystemMessage(Component.literal("§7Description: Cast individual signs assigned to keybinds"));
+                player.sendSystemMessage(Component.literal("§7Usage: Assign signs to slots, press keys to cast signs"));
+                player.sendSystemMessage(Component.literal("§7Example: /chant assign-sign 1 eidolon:wicked"));
+            }
+            case FULL_CHANT -> {
+                player.sendSystemMessage(Component.literal("§7Description: Cast full chant sequences with one key"));
+                player.sendSystemMessage(Component.literal("§7Usage: Assign chants to slots, press keys to cast full sequence"));
+                player.sendSystemMessage(Component.literal("§7Example: /chant assign-chant 1 eidolonunchained:shadow_communion"));
+            }
+            case HYBRID -> {
+                player.sendSystemMessage(Component.literal("§7Description: Support both individual signs and full chants"));
+                player.sendSystemMessage(Component.literal("§7Usage: Assign either signs or chants to different slots"));
+                player.sendSystemMessage(Component.literal("§7Mixed example: Signs in slots 1-2, chants in slots 3-4"));
+            }
+        }
         
         return 1;
     }

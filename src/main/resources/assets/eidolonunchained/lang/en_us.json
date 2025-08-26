@@ -101,10 +101,10 @@
   
   "_comment_keybinds": "Keybind translations",
   "key.categories.eidolonunchained": "Eidolon Unchained",
-  "key.eidolonunchained.chant_slot_1": "Chant Slot 1",
-  "key.eidolonunchained.chant_slot_2": "Chant Slot 2", 
-  "key.eidolonunchained.chant_slot_3": "Chant Slot 3",
-  "key.eidolonunchained.chant_slot_4": "Chant Slot 4",
+  "key.eidolonunchained.chant_slot_1": "Sign/Chant Slot 1",
+  "key.eidolonunchained.chant_slot_2": "Sign/Chant Slot 2", 
+  "key.eidolonunchained.chant_slot_3": "Sign/Chant Slot 3",
+  "key.eidolonunchained.chant_slot_4": "Sign/Chant Slot 4",
   "key.eidolonunchained.open_chant_interface": "Open Chant Interface",
   
   "_comment_ai_deity_chants": "AI Deity Chant Chapter",

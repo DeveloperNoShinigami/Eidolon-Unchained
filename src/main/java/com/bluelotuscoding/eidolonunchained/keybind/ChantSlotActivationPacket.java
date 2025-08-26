@@ -1,6 +1,6 @@
 package com.bluelotuscoding.eidolonunchained.keybind;
 
-import com.bluelotuscoding.eidolonunchained.chant.ChantSlotManager;
+import com.bluelotuscoding.eidolonunchained.chant.SlotAssignmentManager;
 import com.mojang.logging.LogUtils;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -45,13 +45,13 @@ public class ChantSlotActivationPacket {
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player != null) {
-                LOGGER.info("Processing chant slot activation for player: {} slot: {} mode: {}", 
+                LOGGER.info("Processing slot activation for player: {} slot: {} mode: {}", 
                            player.getName().getString(), slotNumber, castingMode);
                 
-                // Get the chant assigned to this slot and activate with the specified mode
-                boolean success = ChantSlotManager.activateChantSlot(player, slotNumber, castingMode);
+                // Get the assignment for this slot and activate with the specified mode
+                boolean success = SlotAssignmentManager.activateSlot(player, slotNumber, castingMode);
                 if (!success) {
-                    player.sendSystemMessage(Component.literal("§cNo chant assigned to slot " + slotNumber + ". Use /chant assign <slot> <chant_id> to configure."));
+                    player.sendSystemMessage(Component.literal("§cNo assignment in slot " + slotNumber + ". Use /chant assign-sign <slot> <sign> or /chant assign-chant <slot> <chant> to configure."));
                 }
             }
         });

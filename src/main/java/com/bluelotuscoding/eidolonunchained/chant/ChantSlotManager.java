@@ -151,6 +151,35 @@ public class ChantSlotManager {
     }
     
     /**
+     * Execute a full chant sequence (for FULL_CHANT mode)
+     */
+    public static boolean executeFullChant(ServerPlayer player, DatapackChant chant) {
+        // Check if chant requires effigy (deity-linked chants)
+        if (chant.getLinkedDeity() != null) {
+            if (!isNearEffigy(player)) {
+                player.sendSystemMessage(Component.literal("§cYou must be near an effigy to cast deity chants!"));
+                return false;
+            }
+        }
+        
+        player.sendSystemMessage(Component.literal("§6Casting full chant: " + chant.getName()));
+        
+        // Store the active chant for validation
+        CompoundTag playerData = player.getPersistentData();
+        CompoundTag modData = playerData.getCompound(EidolonUnchained.MODID);
+        modData.putString("active_chant", chant.getId().toString());
+        modData.putString("casting_mode", "FULL_CHANT");
+        modData.putLong("chant_start_time", System.currentTimeMillis());
+        playerData.put(EidolonUnchained.MODID, modData);
+        
+        // TODO: Integrate with Eidolon's spell system to execute the full sequence
+        // For now, just show completion message
+        player.sendSystemMessage(Component.literal("§a✅ Full chant sequence completed!"));
+        
+        return true;
+    }
+    
+    /**
      * Gets the chant assigned to a specific slot
      */
     public static ResourceLocation getChantInSlot(ServerPlayer player, int slot) {

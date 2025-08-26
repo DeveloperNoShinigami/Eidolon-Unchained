@@ -10,16 +10,16 @@ public class ChantCastingConfig {
      */
     public enum CastingMode {
         /**
-         * Cast the entire chant sequence with one key press (default)
+         * Cast signs one by one like in the codex interface (default)
+         * User presses G/H/J/K to cast individual signs assigned to those keys
+         */
+        INDIVIDUAL_SIGNS,
+        
+        /**
+         * Cast the entire chant sequence with one key press
          * User presses G/H/J/K and the full chant is executed instantly
          */
         FULL_CHANT,
-        
-        /**
-         * Cast signs one by one like in the codex interface
-         * User presses G/H/J/K repeatedly to advance through each sign
-         */
-        INDIVIDUAL_SIGNS,
         
         /**
          * Support both approaches - hold key for full chant, tap for individual signs
@@ -37,7 +37,7 @@ public class ChantCastingConfig {
             return CastingMode.valueOf(modeStr.toUpperCase());
         } catch (IllegalArgumentException e) {
             // Fallback to default if config is invalid
-            return CastingMode.FULL_CHANT;
+            return CastingMode.INDIVIDUAL_SIGNS;
         }
     }
     
