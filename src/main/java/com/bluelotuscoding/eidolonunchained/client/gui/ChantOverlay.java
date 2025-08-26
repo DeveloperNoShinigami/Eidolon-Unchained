@@ -52,25 +52,7 @@ public class ChantOverlay implements IGuiOverlay {
     private static long executionCompleteTime = 0;
     private static ResourceLocation lastSignId = null; // Prevent duplicate additions
     
-    // Custom floating sign animation state (replacing ChantCasterEntity)
-    private static final List<FloatingSignData> floatingSignsData = new ArrayList<>();
-    
     // Configuration - accessed dynamically to avoid early config loading issues
-    
-    // Custom floating sign data for our controlled animation
-    private static class FloatingSignData {
-        public final Sign sign;
-        public final long spawnTime;
-        public final float angle;
-        public final float radius;
-        
-        public FloatingSignData(Sign sign, long spawnTime, float angle, float radius) {
-            this.sign = sign;
-            this.spawnTime = spawnTime;
-            this.angle = angle;
-            this.radius = radius;
-        }
-    }
     
     /**
      * Add a sign to the active chant with Eidolon's casting animation
@@ -92,7 +74,6 @@ public class ChantOverlay implements IGuiOverlay {
         if (!isActive) {
             isActive = true;
             activeChant.clear();
-            floatingSignsData.clear();
         }
         
         // Add the sign
@@ -100,10 +81,6 @@ public class ChantOverlay implements IGuiOverlay {
         lastSignAddTime = currentTime;
         lastSignId = signId;
         autoCompleteTriggered = false;
-        
-        // Add floating sign data for custom animation (immediate)
-        float angle = (activeChant.size() - 1) * (360.0f / Math.max(1, activeChant.size()));
-        floatingSignsData.add(new FloatingSignData(sign, currentTime, angle, 1.5f));
         
         // Play Eidolon's SELECT_RUNE sound (like selecting in codex)
         if (mc.player != null) {
@@ -150,7 +127,6 @@ public class ChantOverlay implements IGuiOverlay {
      */
     public static void clearChant() {
         activeChant.clear();
-        floatingSignsData.clear();
         isActive = false;
         autoCompleteTriggered = false;
         executionCompleted = false;
@@ -230,7 +206,6 @@ public class ChantOverlay implements IGuiOverlay {
         if (timeSinceLastSign > 10000 && !autoCompleteTriggered) { // Don't timeout during auto-completion
             isActive = false;
             activeChant.clear();
-            floatingSignsData.clear();
             return;
         }
         
@@ -359,73 +334,5 @@ public class ChantOverlay implements IGuiOverlay {
      */
     public static List<Sign> getActiveChant() {
         return new ArrayList<>(activeChant);
-    }
-    
-    /**
-     * Render floating signs in 3D world space (called from ClientEvents)
-     */
-    public static void renderFloatingSignsIn3D(GuiGraphics guiGraphics, float partialTicks) {
-        if (!isActive || floatingSignsData.isEmpty()) return;
-        
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
-        
-        // Get camera position for proper positioning
-        Vec3 cameraPos = mc.gameRenderer.getMainCamera().getPosition();
-        Vec3 playerPos = mc.player.position();
-        
-        // Render each floating sign
-        RenderSystem.enableBlend();
-        RenderSystem.setShader(ClientRegistry::getGlowingSpriteShader);
-        RenderSystem.setShaderTexture(0, InventoryMenu.BLOCK_ATLAS);
-        
-        MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
-        
-        for (int i = 0; i < floatingSignsData.size(); i++) {
-            FloatingSignData signData = floatingSignsData.get(i);
-            
-            // Calculate animation progress (signs float up and orbit)
-            long currentTime = System.currentTimeMillis();
-            float ageInSeconds = (currentTime - signData.spawnTime) / 1000.0f;
-            
-            // Remove old signs after 8 seconds
-            if (ageInSeconds > 8.0f) {
-                floatingSignsData.remove(i);
-                i--;
-                continue;
-            }
-            
-            // Calculate position relative to player
-            float orbitRadius = signData.radius + ageInSeconds * 0.2f; // Slowly expand
-            float height = 1.5f + ageInSeconds * 0.3f; // Float upward
-            float angle = signData.angle + ageInSeconds * 30.0f; // Slow rotation
-            
-            float x = (float)(playerPos.x + Math.cos(Math.toRadians(angle)) * orbitRadius);
-            float y = (float)(playerPos.y + height);
-            float z = (float)(playerPos.z + Math.sin(Math.toRadians(angle)) * orbitRadius);
-            
-            // Calculate screen position from world position
-            // This is a simplified approach - for proper 3D rendering we'd need WorldRenderEvent
-            float alpha = Math.max(0, 1.0f - ageInSeconds / 8.0f); // Fade out over time
-            float glow = 0.8f + 0.2f * (float)Math.sin(ageInSeconds * 4.0f); // Pulsing effect
-            
-            // For now, just spawn particles at the calculated position
-            if (mc.level.random.nextFloat() < 0.3f) {
-                mc.level.addParticle(ParticleTypes.ENCHANT, x, y, z, 0, 0.05, 0);
-                
-                // Add sign-colored glow particles
-                Sign sign = signData.sign;
-                if (mc.level.random.nextFloat() < 0.1f) {
-                    // Convert sign colors to particle velocity for colored effect
-                    double velX = (sign.getRed() - 0.5) * 0.1;
-                    double velY = 0.1;
-                    double velZ = (sign.getBlue() - 0.5) * 0.1;
-                    mc.level.addParticle(ParticleTypes.GLOW, x, y, z, velX, velY, velZ);
-                }
-            }
-        }
-        
-        bufferSource.endBatch();
-        RenderSystem.defaultBlendFunc();
     }
 }

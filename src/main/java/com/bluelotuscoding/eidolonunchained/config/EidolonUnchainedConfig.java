@@ -55,6 +55,8 @@ public class EidolonUnchainedConfig {
         public final ForgeConfigSpec.IntValue individualSignTimeoutMs;
         public final ForgeConfigSpec.BooleanValue enableChantFeedback;
         public final ForgeConfigSpec.IntValue chantAutoCompleteDelay;
+        public final ForgeConfigSpec.IntValue defaultManaCost;
+        public final ForgeConfigSpec.BooleanValue enableManaCosts;
         
         // ===========================================
         // DEITY INTERACTION CONFIGURATION
@@ -214,6 +216,14 @@ public class EidolonUnchainedConfig {
                          "How long to wait before automatically casting a completed chant sequence",
                          "Set to 0 to disable auto-completion")
                 .defineInRange("chant_auto_complete_delay", 20, 0, 100);
+            
+            enableManaCosts = builder
+                .comment("Enable mana costs for chants (uses Eidolon's soul energy system)")
+                .define("enable_mana_costs", true);
+            
+            defaultManaCost = builder
+                .comment("Default mana cost for chants that don't specify a cost")
+                .defineInRange("default_mana_cost", 10, 0, 100);
             
             builder.pop();
             

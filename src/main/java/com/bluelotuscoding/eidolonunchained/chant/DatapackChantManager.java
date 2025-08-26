@@ -7,10 +7,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonElement;
 import com.mojang.logging.LogUtils;
 import elucent.eidolon.api.spells.Sign;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fml.common.Mod;
 import org.slf4j.Logger;
 
@@ -246,14 +248,43 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
             return false;
         }
         
+        // Check cooldown
+        if (!ChantCooldownManager.canCastChant(player)) {
+            int remainingSeconds = ChantCooldownManager.getRemainingCooldown(player);
+            player.sendSystemMessage(Component.literal("§cChant is on cooldown for " + remainingSeconds + " more seconds"));
+            return false;
+        }
+        
+        // Check mana cost (if enabled in config)
+        int manaCost = chant.getManaCost();
+        if (com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.enableManaCosts.get() && manaCost > 0) {
+            LazyOptional<elucent.eidolon.capability.ISoul> soulCap = player.getCapability(elucent.eidolon.capability.ISoul.INSTANCE);
+            if (soulCap.isPresent()) {
+                elucent.eidolon.capability.ISoul soul = soulCap.orElse(null);
+                if (soul != null && soul.getMagic() < manaCost) {
+                    player.sendSystemMessage(Component.literal("§cNot enough mana! Required: " + manaCost + ", Available: " + (int)soul.getMagic()));
+                    return false;
+                }
+            }
+        }
+        
         if (!chant.canPerform(player)) {
             LOGGER.debug("Player {} cannot perform chant {}", player.getName().getString(), chantId);
             return false;
         }
         
         try {
+            // Deduct mana cost before execution (if enabled)
+            if (com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.enableManaCosts.get() && manaCost > 0) {
+                elucent.eidolon.capability.ISoul.expendMana(player, manaCost);
+            }
+            
+            // Set cooldown
+            ChantCooldownManager.setCooldown(player);
+            
             chant.execute(player);
-            LOGGER.debug("Player {} successfully performed chant {}", player.getName().getString(), chantId);
+            LOGGER.debug("Player {} successfully performed chant {} (cost: {} mana)", 
+                        player.getName().getString(), chantId, manaCost);
             return true;
         } catch (Exception e) {
             LOGGER.error("Failed to execute chant {} for player {}: {}", 
