@@ -7,6 +7,7 @@ import elucent.eidolon.api.spells.SignSequence;
 import elucent.eidolon.common.entity.ChantCasterEntity;
 import elucent.eidolon.network.AttemptCastPacket;
 import elucent.eidolon.network.Networking;
+import elucent.eidolon.registries.EidolonSounds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -14,6 +15,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -69,10 +71,11 @@ public class ChantOverlay implements IGuiOverlay {
         // Create or update the ChantCasterEntity
         updateChantCasterEntity();
         
-        // Play sound effect
-        mc.getSoundManager().play(
-            SimpleSoundInstance.forUI(SoundEvents.EXPERIENCE_ORB_PICKUP, 1.2f + 0.1f * activeChant.size())
-        );
+        // Play Eidolon's SELECT_RUNE sound (like selecting in codex)
+        if (mc.player != null) {
+            mc.player.playNotifySound(EidolonSounds.SELECT_RUNE.get(), SoundSource.NEUTRAL, 
+                0.5f, mc.level.random.nextFloat() * 0.25f + 0.75f);
+        }
         
         // Spawn additional particles for extra effect
         spawnSignParticles(sign);
@@ -247,10 +250,10 @@ public class ChantOverlay implements IGuiOverlay {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         
-        // Play completion sound
-        mc.getSoundManager().play(
-            SimpleSoundInstance.forUI(SoundEvents.PLAYER_LEVELUP, 1.0f)
-        );
+        // Play completion sound (experience orb pickup as requested)
+        if (mc.player != null) {
+            mc.player.playNotifySound(SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.NEUTRAL, 1.0f, 1.0f);
+        }
         
         // Send AttemptCastPacket to server (this will handle the actual spell casting)
         AttemptCastPacket castPacket = new AttemptCastPacket(mc.player, new ArrayList<>(activeChant));
