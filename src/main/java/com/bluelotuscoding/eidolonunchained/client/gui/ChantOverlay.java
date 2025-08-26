@@ -2,20 +2,27 @@ package com.bluelotuscoding.eidolonunchained.client.gui;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import elucent.eidolon.api.spells.Sign;
 import elucent.eidolon.api.spells.SignSequence;
+import elucent.eidolon.client.ClientRegistry;
 import elucent.eidolon.common.entity.ChantCasterEntity;
 import elucent.eidolon.network.AttemptCastPacket;
 import elucent.eidolon.network.Networking;
 import elucent.eidolon.registries.EidolonSounds;
+import elucent.eidolon.util.RenderUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -44,6 +51,7 @@ public class ChantOverlay implements IGuiOverlay {
     private static long autoCompleteStartTime = 0;
     private static boolean autoCompleteTriggered = false;
     private static ChantCasterEntity activeEntity = null;
+    private static ResourceLocation lastSignId = null; // Prevent duplicate additions
     
     // Configuration - accessed dynamically to avoid early config loading issues
     
@@ -56,6 +64,13 @@ public class ChantOverlay implements IGuiOverlay {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         
+        // Prevent duplicate additions within 100ms
+        long currentTime = System.currentTimeMillis();
+        ResourceLocation signId = sign.getRegistryName();
+        if (signId != null && signId.equals(lastSignId) && (currentTime - lastSignAddTime) < 100) {
+            return; // Skip duplicate
+        }
+        
         // Activate the overlay if not already active
         if (!isActive) {
             isActive = true;
@@ -65,10 +80,11 @@ public class ChantOverlay implements IGuiOverlay {
         
         // Add the sign
         activeChant.add(sign);
-        lastSignAddTime = System.currentTimeMillis();
+        lastSignAddTime = currentTime;
+        lastSignId = signId;
         autoCompleteTriggered = false;
         
-        // Create or update the ChantCasterEntity
+        // Create or update the ChantCasterEntity IMMEDIATELY
         updateChantCasterEntity();
         
         // Play Eidolon's SELECT_RUNE sound (like selecting in codex)
@@ -92,6 +108,7 @@ public class ChantOverlay implements IGuiOverlay {
         isActive = false;
         autoCompleteTriggered = false;
         autoCompleteStartTime = 0;
+        lastSignId = null; // Reset duplicate prevention
         
         // Remove the ChantCasterEntity
         if (activeEntity != null && !activeEntity.isRemoved()) {
@@ -200,45 +217,83 @@ public class ChantOverlay implements IGuiOverlay {
             return;
         }
         
-        // Render simple UI feedback (sign count and auto-complete progress)
-        renderChantInfo(guiGraphics, screenWidth, screenHeight);
+        // Render the red ribbon chant interface (like in codex)
+        renderChantRibbon(guiGraphics, screenWidth, screenHeight, partialTick);
     }
     
     /**
-     * Render minimal UI information about the active chant
+     * Render the red ribbon chant interface (adapted from Eidolon's CodexGui.renderChant)
      */
-    private void renderChantInfo(GuiGraphics guiGraphics, int screenWidth, int screenHeight) {
-        Minecraft mc = Minecraft.getInstance();
+    private void renderChantRibbon(GuiGraphics guiGraphics, int screenWidth, int screenHeight, float partialTicks) {
+        // Calculate chant display position (center bottom of screen)
+        int chantWidth = 32 + 24 * activeChant.size();
+        int baseX = screenWidth / 2 - chantWidth / 2;
+        int baseY = screenHeight - 80; // 80 pixels from bottom
         
-        // Show sign count
-        Component chantInfo = Component.literal("§6✨ Chant Active: §f" + activeChant.size() + " signs");
-        int infoX = screenWidth / 2 - mc.font.width(chantInfo) / 2;
-        int infoY = screenHeight - 60;
-        guiGraphics.drawString(mc.font, chantInfo, infoX, infoY, 0xFFFFFF);
+        RenderSystem.enableBlend();
+        RenderSystem.setShaderTexture(0, CODEX_TEXTURE);
         
-        // Show auto-complete progress if triggered
-        int autoCompleteDelayMs = EidolonUnchainedConfig.COMMON.chantAutoCompleteDelay.get() * 50; // Convert to milliseconds
-        if (autoCompleteTriggered && autoCompleteDelayMs > 0) {
-            long elapsed = System.currentTimeMillis() - autoCompleteStartTime;
-            float progress = Math.min(1.0f, elapsed / (float)autoCompleteDelayMs);
-            
-            // Progress bar
-            int barWidth = 200;
-            int barX = screenWidth / 2 - barWidth / 2;
-            int barY = screenHeight - 40;
-            
-            // Background
-            guiGraphics.fill(barX, barY, barX + barWidth, barY + 4, 0x80000000);
-            
-            // Fill
-            int fillWidth = (int)(barWidth * progress);
-            guiGraphics.fill(barX, barY, barX + fillWidth, barY + 4, 0xFF00FF00);
-            
-            // Progress text
-            Component progressText = Component.literal("§eCasting... " + (int)(progress * 100) + "%");
-            int textX = screenWidth / 2 - mc.font.width(progressText) / 2;
-            guiGraphics.drawString(mc.font, progressText, textX, barY - 12, 0xFFFFFF);
+        // Render background panels (red ribbon)
+        int bgx = baseX;
+        guiGraphics.blit(CODEX_TEXTURE, bgx, baseY, 256, 208, 16, 32, 512, 512);
+        bgx += 16;
+        
+        for (int i = 0; i < activeChant.size(); i++) {
+            guiGraphics.blit(CODEX_TEXTURE, bgx, baseY, 272, 208, 24, 32, 512, 512);
+            guiGraphics.blit(CODEX_TEXTURE, bgx, baseY, 312, 208, 24, 24, 512, 512);
+            bgx += 24;
         }
+        
+        guiGraphics.blit(CODEX_TEXTURE, bgx, baseY, 296, 208, 16, 32, 512, 512);
+        
+        // Render signs with glow effects
+        RenderSystem.enableBlend();
+        RenderSystem.setShader(ClientRegistry::getGlowingSpriteShader);
+        RenderSystem.setShaderTexture(0, InventoryMenu.BLOCK_ATLAS);
+        
+        bgx = baseX + 16;
+        MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
+        
+        for (int i = 0; i < activeChant.size(); i++) {
+            Sign sign = activeChant.get(i);
+            
+            // Calculate glow effect based on timing
+            float glow = 1.0f;
+            long timeSinceLastSign = System.currentTimeMillis() - lastSignAddTime;
+            if (i == activeChant.size() - 1 && timeSinceLastSign < 500) {
+                // Pulsing animation for newly added sign
+                float animProgress = timeSinceLastSign / 500.0f;
+                glow = 1.5f + 0.5f * (float)Math.sin(animProgress * Math.PI * 4);
+            } else {
+                // Normal flicker effect (from Eidolon's ClientEvents.getClientTicks())
+                int clientTicks = (int)(System.currentTimeMillis() / 50); // Approximate client ticks
+                float flicker = 0.75f + 0.25f * (float)Math.sin(Math.toRadians(12 * clientTicks - 360.0f * i / activeChant.size()));
+                glow = flicker;
+            }
+            
+            // Base rendering
+            RenderUtil.litQuad(guiGraphics.pose(), bufferSource, bgx + 4, baseY + 4, 16, 16,
+                sign.getRed(), sign.getGreen(), sign.getBlue(), 
+                Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(sign.getSprite()));
+            bufferSource.endBatch();
+            
+            // Render with glow
+            RenderUtil.litQuad(guiGraphics.pose(), bufferSource, bgx + 4, baseY + 4, 16, 16,
+                sign.getRed() * glow, sign.getGreen() * glow, sign.getBlue() * glow, 
+                Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(sign.getSprite()));
+            bufferSource.endBatch();
+            
+            bgx += 24;
+        }
+        
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.disableBlend();
+        
+        // Show simple text info above the ribbon
+        Component chantInfo = Component.literal("§6✨ Chanting... " + activeChant.size() + " signs");
+        int infoX = screenWidth / 2 - Minecraft.getInstance().font.width(chantInfo) / 2;
+        int infoY = baseY - 15;
+        guiGraphics.drawString(Minecraft.getInstance().font, chantInfo, infoX, infoY, 0xFFFFFF);
     }
     
     /**
