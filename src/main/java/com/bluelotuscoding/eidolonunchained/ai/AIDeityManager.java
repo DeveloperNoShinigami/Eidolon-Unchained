@@ -388,6 +388,10 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             config.apiKeyEnv = apiSettings.get("api_key_env").getAsString();
         }
         
+        if (apiSettings.has("model")) {
+            config.apiSettings.model = apiSettings.get("model").getAsString();
+        }
+        
         if (apiSettings.has("timeout_seconds")) {
             config.timeoutSeconds = apiSettings.get("timeout_seconds").getAsInt();
         }

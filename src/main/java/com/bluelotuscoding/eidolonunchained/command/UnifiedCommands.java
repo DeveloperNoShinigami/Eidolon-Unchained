@@ -41,6 +41,11 @@ public class UnifiedCommands {
                     .then(Commands.argument("provider", StringArgumentType.string())
                         .then(Commands.argument("key", StringArgumentType.string())
                             .executes(UnifiedCommands::setApiKey))))
+                .then(Commands.literal("set-model")
+                    .then(Commands.argument("model", StringArgumentType.string())
+                        .executes(UnifiedCommands::setAIModel)))
+                .then(Commands.literal("get-model")
+                    .executes(UnifiedCommands::getAIModel))
                 .then(Commands.literal("test")
                     .then(Commands.argument("provider", StringArgumentType.string())
                         .executes(UnifiedCommands::testApiKey)))
@@ -120,6 +125,7 @@ public class UnifiedCommands {
         // AI System
         status.append("§eAI Deities: ").append(EidolonUnchainedConfig.COMMON.enableAIDeities.get() ? "§aEnabled" : "§cDisabled").append("\n");
         status.append("§eAI Provider: ").append("§b").append(EidolonUnchainedConfig.COMMON.aiProvider.get()).append("\n");
+        status.append("§eAI Model: ").append("§b").append(EidolonUnchainedConfig.COMMON.geminiModel.get()).append("\n");
         
         // Chant System
         status.append("§eChant System: ").append(EidolonUnchainedConfig.COMMON.enableChantSystem.get() ? "§aEnabled" : "§cDisabled").append("\n");
@@ -341,6 +347,39 @@ public class UnifiedCommands {
         
         // Validate chants
         context.getSource().sendSuccess(() -> Component.literal("§aChant validation completed"), false);
+        
+        return 1;
+    }
+    
+    private static int setAIModel(CommandContext<CommandSourceStack> context) {
+        String model = StringArgumentType.getString(context, "model");
+        
+        try {
+            // Update the config value
+            EidolonUnchainedConfig.COMMON.geminiModel.set(model);
+            EidolonUnchainedConfig.COMMON_SPEC.save();
+            
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§aAI model set to: " + model), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§7Note: This will take effect for new AI interactions"), false);
+            
+            return 1;
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cFailed to set AI model: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    private static int getAIModel(CommandContext<CommandSourceStack> context) {
+        String currentModel = EidolonUnchainedConfig.COMMON.geminiModel.get();
+        
+        context.getSource().sendSuccess(() -> 
+            Component.literal("§6Current AI Model: §f" + currentModel), false);
+        context.getSource().sendSuccess(() -> 
+            Component.literal("§7Available models: gemini-1.5-flash, gemini-1.5-pro"), false);
+        context.getSource().sendSuccess(() -> 
+            Component.literal("§7Use /eidolon-unchained api set-model <model> to change"), false);
         
         return 1;
     }

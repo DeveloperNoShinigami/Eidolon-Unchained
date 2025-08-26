@@ -167,7 +167,7 @@ public class DeityChat {
             
             GeminiAPIClient client = new GeminiAPIClient(
                 apiKey,
-                aiConfig.apiSettings.model,
+                aiConfig.apiSettings.getModel(),
                 aiConfig.apiSettings.timeoutSeconds
             );
             

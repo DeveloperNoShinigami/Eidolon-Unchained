@@ -163,7 +163,7 @@ public class PrayerSystem {
         // Get API client
         GeminiAPIClient client = new GeminiAPIClient(
             System.getenv(aiConfig.apiSettings.apiKeyEnv),
-            aiConfig.apiSettings.model,
+            aiConfig.apiSettings.getModel(),
             aiConfig.apiSettings.timeoutSeconds
         );
         
