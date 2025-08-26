@@ -1,0 +1,7 @@
+{
+  "key": "example_chants",
+  "name": "eidolon.codex.category.example_chants",
+  "icon": "eidolon:soul_gem",
+  "color": "0x8A2BE2",
+  "description": "Example chant spells for communicating with deities"
+}

@@ -96,6 +96,9 @@ public class UnifiedCommands {
         
         dispatcher.register(Commands.literal("eidolon-config")
             .redirect(dispatcher.getRoot().getChild("eidolon-unchained").getChild("config")));
+        
+        // Register the new flexible chant slot commands
+        ChantSlotCommands.register(dispatcher);
     }
     
     // Configuration commands

@@ -2,7 +2,7 @@
   "id": "simple_research_example",
   "stars": 1,
   "triggers": [
-    "minecraft:crafting_table"
+    "minecraft:zombie"
   ],
   "tasks": {
     "0": [

@@ -1,6 +1,9 @@
 package com.bluelotuscoding.eidolonunchained.network;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
+import com.bluelotuscoding.eidolonunchained.keybind.ChantCastPacket;
+import com.bluelotuscoding.eidolonunchained.keybind.ChantSlotActivationPacket;
+import com.bluelotuscoding.eidolonunchained.keybind.ChantInterfacePacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
@@ -34,6 +37,33 @@ public class EidolonUnchainedNetworking {
                 DeitySyncPacket::encode,
                 DeitySyncPacket::decode,
                 DeitySyncPacket::handle
+            );
+            
+            // Register chant cast packet for keybind-based casting
+            INSTANCE.registerMessage(
+                ++packetId,
+                ChantCastPacket.class,
+                ChantCastPacket::toBytes,
+                ChantCastPacket::new,
+                ChantCastPacket::handle
+            );
+            
+            // Register chant slot activation packet
+            INSTANCE.registerMessage(
+                ++packetId,
+                ChantSlotActivationPacket.class,
+                ChantSlotActivationPacket::toBytes,
+                ChantSlotActivationPacket::new,
+                ChantSlotActivationPacket::handle
+            );
+            
+            // Register chant interface packet
+            INSTANCE.registerMessage(
+                ++packetId,
+                ChantInterfacePacket.class,
+                ChantInterfacePacket::toBytes,
+                ChantInterfacePacket::new,
+                ChantInterfacePacket::handle
             );
             
             // Add more packets here as needed

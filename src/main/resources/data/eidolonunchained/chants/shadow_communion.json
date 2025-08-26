@@ -8,7 +8,7 @@
   "linked_deity": "eidolonunchained:dark_deity",
   "signs": [
     "eidolon:wicked",
-    "eidolon:death",
+    "eidolon:wicked",
     "eidolon:blood"
   ],
   "requirements": [],

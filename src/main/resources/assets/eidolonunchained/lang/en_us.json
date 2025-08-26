@@ -1,22 +1,23 @@
 {
   "eidolon.codex.category.examples": "Examples",
+  "eidolon.codex.category.example_chants": "Example Chants",
   "eidolonunchained.codex.chapter.getting_started": "Getting Started",
   "eidolonunchained.codex.chapter.examples": "Example Chants",
   
   "_comment_chants": "Chant translations",
   "eidolonunchained.codex.chapter.shadow_communion": "Shadow Communion",
   "eidolonunchained.codex.page.shadow_communion": "Shadow Communion",
-  "eidolonunchained.codex.page.shadow_communion.chant": "Reach into the darkness to speak with Nyxathel the Shadow Lord. Draw the signs of Wicked, Death, and Blood to establish contact with the shadow realm.",
+  "eidolonunchained.codex.page.shadow_communion.chant": "Reach into the darkness to speak with Nyxathel the Shadow Lord. Draw the signs of Wicked, Wicked, and Blood to establish contact with the shadow realm.",
   "eidolonunchained.codex.page.shadow_communion.description": "This chant grants dark powers and opens forbidden communication with the deity of shadows.",
   
   "eidolonunchained.codex.chapter.divine_communion": "Divine Communion", 
   "eidolonunchained.codex.page.divine_communion": "Divine Communion",
-  "eidolonunchained.codex.page.divine_communion.chant": "A sacred chant that opens communication with the Light Deity, Lumina. Draw the signs of Sacred, Harmony, and Soul to call upon divine blessing.",
+  "eidolonunchained.codex.page.divine_communion.chant": "A sacred chant that opens communication with the Light Deity, Lumina. Draw the signs of Sacred, Harmony, and Warding to call upon divine blessing.",
   "eidolonunchained.codex.page.divine_communion.description": "Blesses the caster and allows direct conversation with the deity of light.",
   
   "eidolonunchained.codex.chapter.natures_communion": "Nature's Communion",
   "eidolonunchained.codex.page.natures_communion": "Nature's Communion", 
-  "eidolonunchained.codex.page.natures_communion.chant": "Connect with the natural world and speak with Sylvana, the Nature Deity. Draw the signs of Harmony, Soul, and Magic to commune with nature.",
+  "eidolonunchained.codex.page.natures_communion.chant": "Connect with the natural world and speak with Sylvana, the Nature Deity. Draw the signs of Harmony, Soul, and Sacred to commune with nature.",
   "eidolonunchained.codex.page.natures_communion.description": "Enhances your connection to the natural world and allows communication with nature's guardian.",
   
   "eidolonunchained.codex.chapter.divine_judgment": "Divine Judgment",
@@ -96,5 +97,27 @@
   "research.discovery.title": "Research Discovered!",
   "research.discovery.location": "Location: %s",
   "research.discovery.research": "Research: %s", 
-  "research.discovery.check_inventory": "Check your inventory for Research Notes!"
+  "research.discovery.check_inventory": "Check your inventory for Research Notes!",
+  
+  "_comment_keybinds": "Keybind translations",
+  "key.categories.eidolonunchained": "Eidolon Unchained",
+  "key.eidolonunchained.chant_slot_1": "Chant Slot 1",
+  "key.eidolonunchained.chant_slot_2": "Chant Slot 2", 
+  "key.eidolonunchained.chant_slot_3": "Chant Slot 3",
+  "key.eidolonunchained.chant_slot_4": "Chant Slot 4",
+  "key.eidolonunchained.open_chant_interface": "Open Chant Interface",
+  
+  "_comment_ai_deity_chants": "AI Deity Chant Chapter",
+  "eidolonunchained.codex.chapter.ai_deity_chants.title": "AI Deity Communion",
+  "eidolonunchained.codex.entry.shadow_communion.title": "Shadow Communion",
+  "eidolonunchained.codex.entry.shadow_communion.description": "Commune with Nyxathel the Shadow Lord through dark rituals. This chant opens a direct communication channel with the deity of shadows.",
+  "eidolonunchained.codex.entry.shadow_communion.chant_description": "Draw the signs of Wicked, Wicked, and Blood to establish contact with the shadow realm.",
+  
+  "eidolonunchained.codex.entry.divine_communion.title": "Divine Communion",
+  "eidolonunchained.codex.entry.divine_communion.description": "Seek guidance from Lumina the Sacred Guardian. This blessed chant allows communication with the deity of light and protection.",
+  "eidolonunchained.codex.entry.divine_communion.chant_description": "Draw the signs of Sacred, Harmony, and Warding to call upon divine blessing.",
+  
+  "eidolonunchained.codex.entry.natures_communion.title": "Nature's Communion",
+  "eidolonunchained.codex.entry.natures_communion.description": "Connect with Verdania, Guardian of Nature. This chant harmonizes your spirit with the natural world.",
+  "eidolonunchained.codex.entry.natures_communion.chant_description": "Draw the signs of Harmony, Soul, and Sacred to commune with nature's guardian."
 }

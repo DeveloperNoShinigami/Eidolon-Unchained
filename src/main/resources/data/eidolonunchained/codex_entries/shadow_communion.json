@@ -1,0 +1,14 @@
+{
+  "target_chapter": "example_chants:shadow_communion",
+  "pages": [
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.page.shadow_communion.description"
+    },
+    {
+      "type": "chant",
+      "spell": "eidolonunchained:shadow_communion",
+      "text": "eidolonunchained.codex.page.shadow_communion.chant"
+    }
+  ]
+}

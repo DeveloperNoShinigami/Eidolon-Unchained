@@ -176,6 +176,10 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
         return new ArrayList<>(chants.values());
     }
     
+    public static Collection<ResourceLocation> getAllChantIds() {
+        return new ArrayList<>(chants.keySet());
+    }
+    
     public static DatapackChant getChant(ResourceLocation id) {
         return chants.get(id);
     }
