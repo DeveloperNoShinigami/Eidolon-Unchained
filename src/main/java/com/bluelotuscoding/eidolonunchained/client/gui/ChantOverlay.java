@@ -39,8 +39,8 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class ChantOverlay implements IGuiOverlay {
     
-    // Use a standard GUI texture instead of missing Eidolon texture
-    private static final ResourceLocation CHANT_TEXTURE = new ResourceLocation("minecraft", "textures/gui/widgets.png");
+    // Use Eidolon's actual codex background texture for authentic red ribbon UI
+    private static final ResourceLocation CHANT_TEXTURE = new ResourceLocation("eidolon", "textures/gui/codex_bg.png");
     
     // Chant state
     private static final List<Sign> activeChant = new ArrayList<>();
@@ -234,19 +234,23 @@ public class ChantOverlay implements IGuiOverlay {
         RenderSystem.enableBlend();
         RenderSystem.setShaderTexture(0, CHANT_TEXTURE);
         
-        // Render background panels (using standard texture with red overlay)
+        // Render chant ribbon using Eidolon's exact UV coordinates
         int bgx = baseX;
         
-        // Draw dark background panels using widgets.png
-        for (int i = 0; i <= activeChant.size(); i++) {
-            int panelWidth = (i == 0 || i == activeChant.size()) ? 16 : 24;
-            guiGraphics.blit(CHANT_TEXTURE, bgx, baseY, 0, 66, panelWidth, 32);
-            bgx += panelWidth;
+        // Left cap (256, 208, 16, 32)
+        guiGraphics.blit(CHANT_TEXTURE, bgx, baseY, 256, 208, 16, 32, 512, 512);
+        bgx += 16;
+        
+        // Middle segments for each sign (272, 208, 24, 32)
+        for (int i = 0; i < activeChant.size(); i++) {
+            guiGraphics.blit(CHANT_TEXTURE, bgx, baseY, 272, 208, 24, 32, 512, 512);
+            // Sign overlay (312, 208, 24, 24)
+            guiGraphics.blit(CHANT_TEXTURE, bgx, baseY, 312, 208, 24, 24, 512, 512);
+            bgx += 24;
         }
         
-        // Add red overlay to simulate red ribbon
-        int overlayWidth = 32 + 24 * activeChant.size();
-        guiGraphics.fill(baseX, baseY, baseX + overlayWidth, baseY + 32, 0x80800000); // Semi-transparent red
+        // Right cap (296, 208, 16, 32)
+        guiGraphics.blit(CHANT_TEXTURE, bgx, baseY, 296, 208, 16, 32, 512, 512);
         
         // Render signs with glow effects
         RenderSystem.enableBlend();
@@ -256,38 +260,33 @@ public class ChantOverlay implements IGuiOverlay {
         bgx = baseX + 16;
         MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
         
+        // Approximate client ticks for animation
+        int clientTicks = (int)(System.currentTimeMillis() / 50);
+        
+        // Render base signs
         for (int i = 0; i < activeChant.size(); i++) {
             Sign sign = activeChant.get(i);
-            
-            // Calculate glow effect based on timing
-            float glow = 1.0f;
-            long timeSinceLastSign = System.currentTimeMillis() - lastSignAddTime;
-            if (i == activeChant.size() - 1 && timeSinceLastSign < 500) {
-                // Pulsing animation for newly added sign
-                float animProgress = timeSinceLastSign / 500.0f;
-                glow = 1.5f + 0.5f * (float)Math.sin(animProgress * Math.PI * 4);
-            } else {
-                // Normal flicker effect (from Eidolon's ClientEvents.getClientTicks())
-                int clientTicks = (int)(System.currentTimeMillis() / 50); // Approximate client ticks
-                float flicker = 0.75f + 0.25f * (float)Math.sin(Math.toRadians(12 * clientTicks - 360.0f * i / activeChant.size()));
-                glow = flicker;
-            }
-            
-            // Base rendering
             RenderUtil.litQuad(guiGraphics.pose(), bufferSource, bgx + 4, baseY + 4, 16, 16,
                 sign.getRed(), sign.getGreen(), sign.getBlue(), 
                 Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(sign.getSprite()));
             bufferSource.endBatch();
-            
-            // Render with glow
-            RenderUtil.litQuad(guiGraphics.pose(), bufferSource, bgx + 4, baseY + 4, 16, 16,
-                sign.getRed() * glow, sign.getGreen() * glow, sign.getBlue() * glow, 
-                Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(sign.getSprite()));
-            bufferSource.endBatch();
-            
             bgx += 24;
         }
         
+        // Render flickering glow overlay
+        bgx = baseX + 16;
+        RenderSystem.blendFunc(770, 1); // SRC_ALPHA, ONE for additive blending
+        for (int i = 0; i < activeChant.size(); i++) {
+            float flicker = 0.75f + 0.25f * (float)Math.sin(Math.toRadians(12 * clientTicks - 360.0f * i / activeChant.size()));
+            Sign sign = activeChant.get(i);
+            RenderUtil.litQuad(guiGraphics.pose(), bufferSource, bgx + 4, baseY + 4, 16, 16,
+                sign.getRed() * flicker, sign.getGreen() * flicker, sign.getBlue() * flicker, 
+                Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(sign.getSprite()));
+            bufferSource.endBatch();
+            bgx += 24;
+        }
+        
+        // Reset blend function
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
         
@@ -332,5 +331,73 @@ public class ChantOverlay implements IGuiOverlay {
      */
     public static List<Sign> getActiveChant() {
         return new ArrayList<>(activeChant);
+    }
+    
+    /**
+     * Render floating signs in 3D world space (called from ClientEvents)
+     */
+    public static void renderFloatingSignsIn3D(GuiGraphics guiGraphics, float partialTicks) {
+        if (!isActive || floatingSignsData.isEmpty()) return;
+        
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) return;
+        
+        // Get camera position for proper positioning
+        Vec3 cameraPos = mc.gameRenderer.getMainCamera().getPosition();
+        Vec3 playerPos = mc.player.position();
+        
+        // Render each floating sign
+        RenderSystem.enableBlend();
+        RenderSystem.setShader(ClientRegistry::getGlowingSpriteShader);
+        RenderSystem.setShaderTexture(0, InventoryMenu.BLOCK_ATLAS);
+        
+        MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
+        
+        for (int i = 0; i < floatingSignsData.size(); i++) {
+            FloatingSignData signData = floatingSignsData.get(i);
+            
+            // Calculate animation progress (signs float up and orbit)
+            long currentTime = System.currentTimeMillis();
+            float ageInSeconds = (currentTime - signData.spawnTime) / 1000.0f;
+            
+            // Remove old signs after 8 seconds
+            if (ageInSeconds > 8.0f) {
+                floatingSignsData.remove(i);
+                i--;
+                continue;
+            }
+            
+            // Calculate position relative to player
+            float orbitRadius = signData.radius + ageInSeconds * 0.2f; // Slowly expand
+            float height = 1.5f + ageInSeconds * 0.3f; // Float upward
+            float angle = signData.angle + ageInSeconds * 30.0f; // Slow rotation
+            
+            float x = (float)(playerPos.x + Math.cos(Math.toRadians(angle)) * orbitRadius);
+            float y = (float)(playerPos.y + height);
+            float z = (float)(playerPos.z + Math.sin(Math.toRadians(angle)) * orbitRadius);
+            
+            // Calculate screen position from world position
+            // This is a simplified approach - for proper 3D rendering we'd need WorldRenderEvent
+            float alpha = Math.max(0, 1.0f - ageInSeconds / 8.0f); // Fade out over time
+            float glow = 0.8f + 0.2f * (float)Math.sin(ageInSeconds * 4.0f); // Pulsing effect
+            
+            // For now, just spawn particles at the calculated position
+            if (mc.level.random.nextFloat() < 0.3f) {
+                mc.level.addParticle(ParticleTypes.ENCHANT, x, y, z, 0, 0.05, 0);
+                
+                // Add sign-colored glow particles
+                Sign sign = signData.sign;
+                if (mc.level.random.nextFloat() < 0.1f) {
+                    // Convert sign colors to particle velocity for colored effect
+                    double velX = (sign.getRed() - 0.5) * 0.1;
+                    double velY = 0.1;
+                    double velZ = (sign.getBlue() - 0.5) * 0.1;
+                    mc.level.addParticle(ParticleTypes.GLOW, x, y, z, velX, velY, velZ);
+                }
+            }
+        }
+        
+        bufferSource.endBatch();
+        RenderSystem.defaultBlendFunc();
     }
 }
