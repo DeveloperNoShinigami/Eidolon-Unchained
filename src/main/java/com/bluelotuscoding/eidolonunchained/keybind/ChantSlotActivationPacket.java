@@ -18,17 +18,26 @@ public class ChantSlotActivationPacket {
     private static final Logger LOGGER = LogUtils.getLogger();
     
     private final int slotNumber;
+    private final String castingMode;
     
     public ChantSlotActivationPacket(int slotNumber) {
         this.slotNumber = slotNumber;
+        this.castingMode = "FULL_CHANT"; // Default for backward compatibility
+    }
+    
+    public ChantSlotActivationPacket(int slotNumber, String castingMode) {
+        this.slotNumber = slotNumber;
+        this.castingMode = castingMode;
     }
     
     public ChantSlotActivationPacket(FriendlyByteBuf buf) {
         this.slotNumber = buf.readInt();
+        this.castingMode = buf.readUtf();
     }
     
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeInt(this.slotNumber);
+        buf.writeUtf(this.castingMode);
     }
     
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
@@ -36,11 +45,11 @@ public class ChantSlotActivationPacket {
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player != null) {
-                LOGGER.info("Processing chant slot activation for player: {} slot: {}", 
-                           player.getName().getString(), slotNumber);
+                LOGGER.info("Processing chant slot activation for player: {} slot: {} mode: {}", 
+                           player.getName().getString(), slotNumber, castingMode);
                 
-                // Get the chant assigned to this slot
-                boolean success = ChantSlotManager.activateChantSlot(player, slotNumber);
+                // Get the chant assigned to this slot and activate with the specified mode
+                boolean success = ChantSlotManager.activateChantSlot(player, slotNumber, castingMode);
                 if (!success) {
                     player.sendSystemMessage(Component.literal("§cNo chant assigned to slot " + slotNumber + ". Use /chant assign <slot> <chant_id> to configure."));
                 }

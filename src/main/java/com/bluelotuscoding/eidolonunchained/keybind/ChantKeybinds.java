@@ -26,7 +26,7 @@ import org.slf4j.Logger;
  * Opens an in-game chant casting interface when activated.
  */
 @OnlyIn(Dist.CLIENT)
-@Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ChantKeybinds {
     private static final Logger LOGGER = LogUtils.getLogger();
     
@@ -69,43 +69,6 @@ public class ChantKeybinds {
         event.register(CHANT_SLOT_3);
         event.register(CHANT_SLOT_4);
         event.register(OPEN_CHANT_INTERFACE);
-        LOGGER.info("✅ Registered flexible chant keybinds (4 slots + interface)");
-    }
-    
-    @SubscribeEvent
-    public static void onKeyInput(InputEvent.Key event) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null) return;
-        
-        if (event.getAction() == GLFW.GLFW_PRESS) {
-            int chantSlot = -1;
-            
-            if (CHANT_SLOT_1.consumeClick()) {
-                chantSlot = 1;
-            } else if (CHANT_SLOT_2.consumeClick()) {
-                chantSlot = 2;
-            } else if (CHANT_SLOT_3.consumeClick()) {
-                chantSlot = 3;
-            } else if (CHANT_SLOT_4.consumeClick()) {
-                chantSlot = 4;
-            } else if (OPEN_CHANT_INTERFACE.consumeClick()) {
-                // Open chant management interface
-                LOGGER.info("Opening chant interface");
-                mc.player.sendSystemMessage(Component.literal("§6Opening Chant Interface..."));
-                
-                ChantInterfacePacket packet = new ChantInterfacePacket(ChantInterfacePacket.Action.OPEN_INTERFACE);
-                EidolonUnchainedNetworking.INSTANCE.sendToServer(packet);
-                return;
-            }
-            
-            if (chantSlot != -1) {
-                LOGGER.info("Player pressed chant slot: {}", chantSlot);
-                mc.player.sendSystemMessage(Component.literal("§6Activating chant slot " + chantSlot + "..."));
-                
-                // Send packet to server to handle chant slot activation
-                ChantSlotActivationPacket packet = new ChantSlotActivationPacket(chantSlot);
-                EidolonUnchainedNetworking.INSTANCE.sendToServer(packet);
-            }
-        }
+        LOGGER.info("Registered flexible chant keybinds (4 slots + interface)");
     }
 }

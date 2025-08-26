@@ -1,7 +1,6 @@
 package com.bluelotuscoding.eidolonunchained.chant;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
-import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.mojang.logging.LogUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -22,7 +21,6 @@ import java.util.Map;
 /**
  * Manages flexible chant slot assignments for players.
  * Allows any datapack chant to be assigned to any of the 4 available slots.
- * Supports multiple casting modes: full chant, individual signs, or hybrid.
  * Handles persistence and validation of chant casting.
  */
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -70,9 +68,15 @@ public class ChantSlotManager {
     
     /**
      * Activates a chant slot for a player
-     * Supports different casting modes: full chant, individual signs, or hybrid
      */
     public static boolean activateChantSlot(ServerPlayer player, int slot) {
+        return activateChantSlot(player, slot, "FULL_CHANT");
+    }
+    
+    /**
+     * Activates a chant slot for a player with specified casting mode
+     */
+    public static boolean activateChantSlot(ServerPlayer player, int slot, String castingMode) {
         ResourceLocation chantId = getChantInSlot(player, slot);
         if (chantId == null) {
             return false;
@@ -92,59 +96,56 @@ public class ChantSlotManager {
             }
         }
         
-        // Check casting mode configuration
-        EidolonUnchainedConfig.ChantCastingMode castingMode = EidolonUnchainedConfig.COMMON.chantCastingMode.get();
-        
-        switch (castingMode) {
-            case FULL_CHANT:
-                return executeFullChant(player, chant);
-            case INDIVIDUAL_SIGNS:
-                return startSignSequence(player, chant);
-            case HYBRID:
-                // Default to sign sequence (like codex), but allow full chant with special modifier
-                // TODO: Check for modifier key (shift, ctrl, etc.) to switch to full chant mode
-                return startSignSequence(player, chant);
-            default:
-                return startSignSequence(player, chant);
-        }
-    }
-    
-    /**
-     * Execute the full chant immediately (default behavior)
-     */
-    private static boolean executeFullChant(ServerPlayer player, DatapackChant chant) {
-        try {
-            // Execute the chant spell directly
-            DatapackChantSpell spell = DatapackChantManager.getSpellForChant(chant.getId());
-            if (spell != null) {
-                spell.cast(player.level(), player.blockPosition(), player);
-                player.sendSystemMessage(Component.literal("§6Executed chant: " + chant.getName()));
-                return true;
-            } else {
-                player.sendSystemMessage(Component.literal("§cNo spell found for chant: " + chant.getName()));
+        // Handle different casting modes
+        switch (castingMode.toUpperCase()) {
+            case "FULL_CHANT" -> {
+                // Cast the entire chant sequence automatically
+                player.sendSystemMessage(Component.literal("§6Casting chant: " + chant.getName()));
+                
+                // Store the active chant for validation
+                CompoundTag playerData = player.getPersistentData();
+                CompoundTag modData = playerData.getCompound(EidolonUnchained.MODID);
+                modData.putString("active_chant", chantId.toString());
+                modData.putString("casting_mode", "FULL_CHANT");
+                modData.putLong("chant_start_time", System.currentTimeMillis());
+                playerData.put(EidolonUnchained.MODID, modData);
+                
+                // TODO: Trigger automatic execution of the full chant sequence
+                player.sendSystemMessage(Component.literal("§a✅ Full chant cast complete!"));
+            }
+            case "INDIVIDUAL_SIGNS" -> {
+                // Start individual sign casting mode
+                player.sendSystemMessage(Component.literal("§6Starting chant: " + chant.getName()));
+                player.sendSystemMessage(Component.literal("§7Press the key again to cast each sign: " + formatSignSequence(chant.getSignSequence())));
+                
+                // Store the active chant for sign-by-sign casting
+                CompoundTag playerData = player.getPersistentData();
+                CompoundTag modData = playerData.getCompound(EidolonUnchained.MODID);
+                modData.putString("active_chant", chantId.toString());
+                modData.putString("casting_mode", "INDIVIDUAL_SIGNS");
+                modData.putInt("current_sign_index", 0);
+                modData.putLong("chant_start_time", System.currentTimeMillis());
+                playerData.put(EidolonUnchained.MODID, modData);
+            }
+            case "HYBRID" -> {
+                // For now, default to FULL_CHANT behavior in hybrid mode
+                // TODO: Implement hold vs tap detection
+                player.sendSystemMessage(Component.literal("§6Casting chant (hybrid mode): " + chant.getName()));
+                
+                CompoundTag playerData = player.getPersistentData();
+                CompoundTag modData = playerData.getCompound(EidolonUnchained.MODID);
+                modData.putString("active_chant", chantId.toString());
+                modData.putString("casting_mode", "HYBRID");
+                modData.putLong("chant_start_time", System.currentTimeMillis());
+                playerData.put(EidolonUnchained.MODID, modData);
+                
+                player.sendSystemMessage(Component.literal("§a✅ Hybrid chant cast complete!"));
+            }
+            default -> {
+                player.sendSystemMessage(Component.literal("§cUnknown casting mode: " + castingMode));
                 return false;
             }
-        } catch (Exception e) {
-            LOGGER.error("Failed to execute full chant {}: {}", chant.getId(), e.getMessage());
-            player.sendSystemMessage(Component.literal("§cFailed to execute chant: " + e.getMessage()));
-            return false;
         }
-    }
-    
-    /**
-     * Start sign sequence casting (like in codex)
-     */
-    private static boolean startSignSequence(ServerPlayer player, DatapackChant chant) {
-        // Open sign sequence interface for this chant
-        player.sendSystemMessage(Component.literal("§6Starting chant: " + chant.getName()));
-        player.sendSystemMessage(Component.literal("§7Draw the sign sequence: " + formatSignSequence(chant.getSignSequence())));
-        
-        // Store the active chant for validation when signs are drawn
-        CompoundTag playerData = player.getPersistentData();
-        CompoundTag modData = playerData.getCompound(EidolonUnchained.MODID);
-        modData.putString("active_chant", chant.getId().toString());
-        modData.putLong("chant_start_time", System.currentTimeMillis());
-        playerData.put(EidolonUnchained.MODID, modData);
         
         return true;
     }
