@@ -60,6 +60,9 @@ public class EidolonUnchained
         // Register the Deferred Register to the mod event bus so tabs get registered
         CREATIVE_MODE_TABS.register(modEventBus);
 
+        // Register keybind registration event handler
+        modEventBus.addListener(com.bluelotuscoding.eidolonunchained.keybind.ChantKeybinds::onRegisterKeyMappings);
+
         // Register our unified configuration
         EidolonUnchainedConfig.register();
 

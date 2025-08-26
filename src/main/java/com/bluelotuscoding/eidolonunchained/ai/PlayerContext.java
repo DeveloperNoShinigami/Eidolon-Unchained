@@ -21,11 +21,15 @@ public class PlayerContext {
     
     public PlayerContext(String playerName) {
         this.playerName = playerName;
+        this.progressionLevel = "beginner"; // Default progression level
+        this.recentActions = new ArrayList<>();
     }
     
     public PlayerContext(ServerPlayer player, DatapackDeity deity) {
         this.playerName = player.getName().getString();
         this.reputation = deity.getPlayerReputation(player);
+        this.progressionLevel = "beginner"; // Default progression level
+        this.recentActions = new ArrayList<>();
         // Additional context can be added here
     }
 }

@@ -1,5 +1,4 @@
 {
-  "name": "eidolonunchained.codex.chapter.divine_communion",
-  "icon": "minecraft:glowstone",
-  "category": "example_chants"
+  "title": "eidolonunchained.codex.chapter.divine_communion",
+  "icon": "minecraft:glowstone"
 }

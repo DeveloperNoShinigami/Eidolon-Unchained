@@ -160,7 +160,7 @@ public class AIDeityConfig {
         }
         
         // Check for special personality shifts
-        if (playerContext.progressionLevel.equals("master")) {
+        if (playerContext.progressionLevel != null && playerContext.progressionLevel.equals("master")) {
             String masterPersonality = getPersonalityShift("master_level");
             if (masterPersonality != null) {
                 personality.append(" ").append(masterPersonality);

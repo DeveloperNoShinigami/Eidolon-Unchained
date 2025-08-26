@@ -1,4 +1,15 @@
 {
+  "_comment_categories": "Keybind category",
+  "key.categories.eidolonunchained": "Eidolon Unchained",
+  
+  "_comment_keybinds": "Keybind translations",
+  "key.eidolonunchained.chant_slot_1": "Chant Slot 1",
+  "key.eidolonunchained.chant_slot_2": "Chant Slot 2", 
+  "key.eidolonunchained.chant_slot_3": "Chant Slot 3",
+  "key.eidolonunchained.chant_slot_4": "Chant Slot 4",
+  "key.eidolonunchained.open_chant_interface": "Open Chant Interface",
+
+  "_comment_codex": "Codex translations",
   "eidolon.codex.category.examples": "Examples",
   "eidolon.codex.category.example_chants": "Example Chants",
   "eidolonunchained.codex.chapter.getting_started": "Getting Started",
@@ -98,14 +109,6 @@
   "research.discovery.location": "Location: %s",
   "research.discovery.research": "Research: %s", 
   "research.discovery.check_inventory": "Check your inventory for Research Notes!",
-  
-  "_comment_keybinds": "Keybind translations",
-  "key.categories.eidolonunchained": "Eidolon Unchained",
-  "key.eidolonunchained.chant_slot_1": "Chant Slot 1",
-  "key.eidolonunchained.chant_slot_2": "Chant Slot 2", 
-  "key.eidolonunchained.chant_slot_3": "Chant Slot 3",
-  "key.eidolonunchained.chant_slot_4": "Chant Slot 4",
-  "key.eidolonunchained.open_chant_interface": "Open Chant Interface",
   
   "_comment_ai_deity_chants": "AI Deity Chant Chapter",
   "eidolonunchained.codex.chapter.ai_deity_chants.title": "AI Deity Communion",

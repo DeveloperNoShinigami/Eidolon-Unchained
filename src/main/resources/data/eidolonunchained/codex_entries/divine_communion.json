@@ -1,1 +1,14 @@
-{  "target_chapter": "example_chants:divine_communion",  "pages": [    {      "type": "text",      "text": "eidolonunchained.codex.page.divine_communion.description"    },    {      "type": "chant",      "spell": "eidolonunchained:divine_communion",      "text": "eidolonunchained.codex.page.divine_communion.chant"    }  ]}
+{
+  "target_chapter": "divine_communion",
+  "pages": [
+	{
+	  "type": "text",
+	  "text": "eidolonunchained.codex.page.divine_communion.description"
+	},
+	{
+	  "type": "chant",
+	  "spell": "eidolonunchained:divine_communion",
+	  "text": "eidolonunchained.codex.page.divine_communion.chant"
+	}
+  ]
+}

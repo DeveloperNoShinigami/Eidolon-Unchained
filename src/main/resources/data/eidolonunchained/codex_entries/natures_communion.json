@@ -1,1 +1,14 @@
-{  "target_chapter": "example_chants:natures_communion",  "pages": [    {      "type": "text",      "text": "eidolonunchained.codex.page.natures_communion.description"    },    {      "type": "chant",      "spell": "eidolonunchained:natures_communion",      "text": "eidolonunchained.codex.page.natures_communion.chant"    }  ]}
+{
+  "target_chapter": "natures_communion",
+  "pages": [
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.page.natures_communion.description"
+    },
+    {
+      "type": "chant",
+      "spell": "eidolonunchainednatures_communion",
+      "text": "eidolonunchained.codex.page.natures_communion.chant"
+    }
+  ]
+}

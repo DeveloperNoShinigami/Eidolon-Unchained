@@ -69,7 +69,7 @@ public class ChantKeybinds {
         event.register(CHANT_SLOT_3);
         event.register(CHANT_SLOT_4);
         event.register(OPEN_CHANT_INTERFACE);
-        LOGGER.info("Registered flexible chant keybinds (4 slots + interface)");
+        LOGGER.info("✅ Registered flexible chant keybinds (4 slots + interface)");
     }
     
     @SubscribeEvent

@@ -11,6 +11,12 @@ import org.apache.commons.lang3.tuple.Pair;
  */
 public class EidolonUnchainedConfig {
     
+    public enum ChantCastingMode {
+        FULL_CHANT,          // Cast entire chant sequence with one keybind (default)
+        INDIVIDUAL_SIGNS,    // Cast each sign individually (like codex)
+        HYBRID              // Support both modes
+    }
+    
     public static final CommonConfig COMMON;
     public static final ForgeConfigSpec COMMON_SPEC;
     
@@ -51,6 +57,12 @@ public class EidolonUnchainedConfig {
         public final ForgeConfigSpec.BooleanValue requireExactSignOrder;
         public final ForgeConfigSpec.IntValue chantCooldownSeconds;
         public final ForgeConfigSpec.BooleanValue allowChantCancellation;
+        
+        // Chant casting mode configuration  
+        public final ForgeConfigSpec.EnumValue<ChantCastingMode> chantCastingMode;
+        public final ForgeConfigSpec.BooleanValue allowSequentialSigns;
+        public final ForgeConfigSpec.BooleanValue showSignFeedback;
+        public final ForgeConfigSpec.IntValue signSequenceTimeout;
         
         // ===========================================
         // DEITY INTERACTION CONFIGURATION
@@ -189,6 +201,25 @@ public class EidolonUnchainedConfig {
             allowChantCancellation = builder
                 .comment("Allow players to cancel chants mid-sequence")
                 .define("allow_chant_cancellation", true);
+            
+            chantCastingMode = builder
+                .comment("Chant casting mode:",
+                        "FULL_CHANT: Cast entire chant with one keybind (default)",
+                        "INDIVIDUAL_SIGNS: Cast each sign individually like in codex",
+                        "HYBRID: Support both full chant and individual sign casting")
+                .defineEnum("chant_casting_mode", ChantCastingMode.FULL_CHANT);
+                
+            allowSequentialSigns = builder
+                .comment("Allow casting signs sequentially when in INDIVIDUAL_SIGNS or HYBRID mode")
+                .define("allow_sequential_signs", true);
+                
+            showSignFeedback = builder
+                .comment("Show visual feedback when casting individual signs")
+                .define("show_sign_feedback", true);
+                
+            signSequenceTimeout = builder
+                .comment("Timeout in seconds for sign sequence completion (0 = no timeout)")
+                .defineInRange("sign_sequence_timeout", 10, 0, 60);
             
             builder.pop();
             

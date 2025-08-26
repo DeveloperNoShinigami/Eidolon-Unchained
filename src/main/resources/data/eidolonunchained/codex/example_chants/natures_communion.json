@@ -1,5 +1,4 @@
 {
-  "name": "eidolonunchained.codex.chapter.natures_communion",
-  "icon": "minecraft:flowering_azalea",
-  "category": "example_chants"
+  "title": "eidolonunchained.codex.chapter.natures_communion",
+  "icon": "minecraft:flowering_azalea"
 }
