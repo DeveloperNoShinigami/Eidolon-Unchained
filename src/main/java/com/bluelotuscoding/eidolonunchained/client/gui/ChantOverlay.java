@@ -48,6 +48,8 @@ public class ChantOverlay implements IGuiOverlay {
     private static long lastSignAddTime = 0;
     private static long autoCompleteStartTime = 0;
     private static boolean autoCompleteTriggered = false;
+    private static boolean executionCompleted = false;
+    private static long executionCompleteTime = 0;
     private static ResourceLocation lastSignId = null; // Prevent duplicate additions
     
     // Custom floating sign animation state (replacing ChantCasterEntity)
@@ -125,10 +127,9 @@ public class ChantOverlay implements IGuiOverlay {
         // Convert to SignSequence for spell matching
         SignSequence sequence = new SignSequence(activeChant);
         
-        // Check against all registered spells
-        // TODO: Implement spell matching logic
-        // For now, auto-complete after any sequence of 3+ signs
-        if (activeChant.size() >= 3) {
+        // For individual sign casting, trigger immediately after first sign
+        // For full chants, wait for a complete sequence (3+ signs for now)
+        if (activeChant.size() >= 1) {
             triggerAutoComplete();
         }
     }
@@ -152,7 +153,9 @@ public class ChantOverlay implements IGuiOverlay {
         floatingSignsData.clear();
         isActive = false;
         autoCompleteTriggered = false;
+        executionCompleted = false;
         autoCompleteStartTime = 0;
+        executionCompleteTime = 0;
         lastSignId = null; // Reset duplicate prevention
     }
     
@@ -201,17 +204,30 @@ public class ChantOverlay implements IGuiOverlay {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         
-        // Check for auto-completion
-        int autoCompleteDelayMs = EidolonUnchainedConfig.COMMON.chantAutoCompleteDelay.get() * 50; // Convert to milliseconds
-        if (autoCompleteTriggered && autoCompleteDelayMs > 0 && 
-            (System.currentTimeMillis() - autoCompleteStartTime) >= autoCompleteDelayMs) {
-            executeChant();
-            return;
+        // Check for auto-completion timing
+        int autoCompleteDelayMs = EidolonUnchainedConfig.COMMON.chantAutoCompleteDelay.get() * 50;
+        if (autoCompleteTriggered && !executionCompleted && autoCompleteDelayMs > 0) {
+            long timeSinceAutoStart = System.currentTimeMillis() - autoCompleteStartTime;
+            if (timeSinceAutoStart >= autoCompleteDelayMs) {
+                // Execute the chant and mark completion
+                executeChant();
+                executionCompleted = true;
+                executionCompleteTime = System.currentTimeMillis();
+            }
+        }
+        
+        // If execution completed, show briefly then clear
+        if (executionCompleted) {
+            long timeSinceCompletion = System.currentTimeMillis() - executionCompleteTime;
+            if (timeSinceCompletion >= 1000) { // Show for 1 second after completion
+                clearChant();
+                return;
+            }
         }
         
         // Check if overlay should timeout (extended to 10 seconds for better visibility)
         long timeSinceLastSign = System.currentTimeMillis() - lastSignAddTime;
-        if (timeSinceLastSign > 10000) { // 10 seconds timeout
+        if (timeSinceLastSign > 10000 && !autoCompleteTriggered) { // Don't timeout during auto-completion
             isActive = false;
             activeChant.clear();
             floatingSignsData.clear();
@@ -290,8 +306,20 @@ public class ChantOverlay implements IGuiOverlay {
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
         
-        // Show simple text info above the ribbon
-        Component chantInfo = Component.literal("§6✨ Chanting... " + activeChant.size() + " signs");
+        // Show chant status info above the ribbon
+        Component chantInfo;
+        if (executionCompleted) {
+            chantInfo = Component.literal("§a✨ Spell Cast!");
+        } else if (autoCompleteTriggered) {
+            // Show charging/building power message during delay
+            int autoCompleteDelayMs = EidolonUnchainedConfig.COMMON.chantAutoCompleteDelay.get() * 50;
+            long timeSinceAutoStart = System.currentTimeMillis() - autoCompleteStartTime;
+            float progress = Math.min(1.0f, (float)timeSinceAutoStart / autoCompleteDelayMs);
+            chantInfo = Component.literal("§d✨ Building power... " + (int)(progress * 100) + "%");
+        } else {
+            chantInfo = Component.literal("§6✨ Chanting... " + activeChant.size() + " signs");
+        }
+        
         int infoX = screenWidth / 2 - Minecraft.getInstance().font.width(chantInfo) / 2;
         int infoY = baseY - 15;
         guiGraphics.drawString(Minecraft.getInstance().font, chantInfo, infoX, infoY, 0xFFFFFF);

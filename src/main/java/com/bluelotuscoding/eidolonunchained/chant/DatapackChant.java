@@ -319,9 +319,8 @@ public class DatapackChant {
                     sendMessage(player);
                     break;
                 case "start_conversation":
-                    startConversation(player);
-                    break;
                 case "communication":
+                    // Both effect types do the same thing - start deity conversation
                     startConversation(player);
                     break;
                 default:

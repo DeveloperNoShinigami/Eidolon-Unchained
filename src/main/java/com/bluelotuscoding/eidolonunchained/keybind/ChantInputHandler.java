@@ -42,7 +42,6 @@ public class ChantInputHandler {
             } else if (ChantKeybinds.OPEN_CHANT_INTERFACE.consumeClick()) {
                 // Open chant management interface
                 LOGGER.info("Opening chant interface");
-                mc.player.sendSystemMessage(Component.literal("§6Opening Chant Interface..."));
                 
                 ChantInterfacePacket packet = new ChantInterfacePacket(ChantInterfacePacket.Action.OPEN_INTERFACE);
                 EidolonUnchainedNetworking.INSTANCE.sendToServer(packet);
@@ -61,15 +60,7 @@ public class ChantInputHandler {
         
         LOGGER.info("Player pressed chant slot: {} (mode: {})", chantSlot, mode);
         
-        String modeMessage = switch (mode) {
-            case FULL_CHANT -> "§6Casting full chant from slot " + chantSlot + "...";
-            case INDIVIDUAL_SIGNS -> "§6Casting next sign from slot " + chantSlot + "...";
-            case HYBRID -> "§6Activating chant slot " + chantSlot + " (hybrid mode)...";
-        };
-        
-        if (ChantCastingConfig.isFeedbackEnabled()) {
-            mc.player.sendSystemMessage(Component.literal(modeMessage));
-        }
+        // Remove chat spam - let the visual overlay handle feedback
         
         // Send packet to server with casting mode information
         ChantSlotActivationPacket packet = new ChantSlotActivationPacket(chantSlot, mode.name());

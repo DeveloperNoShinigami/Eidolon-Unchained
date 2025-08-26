@@ -204,7 +204,7 @@ public class SlotAssignmentManager {
             return false;
         }
 
-        player.sendSystemMessage(Component.literal("§6Opening chant interface with sign: " + assignment.displayName));
+        // Remove chat spam - let visual overlay handle feedback
         
         // Send packet to client to open chant interface and add the sign
         // This mimics clicking a sign in the codex
