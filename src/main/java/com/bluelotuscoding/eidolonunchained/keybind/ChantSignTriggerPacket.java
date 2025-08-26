@@ -40,8 +40,6 @@ public class ChantSignTriggerPacket {
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
-            System.out.println("DEBUG: ChantSignTriggerPacket.handle() called on client");
-            
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null || mc.level == null) return;
             
@@ -51,11 +49,8 @@ public class ChantSignTriggerPacket {
             Sign sign = Signs.find(signId);
             if (sign == null) {
                 LOGGER.warn("Sign not found: {}", signId);
-                System.out.println("DEBUG: Sign not found: " + signId);
                 return;
             }
-            
-            System.out.println("DEBUG: Found sign, calling ChantOverlay.addSignToChant()");
             
             try {
                 // Add the sign to the chant overlay (new independent system)
@@ -64,7 +59,6 @@ public class ChantSignTriggerPacket {
                 LOGGER.debug("Successfully added sign {} to chant overlay", signId);
             } catch (Exception e) {
                 LOGGER.error("Failed to process sign trigger: {}", e.getMessage(), e);
-                System.out.println("DEBUG: Exception in addSignToChant: " + e.getMessage());
             }
         });
         

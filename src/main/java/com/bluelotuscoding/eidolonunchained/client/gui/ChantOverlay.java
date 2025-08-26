@@ -39,7 +39,8 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class ChantOverlay implements IGuiOverlay {
     
-    private static final ResourceLocation CODEX_TEXTURE = new ResourceLocation("eidolon", "textures/gui/codex_gui.png");
+    // Use a standard GUI texture instead of missing Eidolon texture
+    private static final ResourceLocation CHANT_TEXTURE = new ResourceLocation("minecraft", "textures/gui/widgets.png");
     
     // Chant state
     private static final List<Sign> activeChant = new ArrayList<>();
@@ -73,8 +74,6 @@ public class ChantOverlay implements IGuiOverlay {
      * Add a sign to the active chant with Eidolon's casting animation
      */
     public static void addSignToChant(Sign sign) {
-        System.out.println("DEBUG: addSignToChant called with sign: " + (sign != null ? sign.getRegistryName() : "null"));
-        
         if (sign == null) return;
         
         Minecraft mc = Minecraft.getInstance();
@@ -84,11 +83,8 @@ public class ChantOverlay implements IGuiOverlay {
         long currentTime = System.currentTimeMillis();
         ResourceLocation signId = sign.getRegistryName();
         if (signId != null && signId.equals(lastSignId) && (currentTime - lastSignAddTime) < 100) {
-            System.out.println("DEBUG: Skipping duplicate sign addition");
             return; // Skip duplicate
         }
-        
-        System.out.println("DEBUG: Setting isActive to true, current activeChant size: " + activeChant.size());
         
         // Activate the overlay if not already active
         if (!isActive) {
@@ -102,8 +98,6 @@ public class ChantOverlay implements IGuiOverlay {
         lastSignAddTime = currentTime;
         lastSignId = signId;
         autoCompleteTriggered = false;
-        
-        System.out.println("DEBUG: Added sign, new activeChant size: " + activeChant.size() + ", isActive: " + isActive);
         
         // Add floating sign data for custom animation (immediate)
         float angle = (activeChant.size() - 1) * (360.0f / Math.max(1, activeChant.size()));
@@ -202,14 +196,10 @@ public class ChantOverlay implements IGuiOverlay {
     
     @Override
     public void render(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
-        System.out.println("DEBUG: render() called, isActive: " + isActive + ", activeChant.size(): " + activeChant.size());
-        
         if (!isActive || activeChant.isEmpty()) return;
         
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
-        
-        System.out.println("DEBUG: About to render chant UI");
         
         // Check for auto-completion
         int autoCompleteDelayMs = EidolonUnchainedConfig.COMMON.chantAutoCompleteDelay.get() * 50; // Convert to milliseconds
@@ -219,9 +209,14 @@ public class ChantOverlay implements IGuiOverlay {
             return;
         }
         
-        // Debug: Always render something to test if overlay is working
-        Component debugText = Component.literal("§cCHANT OVERLAY ACTIVE - Signs: " + activeChant.size());
-        guiGraphics.drawString(mc.font, debugText, 10, 10, 0xFFFFFF);
+        // Check if overlay should timeout (extended to 10 seconds for better visibility)
+        long timeSinceLastSign = System.currentTimeMillis() - lastSignAddTime;
+        if (timeSinceLastSign > 10000) { // 10 seconds timeout
+            isActive = false;
+            activeChant.clear();
+            floatingSignsData.clear();
+            return;
+        }
         
         // Render the red ribbon chant interface (like in codex)
         renderChantRibbon(guiGraphics, screenWidth, screenHeight, partialTick);
@@ -237,20 +232,21 @@ public class ChantOverlay implements IGuiOverlay {
         int baseY = screenHeight - 80; // 80 pixels from bottom
         
         RenderSystem.enableBlend();
-        RenderSystem.setShaderTexture(0, CODEX_TEXTURE);
+        RenderSystem.setShaderTexture(0, CHANT_TEXTURE);
         
-        // Render background panels (red ribbon)
+        // Render background panels (using standard texture with red overlay)
         int bgx = baseX;
-        guiGraphics.blit(CODEX_TEXTURE, bgx, baseY, 256, 208, 16, 32, 512, 512);
-        bgx += 16;
         
-        for (int i = 0; i < activeChant.size(); i++) {
-            guiGraphics.blit(CODEX_TEXTURE, bgx, baseY, 272, 208, 24, 32, 512, 512);
-            guiGraphics.blit(CODEX_TEXTURE, bgx, baseY, 312, 208, 24, 24, 512, 512);
-            bgx += 24;
+        // Draw dark background panels using widgets.png
+        for (int i = 0; i <= activeChant.size(); i++) {
+            int panelWidth = (i == 0 || i == activeChant.size()) ? 16 : 24;
+            guiGraphics.blit(CHANT_TEXTURE, bgx, baseY, 0, 66, panelWidth, 32);
+            bgx += panelWidth;
         }
         
-        guiGraphics.blit(CODEX_TEXTURE, bgx, baseY, 296, 208, 16, 32, 512, 512);
+        // Add red overlay to simulate red ribbon
+        int overlayWidth = 32 + 24 * activeChant.size();
+        guiGraphics.fill(baseX, baseY, baseX + overlayWidth, baseY + 32, 0x80800000); // Semi-transparent red
         
         // Render signs with glow effects
         RenderSystem.enableBlend();
