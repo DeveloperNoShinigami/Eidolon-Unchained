@@ -3,7 +3,6 @@ package com.bluelotuscoding.eidolonunchained.client.gui;
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import elucent.eidolon.api.spells.Sign;
 import elucent.eidolon.api.spells.SignSequence;
 import elucent.eidolon.client.ClientRegistry;
@@ -15,8 +14,6 @@ import elucent.eidolon.util.RenderUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -50,10 +47,27 @@ public class ChantOverlay implements IGuiOverlay {
     private static long lastSignAddTime = 0;
     private static long autoCompleteStartTime = 0;
     private static boolean autoCompleteTriggered = false;
-    private static ChantCasterEntity activeEntity = null;
     private static ResourceLocation lastSignId = null; // Prevent duplicate additions
     
+    // Custom floating sign animation state (replacing ChantCasterEntity)
+    private static final List<FloatingSignData> floatingSignsData = new ArrayList<>();
+    
     // Configuration - accessed dynamically to avoid early config loading issues
+    
+    // Custom floating sign data for our controlled animation
+    private static class FloatingSignData {
+        public final Sign sign;
+        public final long spawnTime;
+        public final float angle;
+        public final float radius;
+        
+        public FloatingSignData(Sign sign, long spawnTime, float angle, float radius) {
+            this.sign = sign;
+            this.spawnTime = spawnTime;
+            this.angle = angle;
+            this.radius = radius;
+        }
+    }
     
     /**
      * Add a sign to the active chant with Eidolon's casting animation
@@ -75,7 +89,7 @@ public class ChantOverlay implements IGuiOverlay {
         if (!isActive) {
             isActive = true;
             activeChant.clear();
-            activeEntity = null;
+            floatingSignsData.clear();
         }
         
         // Add the sign
@@ -84,8 +98,9 @@ public class ChantOverlay implements IGuiOverlay {
         lastSignId = signId;
         autoCompleteTriggered = false;
         
-        // Create or update the ChantCasterEntity IMMEDIATELY
-        updateChantCasterEntity();
+        // Add floating sign data for custom animation (immediate)
+        float angle = (activeChant.size() - 1) * (360.0f / Math.max(1, activeChant.size()));
+        floatingSignsData.add(new FloatingSignData(sign, currentTime, angle, 1.5f));
         
         // Play Eidolon's SELECT_RUNE sound (like selecting in codex)
         if (mc.player != null) {
@@ -98,42 +113,6 @@ public class ChantOverlay implements IGuiOverlay {
         
         // Check if this completes a known chant
         checkForChantCompletion();
-    }
-    
-    /**
-     * Clear the active chant and remove ChantCasterEntity
-     */
-    public static void clearChant() {
-        activeChant.clear();
-        isActive = false;
-        autoCompleteTriggered = false;
-        autoCompleteStartTime = 0;
-        lastSignId = null; // Reset duplicate prevention
-        
-        // Remove the ChantCasterEntity
-        if (activeEntity != null && !activeEntity.isRemoved()) {
-            activeEntity.discard();
-        }
-        activeEntity = null;
-    }
-    
-    /**
-     * Create or update the ChantCasterEntity with current sign sequence
-     */
-    private static void updateChantCasterEntity() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
-        
-        // Remove old entity if it exists
-        if (activeEntity != null && !activeEntity.isRemoved()) {
-            activeEntity.discard();
-        }
-        
-        // Create new ChantCasterEntity with current signs
-        Vec3 placement = mc.player.position().add(0, mc.player.getBbHeight() * 2 / 3, 0).add(mc.player.getLookAngle().scale(0.5f));
-        activeEntity = new ChantCasterEntity(mc.level, mc.player, new ArrayList<>(activeChant), mc.player.getLookAngle());
-        activeEntity.setPos(placement.x, placement.y, placement.z);
-        mc.level.addFreshEntity(activeEntity);
     }
     
     /**
@@ -162,6 +141,18 @@ public class ChantOverlay implements IGuiOverlay {
             autoCompleteTriggered = true;
             autoCompleteStartTime = System.currentTimeMillis();
         }
+    }
+    
+    /**
+     * Clear the active chant and remove floating signs
+     */
+    public static void clearChant() {
+        activeChant.clear();
+        floatingSignsData.clear();
+        isActive = false;
+        autoCompleteTriggered = false;
+        autoCompleteStartTime = 0;
+        lastSignId = null; // Reset duplicate prevention
     }
     
     /**
@@ -216,6 +207,10 @@ public class ChantOverlay implements IGuiOverlay {
             executeChant();
             return;
         }
+        
+        // Debug: Always render something to test if overlay is working
+        Component debugText = Component.literal("§cCHANT OVERLAY ACTIVE - Signs: " + activeChant.size());
+        guiGraphics.drawString(mc.font, debugText, 10, 10, 0xFFFFFF);
         
         // Render the red ribbon chant interface (like in codex)
         renderChantRibbon(guiGraphics, screenWidth, screenHeight, partialTick);
@@ -314,12 +309,7 @@ public class ChantOverlay implements IGuiOverlay {
         AttemptCastPacket castPacket = new AttemptCastPacket(mc.player, new ArrayList<>(activeChant));
         Networking.INSTANCE.sendToServer(castPacket);
         
-        // Provide feedback
-        mc.player.sendSystemMessage(
-            Component.literal("§6✨ Chant completed: " + activeChant.size() + " signs cast!")
-        );
-        
-        // Clear the chant (this will also remove the ChantCasterEntity)
+        // Clear the chant (this will also remove the floating signs)
         clearChant();
     }
     

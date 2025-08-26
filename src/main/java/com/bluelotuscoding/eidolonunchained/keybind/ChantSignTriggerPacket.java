@@ -43,7 +43,7 @@ public class ChantSignTriggerPacket {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null || mc.level == null) return;
             
-            LOGGER.info("Received chant sign trigger packet for sign: {}", signId);
+            LOGGER.debug("Received chant sign trigger packet for sign: {}", signId);
             
             // Find the sign
             Sign sign = Signs.find(signId);
@@ -56,14 +56,9 @@ public class ChantSignTriggerPacket {
                 // Add the sign to the chant overlay (new independent system)
                 ChantOverlay.addSignToChant(sign);
                 
-                // Send feedback to the player
-                String signName = signId.getPath().substring(0, 1).toUpperCase() + signId.getPath().substring(1);
-                mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6✨ Added §f" + signName + "§6 to active chant"));
-                
-                LOGGER.info("Successfully added sign {} to chant overlay", signId);
+                LOGGER.debug("Successfully added sign {} to chant overlay", signId);
             } catch (Exception e) {
                 LOGGER.error("Failed to process sign trigger: {}", e.getMessage(), e);
-                mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cSign keybind error. Please try again."));
             }
         });
         
