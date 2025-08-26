@@ -1,8 +1,8 @@
 package com.bluelotuscoding.eidolonunchained.keybind;
 
+import com.bluelotuscoding.eidolonunchained.client.gui.ChantOverlay;
 import com.mojang.logging.LogUtils;
 import elucent.eidolon.api.spells.Sign;
-import elucent.eidolon.codex.CodexGui;
 import elucent.eidolon.registries.Signs;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 /**
  * Network packet to trigger the chant interface with a specific sign.
  * Sent from server to client when a sign keybind is pressed.
- * Opens the codex chant interface and automatically adds the sign.
+ * Opens the independent chant overlay and automatically adds the sign.
  */
 public class ChantSignTriggerPacket {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -53,19 +53,17 @@ public class ChantSignTriggerPacket {
             }
             
             try {
-                // Send feedback to the player about the sign being added to their active chant
+                // Add the sign to the chant overlay (new independent system)
+                ChantOverlay.addSignToChant(sign);
+                
+                // Send feedback to the player
                 String signName = signId.getPath().substring(0, 1).toUpperCase() + signId.getPath().substring(1);
-                mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6Added §f" + signName + "§6 sign to active chant"));
-                mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7Continue adding signs or open codex (TAB) to cast"));
+                mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6✨ Added §f" + signName + "§6 to active chant"));
                 
-                // TODO: Implement a client-side chant building system
-                // For now, just provide helpful instructions
-                mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7Tip: Open your codex and look for your chant to complete it!"));
-                
-                LOGGER.info("Processed sign trigger for: {}", signId);
+                LOGGER.info("Successfully added sign {} to chant overlay", signId);
             } catch (Exception e) {
                 LOGGER.error("Failed to process sign trigger: {}", e.getMessage(), e);
-                mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cSign keybind error. Use codex manually."));
+                mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cSign keybind error. Please try again."));
             }
         });
         

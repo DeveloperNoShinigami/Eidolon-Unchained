@@ -54,6 +54,7 @@ public class EidolonUnchainedConfig {
         public final ForgeConfigSpec.ConfigValue<String> chantCastingMode;
         public final ForgeConfigSpec.IntValue individualSignTimeoutMs;
         public final ForgeConfigSpec.BooleanValue enableChantFeedback;
+        public final ForgeConfigSpec.IntValue chantAutoCompleteDelay;
         
         // ===========================================
         // DEITY INTERACTION CONFIGURATION
@@ -207,6 +208,12 @@ public class EidolonUnchainedConfig {
             enableChantFeedback = builder
                 .comment("Show visual/audio feedback when casting chants")
                 .define("enable_chant_feedback", true);
+            
+            chantAutoCompleteDelay = builder
+                .comment("Auto-complete delay for chant sequences in game ticks (20 ticks = 1 second)",
+                         "How long to wait before automatically casting a completed chant sequence",
+                         "Set to 0 to disable auto-completion")
+                .defineInRange("chant_auto_complete_delay", 20, 0, 100);
             
             builder.pop();
             
