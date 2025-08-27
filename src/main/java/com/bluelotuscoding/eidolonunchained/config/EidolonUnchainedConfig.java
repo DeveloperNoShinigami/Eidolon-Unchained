@@ -50,6 +50,7 @@ public class EidolonUnchainedConfig {
         public final ForgeConfigSpec.BooleanValue useIndividualCategories;
         public final ForgeConfigSpec.BooleanValue requireExactSignOrder;
         public final ForgeConfigSpec.IntValue chantCooldownSeconds;
+        public final ForgeConfigSpec.BooleanValue bypassSpellCooldowns;
         public final ForgeConfigSpec.BooleanValue allowChantCancellation;
         public final ForgeConfigSpec.ConfigValue<String> chantCastingMode;
         public final ForgeConfigSpec.IntValue individualSignTimeoutMs;
@@ -189,10 +190,14 @@ public class EidolonUnchainedConfig {
                 .define("require_exact_sign_order", true);
             
             chantCooldownSeconds = builder
-                .comment("Cooldown between chant attempts in seconds")
+                .comment("Global default cooldown between chant attempts in seconds",
+                         "Individual spells can override this with their own 'cooldown' value in JSON")
                 .defineInRange("chant_cooldown_seconds", 5, 0, 60);
-            
-            allowChantCancellation = builder
+
+            bypassSpellCooldowns = builder
+                .comment("Bypass Eidolon's prayer cooldowns for regular spells (keeps prayer cooldowns intact)",
+                         "When enabled, only actual prayers will have cooldowns, regular spells will use JSON-defined cooldowns")
+                .define("bypass_spell_cooldowns", true);            allowChantCancellation = builder
                 .comment("Allow players to cancel chants mid-sequence")
                 .define("allow_chant_cancellation", true);
             

@@ -1,0 +1,30 @@
+{
+  "id": "eidolonunchained:necromantic_mastery",
+  "chapter": "eidolonunchained:advanced_necromancy",
+  "title": "Necromantic Mastery",
+  "description": "Master advanced necromantic techniques through dedicated practice and study.",
+  "icon": {"item": "eidolon:deathbringer_scythe"},
+  "prerequisites": ["eidolon:advanced_necromancy"],
+  "unlocks": [],
+  "x": 0,
+  "y": 0,
+  "type": "advanced",
+  "required_stars": 4,
+    "tasks": {
+      "tier_1": [
+        {"type": "kill_entities", "entity": "minecraft:zombie", "count": 150},
+        {"type": "kill_entities", "entity": "minecraft:skeleton", "count": 100},
+        {"type": "use_ritual", "ritual": "eidolon:summon_skeleton", "count": 25}
+      ],
+      "tier_2": [
+        {"type": "craft_items", "item": "eidolon:soul_gem", "count": 15},
+        {"type": "use_ritual", "ritual": "eidolon:summon_wraith", "count": 10},
+        {"type": "kill_entities", "entity": "minecraft:wither_skeleton", "count": 25}
+      ],
+      "tier_3": [
+        {"type": "craft_items", "item": "eidolon:deathbringer_scythe", "count": 1},
+        {"type": "use_ritual", "ritual": "eidolon:purify_ritual", "count": 5},
+        {"type": "kill_entities", "entity": "eidolon:necromancer", "count": 3}
+      ]
+   }
+}
