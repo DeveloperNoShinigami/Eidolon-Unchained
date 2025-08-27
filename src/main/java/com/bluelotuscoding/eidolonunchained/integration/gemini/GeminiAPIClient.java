@@ -93,10 +93,11 @@ public class GeminiAPIClient {
         addSafetySetting(safetyArray, "HARM_CATEGORY_DANGEROUS_CONTENT", safetySettings.dangerous_content);
         request.add("safetySettings", safetyArray);
         
-        // Generation config
+        // Generation config with token management
         JsonObject generationConfig = new JsonObject();
         generationConfig.addProperty("temperature", genConfig.temperature);
-        generationConfig.addProperty("maxOutputTokens", genConfig.max_output_tokens);
+        // Reduce max tokens to prevent truncation
+        generationConfig.addProperty("maxOutputTokens", Math.min(genConfig.max_output_tokens, 800));
         request.add("generationConfig", generationConfig);
         
         return request;
@@ -154,6 +155,19 @@ public class GeminiAPIClient {
             
             if (response.has("candidates") && response.getAsJsonArray("candidates").size() > 0) {
                 JsonObject candidate = response.getAsJsonArray("candidates").get(0).getAsJsonObject();
+                
+                // Check for finish reason issues
+                if (candidate.has("finishReason")) {
+                    String finishReason = candidate.get("finishReason").getAsString();
+                    if ("MAX_TOKENS".equals(finishReason)) {
+                        LOGGER.warn("AI response truncated due to token limit");
+                        return new AIResponse(false, "The deity's message was too complex. Please try a simpler prayer.", List.of());
+                    }
+                    if ("SAFETY".equals(finishReason)) {
+                        LOGGER.warn("AI response blocked by safety filters");
+                        return new AIResponse(false, "The deity does not wish to discuss such matters.", List.of());
+                    }
+                }
                 
                 if (candidate.has("content")) {
                     JsonObject content = candidate.getAsJsonObject("content");
@@ -253,7 +267,80 @@ public class GeminiAPIClient {
         context.append("Health: ").append((int)player.getHealth()).append("/").append((int)player.getMaxHealth()).append("\n");
         context.append("Experience Level: ").append(player.experienceLevel).append("\n");
         
+        // Inventory summary - highlight notable magical items
+        String inventorySummary = getInventorySummary(player);
+        if (!inventorySummary.isEmpty()) {
+            context.append("Notable Items: ").append(inventorySummary).append("\n");
+        }
+        
+        // Ritual history
+        String ritualHistory = getRitualHistory(player);
+        if (!ritualHistory.isEmpty()) {
+            context.append("Recent Rituals: ").append(ritualHistory).append("\n");
+        }
+        
         return context.toString();
+    }
+    
+    /**
+     * Get a summary of notable items in player's inventory
+     */
+    private static String getInventorySummary(ServerPlayer player) {
+        StringBuilder summary = new StringBuilder();
+        java.util.List<String> notableItems = new java.util.ArrayList<>();
+        
+        // Check main inventory and hotbar
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            net.minecraft.world.item.ItemStack stack = player.getInventory().getItem(i);
+            if (!stack.isEmpty() && isNotableItem(stack)) {
+                String itemName = stack.getDisplayName().getString();
+                int count = stack.getCount();
+                if (count > 1) {
+                    notableItems.add(itemName + " x" + count);
+                } else {
+                    notableItems.add(itemName);
+                }
+                
+                // Limit to prevent token overflow
+                if (notableItems.size() >= 8) break;
+            }
+        }
+        
+        return String.join(", ", notableItems);
+    }
+    
+    /**
+     * Check if an item is notable for AI context
+     */
+    private static boolean isNotableItem(net.minecraft.world.item.ItemStack stack) {
+        String itemId = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(stack.getItem()).toString();
+        
+        // Magical/ritual items
+        if (itemId.contains("eidolon") || itemId.contains("soul") || itemId.contains("crystal") || 
+            itemId.contains("wand") || itemId.contains("ritual") || itemId.contains("altar") ||
+            itemId.contains("rune") || itemId.contains("enchant") || itemId.contains("potion")) {
+            return true;
+        }
+        
+        // Valuable materials
+        if (itemId.contains("diamond") || itemId.contains("emerald") || itemId.contains("gold") || 
+            itemId.contains("netherite") || itemId.contains("nether_star")) {
+            return true;
+        }
+        
+        // Enchanted items
+        return stack.isEnchanted();
+    }
+    
+    /**
+     * Get recent ritual/chant history for this player
+     */
+    private static String getRitualHistory(ServerPlayer player) {
+        try {
+            return com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.getRitualHistorySummary(player);
+        } catch (Exception e) {
+            return "";
+        }
     }
     
     private static String getTimeOfDay(long time) {

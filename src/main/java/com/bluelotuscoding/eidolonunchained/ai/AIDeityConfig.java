@@ -35,6 +35,9 @@ public class AIDeityConfig {
     // Prayer configurations
     public final Map<String, PrayerAIConfig> prayerConfigs = new HashMap<>();
     
+    // Task system configuration
+    public TaskSystemConfig taskConfig = new TaskSystemConfig();
+    
     // API settings
     public APISettings apiSettings = new APISettings();
     

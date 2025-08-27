@@ -196,9 +196,15 @@ public class PrayerSystem {
     private static String buildPrompt(ServerPlayer player, DatapackDeity deity, PrayerAIConfig prayerConfig, String... args) {
         String basePrompt = prayerConfig.base_prompt;
         
+        // Get favor points and enhanced context
+        int favorPoints = com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.getFavorPoints(player, deity.getId());
+        String enhancedContext = com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.getContextSummary(player);
+        String ritualHistory = com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.getRitualHistorySummary(player);
+        
         // Replace placeholders
         basePrompt = basePrompt.replace("{player}", player.getName().getString());
         basePrompt = basePrompt.replace("{reputation}", String.valueOf(deity.getPlayerReputation(player)));
+        basePrompt = basePrompt.replace("{favor}", String.valueOf(favorPoints));
         basePrompt = basePrompt.replace("{research_count}", "0"); // TODO: Integrate with research system
         basePrompt = basePrompt.replace("{progression_level}", getProgressionLevel(deity, player));
         
@@ -212,6 +218,24 @@ public class PrayerSystem {
         // Add any additional arguments
         if (args.length > 0) {
             basePrompt += "\nAdditional context: " + String.join(" ", args);
+        }
+        
+        // Add enhanced context
+        if (!enhancedContext.isEmpty()) {
+            basePrompt += "\nRecent Player Activity: " + enhancedContext;
+        }
+        
+        if (!ritualHistory.isEmpty()) {
+            basePrompt += "\nRitual History: " + ritualHistory;
+        }
+        
+        basePrompt += "\nFavor Points: " + favorPoints + " (earned through successful rituals and completed tasks)";
+        
+        // Add task system guidance if enabled
+        com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig config = 
+            com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance().getAIConfig(deity.getId());
+        if (config != null && config.taskConfig.enabled) {
+            basePrompt += "\nTask Assignment: You can assign tasks to worthy players using: Command: /eidolon:assign_task " + player.getName().getString() + " <task_id>";
         }
         
         // Add command constraints

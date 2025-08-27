@@ -285,10 +285,30 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
             chant.execute(player);
             LOGGER.debug("Player {} successfully performed chant {} (cost: {} mana)", 
                         player.getName().getString(), chantId, manaCost);
+                        
+            // Record chant performance for AI context tracking
+            try {
+                com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.recordChant(
+                    player, chantId, chant.getLinkedDeity(), true
+                );
+            } catch (Exception e) {
+                LOGGER.warn("Failed to record chant for AI context", e);
+            }
+            
             return true;
         } catch (Exception e) {
             LOGGER.error("Failed to execute chant {} for player {}: {}", 
                         chantId, player.getName().getString(), e.getMessage());
+                        
+            // Record failed chant for AI context
+            try {
+                com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.recordChant(
+                    player, chantId, chant.getLinkedDeity(), false
+                );
+            } catch (Exception e2) {
+                LOGGER.warn("Failed to record failed chant for AI context", e2);
+            }
+            
             return false;
         }
     }

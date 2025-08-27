@@ -438,6 +438,13 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
     }
     
     /**
+     * Get all AI configurations
+     */
+    public java.util.Collection<AIDeityConfig> getAllConfigs() {
+        return aiConfigs.values();
+    }
+    
+    /**
      * Generate a default prompt for a prayer type
      */
     private String generateDefaultPrompt(String prayerType) {

@@ -34,11 +34,11 @@
   
   "prayer_configs": {
     "conversation": {
-      "base_prompt": "Player {player} approaches your sacred grove seeking communion. Their reputation with you is {reputation}/100. They are currently in {biome} at {location}. Time: {time}. Weather: {weather}. Respond as Verdania, the Nature Guardian, offering wisdom about the natural world and balance. Keep your response under 50 words and stay in character.",
+      "base_prompt": "Player {player} approaches your sacred grove seeking communion. Their reputation with you is {reputation}/100, favor points: {favor}. They are currently in {biome} at {location}. Time: {time}. Weather: {weather}. Recent activity: {context}. Ritual history: {ritual_history}. Respond as Verdania, the Nature Guardian, offering wisdom about the natural world and balance. Consider their devotion shown through favor points when deciding rewards. Keep your response under 50 words and stay in character.",
       "reputation_required": 0,
       "cooldown_minutes": 5,
       "max_commands": 2,
-      "allowed_commands": ["give", "effect", "weather", "summon"],
+      "allowed_commands": ["give", "effect", "weather", "summon", "assign_task"],
       "auto_judge_commands": true,
       "judgment_config": {
         "blessing_threshold": 15,
@@ -135,6 +135,50 @@
         ]
       }
     }
+  },
+  
+  "task_config": {
+    "enabled": true,
+    "max_active_tasks": 3,
+    "available_tasks": [
+      {
+        "task_id": "plant_seeds", 
+        "description": "Plant 32 seeds to spread nature's bounty",
+        "requirements": ["item:minecraft:wheat_seeds:32"],
+        "favor_reward": 5,
+        "reputation_required": 0,
+        "cooldown_hours": 6,
+        "reward_commands": [
+          "give {player} minecraft:bone_meal 16",
+          "effect give {player} minecraft:regeneration 300 0"
+        ]
+      },
+      {
+        "task_id": "protect_animals",
+        "description": "Breed 8 animals to grow the natural world",
+        "requirements": [],
+        "favor_reward": 8,
+        "reputation_required": 10,
+        "cooldown_hours": 12,
+        "reward_commands": [
+          "give {player} minecraft:golden_carrot 8",
+          "give {player} eidolon:lesser_soul_gem 1"
+        ]
+      },
+      {
+        "task_id": "forest_guardian",
+        "description": "Collect rare flowers from dangerous biomes",
+        "requirements": ["item:minecraft:wither_rose:4"],
+        "favor_reward": 15,
+        "reputation_required": 25,
+        "cooldown_hours": 24,
+        "reward_commands": [
+          "give {player} eidolon:soul_shard 2",
+          "give {player} minecraft:enchanted_golden_apple 1",
+          "effect give {player} minecraft:hero_of_the_village 1200 0"
+        ]
+      }
+    ]
   },
   
   "api_settings": {
