@@ -34,7 +34,7 @@
   
   "prayer_configs": {
     "conversation": {
-      "base_prompt": "Player {player} approaches your sacred grove seeking communion. Their reputation with you is {reputation}/100, favor points: {favor}. They are currently in {biome} at {location}. Time: {time}. Weather: {weather}. Recent activity: {context}. Ritual history: {ritual_history}. Respond as Verdania, the Nature Guardian, offering wisdom about the natural world and balance. Consider their devotion shown through favor points when deciding rewards. Keep your response under 50 words and stay in character.",
+      "base_prompt": "Player {player} approaches your sacred grove seeking communion. Their reputation with you is {reputation}/100. They are currently in {biome} at {location}. Time: {time}. Weather: {weather}. Recent activity: {context}. Ritual history: {ritual_history}. Respond as Verdania, the Nature Guardian, offering wisdom about the natural world and balance. Consider their devotion shown through reputation when deciding rewards. Keep your response under 50 words and stay in character.",
       "reputation_required": 0,
       "cooldown_minutes": 5,
       "max_commands": 2,
@@ -145,7 +145,7 @@
         "task_id": "plant_seeds", 
         "description": "Plant 32 seeds to spread nature's bounty",
         "requirements": ["item:minecraft:wheat_seeds:32"],
-        "favor_reward": 5,
+        "reputation_reward": 5,
         "reputation_required": 0,
         "cooldown_hours": 6,
         "reward_commands": [
@@ -154,10 +154,24 @@
         ]
       },
       {
+        "task_id": "verdant_ritual",
+        "description": "Perform the Ritual of Verdant Growth to channel nature's power",
+        "requirements": ["ritual:eidolonunchained:verdant_growth:1"],
+        "reputation_reward": 10,
+        "reputation_required": 5,
+        "cooldown_hours": 12,
+        "reward_commands": [
+          "give {player} minecraft:golden_carrot 8",
+          "give {player} eidolon:lesser_soul_gem 2",
+          "effect give {player} minecraft:saturation 600 0",
+          "tellraw {player} {\"text\":\"Nature's essence flows through you!\",\"color\":\"green\"}"
+        ]
+      },
+      {
         "task_id": "protect_animals",
         "description": "Breed 8 animals to grow the natural world",
         "requirements": [],
-        "favor_reward": 8,
+        "reputation_reward": 8,
         "reputation_required": 10,
         "cooldown_hours": 12,
         "reward_commands": [
@@ -169,13 +183,27 @@
         "task_id": "forest_guardian",
         "description": "Collect rare flowers from dangerous biomes",
         "requirements": ["item:minecraft:wither_rose:4"],
-        "favor_reward": 15,
+        "reputation_reward": 15,
         "reputation_required": 25,
         "cooldown_hours": 24,
         "reward_commands": [
           "give {player} eidolon:soul_shard 2",
           "give {player} minecraft:enchanted_golden_apple 1",
           "effect give {player} minecraft:hero_of_the_village 1200 0"
+        ]
+      },
+      {
+        "task_id": "perform_verdant_ritual",
+        "description": "Perform the sacred Ritual of Verdant Growth to honor the Earth Mother",
+        "requirements": ["ritual:eidolonunchained:ritual_of_verdant_growth:1"],
+        "reputation_reward": 20,
+        "reputation_required": 30,
+        "cooldown_hours": 48,
+        "reward_commands": [
+          "give {player} eidolon:soul_shard 4",
+          "give {player} minecraft:enchanted_golden_apple 2",
+          "effect give {player} minecraft:regeneration 1200 2",
+          "tellraw {player} {\"text\":\"Verdania smiles upon your devotion to the sacred ritual.\",\"color\":\"green\"}"
         ]
       }
     ]

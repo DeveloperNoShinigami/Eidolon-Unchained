@@ -103,6 +103,70 @@
     }
   },
   
+  "task_config": {
+    "enabled": true,
+    "max_active_tasks": 3,
+    "available_tasks": [
+      {
+        "task_id": "harvest_souls",
+        "description": "Collect 16 soul sand from the Nether's darkest depths",
+        "requirements": ["item:minecraft:soul_sand:16"],
+        "reputation_reward": 6,
+        "reputation_required": 0,
+        "cooldown_hours": 6,
+        "reward_commands": [
+          "give {player} eidolon:death_essence 3",
+          "effect give {player} minecraft:strength 300 0"
+        ]
+      },
+      {
+        "task_id": "shadow_ritual",
+        "description": "Perform the Ritual of Shadow Ascension to embrace the darkness",
+        "requirements": ["ritual:eidolonunchained:shadow_ascension:1"],
+        "reputation_reward": 18,
+        "reputation_required": 15,
+        "cooldown_hours": 20,
+        "reward_commands": [
+          "give {player} eidolon:death_essence 5",
+          "give {player} eidolon:soul_shard 3",
+          "effect give {player} minecraft:night_vision 1800 0",
+          "effect give {player} minecraft:strength 1200 1",
+          "effect give {player} minecraft:invisibility 300 0",
+          "tellraw {player} {\"text\":\"The shadows embrace you as their own...\",\"color\":\"dark_purple\"}"
+        ]
+      },
+      {
+        "task_id": "dark_ritual",
+        "description": "Perform forbidden rites under the new moon",
+        "requirements": [],
+        "reputation_reward": 15,
+        "reputation_required": 20,
+        "cooldown_hours": 16,
+        "reward_commands": [
+          "give {player} eidolon:zombie_heart 2",
+          "give {player} eidolon:soul_shard 2",
+          "effect give {player} minecraft:night_vision 1200 0",
+          "effect give {player} minecraft:strength 600 1"
+        ]
+      },
+      {
+        "task_id": "shadow_master",
+        "description": "Embrace the void and collect rare nether materials",
+        "requirements": ["item:minecraft:ancient_debris:4", "item:minecraft:wither_skeleton_skull:1"],
+        "reputation_reward": 25,
+        "reputation_required": 40,
+        "cooldown_hours": 48,
+        "reward_commands": [
+          "give {player} minecraft:nether_star 1",
+          "give {player} eidolon:warped_sprouts 8",
+          "effect give {player} minecraft:invisibility 600 0",
+          "enchant {player} minecraft:looting 2",
+          "tellraw {player} {\"text\":\"The shadows embrace you as their champion...\",\"color\":\"dark_purple\"}"
+        ]
+      }
+    ]
+  },
+  
   "api_settings": {
     "api_key_env": "GEMINI_API_KEY",
     "timeout_seconds": 30,

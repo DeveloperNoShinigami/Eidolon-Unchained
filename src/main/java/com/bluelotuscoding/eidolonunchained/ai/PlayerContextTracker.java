@@ -27,9 +27,9 @@ public class PlayerContextTracker {
     
     // NBT keys for persistence
     private static final String NBT_RITUAL_HISTORY = "ritual_history";
-    private static final String NBT_FAVOR_POINTS = "favor_points";
     private static final String NBT_ACTIVE_TASKS = "active_tasks";
     private static final String NBT_COMPLETED_TASKS = "completed_tasks";
+    private static final String NBT_COMPLETED_RITUALS = "completed_rituals";
     private static final String NBT_CHANT_COUNT = "chant_count";
     
     /**
@@ -44,12 +44,10 @@ public class PlayerContextTracker {
         public Map<ResourceLocation, Integer> chantCounts = new HashMap<>();
         public List<String> recentActions = new ArrayList<>();
         
-        // Favor system (separate from reputation)
-        public Map<ResourceLocation, Integer> favorPoints = new HashMap<>();
-        
         // Task system
         public Map<String, PlayerTask> activeTasks = new HashMap<>();
         public List<String> completedTasks = new ArrayList<>();
+        public List<String> completedRituals = new ArrayList<>(); // Track completed rituals for task checking
         
         // Behavioral tracking
         public long lastPrayerTime = 0;
@@ -72,24 +70,12 @@ public class PlayerContextTracker {
                 ritualHistory = ritualHistory.subList(0, 20);
             }
             
-            // Award favor points for successful rituals
-            if (successful && deityId != null) {
-                int currentFavor = favorPoints.getOrDefault(deityId, 0);
-                favorPoints.put(deityId, currentFavor + 1);
-            }
-            
             addAction("performed " + ritualName + (successful ? " successfully" : " unsuccessfully"));
         }
         
         public void addChant(ResourceLocation chantId, ResourceLocation deityId, boolean successful) {
             int currentCount = chantCounts.getOrDefault(chantId, 0);
             chantCounts.put(chantId, currentCount + 1);
-            
-            // Award favor for successful chants
-            if (successful && deityId != null) {
-                int currentFavor = favorPoints.getOrDefault(deityId, 0);
-                favorPoints.put(deityId, currentFavor + 1);
-            }
             
             addAction("chanted " + chantId.getPath() + (successful ? " successfully" : " unsuccessfully"));
         }
@@ -103,8 +89,8 @@ public class PlayerContextTracker {
             }
         }
         
-        public void assignTask(String taskId, String description, ResourceLocation deityId, int favorReward) {
-            PlayerTask task = new PlayerTask(taskId, description, deityId, System.currentTimeMillis(), favorReward);
+        public void assignTask(String taskId, String description, ResourceLocation deityId, int reputationReward) {
+            PlayerTask task = new PlayerTask(taskId, description, deityId, System.currentTimeMillis(), reputationReward);
             activeTasks.put(taskId, task);
             addAction("received task: " + description);
         }
@@ -113,12 +99,6 @@ public class PlayerContextTracker {
             PlayerTask task = activeTasks.remove(taskId);
             if (task != null) {
                 completedTasks.add(0, taskId); // Add to front
-                
-                // Award favor points
-                if (task.deityId != null) {
-                    int currentFavor = favorPoints.getOrDefault(task.deityId, 0);
-                    favorPoints.put(task.deityId, currentFavor + task.favorReward);
-                }
                 
                 addAction("completed task: " + task.description);
                 
@@ -172,13 +152,6 @@ public class PlayerContextTracker {
             }
             modData.put(NBT_RITUAL_HISTORY, ritualTag);
             
-            // Save favor points
-            CompoundTag favorTag = new CompoundTag();
-            for (Map.Entry<ResourceLocation, Integer> entry : favorPoints.entrySet()) {
-                favorTag.putInt(entry.getKey().toString(), entry.getValue());
-            }
-            modData.put(NBT_FAVOR_POINTS, favorTag);
-            
             // Save chant counts
             CompoundTag chantTag = new CompoundTag();
             for (Map.Entry<ResourceLocation, Integer> entry : chantCounts.entrySet()) {
@@ -194,7 +167,7 @@ public class PlayerContextTracker {
                 taskEntryTag.putString("description", task.description);
                 taskEntryTag.putString("deity", task.deityId != null ? task.deityId.toString() : "");
                 taskEntryTag.putLong("assigned_time", task.assignedTime);
-                taskEntryTag.putInt("favor_reward", task.favorReward);
+                taskEntryTag.putInt("reputation_reward", task.reputationReward);
                 taskTag.put(entry.getKey(), taskEntryTag);
             }
             modData.put(NBT_ACTIVE_TASKS, taskTag);
@@ -205,6 +178,13 @@ public class PlayerContextTracker {
                 completedTag.putString("task_" + i, completedTasks.get(i));
             }
             modData.put(NBT_COMPLETED_TASKS, completedTag);
+            
+            // Save completed rituals (last 50)
+            CompoundTag ritualsTag = new CompoundTag();
+            for (int i = 0; i < Math.min(completedRituals.size(), 50); i++) {
+                ritualsTag.putString("ritual_" + i, completedRituals.get(i));
+            }
+            modData.put(NBT_COMPLETED_RITUALS, ritualsTag);
             
             playerData.put(EidolonUnchained.MODID, modData);
         }
@@ -227,14 +207,6 @@ public class PlayerContextTracker {
                 }
             }
             
-            // Load favor points
-            if (modData.contains(NBT_FAVOR_POINTS)) {
-                CompoundTag favorTag = modData.getCompound(NBT_FAVOR_POINTS);
-                for (String key : favorTag.getAllKeys()) {
-                    favorPoints.put(new ResourceLocation(key), favorTag.getInt(key));
-                }
-            }
-            
             // Load chant counts
             if (modData.contains(NBT_CHANT_COUNT)) {
                 CompoundTag chantTag = modData.getCompound(NBT_CHANT_COUNT);
@@ -252,8 +224,8 @@ public class PlayerContextTracker {
                     String deityStr = taskEntryTag.getString("deity");
                     ResourceLocation deityId = deityStr.isEmpty() ? null : new ResourceLocation(deityStr);
                     long assignedTime = taskEntryTag.getLong("assigned_time");
-                    int favorReward = taskEntryTag.getInt("favor_reward");
-                    activeTasks.put(key, new PlayerTask(key, description, deityId, assignedTime, favorReward));
+                    int reputationReward = taskEntryTag.getInt("reputation_reward");
+                    activeTasks.put(key, new PlayerTask(key, description, deityId, assignedTime, reputationReward));
                 }
             }
             
@@ -262,6 +234,14 @@ public class PlayerContextTracker {
                 CompoundTag completedTag = modData.getCompound(NBT_COMPLETED_TASKS);
                 for (String key : completedTag.getAllKeys()) {
                     completedTasks.add(completedTag.getString(key));
+                }
+            }
+            
+            // Load completed rituals
+            if (modData.contains(NBT_COMPLETED_RITUALS)) {
+                CompoundTag ritualsTag = modData.getCompound(NBT_COMPLETED_RITUALS);
+                for (String key : ritualsTag.getAllKeys()) {
+                    completedRituals.add(ritualsTag.getString(key));
                 }
             }
         }
@@ -301,14 +281,14 @@ public class PlayerContextTracker {
         public final String description;
         public final ResourceLocation deityId;
         public final long assignedTime;
-        public final int favorReward;
+        public final int reputationReward;
         
-        public PlayerTask(String taskId, String description, ResourceLocation deityId, long assignedTime, int favorReward) {
+        public PlayerTask(String taskId, String description, ResourceLocation deityId, long assignedTime, int reputationReward) {
             this.taskId = taskId;
             this.description = description;
             this.deityId = deityId;
             this.assignedTime = assignedTime;
-            this.favorReward = favorReward;
+            this.reputationReward = reputationReward;
         }
     }
     
@@ -374,37 +354,90 @@ public class PlayerContextTracker {
     }
     
     /**
-     * Get favor points for a deity
-     */
-    public static int getFavorPoints(ServerPlayer player, ResourceLocation deityId) {
-        EnhancedPlayerContext context = getOrCreateContext(player.getUUID(), player);
-        return context.favorPoints.getOrDefault(deityId, 0);
-    }
-    
-    /**
-     * Add favor points for a deity
-     */
-    public static void addFavorPoints(ServerPlayer player, ResourceLocation deityId, int points) {
-        EnhancedPlayerContext context = getOrCreateContext(player.getUUID(), player);
-        int current = context.favorPoints.getOrDefault(deityId, 0);
-        context.favorPoints.put(deityId, current + points);
-        context.addAction("gained " + points + " favor with " + deityId.getPath());
-    }
-    
-    /**
      * Assign a task to a player
      */
-    public static void assignTask(ServerPlayer player, String taskId, String description, ResourceLocation deityId, int favorReward) {
+    public static void assignTask(ServerPlayer player, String taskId, String description, ResourceLocation deityId, int reputationReward) {
         EnhancedPlayerContext context = getOrCreateContext(player.getUUID(), player);
-        context.assignTask(taskId, description, deityId, favorReward);
+        context.assignTask(taskId, description, deityId, reputationReward);
     }
     
     /**
-     * Complete a task
+     * Complete a task and award reputation
      */
+    /**
+     * Track ritual completion for task requirements (manually called by commands)
+     */
+    public static void onRitualComplete(ServerPlayer player, ResourceLocation ritualId, boolean successful) {
+        EnhancedPlayerContext context = getOrCreateContext(player.getUUID(), player);
+        context.addRitual(ritualId.toString(), null, successful);
+        
+        if (successful) {
+            // Record the ritual completion for requirement checking
+            context.completedRituals.add(ritualId.toString());
+            
+            // Check if this completes any active tasks
+            checkRitualTaskCompletion(player, ritualId, context);
+            
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                "§6[Ritual] §eCompleted: " + ritualId.getPath()));
+        }
+    }
+    
+    private static void checkRitualTaskCompletion(ServerPlayer player, ResourceLocation ritualId, EnhancedPlayerContext context) {
+        // Check active tasks for ritual requirements
+        for (Map.Entry<String, PlayerTask> entry : context.activeTasks.entrySet()) {
+            String taskId = entry.getKey();
+            
+            // Find task template
+            for (com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig config : com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance().getAllConfigs()) {
+                for (com.bluelotuscoding.eidolonunchained.ai.TaskSystemConfig.TaskTemplate template : config.taskConfig.availableTasks) {
+                    if (template.taskId.equals(taskId)) {
+                        // Check if this ritual completes the task
+                        for (String requirement : template.requirements) {
+                            if (requirement.startsWith("ritual:") && requirement.contains(ritualId.toString())) {
+                                completeTask(player, taskId);
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6[Divine Task] §eCompleted: " + template.description));
+                                return; // Exit early since task is completed
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     public static boolean completeTask(ServerPlayer player, String taskId) {
         EnhancedPlayerContext context = getOrCreateContext(player.getUUID(), player);
-        return context.completeTask(taskId);
+        boolean completed = context.completeTask(taskId);
+        
+        if (completed) {
+            // Find the task to get deity and reputation reward
+            for (com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig config : com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance().getAllConfigs()) {
+                for (com.bluelotuscoding.eidolonunchained.ai.TaskSystemConfig.TaskTemplate template : config.taskConfig.availableTasks) {
+                    if (template.taskId.equals(taskId)) {
+                        // Award reputation using Eidolon's system
+                        try {
+                            player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE).ifPresent(rep -> {
+                                rep.addReputation(player, config.deityId, template.reputationReward);
+                            });
+                        } catch (Exception e) {
+                            // Fallback to datapack deity system
+                            com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = 
+                                com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(config.deityId);
+                            if (deity != null) {
+                                // Use reputation capability instead since DatapackDeity doesn't have addReputation method
+                                player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE).ifPresent(rep -> {
+                                    rep.addReputation(player, config.deityId, template.reputationReward);
+                                });
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        
+        return completed;
     }
     
     /**

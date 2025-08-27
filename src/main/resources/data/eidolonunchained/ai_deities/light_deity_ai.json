@@ -128,6 +128,67 @@
     }
   },
   
+  "task_config": {
+    "enabled": true,
+    "max_active_tasks": 3,
+    "available_tasks": [
+      {
+        "task_id": "heal_villagers",
+        "description": "Heal 5 villagers to spread the light's blessing",
+        "requirements": [],
+        "reputation_reward": 8,
+        "reputation_required": 0,
+        "cooldown_hours": 8,
+        "reward_commands": [
+          "give {player} minecraft:golden_apple 2",
+          "effect give {player} minecraft:regeneration 300 1"
+        ]
+      },
+      {
+        "task_id": "radiance_ritual",
+        "description": "Perform the Ritual of Divine Radiance to channel holy light",
+        "requirements": ["ritual:eidolonunchained:divine_radiance:1"],
+        "reputation_reward": 15,
+        "reputation_required": 10,
+        "cooldown_hours": 16,
+        "reward_commands": [
+          "give {player} minecraft:enchanted_golden_apple 1",
+          "give {player} eidolon:soul_shard 2",
+          "effect give {player} minecraft:resistance 1200 1",
+          "effect give {player} minecraft:glowing 600 0",
+          "tellraw {player} {\"text\":\"Divine light blesses your soul!\",\"color\":\"gold\"}"
+        ]
+      },
+      {
+        "task_id": "banish_undead",
+        "description": "Defeat 10 undead creatures to cleanse the darkness",
+        "requirements": [],
+        "reputation_reward": 12,
+        "reputation_required": 15,
+        "cooldown_hours": 12,
+        "reward_commands": [
+          "give {player} minecraft:enchanted_golden_apple 1",
+          "effect give {player} minecraft:resistance 600 1",
+          "give {player} eidolon:lesser_soul_gem 2"
+        ]
+      },
+      {
+        "task_id": "light_beacon",
+        "description": "Create a beacon of light to guide lost souls",
+        "requirements": ["item:minecraft:beacon:1", "item:minecraft:diamond_block:4"],
+        "reputation_reward": 20,
+        "reputation_required": 30,
+        "cooldown_hours": 24,
+        "reward_commands": [
+          "give {player} minecraft:netherite_ingot 1",
+          "give {player} eidolon:soul_shard 3",
+          "effect give {player} minecraft:hero_of_the_village 1200 1",
+          "tellraw {player} {\"text\":\"Your beacon of light has earned divine favor!\",\"color\":\"gold\"}"
+        ]
+      }
+    ]
+  },
+  
   "api_settings": {
     "api_key_env": "GEMINI_API_KEY",
     "timeout_seconds": 30,

@@ -15,17 +15,17 @@ public class TaskSystemConfig {
         public String taskId;
         public String description;
         public List<String> requirements = new ArrayList<>();
-        public int favorReward = 5;
+        public int reputationReward = 5; // Reputation points awarded on completion
         public int reputationRequired = 0;
         public long cooldownHours = 24;
         public List<String> rewardCommands = new ArrayList<>();
         
         public TaskTemplate() {}
         
-        public TaskTemplate(String taskId, String description, int favorReward) {
+        public TaskTemplate(String taskId, String description, int reputationReward) {
             this.taskId = taskId;
             this.description = description;
-            this.favorReward = favorReward;
+            this.reputationReward = reputationReward;
         }
     }
     

@@ -1,0 +1,25 @@
+{
+  "id": "divine_purification_ritual",
+  "title": "eidolonunchained.research.entry.divine_purification_ritual.title", 
+  "description": "eidolonunchained.research.entry.divine_purification_ritual.description",
+  "target_chapter": "divine_rituals",
+  "prerequisites": [
+    "eidolonunchained:divine_ritual_discovery"
+  ],
+  "pages": [
+    {
+      "type": "text",
+      "text": "§eLumina, the Sacred Guardian§r, blesses those who perform this purifying ceremony. The golden apple represents divine nourishment and the cleansing of the soul.$(br2)This ritual purifies negative influences and may be requested as a divine task."
+    },
+    {
+      "type": "ritual",
+      "recipe": "eidolonunchained:divine_purification",
+      "text": "Place a §6Golden Apple§r in the brazier as the ritual focus. Arrange the purification components on stone hands, then activate with a §bDiamond§r."
+    },
+    {
+      "type": "text",
+      "title": "Purification Components", 
+      "text": "§lStone Hand Contents:§r$(br)• 4x §eGlowstone Dust§r - divine radiance$(br)• 2x §fMilk Bucket§r - purification$(br)• 2x §6Gold Ingot§r - celestial metal$(br2)The ritual cleanses the soul and strengthens your connection to the light."
+    }
+  ]
+}

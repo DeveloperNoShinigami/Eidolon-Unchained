@@ -1,0 +1,11 @@
+{
+  "id": "divine_rituals",
+  "title": "eidolonunchained.research.chapter.divine_rituals.title",
+  "icon": "eidolon:brazier",
+  "category": "custom_research",
+  "entries": [
+    "nature_blessing_ritual",
+    "divine_purification_ritual", 
+    "shadow_embrace_ritual"
+  ]
+}

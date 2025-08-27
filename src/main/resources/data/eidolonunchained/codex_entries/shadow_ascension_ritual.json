@@ -1,0 +1,21 @@
+{
+  "target_chapter": "deity_rituals",
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolonunchained.codex.entry.shadow_ascension_ritual"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.shadow_ascension_ritual.description"
+    },
+    {
+      "type": "recipe",
+      "recipe": "eidolonunchained:ritual_shadow_ascension"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.shadow_ascension_ritual.effects"
+    }
+  ]
+}

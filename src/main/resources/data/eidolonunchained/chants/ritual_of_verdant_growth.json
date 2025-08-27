@@ -1,0 +1,82 @@
+{
+  "name": "Ritual of Verdant Growth",
+  "description": "A sacred ritual to Verdania that blesses the land with abundant growth and life. Requires offerings of nature's bounty to complete.",
+  "category": "divine_rituals",
+  "codex_icon": "minecraft:oak_sapling",
+  "difficulty": 3,
+  "mana_cost": 40,
+  "cooldown": 120,
+  "show_in_codex": true,
+  "linked_deity": "eidolonunchained:nature_deity",
+  "ritual_type": "nature_blessing",
+  "signs": [
+    "eidolon:harmony",
+    "eidolon:soul",
+    "eidolon:sacred",
+    "eidolon:harmony"
+  ],
+  "requirements": [
+    {
+      "type": "item",
+      "item": "minecraft:oak_sapling",
+      "count": 4,
+      "consume": true
+    },
+    {
+      "type": "item", 
+      "item": "minecraft:bone_meal",
+      "count": 8,
+      "consume": true
+    },
+    {
+      "type": "item",
+      "item": "minecraft:wheat_seeds", 
+      "count": 16,
+      "consume": true
+    },
+    {
+      "type": "biome",
+      "biomes": ["minecraft:forest", "minecraft:flower_forest", "minecraft:plains", "minecraft:meadow"]
+    },
+    {
+      "type": "time",
+      "min_time": 6000,
+      "max_time": 18000
+    }
+  ],
+  "effects": [
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:regeneration", 
+      "duration": 600,
+      "amplifier": 2
+    },
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:saturation",
+      "duration": 200,
+      "amplifier": 1
+    },
+    {
+      "type": "give_item",
+      "item": "eidolon:lesser_soul_gem",
+      "count": 2
+    },
+    {
+      "type": "give_item",
+      "item": "minecraft:golden_apple",
+      "count": 1
+    },
+    {
+      "type": "spawn_particles",
+      "particle": "minecraft:happy_villager",
+      "count": 50
+    },
+    {
+      "type": "play_sound",
+      "sound": "minecraft:block.grass.break",
+      "volume": 0.8,
+      "pitch": 1.2
+    }
+  ]
+}

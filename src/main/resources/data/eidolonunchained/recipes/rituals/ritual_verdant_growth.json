@@ -1,0 +1,28 @@
+{
+  "type": "eidolon:ritual_brazier",
+  "focusItems": [
+    {
+      "item": "minecraft:oak_sapling"
+    }
+  ],
+  "pedestalItems": [
+    {
+      "item": "minecraft:wheat_seeds"
+    },
+    {
+      "item": "minecraft:bone_meal"
+    },
+    {
+      "item": "minecraft:oak_leaves"
+    },
+    {
+      "tag": "minecraft:flowers"
+    }
+  ],
+  "reagent": [
+    {
+      "item": "eidolon:soul_shard"
+    }
+  ],
+  "ritual": "eidolonunchained:verdant_growth"
+}

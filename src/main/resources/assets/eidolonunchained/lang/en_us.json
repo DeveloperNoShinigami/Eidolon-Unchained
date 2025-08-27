@@ -90,6 +90,14 @@
   "eidolonunchained.research.entry.simple_example.title": "Simple Research Example",
   "eidolonunchained.research.entry.simple_example.description": "A basic example of the research system",
   
+  "eidolonunchained.research.chapter.divine_rituals.title": "Divine Rituals",
+  "eidolonunchained.research.entry.nature_blessing_ritual.title": "Nature's Blessing Ritual",
+  "eidolonunchained.research.entry.nature_blessing_ritual.description": "A sacred ceremony to commune with Verdania, the Nature Guardian",
+  "eidolonunchained.research.entry.divine_purification_ritual.title": "Divine Purification Ritual", 
+  "eidolonunchained.research.entry.divine_purification_ritual.description": "A holy ritual to gain Lumina's blessing and cleanse the soul",
+  "eidolonunchained.research.entry.shadow_embrace_ritual.title": "Shadow Embrace Ritual",
+  "eidolonunchained.research.entry.shadow_embrace_ritual.description": "A dangerous ritual to gain power from Nyxathel, the Shadow Lord",
+  
   "task.eidolonunchained.has_nbt.single": "User contains '%s'",
   "task.eidolonunchained.has_nbt.multiple": "User contains %d data fields",
   

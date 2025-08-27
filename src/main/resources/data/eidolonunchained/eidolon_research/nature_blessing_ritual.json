@@ -1,0 +1,41 @@
+{
+  "id": "nature_blessing_ritual",
+  "stars": 3,
+  "triggers": [
+    {
+      "type": "ritual",
+      "ritual": "eidolonunchained:nature_blessing",
+      "item_requirements": {
+        "check_inventory": true,
+        "items": []
+      }
+    }
+  ],
+  "tasks": {
+    "0": [
+      {
+        "type": "item",
+        "item": "minecraft:oak_sapling",
+        "count": 3
+      }
+    ],
+    "1": [
+      {
+        "type": "item",
+        "item": "eidolon:arcane_gold_ingot",
+        "count": 2
+      }
+    ]
+  },
+  "rewards": [
+    {
+      "type": "item",
+      "item": "minecraft:enchanted_book",
+      "count": 1
+    },
+    {
+      "type": "experience",
+      "amount": 150
+    }
+  ]
+}

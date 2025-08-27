@@ -1,0 +1,51 @@
+{
+  "id": "divine_ritual_discovery",
+  "stars": 3,
+  "triggers": [
+    "eidolon:brazier",
+    "minecraft:golden_apple", 
+    "minecraft:emerald",
+    "minecraft:diamond",
+    "ritual:eidolonunchained:nature_blessing",
+    "ritual:eidolonunchained:divine_purification",
+    "ritual:eidolonunchained:shadow_embrace"
+  ],
+  "tasks": {
+    "0": [
+      {
+        "type": "item",
+        "item": "eidolon:brazier",
+        "count": 1
+      }
+    ],
+    "1": [
+      {
+        "type": "ritual_completion",
+        "ritual": "eidolonunchained:nature_blessing"
+      }
+    ],
+    "2": [
+      {
+        "type": "ritual_completion", 
+        "ritual": "eidolonunchained:divine_purification"
+      }
+    ],
+    "3": [
+      {
+        "type": "ritual_completion",
+        "ritual": "eidolonunchained:shadow_embrace"
+      }
+    ]
+  },
+  "rewards": [
+    {
+      "type": "item",
+      "item": "eidolon:research_notes",
+      "count": 5
+    },
+    {
+      "type": "experience",
+      "amount": 500
+    }
+  ]
+}

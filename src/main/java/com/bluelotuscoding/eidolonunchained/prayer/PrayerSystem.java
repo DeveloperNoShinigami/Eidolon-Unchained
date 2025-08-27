@@ -196,15 +196,13 @@ public class PrayerSystem {
     private static String buildPrompt(ServerPlayer player, DatapackDeity deity, PrayerAIConfig prayerConfig, String... args) {
         String basePrompt = prayerConfig.base_prompt;
         
-        // Get favor points and enhanced context
-        int favorPoints = com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.getFavorPoints(player, deity.getId());
+        // Get enhanced context
         String enhancedContext = com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.getContextSummary(player);
         String ritualHistory = com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.getRitualHistorySummary(player);
         
         // Replace placeholders
         basePrompt = basePrompt.replace("{player}", player.getName().getString());
         basePrompt = basePrompt.replace("{reputation}", String.valueOf(deity.getPlayerReputation(player)));
-        basePrompt = basePrompt.replace("{favor}", String.valueOf(favorPoints));
         basePrompt = basePrompt.replace("{research_count}", "0"); // TODO: Integrate with research system
         basePrompt = basePrompt.replace("{progression_level}", getProgressionLevel(deity, player));
         
@@ -228,8 +226,6 @@ public class PrayerSystem {
         if (!ritualHistory.isEmpty()) {
             basePrompt += "\nRitual History: " + ritualHistory;
         }
-        
-        basePrompt += "\nFavor Points: " + favorPoints + " (earned through successful rituals and completed tasks)";
         
         // Add task system guidance if enabled
         com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig config = 

@@ -1,8 +1,42 @@
 {
   "id": "simple_research_example",
-  "stars": 1,
+  "stars": 2,
   "triggers": [
-    "minecraft:zombie"
+    "minecraft:zombie",
+    {
+      "type": "kill_entity",
+      "entity": "minecraft:zombie",
+      "nbt": {},
+      "item_requirements": {
+        "check_inventory": true,
+        "items": [
+          {
+            "item": "minecraft:iron_sword",
+            "nbt": {},
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "type": "biome",
+      "biome": "minecraft:desert",
+      "coordinates": {
+        "x": 100,
+        "z": 200,
+        "range": 50.0
+      },
+      "item_requirements": {
+        "check_inventory": true,
+        "items": [
+          {
+            "item": "minecraft:sand",
+            "nbt": {},
+            "count": 1
+          }
+        ]
+      }
+    }
   ],
   "tasks": {
     "0": [

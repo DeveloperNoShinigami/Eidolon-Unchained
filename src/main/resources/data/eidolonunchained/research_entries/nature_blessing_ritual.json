@@ -1,0 +1,25 @@
+{
+  "id": "nature_blessing_ritual",
+  "title": "eidolonunchained.research.entry.nature_blessing_ritual.title",
+  "description": "eidolonunchained.research.entry.nature_blessing_ritual.description",
+  "target_chapter": "divine_rituals",
+  "prerequisites": [
+    "eidolonunchained:divine_ritual_discovery"
+  ],
+  "pages": [
+    {
+      "type": "text",
+      "text": "§2Verdania, the Nature Guardian§r, responds to this sacred ritual of growth and harmony. The ritual channels the essence of life and natural cycles.$(br2)This ritual can be performed to gain favor with Verdania and may be required to complete divine tasks."
+    },
+    {
+      "type": "ritual",
+      "recipe": "eidolonunchained:nature_blessing",
+      "text": "Place an §2Oak Sapling§r in the brazier as the ritual focus. Arrange the components on stone hands around the brazier, then activate with an §aEmerald§r."
+    },
+    {
+      "type": "text", 
+      "title": "Ritual Components",
+      "text": "§lStone Hand Contents:§r$(br)• 4x §2Wheat Seeds§r - symbols of new life$(br)• 2x §aBone Meal§r - nourishment for growth$(br)• 2x §6Oak Log§r - connection to the forest$(br2)Light the brazier when all components are properly placed."
+    }
+  ]
+}
