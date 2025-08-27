@@ -5,6 +5,7 @@
   "codex_icon": "minecraft:wither_skeleton_skull",
   "difficulty": 3,
   "mana_cost": 40,
+  "cooldown": 90,
   "show_in_codex": true,
   "linked_deity": "eidolonunchained:dark_deity",
   "signs": [

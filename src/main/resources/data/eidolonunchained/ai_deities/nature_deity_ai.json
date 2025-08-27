@@ -44,17 +44,17 @@
         "blessing_threshold": 15,
         "curse_threshold": -5,
         "blessing_commands": [
-          "effect give @p minecraft:regeneration 180 0",
-          "give @p minecraft:wheat_seeds {count}",
-          "effect give @p minecraft:saturation 30 0"
+          "effect give {player} minecraft:regeneration 180 0",
+          "give {player} minecraft:wheat_seeds 5",
+          "effect give {player} minecraft:saturation 30 0"
         ],
         "curse_commands": [
-          "effect give @p minecraft:poison 30 0",
-          "summon minecraft:bee ~ ~ ~ {Anger:200,AngryAt:@p}"
+          "effect give {player} minecraft:poison 30 0",
+          "summon minecraft:bee ~ ~ ~ {Anger:200}"
         ],
         "neutral_commands": [
-          "give @p minecraft:oak_sapling 2",
-          "effect give @p minecraft:slow_digging 30 0"
+          "give {player} minecraft:oak_sapling 2",
+          "effect give {player} minecraft:slow_digging 30 0"
         ]
       }
     },
@@ -69,18 +69,18 @@
         "blessing_threshold": 25,
         "curse_threshold": 5,
         "blessing_commands": [
-          "give @p minecraft:golden_apple {count}",
-          "effect give @p minecraft:regeneration 300 1",
-          "summon minecraft:wolf ~ ~ ~ {Owner:@p,Sitting:0b}",
+          "give {player} minecraft:golden_apple 1",
+          "effect give {player} minecraft:regeneration 300 1",
+          "summon minecraft:wolf ~ ~ ~ {Owner:\"{player}\",Sitting:0b}",
           "weather clear 6000"
         ],
         "curse_commands": [
-          "effect give @p minecraft:slowness 60 1",
+          "effect give {player} minecraft:slowness 60 1",
           "summon minecraft:spider ~ ~ ~ {CustomName:'\"Nature's Displeasure\"'}"
         ],
         "neutral_commands": [
-          "give @p minecraft:bone_meal 5",
-          "effect give @p minecraft:luck 300 0"
+          "give {player} minecraft:bone_meal 5",
+          "effect give {player} minecraft:luck 300 0"
         ]
       }
     },
@@ -95,16 +95,16 @@
         "blessing_threshold": 30,
         "curse_threshold": 10,
         "blessing_commands": [
-          "give @p eidolon:research_notes 1",
-          "give @p minecraft:map 1",
-          "tellraw @p {\"text\":\"The whispers of the forest reveal ancient secrets...\",\"color\":\"green\"}",
-          "effect give @p minecraft:night_vision 600 0"
+          "give {player} eidolon:research_notes 1",
+          "give {player} minecraft:map 1",
+          "tellraw {player} {\"text\":\"The whispers of the forest reveal ancient secrets...\",\"color\":\"green\"}",
+          "effect give {player} minecraft:night_vision 600 0"
         ],
         "curse_commands": [
-          "tellraw @p {\"text\":\"The forest spirits withhold their wisdom from you.\",\"color\":\"dark_green\"}"
+          "tellraw {player} {\"text\":\"The forest spirits withhold their wisdom from you.\",\"color\":\"dark_green\"}"
         ],
         "neutral_commands": [
-          "tellraw @p {\"text\":\"Grow closer to nature, and greater knowledge will follow.\",\"color\":\"green\"}"
+          "tellraw {player} {\"text\":\"Grow closer to nature, and greater knowledge will follow.\",\"color\":\"green\"}"
         ]
       }
     },
@@ -119,19 +119,19 @@
         "blessing_threshold": 35,
         "curse_threshold": 15,
         "blessing_commands": [
-          "effect give @p minecraft:resistance 600 1",
-          "effect give @p minecraft:fire_resistance 600 0",
-          "give @p minecraft:totem_of_undying 1",
+          "effect give {player} minecraft:resistance 600 1",
+          "effect give {player} minecraft:fire_resistance 600 0",
+          "give {player} minecraft:totem_of_undying 1",
           "weather thunder 3000",
-          "tellraw @p {\"text\":\"Balance restored. You are protected by nature's forces.\",\"color\":\"gold\"}"
+          "tellraw {player} {\"text\":\"Balance restored. You are protected by nature's forces.\",\"color\":\"gold\"}"
         ],
         "curse_commands": [
-          "effect give @p minecraft:unluck 600 0",
-          "tellraw @p {\"text\":\"The natural balance rejects your presence.\",\"color\":\"red\"}"
+          "effect give {player} minecraft:unluck 600 0",
+          "tellraw {player} {\"text\":\"The natural balance rejects your presence.\",\"color\":\"red\"}"
         ],
         "neutral_commands": [
-          "effect give @p minecraft:slow_falling 300 0",
-          "tellraw @p {\"text\":\"Seek greater harmony before requesting balance.\",\"color\":\"yellow\"}"
+          "effect give {player} minecraft:slow_falling 300 0",
+          "tellraw {player} {\"text\":\"Seek greater harmony before requesting balance.\",\"color\":\"yellow\"}"
         ]
       }
     }

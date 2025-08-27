@@ -2,6 +2,8 @@
   "name": "Test Chant with Item Requirements",
   "description": "A test chant that requires specific items to cast, demonstrating the new requirement system.",
   "category": "examples",
+  "mana_cost": 10,
+  "cooldown": 60,
   "codex_icon": "minecraft:diamond",
   "difficulty": 2,
   "show_in_codex": true,

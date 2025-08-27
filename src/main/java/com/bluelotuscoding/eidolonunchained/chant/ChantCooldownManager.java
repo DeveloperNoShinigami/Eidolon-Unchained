@@ -1,6 +1,7 @@
 package com.bluelotuscoding.eidolonunchained.chant;
 
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
@@ -10,42 +11,48 @@ import java.util.UUID;
 
 /**
  * Manages cooldowns for chant casting to prevent spam
+ * Supports per-chant cooldowns with global config as fallback
  */
 public class ChantCooldownManager {
     
-    private static final Map<UUID, Long> playerCooldowns = new HashMap<>();
+    // playerId -> (chantId -> lastCastTime)
+    private static final Map<UUID, Map<ResourceLocation, Long>> playerChantCooldowns = new HashMap<>();
     
     /**
-     * Check if a player can cast a chant (not on cooldown)
+     * Check if a player can cast a specific chant (not on cooldown)
      */
-    public static boolean canCastChant(Player player) {
+    public static boolean canCastChant(Player player, DatapackChant chant) {
         UUID playerId = player.getUUID();
+        ResourceLocation chantId = chant.getId();
         long currentTime = System.currentTimeMillis();
         
-        if (!playerCooldowns.containsKey(playerId)) {
+        Map<ResourceLocation, Long> playerCooldowns = playerChantCooldowns.get(playerId);
+        if (playerCooldowns == null || !playerCooldowns.containsKey(chantId)) {
             return true;
         }
         
-        long lastCastTime = playerCooldowns.get(playerId);
-        int cooldownSeconds = EidolonUnchainedConfig.COMMON.chantCooldownSeconds.get();
+        long lastCastTime = playerCooldowns.get(chantId);
+        int cooldownSeconds = chant.getCooldown(); // Use chant-specific cooldown
         long cooldownMs = cooldownSeconds * 1000L;
         
         return (currentTime - lastCastTime) >= cooldownMs;
     }
     
     /**
-     * Get remaining cooldown time in seconds for a player
+     * Get remaining cooldown time in seconds for a specific chant
      */
-    public static int getRemainingCooldown(Player player) {
+    public static int getRemainingCooldown(Player player, DatapackChant chant) {
         UUID playerId = player.getUUID();
+        ResourceLocation chantId = chant.getId();
         long currentTime = System.currentTimeMillis();
         
-        if (!playerCooldowns.containsKey(playerId)) {
+        Map<ResourceLocation, Long> playerCooldowns = playerChantCooldowns.get(playerId);
+        if (playerCooldowns == null || !playerCooldowns.containsKey(chantId)) {
             return 0;
         }
         
-        long lastCastTime = playerCooldowns.get(playerId);
-        int cooldownSeconds = EidolonUnchainedConfig.COMMON.chantCooldownSeconds.get();
+        long lastCastTime = playerCooldowns.get(chantId);
+        int cooldownSeconds = chant.getCooldown(); // Use chant-specific cooldown
         long cooldownMs = cooldownSeconds * 1000L;
         long remainingMs = cooldownMs - (currentTime - lastCastTime);
         
@@ -53,19 +60,36 @@ public class ChantCooldownManager {
     }
     
     /**
-     * Set cooldown for a player after casting a chant
+     * Set cooldown for a player after casting a specific chant
      */
-    public static void setCooldown(Player player) {
+    public static void setCooldown(Player player, DatapackChant chant) {
         UUID playerId = player.getUUID();
-        playerCooldowns.put(playerId, System.currentTimeMillis());
+        ResourceLocation chantId = chant.getId();
+        
+        playerChantCooldowns.computeIfAbsent(playerId, k -> new HashMap<>())
+                           .put(chantId, System.currentTimeMillis());
     }
     
     /**
-     * Clear cooldown for a player (admin command or special circumstances)
+     * Clear cooldown for a specific chant for a player (admin command or special circumstances)
      */
-    public static void clearCooldown(Player player) {
+    public static void clearCooldown(Player player, ResourceLocation chantId) {
         UUID playerId = player.getUUID();
-        playerCooldowns.remove(playerId);
+        Map<ResourceLocation, Long> playerCooldowns = playerChantCooldowns.get(playerId);
+        if (playerCooldowns != null) {
+            playerCooldowns.remove(chantId);
+            if (playerCooldowns.isEmpty()) {
+                playerChantCooldowns.remove(playerId);
+            }
+        }
+    }
+    
+    /**
+     * Clear all cooldowns for a player
+     */
+    public static void clearAllCooldowns(Player player) {
+        UUID playerId = player.getUUID();
+        playerChantCooldowns.remove(playerId);
     }
     
     /**
@@ -73,11 +97,14 @@ public class ChantCooldownManager {
      */
     public static void cleanup() {
         long currentTime = System.currentTimeMillis();
-        int maxCooldownSeconds = EidolonUnchainedConfig.COMMON.chantCooldownSeconds.get();
-        long maxCooldownMs = maxCooldownSeconds * 1000L;
+        long maxAge = 24 * 60 * 60 * 1000L; // 24 hours
         
-        playerCooldowns.entrySet().removeIf(entry -> 
-            (currentTime - entry.getValue()) > (maxCooldownMs * 2) // Remove after 2x cooldown time
-        );
+        playerChantCooldowns.entrySet().removeIf(playerEntry -> {
+            Map<ResourceLocation, Long> chantCooldowns = playerEntry.getValue();
+            chantCooldowns.entrySet().removeIf(chantEntry -> 
+                (currentTime - chantEntry.getValue()) > maxAge
+            );
+            return chantCooldowns.isEmpty();
+        });
     }
 }

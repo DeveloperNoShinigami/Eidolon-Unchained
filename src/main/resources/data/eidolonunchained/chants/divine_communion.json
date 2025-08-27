@@ -5,6 +5,7 @@
   "codex_icon": "minecraft:glowstone",
   "difficulty": 2,
   "mana_cost": 25,
+  "cooldown": 60,
   "show_in_codex": true,
   "linked_deity": "eidolonunchained:light_deity",
   "signs": [

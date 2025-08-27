@@ -249,8 +249,8 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
         }
         
         // Check cooldown
-        if (!ChantCooldownManager.canCastChant(player)) {
-            int remainingSeconds = ChantCooldownManager.getRemainingCooldown(player);
+        if (!ChantCooldownManager.canCastChant(player, chant)) {
+            int remainingSeconds = ChantCooldownManager.getRemainingCooldown(player, chant);
             player.sendSystemMessage(Component.literal("§cChant is on cooldown for " + remainingSeconds + " more seconds"));
             return false;
         }
@@ -280,7 +280,7 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
             }
             
             // Set cooldown
-            ChantCooldownManager.setCooldown(player);
+            ChantCooldownManager.setCooldown(player, chant);
             
             chant.execute(player);
             LOGGER.debug("Player {} successfully performed chant {} (cost: {} mana)", 

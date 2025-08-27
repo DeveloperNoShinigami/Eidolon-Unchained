@@ -29,7 +29,7 @@
   
   "prayer_configs": {
     "conversation": {
-      "base_prompt": "Player {player} approaches your sacred altar seeking communion. Their reputation with you is {reputation}/100. They are currently in {biome} at {location}. Time: {time}. Weather: {weather}. Respond as Lumina, the Sacred Guardian, offering hope, healing wisdom, and divine guidance. Keep your compassionate response under 50 words and stay in character.",
+      "base_prompt": "Player {player} approaches your sacred altar seeking communion. Their reputation with you is {reputation}/100. They are currently in {biome} at {location}. Time: {time}. Weather: {weather}. Respond as Lumina, the Sacred Guardian, offering hope, healing wisdom, and divine guidance. Based on their reputation, you can bless them (rep ≥10), curse them (rep ≤-15), or offer neutral help. Always respond with compassionate divine words in under 50 words and stay in character.",
       "reputation_required": 0,
       "cooldown_minutes": 3,
       "max_commands": 2,
@@ -39,16 +39,16 @@
         "blessing_threshold": 10,
         "curse_threshold": -15,
         "blessing_commands": [
-          "effect give @p minecraft:regeneration 180 0",
-          "effect give @p minecraft:resistance 300 0",
-          "give @p minecraft:bread {count}"
+          "effect give {player} minecraft:regeneration 180 0",
+          "effect give {player} minecraft:resistance 300 0",
+          "give {player} minecraft:bread 3"
         ],
         "curse_commands": [
-          "tellraw @p {\"text\":\"I am disappointed in your actions, but redemption is always possible.\",\"color\":\"yellow\"}"
+          "tellraw {player} {\"text\":\"I am disappointed in your actions, but redemption is always possible.\",\"color\":\"yellow\"}"
         ],
         "neutral_commands": [
-          "effect give @p minecraft:saturation 10 0",
-          "give @p minecraft:wheat 3"
+          "effect give {player} minecraft:saturation 10 0",
+          "give {player} minecraft:wheat 3"
         ]
       }
     },
@@ -63,17 +63,16 @@
         "blessing_threshold": 15,
         "curse_threshold": -5,
         "blessing_commands": [
-          "give @p minecraft:golden_apple {count}",
-          "effect give @p minecraft:regeneration 300 1",
-          "effect give @p minecraft:resistance 600 1",
-          "enchant @p minecraft:protection 1"
+          "give {player} minecraft:golden_apple 1",
+          "effect give {player} minecraft:regeneration 300 1",
+          "effect give {player} minecraft:resistance 600 1"
         ],
         "curse_commands": [
-          "tellraw @p {\"text\":\"Your heart needs cleansing before you can receive my blessings.\",\"color\":\"gold\"}"
+          "tellraw {player} {\"text\":\"Your heart needs cleansing before you can receive my blessings.\",\"color\":\"gold\"}"
         ],
         "neutral_commands": [
-          "give @p minecraft:golden_carrot 2",
-          "effect give @p minecraft:health_boost 300 0"
+          "give {player} minecraft:golden_carrot 2",
+          "effect give {player} minecraft:health_boost 300 0"
         ]
       }
     },
@@ -88,16 +87,15 @@
         "blessing_threshold": 25,
         "curse_threshold": 5,
         "blessing_commands": [
-          "give @p eidolon:research_notes 1",
-          "give @p minecraft:compass 1",
-          "tellraw @p {\"text\":\"Let the light guide your path to righteousness.\",\"color\":\"gold\"}",
-          "effect give @p minecraft:glowing 600 0"
+          "give {player} minecraft:compass 1",
+          "tellraw {player} {\"text\":\"Let the light guide your path to righteousness.\",\"color\":\"gold\"}",
+          "effect give {player} minecraft:glowing 600 0"
         ],
         "curse_commands": [
-          "tellraw @p {\"text\":\"Seek purity of heart before asking for divine wisdom.\",\"color\":\"yellow\"}"
+          "tellraw {player} {\"text\":\"Seek purity of heart before asking for divine wisdom.\",\"color\":\"yellow\"}"
         ],
         "neutral_commands": [
-          "tellraw @p {\"text\":\"Continue on your path, child. Good deeds will earn greater wisdom.\",\"color\":\"white\"}"
+          "tellraw {player} {\"text\":\"Continue on your path, child. Good deeds will earn greater wisdom.\",\"color\":\"white\"}"
         ]
       }
     },
@@ -112,19 +110,19 @@
         "blessing_threshold": 30,
         "curse_threshold": 10,
         "blessing_commands": [
-          "effect clear @p",
-          "effect give @p minecraft:regeneration 300 2",
-          "effect give @p minecraft:resistance 600 1",
-          "give @p minecraft:milk_bucket 1",
-          "tellraw @p {\"text\":\"You have been cleansed by divine light.\",\"color\":\"gold\"}"
+          "effect clear {player}",
+          "effect give {player} minecraft:regeneration 300 2",
+          "effect give {player} minecraft:resistance 600 1",
+          "give {player} minecraft:milk_bucket 1",
+          "tellraw {player} {\"text\":\"You have been cleansed by divine light.\",\"color\":\"gold\"}"
         ],
         "curse_commands": [
-          "tellraw @p {\"text\":\"Your spirit is too corrupted for purification. Seek redemption first.\",\"color\":\"red\"}"
+          "tellraw {player} {\"text\":\"Your spirit is too corrupted for purification. Seek redemption first.\",\"color\":\"red\"}"
         ],
         "neutral_commands": [
-          "effect clear @p minecraft:poison",
-          "effect clear @p minecraft:wither",
-          "tellraw @p {\"text\":\"Partial cleansing granted. Prove your worth for complete purification.\",\"color\":\"yellow\"}"
+          "effect clear {player} minecraft:poison",
+          "effect clear {player} minecraft:wither",
+          "tellraw {player} {\"text\":\"Partial cleansing granted. Prove your worth for complete purification.\",\"color\":\"yellow\"}"
         ]
       }
     }

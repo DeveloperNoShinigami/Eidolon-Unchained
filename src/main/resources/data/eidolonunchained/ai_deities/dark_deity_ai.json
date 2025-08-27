@@ -37,18 +37,18 @@
         "blessing_threshold": 15,
         "curse_threshold": -5,
         "blessing_commands": [
-          "give @p eidolon:soul_shard {count}",
-          "effect give @p minecraft:night_vision 300",
-          "effect give @p minecraft:strength 60 0"
+          "give {player} eidolon:soul_shard {count}",
+          "effect give {player} minecraft:night_vision 300",
+          "effect give {player} minecraft:strength 60 0"
         ],
         "curse_commands": [
-          "effect give @p minecraft:blindness 60",
-          "effect give @p minecraft:weakness 120 1",
+          "effect give {player} minecraft:blindness 60",
+          "effect give {player} minecraft:weakness 120 1",
           "summon minecraft:zombie ~ ~ ~ {CustomName:'\"Shadow Punishment\"'}"
         ],
         "neutral_commands": [
-          "give @p minecraft:bone 2",
-          "effect give @p minecraft:slow_digging 30 0"
+          "give {player} minecraft:bone 2",
+          "effect give {player} minecraft:slow_digging 30 0"
         ]
       }
     },
@@ -63,18 +63,18 @@
         "blessing_threshold": 25,
         "curse_threshold": 5,
         "blessing_commands": [
-          "give @p eidolon:death_essence {count}",
-          "give @p eidolon:zombie_heart 1",
-          "effect give @p minecraft:strength 600 1",
-          "enchant @p minecraft:looting 1"
+          "give {player} eidolon:death_essence {count}",
+          "give {player} eidolon:zombie_heart 1",
+          "effect give {player} minecraft:strength 600 1",
+          "enchant {player} minecraft:looting 1"
         ],
         "curse_commands": [
-          "effect give @p minecraft:poison 60 1",
+          "effect give {player} minecraft:poison 60 1",
           "summon minecraft:skeleton ~ ~ ~ {CustomName:'\"Dark Retribution\"'}"
         ],
         "neutral_commands": [
-          "give @p minecraft:rotten_flesh 3",
-          "effect give @p minecraft:hunger 120 0"
+          "give {player} minecraft:rotten_flesh 3",
+          "effect give {player} minecraft:hunger 120 0"
         ]
       }
     },
@@ -89,15 +89,15 @@
         "blessing_threshold": 35,
         "curse_threshold": 15,
         "blessing_commands": [
-          "give @p eidolon:research_notes 1",
-          "give @p eidolon:codex 1",
-          "tellraw @p {\"text\":\"The shadows whisper ancient secrets...\",\"color\":\"dark_purple\"}"
+          "give {player} eidolon:research_notes 1",
+          "give {player} eidolon:codex 1",
+          "tellraw {player} {\"text\":\"The shadows whisper ancient secrets...\",\"color\":\"dark_purple\"}"
         ],
         "curse_commands": [
-          "tellraw @p {\"text\":\"You are not worthy of such knowledge.\",\"color\":\"red\"}"
+          "tellraw {player} {\"text\":\"You are not worthy of such knowledge.\",\"color\":\"red\"}"
         ],
         "neutral_commands": [
-          "tellraw @p {\"text\":\"Seek greater devotion before asking for forbidden wisdom.\",\"color\":\"gray\"}"
+          "tellraw {player} {\"text\":\"Seek greater devotion before asking for forbidden wisdom.\",\"color\":\"gray\"}"
         ]
       }
     }

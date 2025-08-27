@@ -5,6 +5,7 @@
   "codex_icon": "minecraft:flowering_azalea",
   "difficulty": 2,
   "mana_cost": 20,
+  "cooldown": 45,
   "show_in_codex": true,
   "linked_deity": "eidolonunchained:nature_deity",
   "signs": [

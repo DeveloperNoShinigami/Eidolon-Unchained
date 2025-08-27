@@ -23,6 +23,7 @@ public class DatapackChant {
     private final ResourceLocation codexIcon; // Icon to use in codex
     private final int difficulty;
     private final int manaCost; // Soul/magic cost to cast this chant
+    private final int cooldown; // Cooldown in seconds for this specific chant
     private final List<ChantEffect> effects;
     private final List<String> requirements;
     private final boolean showInCodex;
@@ -30,7 +31,7 @@ public class DatapackChant {
     
     public DatapackChant(ResourceLocation id, String name, String description, 
                         List<ResourceLocation> signSequence, String category, ResourceLocation codexIcon,
-                        int difficulty, int manaCost, List<ChantEffect> effects,
+                        int difficulty, int manaCost, int cooldown, List<ChantEffect> effects,
                         List<String> requirements, boolean showInCodex, 
                         ResourceLocation linkedDeity) {
         this.id = id;
@@ -41,6 +42,7 @@ public class DatapackChant {
         this.codexIcon = codexIcon;
         this.difficulty = difficulty;
         this.manaCost = Math.max(0, manaCost); // Ensure non-negative
+        this.cooldown = Math.max(0, cooldown); // Ensure non-negative
         this.effects = new ArrayList<>(effects);
         this.requirements = new ArrayList<>(requirements);
         this.showInCodex = showInCodex;
@@ -55,6 +57,7 @@ public class DatapackChant {
     public ResourceLocation getCodexIcon() { return codexIcon; }
     public int getDifficulty() { return difficulty; }
     public int getManaCost() { return manaCost; }
+    public int getCooldown() { return cooldown; }
     public List<ChantEffect> getEffects() { return new ArrayList<>(effects); }
     public List<String> getRequirements() { return new ArrayList<>(requirements); }
     public boolean shouldShowInCodex() { return showInCodex; }
@@ -215,6 +218,8 @@ public class DatapackChant {
         int difficulty = json.has("difficulty") ? json.get("difficulty").getAsInt() : 1;
         int manaCost = json.has("mana_cost") ? json.get("mana_cost").getAsInt() : 
                       com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.defaultManaCost.get();
+        int cooldown = json.has("cooldown") ? json.get("cooldown").getAsInt() : 
+                      com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.chantCooldownSeconds.get();
         boolean showInCodex = json.has("show_in_codex") ? json.get("show_in_codex").getAsBoolean() : true;
         
         // Parse optional linked deity
@@ -251,7 +256,7 @@ public class DatapackChant {
         }
         
         return new DatapackChant(id, name, description, signSequence, category, codexIcon,
-                               difficulty, manaCost, effects, requirements, showInCodex, linkedDeity);
+                               difficulty, manaCost, cooldown, effects, requirements, showInCodex, linkedDeity);
     }
     
     /**
