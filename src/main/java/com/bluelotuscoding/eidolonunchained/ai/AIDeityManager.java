@@ -184,6 +184,8 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
      */
     private void linkPendingConfigs() {
         LOGGER.info("Linking {} pending AI configurations to loaded deities", pendingConfigs.size());
+        LOGGER.info("Available deities: {}", Deities.getDeities().stream()
+            .map(d -> d.getId()).toList());
         
         int linked = 0;
         int failed = 0;
@@ -195,14 +197,17 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             try {
                 // Verify the deity exists now that deities are loaded
                 Deity deity = Deities.find(deityId);
+                LOGGER.info("Looking for deity {} - found: {}", deityId, deity != null);
                 if (deity == null) {
-                    LOGGER.warn("AI config references non-existent deity: {}", deityId);
+                    LOGGER.warn("AI config references non-existent deity: {} (available: {})", 
+                        deityId, Deities.getDeities().stream().map(d -> d.getId()).toList());
                     failed++;
                     continue;
                 }
                 
                 if (!(deity instanceof DatapackDeity)) {
-                    LOGGER.warn("AI config can only be applied to DatapackDeity instances: {}", deityId);
+                    LOGGER.warn("AI config can only be applied to DatapackDeity instances: {} (type: {})", 
+                        deityId, deity.getClass().getSimpleName());
                     failed++;
                     continue;
                 }
