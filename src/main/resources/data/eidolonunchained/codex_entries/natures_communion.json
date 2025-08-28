@@ -7,7 +7,7 @@
     },
     {
       "type": "chant",
-      "spell": "eidolonunchainednatures_communion",
+      "spell": "eidolonunchained:natures_communion",
       "text": "eidolonunchained.codex.page.natures_communion.chant"
     }
   ]

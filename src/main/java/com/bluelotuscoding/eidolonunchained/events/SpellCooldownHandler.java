@@ -1,8 +1,8 @@
 package com.bluelotuscoding.eidolonunchained.events;
 
-import com.bluelotuscoding.eidolonunchained.chants.DatapackChantManager;
+import com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
-import com.bluelotuscoding.eidolonunchained.chants.data.ChantData;
+import com.bluelotuscoding.eidolonunchained.chant.DatapackChant;
 import elucent.eidolon.api.spells.Spell;
 import elucent.eidolon.common.spell.PrayerSpell;
 import net.minecraft.resources.ResourceLocation;
@@ -36,11 +36,12 @@ public class SpellCooldownHandler {
         // For datapack chants, check if we have custom cooldown data
         ResourceLocation spellId = spell.getRegistryName();
         if (spellId != null) {
-            ChantData chantData = DatapackChantManager.getChantData(spellId);
-            if (chantData != null && chantData.getCooldownTicks() > 0) {
-                // Use the custom cooldown from JSON
-                LOGGER.debug("Using custom cooldown {} ticks for spell {}", chantData.getCooldownTicks(), spellId);
-                return chantData.getCooldownTicks();
+            DatapackChant chantData = DatapackChantManager.getChant(spellId);
+            if (chantData != null && chantData.getCooldown() > 0) {
+                // Use the custom cooldown from JSON (convert seconds to ticks)
+                long cooldownTicks = chantData.getCooldown() * 20L;
+                LOGGER.debug("Using custom cooldown {} ticks for spell {}", cooldownTicks, spellId);
+                return cooldownTicks;
             }
         }
 
@@ -71,8 +72,8 @@ public class SpellCooldownHandler {
         // Check if it's a datapack chant with cooldown
         ResourceLocation spellId = spell.getRegistryName();
         if (spellId != null) {
-            ChantData chantData = DatapackChantManager.getChantData(spellId);
-            if (chantData != null && chantData.getCooldownTicks() > 0) {
+            DatapackChant chantData = DatapackChantManager.getChant(spellId);
+            if (chantData != null && chantData.getCooldown() > 0) {
                 return true;
             }
         }

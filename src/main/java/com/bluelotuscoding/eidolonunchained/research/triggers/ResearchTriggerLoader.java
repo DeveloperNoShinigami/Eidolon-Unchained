@@ -43,9 +43,18 @@ public class ResearchTriggerLoader {
         TRIGGERS_BY_RESEARCH.clear();
         
         try {
-            // Load from eidolon_research directory
-            Map<ResourceLocation, Resource> resources = resourceManager.listResources("eidolon_research", 
+            // Load from both "research" (preferred) and "eidolon_research" (legacy) directories
+            Map<ResourceLocation, Resource> resources = new HashMap<>();
+            
+            // Load from "research" folder first (preferred)
+            Map<ResourceLocation, Resource> researchResources = resourceManager.listResources("research", 
                 location -> location.getNamespace().equals(EidolonUnchained.MODID) && location.getPath().endsWith(".json"));
+            resources.putAll(researchResources);
+            
+            // Load from "eidolon_research" folder (legacy support)
+            Map<ResourceLocation, Resource> eidolonResearchResources = resourceManager.listResources("eidolon_research", 
+                location -> location.getNamespace().equals(EidolonUnchained.MODID) && location.getPath().endsWith(".json"));
+            resources.putAll(eidolonResearchResources);
             
             for (Map.Entry<ResourceLocation, Resource> entry : resources.entrySet()) {
                 loadTriggersFromResearchFile(entry.getKey(), entry.getValue());
