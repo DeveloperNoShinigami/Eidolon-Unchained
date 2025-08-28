@@ -146,8 +146,8 @@ public class EidolonUnchainedConfig {
                 .defineInRange("ai_temperature", 0.7, 0.0, 1.0);
             
             maxTokens = builder
-                .comment("Maximum tokens in AI responses")
-                .defineInRange("max_tokens", 500, 50, 2000);
+                .comment("Maximum tokens in AI responses (fallback limit, individual deity configs can override)")
+                .defineInRange("max_tokens", 1200, 50, 4000);
             
             logAIInteractions = builder
                 .comment("Log AI interactions for debugging (API keys are never logged)")

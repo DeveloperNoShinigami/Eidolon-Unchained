@@ -96,8 +96,12 @@ public class GeminiAPIClient {
         // Generation config with token management
         JsonObject generationConfig = new JsonObject();
         generationConfig.addProperty("temperature", genConfig.temperature);
-        // Reduce max tokens to prevent truncation
-        generationConfig.addProperty("maxOutputTokens", Math.min(genConfig.max_output_tokens, 800));
+        // Use deity's configured token limit, with reasonable maximum
+        int tokenLimit = Math.min(genConfig.max_output_tokens, 1500);
+        generationConfig.addProperty("maxOutputTokens", tokenLimit);
+        
+        LOGGER.debug("Setting AI token limit to: {} (deity config: {}, max allowed: 1500)", 
+                    tokenLimit, genConfig.max_output_tokens);
         request.add("generationConfig", generationConfig);
         
         return request;
@@ -160,8 +164,8 @@ public class GeminiAPIClient {
                 if (candidate.has("finishReason")) {
                     String finishReason = candidate.get("finishReason").getAsString();
                     if ("MAX_TOKENS".equals(finishReason)) {
-                        LOGGER.warn("AI response truncated due to token limit");
-                        return new AIResponse(false, "The deity's message was too complex. Please try a simpler prayer.", List.of());
+                        LOGGER.warn("AI response truncated due to token limit for model: {}", model);
+                        return new AIResponse(false, "The deity's wisdom overflows! Try asking a more specific question, or the response was too complex for mortal understanding.", List.of());
                     }
                     if ("SAFETY".equals(finishReason)) {
                         LOGGER.warn("AI response blocked by safety filters");
