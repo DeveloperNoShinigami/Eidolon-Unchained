@@ -1,0 +1,59 @@
+{
+  "triggers": [
+    {
+      "research_id": "eidolonunchained:enchanted_sword_mastery",
+      "type": "kill_entity",
+      "entity": "minecraft:zombie",
+      "nbt": {},
+      "item_requirements": {
+        "check_inventory": true,
+        "items": [
+          {
+            "item": "minecraft:diamond_sword",
+            "nbt": {
+              "Enchantments": [
+                {
+                  "id": "minecraft:sharpness",
+                  "lvl": 3
+                }
+              ]
+            },
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "research_id": "eidolonunchained:named_weapon_legend",
+      "type": "kill_entity", 
+      "entity": "minecraft:wither_skeleton",
+      "nbt": {},
+      "item_requirements": {
+        "check_inventory": true,
+        "items": [
+          {
+            "item": "minecraft:netherite_sword",
+            "nbt": {
+              "display": {
+                "Name": "{\"text\":\"Legendary Blade\"}"
+              }
+            },
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "research_id": "eidolonunchained:charged_creeper_study",
+      "type": "kill_entity",
+      "entity": "minecraft:creeper", 
+      "nbt": {
+        "powered": 1
+      },
+      "item_requirements": {
+        "check_inventory": true,
+        "items": []
+      }
+    }
+  ]
+}

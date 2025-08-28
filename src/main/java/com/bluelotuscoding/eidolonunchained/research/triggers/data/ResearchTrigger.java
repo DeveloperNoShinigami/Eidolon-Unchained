@@ -77,15 +77,19 @@ public class ResearchTrigger {
     }
     
     public ResourceLocation getEntity() {
-        return entity != null ? new ResourceLocation(entity) : null;
+        return (entity != null && !entity.isEmpty()) ? new ResourceLocation(entity) : null;
     }
     
     public ResourceLocation getBlock() {
-        return block != null ? new ResourceLocation(block) : null;
+        return (block != null && !block.isEmpty()) ? new ResourceLocation(block) : null;
     }
     
     public ResourceLocation getRitual() {
-        return ritual != null ? new ResourceLocation(ritual) : null;
+        return (ritual != null && !ritual.isEmpty()) ? new ResourceLocation(ritual) : null;
+    }
+    
+    public String getRitualString() {
+        return ritual;
     }
     
     public ResourceLocation getDimension() {

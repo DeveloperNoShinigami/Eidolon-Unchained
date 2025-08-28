@@ -196,8 +196,8 @@ public class RitualEventHandler {
                 
                 for (ResearchTrigger trigger : entry.getValue()) {
                     if ("ritual".equals(trigger.getType()) && 
-                        trigger.getRitual() != null && 
-                        trigger.getRitual().equals(ritualId)) {
+                        trigger.getRitualString() != null && 
+                        trigger.getRitualString().equals(ritualId.toString())) {
                         
                         // Check item requirements
                         if (ItemRequirementChecker.checkItemRequirements(player, trigger.getItemRequirements())) {

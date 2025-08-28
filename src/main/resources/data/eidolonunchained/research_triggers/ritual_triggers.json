@@ -1,0 +1,31 @@
+{
+  "triggers": [
+    {
+      "research_id": "eidolonunchained:nature_blessing_ritual",
+      "type": "ritual",
+      "ritual": "eidolonunchained:nature_blessing",
+      "item_requirements": {
+        "check_inventory": true,
+        "items": []
+      }
+    },
+    {
+      "research_id": "eidolonunchained:divine_purification_ritual", 
+      "type": "ritual",
+      "ritual": "eidolonunchained:divine_purification",
+      "item_requirements": {
+        "check_inventory": true,
+        "items": []
+      }
+    },
+    {
+      "research_id": "eidolonunchained:shadow_embrace_ritual",
+      "type": "ritual", 
+      "ritual": "eidolonunchained:shadow_embrace",
+      "item_requirements": {
+        "check_inventory": true,
+        "items": []
+      }
+    }
+  ]
+}

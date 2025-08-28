@@ -2,13 +2,26 @@
   "id": "divine_ritual_discovery",
   "stars": 3,
   "triggers": [
-    "eidolon:brazier",
-    "minecraft:golden_apple", 
-    "minecraft:emerald",
-    "minecraft:diamond",
-    "ritual:eidolonunchained:nature_blessing",
-    "ritual:eidolonunchained:divine_purification",
-    "ritual:eidolonunchained:shadow_embrace"
+    {
+      "type": "item_interaction",
+      "block": "eidolon:brazier"
+    },
+    {
+      "type": "item_use",
+      "item": "minecraft:golden_apple"
+    },
+    {
+      "type": "ritual",
+      "ritual": "eidolonunchained:nature_blessing"
+    },
+    {
+      "type": "ritual", 
+      "ritual": "eidolonunchained:divine_purification"
+    },
+    {
+      "type": "ritual",
+      "ritual": "eidolonunchained:shadow_embrace"
+    }
   ],
   "tasks": {
     "0": [
@@ -20,20 +33,23 @@
     ],
     "1": [
       {
-        "type": "ritual_completion",
-        "ritual": "eidolonunchained:nature_blessing"
+        "type": "item",
+        "item": "minecraft:emerald",
+        "count": 1
       }
     ],
     "2": [
       {
-        "type": "ritual_completion", 
-        "ritual": "eidolonunchained:divine_purification"
+        "type": "item", 
+        "item": "minecraft:diamond",
+        "count": 1
       }
     ],
     "3": [
       {
-        "type": "ritual_completion",
-        "ritual": "eidolonunchained:shadow_embrace"
+        "type": "item",
+        "item": "minecraft:gold_ingot",
+        "count": 3
       }
     ]
   },

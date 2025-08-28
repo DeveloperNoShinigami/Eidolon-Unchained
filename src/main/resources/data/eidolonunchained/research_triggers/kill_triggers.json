@@ -1,0 +1,34 @@
+{
+  "triggers": [
+    {
+      "research_id": "eidolonunchained:zombie_lore",
+      "type": "kill_entity",
+      "entity": "minecraft:zombie",
+      "nbt": {},
+      "item_requirements": {
+        "check_inventory": true,
+        "items": [
+          {
+            "item": "minecraft:iron_sword",
+            "nbt": {}
+          }
+        ]
+      }
+    },
+    {
+      "research_id": "eidolonunchained:skeleton_hunter", 
+      "type": "kill_entity",
+      "entity": "minecraft:skeleton",
+      "nbt": {},
+      "item_requirements": {
+        "check_inventory": true,
+        "items": [
+          {
+            "item": "minecraft:bow",
+            "nbt": {}
+          }
+        ]
+      }
+    }
+  ]
+}

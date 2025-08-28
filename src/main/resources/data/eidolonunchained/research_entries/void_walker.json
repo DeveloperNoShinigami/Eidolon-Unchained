@@ -1,0 +1,26 @@
+{
+  "id": "void_walker",
+  "stars": 4,
+  "triggers": [
+    {
+      "type": "dimension",
+      "dimension": "minecraft:the_nether"
+    }
+  ],
+  "tasks": {
+    "0": [
+      {
+        "type": "item",
+        "item": "minecraft:nether_star",
+        "count": 1
+      }
+    ]
+  },
+  "rewards": [
+    {
+      "type": "item",
+      "item": "minecraft:elytra",
+      "count": 1
+    }
+  ]
+}

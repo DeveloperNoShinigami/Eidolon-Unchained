@@ -1,0 +1,11 @@
+{
+  "title": "Warded Mail",
+  "icon": "minecraft:chainmail_chestplate", 
+  "category": "equipment",
+  "content": [
+    {
+      "type": "text",
+      "text": "Protective armor infused with warding magic, providing enhanced protection against magical attacks."
+    }
+  ]
+}

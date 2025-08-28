@@ -1,0 +1,34 @@
+{
+  "triggers": [
+    {
+      "research_id": "eidolonunchained:altar_knowledge",
+      "type": "block_interaction",
+      "block": "eidolon:wooden_altar",
+      "nbt": {},
+      "item_requirements": {
+        "check_inventory": true,
+        "items": [
+          {
+            "item": "eidolon:arcane_gold_ingot",
+            "nbt": {}
+          }
+        ]
+      }
+    },
+    {
+      "research_id": "eidolonunchained:runetable_mastery",
+      "type": "block_interaction", 
+      "block": "eidolonunchained:runetable",
+      "nbt": {},
+      "item_requirements": {
+        "check_inventory": true,
+        "items": [
+          {
+            "item": "minecraft:enchanted_book",
+            "nbt": {}
+          }
+        ]
+      }
+    }
+  ]
+}
