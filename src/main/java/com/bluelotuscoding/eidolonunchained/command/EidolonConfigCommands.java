@@ -2,6 +2,7 @@ package com.bluelotuscoding.eidolonunchained.command;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
+import com.bluelotuscoding.eidolonunchained.validation.AIConfigValidator;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -48,6 +49,10 @@ public class EidolonConfigCommands {
                     .executes(EidolonConfigCommands::removeConfig)))
             .then(Commands.literal("reload")
                 .executes(EidolonConfigCommands::reloadConfig))
+            .then(Commands.literal("validate")
+                .executes(EidolonConfigCommands::validateSystem))
+            .then(Commands.literal("status")
+                .executes(EidolonConfigCommands::showStatus))
             .then(Commands.literal("status")
                 .executes(EidolonConfigCommands::showStatus))
             .then(Commands.literal("validate-all")
@@ -191,20 +196,84 @@ public class EidolonConfigCommands {
         }
     }
 
+    /**
+     * Validate the entire AI system configuration
+     */
+    private static int validateSystem(CommandContext<CommandSourceStack> context) {
+        try {
+            context.getSource().sendSuccess(() -> Component.literal("§6🔍 Running comprehensive AI system validation..."), false);
+            
+            AIConfigValidator.ValidationResult result = AIConfigValidator.validateSystem();
+            
+            // Send summary to command source
+            String status = result.isValid ? "§a✅ VALID" : "§c❌ INVALID";
+            context.getSource().sendSuccess(() -> Component.literal("§6📊 Validation Result: " + status), false);
+            
+            if (!result.errors.isEmpty()) {
+                context.getSource().sendFailure(Component.literal("§c🚨 ERRORS (" + result.errors.size() + "):"));
+                for (String error : result.errors) {
+                    context.getSource().sendFailure(Component.literal("§c   " + error));
+                }
+            }
+            
+            if (!result.warnings.isEmpty()) {
+                context.getSource().sendSuccess(() -> Component.literal("§e⚠️ WARNINGS (" + result.warnings.size() + "):"), false);
+                for (String warning : result.warnings) {
+                    context.getSource().sendSuccess(() -> Component.literal("§e   " + warning), false);
+                }
+            }
+            
+            if (result.isValid) {
+                context.getSource().sendSuccess(() -> Component.literal("§a✅ AI system is properly configured and ready to use!"), false);
+            } else {
+                context.getSource().sendFailure(Component.literal("§c❌ AI system has configuration issues that need to be resolved."));
+            }
+            
+            // Print detailed results to console
+            AIConfigValidator.printValidationResults(result);
+            
+            return result.isValid ? 1 : 0;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cValidation failed: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    /**
+     * Show system status overview
+     */
     private static int showStatus(CommandContext<CommandSourceStack> context) {
         try {
-            var status = APIKeyManager.getSystemStatus();
-            context.getSource().sendSuccess(() -> Component.literal("§eEidolon Unchained AI System Status:"), false);
+            context.getSource().sendSuccess(() -> Component.literal("§6📊 AI System Status:"), false);
             
-            status.forEach((key, value) -> {
-                String color = value.toString().contains("✓") ? "§a" : 
-                              value.toString().contains("✗") ? "§c" : "§e";
-                context.getSource().sendSuccess(() -> Component.literal(color + "  " + key + ": " + value), false);
-            });
+            // API Key status
+            boolean hasGeminiKey = APIKeyManager.hasAPIKey("gemini");
+            String keyStatus = hasGeminiKey ? "§a✅ Configured" : "§c❌ Missing";
+            context.getSource().sendSuccess(() -> Component.literal("§7• Gemini API Key: " + keyStatus), false);
+            
+            // Quick validation
+            AIConfigValidator.ValidationResult result = AIConfigValidator.validateSystem();
+            String systemStatus = result.isValid ? "§a✅ Operational" : "§c❌ Issues Found";
+            context.getSource().sendSuccess(() -> Component.literal("§7• System Status: " + systemStatus), false);
+            
+            context.getSource().sendSuccess(() -> Component.literal("§7• Errors: §c" + result.errors.size()), false);
+            context.getSource().sendSuccess(() -> Component.literal("§7• Warnings: §e" + result.warnings.size()), false);
+            
+            if (result.details.containsKey("loaded_deities_count")) {
+                context.getSource().sendSuccess(() -> Component.literal("§7• Deities Loaded: §b" + result.details.get("loaded_deities_count")), false);
+            }
+            
+            if (result.details.containsKey("ai_configs_count")) {
+                context.getSource().sendSuccess(() -> Component.literal("§7• AI Configs: §b" + result.details.get("ai_configs_count")), false);
+            }
+            
+            context.getSource().sendSuccess(() -> Component.literal("§6Run §e/eidolon-config validate §6for detailed analysis"), false);
             
             return 1;
+            
         } catch (Exception e) {
-            context.getSource().sendFailure(Component.literal("§cError getting status: " + e.getMessage()));
+            context.getSource().sendFailure(Component.literal("§cStatus check failed: " + e.getMessage()));
             return 0;
         }
     }

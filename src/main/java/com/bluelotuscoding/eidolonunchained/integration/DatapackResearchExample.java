@@ -3,6 +3,7 @@ package com.bluelotuscoding.eidolonunchained.integration;
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
 import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
@@ -68,7 +69,20 @@ public class DatapackResearchExample {
 
             String id = json.has("id") ? json.get("id").getAsString() : "";
             String title = json.has("title") ? json.get("title").getAsString() : "";
-            String icon = json.has("icon") ? json.get("icon").getAsString() : "minecraft:book";
+            String icon = "minecraft:book"; // Default icon
+            
+            // Handle icon field - can be string or object
+            if (json.has("icon")) {
+                JsonElement iconElement = json.get("icon");
+                if (iconElement.isJsonPrimitive()) {
+                    icon = iconElement.getAsString();
+                } else if (iconElement.isJsonObject()) {
+                    JsonObject iconObj = iconElement.getAsJsonObject();
+                    if (iconObj.has("item")) {
+                        icon = iconObj.get("item").getAsString();
+                    }
+                }
+            }
 
             if (id.isEmpty() || title.isEmpty()) {
                 LOGGER.warn("Research chapter missing required fields (id/title)");

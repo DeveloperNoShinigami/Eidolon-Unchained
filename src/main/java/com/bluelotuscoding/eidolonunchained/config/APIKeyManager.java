@@ -9,11 +9,12 @@ import java.util.Map;
 import java.util.HashMap;
 
 /**
- * Simple API key manager for testing and configuration
+ * Simple API key manager for server-side configuration only
+ * API keys are stored server-side and never synchronized to clients
  */
 public class APIKeyManager {
     private static final String CONFIG_DIR = "config/eidolonunchained";
-    private static final String API_CONFIG_FILE = CONFIG_DIR + "/api-keys.properties";
+    private static final String API_CONFIG_FILE = CONFIG_DIR + "/server-api-keys.properties";
     private static Properties apiKeys = new Properties();
     
     static {

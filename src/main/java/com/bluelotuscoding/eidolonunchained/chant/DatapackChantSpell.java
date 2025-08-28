@@ -69,6 +69,11 @@ public class DatapackChantSpell extends PrayerSpell {
             if (chantData.hasLinkedDeity()) {
                 com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.recordChant(
                     serverPlayer, chantData.getId(), chantData.getLinkedDeity(), true);
+                
+                // Grant Facts integration for chant completion
+                // TODO: Implement Facts integration when class is available
+                // com.bluelotuscoding.eidolonunchained.integration.FactsIntegration.onChantPerformed(
+                //     serverPlayer, chantData.getId());
             } else {
                 com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.recordChant(
                     serverPlayer, chantData.getId(), null, true);

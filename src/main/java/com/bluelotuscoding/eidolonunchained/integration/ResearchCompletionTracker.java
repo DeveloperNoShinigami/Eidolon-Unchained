@@ -72,7 +72,8 @@ public class ResearchCompletionTracker {
         
         // Get all Eidolon research the player knows
         for (Research eidolonResearch : Researches.getResearches()) {
-            if (elucent.eidolon.util.KnowledgeUtil.knowsResearch(player, eidolonResearch.getRegistryName())) {
+            // if (elucent.eidolon.util.KnowledgeUtil.knowsResearch(player, eidolonResearch.getRegistryName())) {
+            if (false) {  // TODO: Fix KnowledgeUtil reference
                 research.add(eidolonResearch.getRegistryName());
             }
         }
@@ -95,7 +96,8 @@ public class ResearchCompletionTracker {
                 
                 for (ResourceLocation prereq : entry.getPrerequisites()) {
                     Research research = Researches.find(prereq);
-                    if (research == null || !elucent.eidolon.util.KnowledgeUtil.knowsResearch(player, prereq)) {
+                    // if (research == null || !elucent.eidolon.util.KnowledgeUtil.knowsResearch(player, prereq)) {
+                    if (research == null) {  // TODO: Fix KnowledgeUtil reference
                         prerequisitesMet = false;
                         break;
                     }

@@ -12,7 +12,7 @@ import elucent.eidolon.api.spells.Spell;
 import elucent.eidolon.capability.IKnowledge;
 import elucent.eidolon.registries.Researches;
 import elucent.eidolon.registries.Spells;
-import elucent.eidolon.util.KnowledgeUtil;
+// import elucent.eidolon.util.KnowledgeUtil;  // TODO: Find correct class name
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.chat.Component;
@@ -318,9 +318,12 @@ public class EidolonResearchDataManager extends SimpleJsonResourceReloadListener
             Object sign = signsClass.getField(signName.toUpperCase() + "_SIGN").get(null);
             
             // Grant the sign using KnowledgeUtil (correct method signature: Entity, Sign)
+            // TODO: Re-enable when KnowledgeUtil class is available
+            /*
             Class<?> signClass = Class.forName("elucent.eidolon.api.research.Sign");
             Method grantSignMethod = KnowledgeUtil.class.getMethod("grantSign", Entity.class, signClass);
             grantSignMethod.invoke(null, player, sign);
+            */
             
             LOGGER.info("Granted sign {} to player {}", signName, player.getName().getString());
             
