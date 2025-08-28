@@ -4,9 +4,9 @@ delay = 10
 #The cost of casting this spell
 #Range: > 0
 cost = 0
-#Cooldown for this prayer spell
-#Range: > 21000
-cooldown = 21000
+#Cooldown for this prayer spell (3600 ticks = 3 minutes, powerful spell)
+#Range: > 0
+cooldown = 3600
 #Base reputation gained from this prayer spell
 #Range: > 0
 base_reputation = 1

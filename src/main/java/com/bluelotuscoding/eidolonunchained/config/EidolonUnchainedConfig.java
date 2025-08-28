@@ -283,8 +283,8 @@ public class EidolonUnchainedConfig {
                 .define("enable_prayer_system", true);
             
             prayerCooldownMinutes = builder
-                .comment("Cooldown between prayers in minutes")
-                .defineInRange("prayer_cooldown_minutes", 5, 0, 60);
+                .comment("Cooldown between prayers in minutes (1 minute = reasonable default)")
+                .defineInRange("prayer_cooldown_minutes", 1, 0, 60);
             
             enablePrayerEffects = builder
                 .comment("Allow prayers to grant effects and buffs")

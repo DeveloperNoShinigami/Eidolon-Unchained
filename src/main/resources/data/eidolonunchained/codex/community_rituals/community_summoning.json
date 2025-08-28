@@ -1,0 +1,34 @@
+{
+  "target_chapter": "summon_ritual",
+  "title": "Community Summoning",
+  "icon": "minecraft:bell",
+  "pages": [
+    {
+  "type": "text",
+  "text": "When multiple practitioners combine their power, they can achieve feats impossible for a single mage. Community summoning requires perfect synchronization between participants."
+    },
+    {
+  "type": "text",
+  "text": "The bell serves as both a focus and a timing device, ensuring all participants channel their energy at precisely the right moment."
+    },
+    {
+      "type": "ritual", 
+      "content": "Greater Summoning Circle",
+      "data": {
+        "circle_size": 5,
+        "participants": 3,
+        "components": [
+          {"item": "minecraft:bell", "count": 1},
+          {"item": "minecraft:soul_sand", "count": 32},
+          {"item": "minecraft:wither_skeleton_skull", "count": 3},
+          {"item": "minecraft:nether_star", "count": 1}
+        ],
+        "description": "Summons a powerful ally to aid the community"
+      }
+    },
+    {
+  "type": "text",
+  "text": "Warning: Failed community rituals can have catastrophic consequences. Ensure all participants are experienced and prepared."
+    }
+  ]
+}

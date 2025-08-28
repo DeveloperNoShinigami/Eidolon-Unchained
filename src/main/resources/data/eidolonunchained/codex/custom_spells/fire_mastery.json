@@ -1,0 +1,34 @@
+{
+  "target_chapter": "rituals",
+  "title": "Fire Mastery",
+  "icon": "minecraft:fire_charge",
+  "pages": [
+    {
+  "type": "text",
+  "text": "Master the ancient art of fire magic with these powerful techniques. Fire spells require intense concentration and respect for the destructive force you wield."
+    },
+    {
+  "type": "text", 
+  "text": "Advanced practitioners can combine fire magic with soul manipulation to create devastating attacks that burn both body and spirit."
+    },
+    {
+      "type": "crafting",
+      "content": "Fire Focus Crystal",
+      "data": {
+        "result": {
+          "item": "minecraft:fire_charge",
+          "count": 4
+        },
+        "pattern": [
+          " R ",
+          "RGR", 
+          " R "
+        ],
+        "key": {
+          "R": "minecraft:redstone",
+          "G": "minecraft:gold_ingot"
+        }
+      }
+    }
+  ]
+}

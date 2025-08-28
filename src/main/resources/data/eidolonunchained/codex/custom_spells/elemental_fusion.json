@@ -1,0 +1,24 @@
+{
+  "title": "Elemental Fusion",
+  "icon": "minecraft:fire_charge",
+  "target_chapter": "rituals",
+  "pages": [
+    {
+      "type": "text",
+      "text": "Elemental fusion represents the pinnacle of magical achievement - the ability to combine multiple elements into devastating new spell forms."
+    },
+    {
+      "type": "text", 
+      "text": "§6Fire + Water = Steam§r\n§bWater + Air = Mist§r\n§cFire + Earth = Lava§r\n§aEarth + Air = Dust Storm§r"
+    },
+    {
+      "type": "crafting_recipe",
+      "recipe": "eidolonunchained:fusion_focus",
+      "text": "The Fusion Focus allows precise control over elemental energies, preventing catastrophic magical feedback."
+    },
+    {
+      "type": "text",
+      "text": "Master elemental fusion by practicing with small amounts of energy first. The consequences of failure can be... explosive."
+    }
+  ]
+}
