@@ -37,9 +37,14 @@ public class GeminiAPIClient {
     private final int timeoutSeconds;
     
     public GeminiAPIClient(String apiKey, String model, int timeoutSeconds) {
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+            LOGGER.error("Gemini API key is null or empty. AI features will not work.");
+        }
         this.apiKey = apiKey;
         this.model = model;
         this.timeoutSeconds = timeoutSeconds;
+        LOGGER.debug("Created GeminiAPIClient with model: {}, timeout: {}s, apiKey present: {}", 
+            model, timeoutSeconds, (apiKey != null && !apiKey.trim().isEmpty()));
     }
     
     /**
@@ -96,12 +101,8 @@ public class GeminiAPIClient {
         // Generation config with token management
         JsonObject generationConfig = new JsonObject();
         generationConfig.addProperty("temperature", genConfig.temperature);
-        // Use deity's configured token limit, with reasonable maximum
-        int tokenLimit = Math.min(genConfig.max_output_tokens, 1500);
-        generationConfig.addProperty("maxOutputTokens", tokenLimit);
-        
-        LOGGER.debug("Setting AI token limit to: {} (deity config: {}, max allowed: 1500)", 
-                    tokenLimit, genConfig.max_output_tokens);
+        // Reduce max tokens to prevent truncation and 400 errors
+        generationConfig.addProperty("maxOutputTokens", Math.min(genConfig.max_output_tokens, 300));
         request.add("generationConfig", generationConfig);
         
         return request;
@@ -119,6 +120,10 @@ public class GeminiAPIClient {
         @SuppressWarnings("deprecation")
         URL url = new URL(urlString);
         HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+        
+        // Debug logging
+        LOGGER.debug("Making API request to: {}", urlString.replace(apiKey, "***"));
+        LOGGER.debug("Request body: {}", requestBody.toString());
         
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Content-Type", "application/json");
@@ -147,6 +152,10 @@ public class GeminiAPIClient {
         }
         
         if (responseCode >= 400) {
+            LOGGER.error("API request failed. Response code: {}, Response body: {}", responseCode, response.toString());
+            if (responseCode == 400) {
+                LOGGER.error("Bad Request - likely invalid API key or malformed request");
+            }
             throw new IOException("API request failed with code " + responseCode + ": " + response.toString());
         }
         
@@ -164,8 +173,8 @@ public class GeminiAPIClient {
                 if (candidate.has("finishReason")) {
                     String finishReason = candidate.get("finishReason").getAsString();
                     if ("MAX_TOKENS".equals(finishReason)) {
-                        LOGGER.warn("AI response truncated due to token limit for model: {}", model);
-                        return new AIResponse(false, "The deity's wisdom overflows! Try asking a more specific question, or the response was too complex for mortal understanding.", List.of());
+                        LOGGER.warn("AI response truncated due to token limit");
+                        return new AIResponse(false, "The deity's message was too complex. Please try a simpler prayer.", List.of());
                     }
                     if ("SAFETY".equals(finishReason)) {
                         LOGGER.warn("AI response blocked by safety filters");

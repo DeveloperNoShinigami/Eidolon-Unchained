@@ -158,9 +158,10 @@ public class DeityChat {
             
             // Get API key using the API key manager
             String apiKey = APIKeyManager.getAPIKey("gemini");
-            if (apiKey == null) {
+            if (apiKey == null || apiKey.trim().isEmpty()) {
                 LOGGER.error("No Gemini API key configured. Please set up API key using /eidolon-config or environment variables.");
-                player.sendSystemMessage(Component.literal("§cAI configuration incomplete. Please contact server administrator."));
+                player.sendSystemMessage(Component.literal("§cThe divine connection requires an API key. Please contact server administrator."));
+                player.sendSystemMessage(Component.literal("§7(Set GEMINI_API_KEY environment variable or configure via /eidolon-config)"));
                 endConversation(player);
                 return;
             }
@@ -236,6 +237,14 @@ public class DeityChat {
             prompt.append("This player is neutral in your eyes (reputation: ").append(reputation).append("). ");
         }
         
+        // Add detailed player context using GeminiAPIClient's context builder
+        try {
+            String playerContext = GeminiAPIClient.buildPlayerContext(player);
+            prompt.append("\n\nPlayer Context:\n").append(playerContext);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to build player context: {}", e.getMessage());
+        }
+        
         // Add conversation history if available
         if (!history.isEmpty()) {
             prompt.append("\n\nConversation history:\n");
@@ -245,7 +254,8 @@ public class DeityChat {
         }
         
         prompt.append("\nCurrent message: ").append(currentMessage);
-        prompt.append("\n\nRespond as the deity, keeping your response conversational and under 100 words. ");
+        prompt.append("\n\nRespond as the deity, keeping your response conversational and under 80 words. ");
+        prompt.append("Acknowledge the player's current situation and recent activities if relevant. ");
         prompt.append("Do not include commands or actions in brackets.");
         
         return prompt.toString();
