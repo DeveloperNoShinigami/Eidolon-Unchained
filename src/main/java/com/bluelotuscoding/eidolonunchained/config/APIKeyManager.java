@@ -169,10 +169,14 @@ public class APIKeyManager {
     private static void loadAPIKeys() {
         try {
             Path configPath = Paths.get(API_CONFIG_FILE);
+            System.out.println("APIKeyManager: Looking for config at: " + configPath.toAbsolutePath());
             if (Files.exists(configPath)) {
                 try (InputStream input = Files.newInputStream(configPath)) {
                     apiKeys.load(input);
+                    System.out.println("APIKeyManager: Successfully loaded " + apiKeys.size() + " API configurations");
                 }
+            } else {
+                System.out.println("APIKeyManager: Config file not found, starting with empty configuration");
             }
         } catch (IOException e) {
             System.err.println("Could not load API keys: " + e.getMessage());

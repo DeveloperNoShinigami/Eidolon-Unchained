@@ -7,6 +7,7 @@ import com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig;
 import com.bluelotuscoding.eidolonunchained.ai.PrayerAIConfig;
 import com.bluelotuscoding.eidolonunchained.ai.PlayerContext;
 import com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiAPIClient;
+import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -160,9 +161,17 @@ public class PrayerSystem {
         
         String personality = aiConfig.buildDynamicPersonality(playerContext);
         
+        // Get API key from APIKeyManager instead of environment variable
+        String apiKey = APIKeyManager.getAPIKey("gemini");
+        if (apiKey == null || apiKey.isEmpty()) {
+            sendDeityMessage(player, deity.getDisplayName(), "The deity remains silent... (API key not configured)", false);
+            LOGGER.warn("No Gemini API key configured for deity interaction");
+            return;
+        }
+        
         // Get API client
         GeminiAPIClient client = new GeminiAPIClient(
-            System.getenv(aiConfig.apiSettings.apiKeyEnv),
+            apiKey,
             aiConfig.apiSettings.getModel(),
             aiConfig.apiSettings.timeoutSeconds
         );

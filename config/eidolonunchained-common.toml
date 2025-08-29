@@ -1,0 +1,157 @@
+
+#═══════════════════════════════════════════════════════════════════════
+# AI DEITY SYSTEM CONFIGURATION
+# Configure AI-powered deity interactions and responses
+#═══════════════════════════════════════════════════════════════════════
+[ai_deities]
+	#Enable AI-powered deity conversations and interactions
+	enable_ai_deities = true
+	#AI provider to use (gemini, openai, proxy)
+	ai_provider = "gemini"
+	#Google Gemini API key (leave empty to use environment variable EIDOLON_GEMINI_API_KEY)
+	gemini_api_key = ""
+	#Gemini model to use (gemini-1.5-flash, gemini-1.5-pro)
+	gemini_model = "Gemini 2.5 Flash-Lite"
+	#API request timeout in seconds
+	#Range: 5 ~ 120
+	gemini_timeout_seconds = 30
+	#AI response creativity (0.0 = predictable, 1.0 = creative)
+	#Range: 0.0 ~ 1.0
+	ai_temperature = 0.8
+	#Maximum tokens in AI responses
+	#Range: 50 ~ 2000
+	max_tokens = 1200
+	#Log AI interactions for debugging (API keys are never logged)
+	log_ai_interactions = true
+
+#═══════════════════════════════════════════════════════════════════════
+# CHANT SYSTEM CONFIGURATION
+# Configure the datapack chant system and sign combinations
+#═══════════════════════════════════════════════════════════════════════
+[chant_system]
+	#Enable the custom chant system
+	enable_chant_system = true
+	#Allow chants to be defined in datapacks (data/modid/chants/)
+	enable_datapack_chants = true
+	#Show custom chants in the Eidolon codex
+	show_chants_in_codex = true
+	#Default codex category for custom chants (used when use_individual_categories is false)
+	chant_codex_category = "examples"
+	#Allow chants to specify their own category in JSON (if false, all use default category)
+	use_individual_categories = true
+	#Require exact sign order for chants (disable for more flexible casting)
+	require_exact_sign_order = true
+	#Global default cooldown between chant attempts in seconds
+	#Individual spells can override this with their own 'cooldown' value in JSON
+	#Range: 0 ~ 60
+	chant_cooldown_seconds = 5
+	#Bypass Eidolon's prayer cooldowns for regular spells (keeps prayer cooldowns intact)
+	#When enabled, only actual prayers will have cooldowns, regular spells will use JSON-defined cooldowns
+	bypass_spell_cooldowns = true
+	#Allow players to cancel chants mid-sequence
+	allow_chant_cancellation = true
+	#Chant casting mode:
+	#INDIVIDUAL_SIGNS - Cast signs one by one like in codex (default)
+	#FULL_CHANT - Cast entire chant with one key press
+	#HYBRID - Support both approaches
+	chant_casting_mode = "INDIVIDUAL_SIGNS"
+	#Timeout between individual sign casts in milliseconds (for INDIVIDUAL_SIGNS mode)
+	#Range: 500 ~ 10000
+	individual_sign_timeout_ms = 3000
+	#Show visual/audio feedback when casting chants
+	enable_chant_feedback = true
+	#Auto-complete delay for chant sequences in game ticks (20 ticks = 1 second)
+	#How long to wait before automatically casting a completed chant sequence
+	#Set to 0 to disable auto-completion
+	#Range: 0 ~ 100
+	chant_auto_complete_delay = 20
+	#Enable mana costs for chants (uses Eidolon's soul energy system)
+	enable_mana_costs = true
+	#Default mana cost for chants that don't specify a cost
+	#Range: 0 ~ 100
+	default_mana_cost = 10
+
+#═══════════════════════════════════════════════════════════════════════
+# DEITY INTERACTION CONFIGURATION
+# Configure how players interact with deities
+#═══════════════════════════════════════════════════════════════════════
+[deity_interaction]
+	#Enable deity interaction by right-clicking effigies (legacy mode)
+	enable_effigy_right_click = false
+	#Enable deity conversation through chat after chant completion
+	enable_chat_interaction = true
+	#Require chant completion before deity interaction
+	require_chant_completion = true
+	#How long conversations stay active in minutes
+	#Range: 1 ~ 60
+	conversation_timeout_minutes = 10
+	#Show reputation change messages to players
+	enable_reputation_messages = true
+	#Show deity unlock and progression notifications
+	enable_deity_notifications = true
+
+#═══════════════════════════════════════════════════════════════════════
+# PRAYER SYSTEM CONFIGURATION
+# Configure prayer types, cooldowns, and effects
+#═══════════════════════════════════════════════════════════════════════
+[prayer_system]
+	#Enable the prayer system for deity interactions
+	enable_prayer_system = true
+	#Cooldown between prayers in minutes (1 minute = reasonable default)
+	#Range: 0 ~ 60
+	prayer_cooldown_minutes = 1
+	#Allow prayers to grant effects and buffs
+	enable_prayer_effects = true
+	#Allow prayers to execute commands (server admin configured)
+	enable_prayer_commands = true
+	#Maximum prayers per player per day (0 = unlimited)
+	#Range: 0 ~ 100
+	max_prayers_per_day = 10
+	#Track prayer history for reputation calculations
+	enable_prayer_history = true
+
+#═══════════════════════════════════════════════════════════════════════
+# INTEGRATION CONFIGURATION
+# Configure integrations with other mods and systems
+#═══════════════════════════════════════════════════════════════════════
+[integrations]
+	#Enable integration with Eidolon mod systems
+	enable_eidolon_integration = true
+	#Integrate custom content with Eidolon codex
+	enable_codex_integration = true
+	#Integrate with Eidolon research system
+	enable_research_integration = true
+	#Enable KubeJS integration for custom scripting
+	enable_kubejs_integration = true
+	#Allow custom deities from datapacks
+	enable_custom_deities = true
+
+#═══════════════════════════════════════════════════════════════════════
+# SECURITY AND PERMISSIONS
+# Configure security settings and permission requirements
+#═══════════════════════════════════════════════════════════════════════
+[security]
+	#Required OP level for configuration commands (0-4)
+	#Range: 0 ~ 4
+	required_op_level = 4
+	#Enable permission checks for sensitive operations
+	enable_permission_checks = true
+	#Log security-related events and permission checks
+	log_security_events = true
+	#Encrypt API keys when stored in config files
+	encrypt_api_keys = true
+
+#═══════════════════════════════════════════════════════════════════════
+# DEBUG AND DEVELOPMENT
+# Configuration for debugging and development features
+#═══════════════════════════════════════════════════════════════════════
+[debug]
+	#Enable debug mode with additional logging and validation
+	enable_debug_mode = true
+	#Enable verbose logging for troubleshooting
+	verbose_logging = false
+	#Enable data generation for chants and recipes
+	enable_data_generation = true
+	#Validate JSON files on load and show detailed errors
+	validate_json_files = true
+
