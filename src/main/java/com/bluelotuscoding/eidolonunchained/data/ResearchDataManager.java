@@ -64,7 +64,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
     private static ResearchDataManager INSTANCE;
     
     public ResearchDataManager() {
-        super(GSON, "research_entries");
+        super(GSON, "research");
         INSTANCE = this;
     }
     
