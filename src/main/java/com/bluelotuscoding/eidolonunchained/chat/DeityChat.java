@@ -245,62 +245,77 @@ public class DeityChat {
         try {
             String playerContext = GeminiAPIClient.buildPlayerContext(player);
             prompt.append("\n\nPlayer Current State:\n").append(playerContext);
-            
-            // Add proactive assistance guidance based on player state
-            prompt.append("\n\nIMPORTANT GUIDANCE FOR PROACTIVE ASSISTANCE:\n");
-            prompt.append("- If the player is badly hurt (under 50% health) and has good reputation (15+), ");
-            prompt.append("sense their weakness and offer healing assistance. Ask if they need aid.\n");
-            prompt.append("- If the player is starving (hunger under 12) and has decent reputation (10+), ");
-            prompt.append("notice their hunger and offer sustenance.\n");
-            prompt.append("- If the player has urgent needs and high reputation (25+), ");
-            prompt.append("proactively offer specific divine intervention before they ask.\n");
-            prompt.append("- If the player is in environmental danger (fire, lava, drowning) and has any positive reputation, ");
-            prompt.append("immediately offer emergency assistance.\n");
-            prompt.append("- Always assess their current state first, then respond to their message or offer assistance.\n");
-            prompt.append("- If offering assistance, explain what you sense about their condition and ask for their consent before helping.\n");
-            prompt.append("- Remember: you can grant items, effects, and aid through divine commands when appropriate.\n");
-            
         } catch (Exception e) {
             LOGGER.warn("Failed to build player context: {}", e.getMessage());
         }
         
-        // Add conversation history if available
+        // Add conversation history for context
         if (!history.isEmpty()) {
-            prompt.append("\n\nConversation history:\n");
-            for (String historyMessage : history.subList(Math.max(0, history.size() - 6), history.size())) {
-                prompt.append(historyMessage).append("\n");
+            prompt.append("\n\nConversation History (last few messages):\n");
+            int startIndex = Math.max(0, history.size() - 4); // Last 4 messages
+            for (int i = startIndex; i < history.size(); i++) {
+                prompt.append(history.get(i)).append("\n");
             }
         }
         
-        prompt.append("\nCurrent message: ").append(currentMessage);
-        prompt.append("\n\nRespond as the deity, keeping your response conversational and under 80 words. ");
-        prompt.append("If the player asks for help, items, powers, blessings, or requests anything, ");
-        prompt.append("judge their worthiness based on reputation and either grant or deny their request. ");
-        prompt.append("When you grant requests, mention that you are bestowing gifts or power. ");
-        prompt.append("When you deny requests, explain why they are unworthy. ");
-        prompt.append("Acknowledge the player's current situation and recent activities if relevant. ");
-        prompt.append("Do not include commands or actions in brackets - the system will handle rewards automatically.");
+        // Add current player message with emphasis
+        prompt.append("\n\nPlayer's Current Message: \"").append(currentMessage).append("\"\n");
+        
+        // Enhanced proactive assistance and request handling guidance
+        prompt.append("\n\nCRITICAL DIVINE RESPONSE INSTRUCTIONS:\n");
+        prompt.append("1. ANALYZE PLAYER'S MESSAGE: Look for requests, questions, or needs\n");
+        prompt.append("2. ASSESS THEIR CONDITION: Check health, hunger, and danger status\n");
+        prompt.append("3. CONSIDER YOUR RELATIONSHIP: Factor in reputation and past interactions\n");
+        prompt.append("4. RESPOND APPROPRIATELY:\n");
+        prompt.append("   - If they ask for help/items/powers: Judge worthiness and grant/deny with reason\n");
+        prompt.append("   - If they're in danger/hurt/hungry: Offer assistance based on reputation\n");
+        prompt.append("   - If they're just talking: Engage meaningfully based on their message\n");
+        prompt.append("   - If they're thankful: Acknowledge and build relationship\n");
+        prompt.append("5. BE ENGAGING: Reference their specific situation, respond to their exact words\n");
+        prompt.append("6. COMMAND AUTHORITY: You CAN grant items, effects, and blessings when appropriate\n");
+        prompt.append("7. STAY IN CHARACTER: Maintain your divine personality while being helpful\n");
+        prompt.append("\nIMPORTANT: Address their specific message directly, don't just give generic responses!\n");
         
         return prompt.toString();
     }
     
     /**
-     * Get commands based on automatic judgment
+     * Get commands based on automatic judgment (enhanced for request handling)
+     */
+    /**
+     * Get commands based on automatic judgment (enhanced for request handling)
      */
     private static List<String> getJudgedCommands(ServerPlayer player, DatapackDeity deity, PrayerAIConfig prayerConfig) {
         int reputation = (int) deity.getPlayerReputation(player);
+        List<String> commands = new ArrayList<>();
         
+        // Check if player meets basic blessing threshold
         if (reputation >= prayerConfig.judgmentConfig.blessingThreshold) {
-            return new ArrayList<>(prayerConfig.judgmentConfig.blessingCommands);
+            commands.addAll(prayerConfig.judgmentConfig.blessingCommands);
         } else if (reputation <= prayerConfig.judgmentConfig.curseThreshold) {
-            return new ArrayList<>(prayerConfig.judgmentConfig.curseCommands);
+            commands.addAll(prayerConfig.judgmentConfig.curseCommands);
+        } else {
+            // Even neutral players might get basic help if in dire need
+            float healthPercentage = (player.getHealth() / player.getMaxHealth()) * 100;
+            int foodLevel = player.getFoodData().getFoodLevel();
+            
+            if (healthPercentage <= 25 && reputation >= 0) {
+                // Emergency healing for anyone with non-negative reputation
+                commands.add("effect give {player} minecraft:regeneration 60 0");
+            } else if (foodLevel <= 6 && reputation >= 5) {
+                // Basic food for hungry players with minimal reputation
+                commands.add("give {player} minecraft:bread 2");
+            } else if (reputation >= prayerConfig.judgmentConfig.blessingThreshold / 2) {
+                // Neutral commands for moderate reputation
+                commands.addAll(prayerConfig.judgmentConfig.neutralCommands);
+            }
         }
         
-        return new ArrayList<>();
+        return commands;
     }
     
     /**
-     * Execute a list of commands
+     * Execute a list of commands with enhanced feedback
      */
     private static void executeCommands(ServerPlayer player, List<String> commands) {
         MinecraftServer server = player.getServer();
@@ -312,6 +327,7 @@ public class DeityChat {
             .withPosition(player.position())
             .withPermission(4); // Admin permission level
         
+        int successCount = 0;
         for (String command : commands) {
             try {
                 // Replace placeholders
@@ -322,11 +338,17 @@ public class DeityChat {
                     .replace("{z}", String.valueOf((int) player.getZ()));
                 
                 server.getCommands().performPrefixedCommand(commandSource, processedCommand);
-                LOGGER.debug("Executed deity command: {}", processedCommand);
+                successCount++;
+                LOGGER.info("Successfully executed deity command for {}: {}", player.getName().getString(), processedCommand);
                 
             } catch (Exception e) {
-                LOGGER.error("Failed to execute deity command '{}': {}", command, e.getMessage());
+                LOGGER.error("Failed to execute deity command '{}' for player {}: {}", command, player.getName().getString(), e.getMessage());
             }
+        }
+        
+        // Send feedback to player about divine intervention
+        if (successCount > 0) {
+            player.sendSystemMessage(Component.literal("§6✦ Divine power flows through you... §7(" + successCount + " blessing" + (successCount == 1 ? "" : "s") + " granted)"));
         }
     }
     
