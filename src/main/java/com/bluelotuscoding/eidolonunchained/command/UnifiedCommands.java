@@ -5,6 +5,8 @@ import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
 import com.bluelotuscoding.eidolonunchained.ai.AIDeityManager;
 import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
 import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
+import com.bluelotuscoding.eidolonunchained.chat.ConversationHistoryManager;
+import com.bluelotuscoding.eidolonunchained.chat.ConversationMessage;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -12,9 +14,11 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 // Eidolon integration imports
 import elucent.eidolon.util.KnowledgeUtil;
@@ -92,6 +96,16 @@ public class UnifiedCommands {
                     .then(Commands.argument("player", StringArgumentType.string())
                         .executes(UnifiedCommands::clearPrayerCooldown))))
             
+            // Conversation system  
+            .then(Commands.literal("conversations")
+                .then(Commands.literal("stats")
+                    .executes(UnifiedCommands::showConversationStats))
+                .then(Commands.literal("clear")
+                    .then(Commands.argument("deity", StringArgumentType.string())
+                        .executes(UnifiedCommands::clearConversationHistory)))
+                .then(Commands.literal("clear-all")
+                    .executes(UnifiedCommands::clearAllConversationHistory)))
+            
             // Research system
             .then(Commands.literal("research")
                 .then(Commands.literal("clear")
@@ -110,6 +124,14 @@ public class UnifiedCommands {
                     .executes(UnifiedCommands::showDebugLogs))
                 .then(Commands.literal("triggers")
                     .executes(UnifiedCommands::debugTriggers))
+                .then(Commands.literal("commands")
+                    .then(Commands.argument("player", StringArgumentType.string())
+                        .then(Commands.argument("deity", StringArgumentType.string())
+                            .executes(UnifiedCommands::showCommandHistory))))
+                .then(Commands.literal("report")
+                    .then(Commands.argument("player", StringArgumentType.string())
+                        .then(Commands.argument("deity", StringArgumentType.string())
+                            .executes(UnifiedCommands::generateCommandReport))))
                 .then(Commands.literal("validate-all")
                     .executes(UnifiedCommands::validateAll)))
         );
@@ -480,6 +502,160 @@ public class UnifiedCommands {
             return 1;
         } catch (Exception e) {
             context.getSource().sendFailure(Component.literal("§cFailed to list research: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    // ===== CONVERSATION HISTORY COMMAND IMPLEMENTATIONS =====
+    
+    /**
+     * Show conversation statistics for the executing player
+     */
+    private static int showConversationStats(CommandContext<CommandSourceStack> context) {
+        try {
+            if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+                context.getSource().sendFailure(Component.literal("§cThis command can only be used by players"));
+                return 0;
+            }
+            
+            com.bluelotuscoding.eidolonunchained.chat.DeityChat.showConversationStats(player);
+            return 1;
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cFailed to show conversation stats: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    /**
+     * Clear conversation history with a specific deity
+     */
+    private static int clearConversationHistory(CommandContext<CommandSourceStack> context) {
+        try {
+            if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+                context.getSource().sendFailure(Component.literal("§cThis command can only be used by players"));
+                return 0;
+            }
+            
+            String deityString = StringArgumentType.getString(context, "deity");
+            net.minecraft.resources.ResourceLocation deityId;
+            
+            // Parse deity identifier 
+            if (deityString.contains(":")) {
+                deityId = new net.minecraft.resources.ResourceLocation(deityString);
+            } else {
+                deityId = new net.minecraft.resources.ResourceLocation("eidolonunchained", deityString);
+            }
+            
+            com.bluelotuscoding.eidolonunchained.chat.DeityChat.clearConversationHistory(player, deityId);
+            return 1;
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cFailed to clear conversation history: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    /**
+     * Clear all conversation history for the executing player
+     */
+    private static int clearAllConversationHistory(CommandContext<CommandSourceStack> context) {
+        try {
+            if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+                context.getSource().sendFailure(Component.literal("§cThis command can only be used by players"));
+                return 0;
+            }
+            
+            com.bluelotuscoding.eidolonunchained.chat.DeityChat.clearAllConversationHistory(player);
+            return 1;
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cFailed to clear all conversation history: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    // ===== COMMAND DEBUGGING METHODS =====
+    
+    /**
+     * Show command execution history for debugging
+     */
+    private static int showCommandHistory(CommandContext<CommandSourceStack> context) {
+        String playerName = StringArgumentType.getString(context, "player");
+        String deityId = StringArgumentType.getString(context, "deity");
+        
+        try {
+            // Find player by name
+            ServerPlayer targetPlayer = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+            if (targetPlayer == null) {
+                context.getSource().sendFailure(Component.literal("§cPlayer not found: " + playerName));
+                return 0;
+            }
+            
+            ResourceLocation deityLocation = new ResourceLocation(deityId);
+            ConversationHistoryManager manager = ConversationHistoryManager.get();
+            if (manager == null) {
+                context.getSource().sendFailure(Component.literal("§cConversation history not available"));
+                return 0;
+            }
+            
+            List<ConversationMessage> commandHistory = manager.getCommandExecutionHistory(targetPlayer.getUUID(), deityLocation);
+            
+            if (commandHistory.isEmpty()) {
+                context.getSource().sendSuccess(() -> Component.literal("§eNo command execution history found for " + playerName + " with " + deityId), false);
+                return 1;
+            }
+            
+            StringBuilder historyBuilder = new StringBuilder();
+            historyBuilder.append("§6=== Command Execution History ===\n");
+            historyBuilder.append("§ePlayer: ").append(playerName).append("\n");
+            historyBuilder.append("§eDeity: ").append(deityId).append("\n\n");
+            
+            int count = 0;
+            for (ConversationMessage msg : commandHistory) {
+                if (++count > 10) { // Limit to last 10 entries for readability
+                    historyBuilder.append("§7... (").append(commandHistory.size() - 10).append(" more entries)\n");
+                    break;
+                }
+                
+                String color = msg.getSpeaker().equals("SYSTEM_DEBUG") ? 
+                    (msg.getMessage().contains("SUCCESS: true") ? "§a" : "§c") : "§b";
+                
+                historyBuilder.append(color)
+                              .append("[").append(msg.getTimestamp().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"))).append("] ")
+                              .append(msg.getSpeaker()).append(": ")
+                              .append(msg.getMessage()).append("\n");
+            }
+            
+            context.getSource().sendSuccess(() -> Component.literal(historyBuilder.toString()), false);
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError retrieving command history: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    /**
+     * Generate command execution report for analysis
+     */
+    private static int generateCommandReport(CommandContext<CommandSourceStack> context) {
+        String playerName = StringArgumentType.getString(context, "player");
+        String deityId = StringArgumentType.getString(context, "deity");
+        
+        try {
+            // Find player by name
+            ServerPlayer targetPlayer = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+            if (targetPlayer == null) {
+                context.getSource().sendFailure(Component.literal("§cPlayer not found: " + playerName));
+                return 0;
+            }
+            
+            ResourceLocation deityLocation = new ResourceLocation(deityId);
+            String report = ConversationHistoryManager.getCommandExecutionReportStatic(targetPlayer, deityLocation);
+            
+            context.getSource().sendSuccess(() -> Component.literal(report), false);
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError generating command report: " + e.getMessage()));
             return 0;
         }
     }

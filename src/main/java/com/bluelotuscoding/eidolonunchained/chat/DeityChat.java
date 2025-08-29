@@ -154,8 +154,11 @@ public class DeityChat {
             List<String> history = conversationHistory.get(playerId);
             history.add("Player: " + message);
             
-            // Build conversation prompt
-            String conversationPrompt = buildConversationPrompt(player, deity, message, history);
+            // Add to persistent history
+            ConversationHistoryManager.get().addMessage(player.getUUID(), deityId, "Player", message);
+            
+            // Build conversation prompt with persistent history
+            String conversationPrompt = buildConversationPrompt(player, deity, message, deityId);
             
             // Generate AI response
             String personality = aiConfig.buildDynamicPersonality(new PlayerContext(player, deity));
@@ -193,13 +196,20 @@ public class DeityChat {
                 // Add response to history
                 history.add("Deity: " + response);
                 
+                // Add to persistent history
+                ConversationHistoryManager.get().addMessage(player.getUUID(), deityId, deity.getName(), response);
+                
                 // Check for auto-judgment and commands
                 if (aiConfig.prayerConfigs.containsKey("conversation")) {
                     PrayerAIConfig prayerConfig = aiConfig.prayerConfigs.get("conversation");
                     if (prayerConfig.autoJudgeCommands) {
                         List<String> commands = getJudgedCommands(player, deity, prayerConfig);
                         if (!commands.isEmpty()) {
-                            executeCommands(player, commands);
+                            // Log AI decision for debugging
+                            ConversationHistoryManager.logAIDecisionStatic(player, deityId, "AUTO_JUDGMENT", 
+                                "Reputation: " + (int)deity.getPlayerReputation(player) + ", Health: " + (int)player.getHealth(), commands);
+                            
+                            executeCommands(player, deityId, commands);
                             response += "\n\n§6[Divine intervention enacted]";
                         }
                     }
@@ -225,7 +235,7 @@ public class DeityChat {
     /**
      * Build a comprehensive prompt for conversation context including proactive assistance
      */
-    private static String buildConversationPrompt(ServerPlayer player, DatapackDeity deity, String currentMessage, List<String> history) {
+    private static String buildConversationPrompt(ServerPlayer player, DatapackDeity deity, String currentMessage, ResourceLocation deityId) {
         StringBuilder prompt = new StringBuilder();
         
         prompt.append("You are ").append(deity.getName()).append(", a deity in the world of Minecraft. ");
@@ -249,13 +259,14 @@ public class DeityChat {
             LOGGER.warn("Failed to build player context: {}", e.getMessage());
         }
         
-        // Add conversation history for context
-        if (!history.isEmpty()) {
-            prompt.append("\n\nConversation History (last few messages):\n");
-            int startIndex = Math.max(0, history.size() - 4); // Last 4 messages
-            for (int i = startIndex; i < history.size(); i++) {
-                prompt.append(history.get(i)).append("\n");
-            }
+        // Add FULL conversation history for complete context
+        String fullConversationContext = ConversationHistoryManager.getPlayerFullContext(player, deityId);
+        if (!fullConversationContext.isEmpty()) {
+            prompt.append("\n\n").append(fullConversationContext);
+            prompt.append("\nIMPORTANT: Review the complete conversation history above before responding. ");
+            prompt.append("This gives you full context of your relationship with this player.\n");
+        } else {
+            prompt.append("\n\nThis is your first conversation with this player.\n");
         }
         
         // Add current player message with emphasis
@@ -274,6 +285,7 @@ public class DeityChat {
         prompt.append("5. BE ENGAGING: Reference their specific situation, respond to their exact words\n");
         prompt.append("6. COMMAND AUTHORITY: You CAN grant items, effects, and blessings when appropriate\n");
         prompt.append("7. STAY IN CHARACTER: Maintain your divine personality while being helpful\n");
+        prompt.append("8. USE CONVERSATION HISTORY: Reference past interactions to build continuity\n");
         prompt.append("\nIMPORTANT: Address their specific message directly, don't just give generic responses!\n");
         
         return prompt.toString();
@@ -315,9 +327,9 @@ public class DeityChat {
     }
     
     /**
-     * Execute a list of commands with enhanced feedback
+     * Execute a list of commands with enhanced feedback and debugging
      */
-    private static void executeCommands(ServerPlayer player, List<String> commands) {
+    private static void executeCommands(ServerPlayer player, ResourceLocation deityId, List<String> commands) {
         MinecraftServer server = player.getServer();
         if (server == null) return;
         
@@ -339,10 +351,16 @@ public class DeityChat {
                 
                 server.getCommands().performPrefixedCommand(commandSource, processedCommand);
                 successCount++;
+                
+                // Enhanced logging with debugging
                 LOGGER.info("Successfully executed deity command for {}: {}", player.getName().getString(), processedCommand);
+                ConversationHistoryManager.logCommandExecutionStatic(player, deityId, processedCommand, true, "Command executed successfully");
                 
             } catch (Exception e) {
-                LOGGER.error("Failed to execute deity command '{}' for player {}: {}", command, player.getName().getString(), e.getMessage());
+                // Enhanced error logging with debugging
+                String errorMsg = e.getMessage() != null ? e.getMessage() : "Unknown error";
+                LOGGER.error("Failed to execute deity command '{}' for player {}: {}", command, player.getName().getString(), errorMsg);
+                ConversationHistoryManager.logCommandExecutionStatic(player, deityId, command, false, errorMsg);
             }
         }
         
@@ -353,8 +371,54 @@ public class DeityChat {
     }
     
     /**
-     * Public method for other systems to use the improved deity display
+     * Clear conversation history for a player and deity
      */
+    public static void clearConversationHistory(ServerPlayer player, ResourceLocation deityId) {
+        ConversationHistoryManager.get().clearHistory(player.getUUID(), deityId, player);
+        
+        DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
+        String deityName = deity != null ? deity.getName() : deityId.toString();
+        
+        player.sendSystemMessage(Component.literal("§6Conversation history with " + deityName + " has been cleared."));
+        LOGGER.info("Cleared conversation history for player {} with deity {}", player.getName().getString(), deityId);
+    }
+    
+    /**
+     * Clear all conversation history for a player
+     */
+    public static void clearAllConversationHistory(ServerPlayer player) {
+        ConversationHistoryManager.get().clearAllHistory(player.getUUID(), player);
+        
+        player.sendSystemMessage(Component.literal("§6All conversation history has been cleared."));
+        LOGGER.info("Cleared all conversation history for player {}", player.getName().getString());
+    }
+    
+    /**
+     * Get conversation history statistics for a player
+     */
+    public static void showConversationStats(ServerPlayer player) {
+        // TODO: Implement stats functionality
+        player.sendSystemMessage(Component.literal("§6Conversation stats functionality coming soon!"));
+        /*
+        Map<String, Object> stats = ConversationHistoryManager.getHistoryStats(player);
+        
+        int totalConversations = (Integer) stats.get("total_conversations");
+        int totalMessages = (Integer) stats.get("total_messages");
+        @SuppressWarnings("unchecked")
+        Map<String, Integer> deityMessageCounts = (Map<String, Integer>) stats.get("deity_message_counts");
+        
+        player.sendSystemMessage(Component.literal("§6=== Conversation History Statistics ==="));
+        player.sendSystemMessage(Component.literal("§eTotalConversations: §f" + totalConversations));
+        player.sendSystemMessage(Component.literal("§eTotal Messages: §f" + totalMessages));
+        
+        if (!deityMessageCounts.isEmpty()) {
+            player.sendSystemMessage(Component.literal("§eMessages per Deity:"));
+            for (Map.Entry<String, Integer> entry : deityMessageCounts.entrySet()) {
+                player.sendSystemMessage(Component.literal("  §7" + entry.getKey() + ": §f" + entry.getValue() + " messages"));
+            }
+        }
+        */
+    }
     public static void sendDeityResponsePublic(ServerPlayer player, String deityName, String message, boolean isError) {
         if (isError) {
             // For error messages, use enhanced chat with red formatting
