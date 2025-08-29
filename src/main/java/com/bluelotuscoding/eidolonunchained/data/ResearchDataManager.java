@@ -150,9 +150,12 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
         }
 
         // Now load research entries passed in by the reload listener
+        LOGGER.info("Processing {} research files from reload listener", resourceLocationJsonObjectMap.size());
         for (Map.Entry<ResourceLocation, JsonElement> entry : resourceLocationJsonObjectMap.entrySet()) {
             ResourceLocation resourceLocation = entry.getKey();
             JsonElement jsonElement = entry.getValue();
+
+            LOGGER.info("Processing research file: {}", resourceLocation);
 
             if (!jsonElement.isJsonObject()) {
                 LOGGER.warn("Skipping non-object JSON at {}", resourceLocation);
@@ -273,6 +276,8 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
      */
     private void loadResearchEntry(ResourceLocation location, JsonObject json) {
         try {
+            LOGGER.info("Loading research entry from {}", location);
+            
             if (!json.has("id")) {
                 LOGGER.warn("Research entry at {} missing required 'id' field", location);
                 return;
@@ -291,11 +296,17 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                 return;
             }
 
+            LOGGER.info("Research entry {} - checking format...", entryId);
+            LOGGER.info("Has 'triggers': {}, Has 'stars': {}, Has 'chapter': {}, Has 'target_chapter': {}", 
+                       json.has("triggers"), json.has("stars"), json.has("chapter"), json.has("target_chapter"));
+
             // Check if this is a trigger-based research (has "triggers" and "stars") or codex-style (has "chapter")
             if (json.has("triggers") && json.has("stars")) {
+                LOGGER.info("Detected trigger-based research: {}", entryId);
                 // This is a trigger-based research - convert to ResearchEntry format
                 loadTriggerBasedResearch(entryId, json);
             } else if (json.has("chapter") || json.has("target_chapter")) {
+                LOGGER.info("Detected codex-style research: {}", entryId);
                 // This is a codex-style research entry
                 loadCodexStyleResearch(entryId, location, json);
             } else {
