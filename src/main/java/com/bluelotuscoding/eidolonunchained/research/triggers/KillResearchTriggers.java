@@ -7,6 +7,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -43,14 +44,33 @@ public class KillResearchTriggers {
             
             for (ResearchTrigger trigger : entry.getValue()) {
                 if ("kill_entity".equals(trigger.getType()) && matchesKillTrigger(player, killedEntity, entityType, trigger)) {
-                    // Grant research using Eidolon's system
+                    // Create research notes instead of directly granting research
                     try {
-                        elucent.eidolon.util.KnowledgeUtil.grantResearchNoToast(player, 
+                        // First check if this research exists in Eidolon's system
+                        elucent.eidolon.api.research.Research research = elucent.eidolon.registries.Researches.find(
                             new ResourceLocation("eidolonunchained", researchId));
-                        LOGGER.info("Granted research '{}' to player '{}' for killing '{}'", 
-                            researchId, player.getName().getString(), entityType);
+                        
+                        if (research != null) {
+                            // Create research notes item like NotetakingToolsItem does
+                            ItemStack notes = new ItemStack(elucent.eidolon.registries.Registry.RESEARCH_NOTES.get(), 1);
+                            var tag = notes.getOrCreateTag();
+                            tag.putString("research", research.getRegistryName().toString());
+                            tag.putInt("stepsDone", 0);
+                            tag.putLong("worldSeed", elucent.eidolon.common.tile.ResearchTableTileEntity.SEED + 
+                                978060631 * ((net.minecraft.server.level.ServerLevel)player.level()).getSeed());
+                            
+                            // Give the research notes to the player
+                            if (!player.getInventory().add(notes)) {
+                                player.drop(notes, false);
+                            }
+                            
+                            LOGGER.info("Gave research notes '{}' to player '{}' for killing '{}'", 
+                                researchId, player.getName().getString(), entityType);
+                        } else {
+                            LOGGER.warn("Research '{}' not found in Eidolon's research registry", researchId);
+                        }
                     } catch (Exception e) {
-                        LOGGER.error("Failed to grant research for kill trigger: {}", e.getMessage());
+                        LOGGER.error("Failed to give research notes for kill trigger: {}", e.getMessage());
                     }
                 }
             }

@@ -5,9 +5,11 @@ import com.bluelotuscoding.eidolonunchained.research.triggers.data.ResearchTrigg
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraftforge.event.TickEvent;
@@ -31,121 +33,164 @@ public class LocationResearchTriggers {
     
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player)) {
+        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer serverPlayer)) {
             return;
         }
         
-        // Rate limit the checks
-        UUID playerId = player.getUUID();
+        UUID playerId = serverPlayer.getUUID();
         int timer = PLAYER_CHECK_TIMERS.getOrDefault(playerId, 0);
         
-        if (timer++ >= CHECK_INTERVAL) {
+        if (timer >= CHECK_INTERVAL) {
+            checkLocationTriggers(serverPlayer);
             PLAYER_CHECK_TIMERS.put(playerId, 0);
-            checkLocationTriggers(player);
         } else {
-            PLAYER_CHECK_TIMERS.put(playerId, timer);
+            PLAYER_CHECK_TIMERS.put(playerId, timer + 1);
         }
     }
     
+    /**
+     * Check all location-based triggers for a player
+     */
     private static void checkLocationTriggers(ServerPlayer player) {
-        ServerLevel level = player.serverLevel();
-        BlockPos playerPos = player.blockPosition();
+        Map<String, List<ResearchTrigger>> allTriggers = ResearchTriggerLoader.getTriggersForAllResearch();
         
-        // Get all location triggers from research files
-        for (Map.Entry<String, List<ResearchTrigger>> entry : ResearchTriggerLoader.getTriggersForAllResearch().entrySet()) {
+        for (Map.Entry<String, List<ResearchTrigger>> entry : allTriggers.entrySet()) {
             String researchId = entry.getKey();
             
             for (ResearchTrigger trigger : entry.getValue()) {
-                String triggerType = trigger.getType();
-                if (("dimension".equals(triggerType) || "biome".equals(triggerType) || "structure".equals(triggerType)) && 
-                    matchesLocationTrigger(player, level, playerPos, trigger)) {
-                    
-                    // Grant research using Eidolon's system
-                    try {
-                        elucent.eidolon.util.KnowledgeUtil.grantResearchNoToast(player, 
-                            new ResourceLocation("eidolonunchained", researchId));
-                        LOGGER.info("Granted research '{}' to player '{}' for location trigger", 
-                            researchId, player.getName().getString());
-                    } catch (Exception e) {
-                        LOGGER.error("Failed to grant research for location trigger: {}", e.getMessage());
-                    }
+                if (shouldCheckTrigger(trigger, player)) {
+                    giveResearchNote(player, researchId);
                 }
             }
         }
     }
     
-    private static boolean matchesLocationTrigger(ServerPlayer player, ServerLevel level, BlockPos playerPos, ResearchTrigger trigger) {
-        // Check item requirements first
-        if (!ItemRequirementChecker.checkItemRequirements(player, trigger.getItemRequirements())) {
+    /**
+     * Check if a trigger should activate based on location conditions
+     */
+    private static boolean shouldCheckTrigger(ResearchTrigger trigger, ServerPlayer player) {
+        try {
+            // Early exit if no location conditions
+            if (trigger.getEntity() != null || trigger.getBlock() != null || trigger.getRitual() != null) {
+                return false; // These are handled by other trigger classes
+            }
+            
+            // Check dimension triggers
+            if (trigger.getDimension() != null) {
+                boolean dimensionMatches = checkDimensionTrigger(player, trigger.getDimension().toString());
+                if (dimensionMatches) return true;
+            }
+            
+            // Check biome triggers  
+            if (trigger.getBiome() != null) {
+                boolean biomeMatches = checkBiomeTrigger(player, trigger.getBiome().toString());
+                if (biomeMatches) return true;
+            }
+            
+            // Check structure triggers
+            if (trigger.getStructure() != null) {
+                boolean structureMatches = checkStructureTrigger(player, trigger.getStructure().toString());
+                if (structureMatches) return true;
+            }
+            
+            return false;
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to check trigger conditions for research: {}", e.getMessage());
             return false;
         }
-        
-        String triggerType = trigger.getType();
-        
-        switch (triggerType) {
-            case "dimension":
-                return checkDimensionTrigger(level, trigger);
-            case "biome":
-                return checkBiomeTrigger(level, playerPos, trigger);
-            case "structure":
-                return checkStructureTrigger(level, playerPos, trigger);
-            default:
-                return false;
-        }
     }
     
-    private static boolean checkDimensionTrigger(ServerLevel level, ResearchTrigger trigger) {
-        ResourceLocation currentDimension = level.dimension().location();
-        return currentDimension.equals(trigger.getDimension());
-    }
-    
-    private static boolean checkBiomeTrigger(ServerLevel level, BlockPos playerPos, ResearchTrigger trigger) {
-        Holder<Biome> biomeHolder = level.getBiome(playerPos);
-        ResourceLocation currentBiome = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.BIOME)
-            .getKey(biomeHolder.value());
-        
-        boolean biomeMatches = currentBiome != null && currentBiome.equals(trigger.getBiome());
-        
-        // Check coordinates if specified
-        if (trigger.getCoordinates() != null) {
-            ResearchTrigger.Coordinates coords = trigger.getCoordinates();
-            if (coords.getX() != null && coords.getZ() != null) {
-                double distance = Math.sqrt(Math.pow(playerPos.getX() - coords.getX(), 2) + 
-                                          Math.pow(playerPos.getZ() - coords.getZ(), 2));
-                boolean inRange = distance <= coords.getRange();
-                
-                // If coordinates are specified, both biome and location must match
-                return biomeMatches && inRange;
-            }
-        }
-        
-        return biomeMatches;
-    }
-    
-    private static boolean checkStructureTrigger(ServerLevel level, BlockPos playerPos, ResearchTrigger trigger) {
+    /**
+     * Give a research note to the player instead of directly granting research
+     */
+    private static void giveResearchNote(ServerPlayer player, String researchId) {
         try {
-            // Get structure registry
-            var structureRegistry = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
+            // Get the research note item from Eidolon's registry
+            var researchNoteItem = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(
+                new ResourceLocation("eidolon", "research_notes"));
             
-            // Find the target structure
-            Structure targetStructure = structureRegistry.get(trigger.getStructure());
+            if (researchNoteItem == null) {
+                LOGGER.error("Could not find research_notes item from Eidolon");
+                return;
+            }
+            
+            // Create ItemStack with proper NBT
+            ItemStack researchNote = new ItemStack(researchNoteItem);
+            CompoundTag tag = researchNote.getOrCreateTag();
+            tag.putString("research", researchId);
+            tag.putInt("stepsDone", 0);
+            
+            // Add worldSeed for research table compatibility
+            ServerLevel serverLevel = (ServerLevel) player.level();
+            long worldSeed = serverLevel.getSeed();
+            tag.putLong("worldSeed", worldSeed);
+            
+            // Give to player
+            if (!player.addItem(researchNote)) {
+                player.drop(researchNote, false); // Drop if inventory full
+            }
+            
+            LOGGER.info("Gave research note for '{}' to player {}", researchId, player.getName().getString());
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to give research note for '{}': {}", researchId, e.getMessage());
+        }
+    }
+    
+    /**
+     * Check dimension condition
+     */
+    private static boolean checkDimensionTrigger(ServerPlayer player, String dimension) {
+        try {
+            String currentDimension = player.level().dimension().location().toString();
+            return currentDimension.equals(dimension);
+        } catch (Exception e) {
+            LOGGER.error("Failed to check dimension trigger: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Check biome condition  
+     */
+    private static boolean checkBiomeTrigger(ServerPlayer player, String biome) {
+        try {
+            BlockPos playerPos = player.blockPosition();
+            Holder<Biome> biomeHolder = player.level().getBiome(playerPos);
+            ResourceLocation biomeLocation = biomeHolder.unwrapKey()
+                .map(key -> key.location())
+                .orElse(null);
+                
+            if (biomeLocation == null) {
+                return false;
+            }
+            
+            String biomeName = biomeLocation.toString();
+            return biomeName.equals(biome);
+        } catch (Exception e) {
+            LOGGER.error("Failed to check biome trigger: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Check structure condition
+     */
+    private static boolean checkStructureTrigger(ServerPlayer player, String structure) {
+        try {
+            BlockPos playerPos = player.blockPosition();
+            ServerLevel level = (ServerLevel) player.level();
+            
+            ResourceLocation structureLocation = new ResourceLocation(structure);
+            Structure targetStructure = level.registryAccess()
+                .registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE)
+                .get(structureLocation);
+                
             if (targetStructure == null) {
                 return false;
             }
             
-            // Check coordinates if specified
-            if (trigger.getCoordinates() != null) {
-                ResearchTrigger.Coordinates coords = trigger.getCoordinates();
-                if (coords.getX() != null && coords.getZ() != null) {
-                    double distance = Math.sqrt(Math.pow(playerPos.getX() - coords.getX(), 2) + 
-                                              Math.pow(playerPos.getZ() - coords.getZ(), 2));
-                    
-                    // For coordinate-based structure triggers, just check if we're in range of the coordinates
-                    return distance <= coords.getRange();
-                }
-            }
-            
-            // If no coordinates specified, check if structure exists at this position
             var structureResult = level.structureManager().getStructureWithPieceAt(playerPos, targetStructure);
             return structureResult.isValid();
             

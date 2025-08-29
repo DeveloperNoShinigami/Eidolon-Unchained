@@ -6,6 +6,7 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -37,14 +38,33 @@ public class InteractionResearchTriggers {
             
             for (ResearchTrigger trigger : entry.getValue()) {
                 if ("block_interaction".equals(trigger.getType()) && matchesInteractionTrigger(player, event, blockType, trigger)) {
-                    // Grant research using Eidolon's system
+                    // Create research notes instead of directly granting research
                     try {
-                        elucent.eidolon.util.KnowledgeUtil.grantResearchNoToast(player, 
+                        // First check if this research exists in Eidolon's system
+                        elucent.eidolon.api.research.Research research = elucent.eidolon.registries.Researches.find(
                             new ResourceLocation("eidolonunchained", researchId));
-                        LOGGER.info("Granted research '{}' to player '{}' for interacting with '{}'", 
-                            researchId, player.getName().getString(), blockType);
+                        
+                        if (research != null) {
+                            // Create research notes item like NotetakingToolsItem does
+                            ItemStack notes = new ItemStack(elucent.eidolon.registries.Registry.RESEARCH_NOTES.get(), 1);
+                            var tag = notes.getOrCreateTag();
+                            tag.putString("research", research.getRegistryName().toString());
+                            tag.putInt("stepsDone", 0);
+                            tag.putLong("worldSeed", elucent.eidolon.common.tile.ResearchTableTileEntity.SEED + 
+                                978060631 * ((net.minecraft.server.level.ServerLevel)event.getLevel()).getSeed());
+                            
+                            // Give the research notes to the player
+                            if (!player.getInventory().add(notes)) {
+                                player.drop(notes, false);
+                            }
+                            
+                            LOGGER.info("Gave research notes '{}' to player '{}' for interacting with '{}'", 
+                                researchId, player.getName().getString(), blockType);
+                        } else {
+                            LOGGER.warn("Research '{}' not found in Eidolon's research registry", researchId);
+                        }
                     } catch (Exception e) {
-                        LOGGER.error("Failed to grant research for interaction trigger: {}", e.getMessage());
+                        LOGGER.error("Failed to give research notes for interaction trigger: {}", e.getMessage());
                     }
                 }
             }
