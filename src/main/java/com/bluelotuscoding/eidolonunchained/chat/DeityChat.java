@@ -331,79 +331,232 @@ public class DeityChat {
     }
     
     /**
-     * Send deity response with prominent display above action bar (matches PrayerSystem)
+     * Public method for other systems to use the improved deity display
+     */
+    public static void sendDeityResponsePublic(ServerPlayer player, String deityName, String message, boolean isError) {
+        if (isError) {
+            // For error messages, use enhanced chat with red formatting
+            sendEnhancedChatMessage(player, "§c" + deityName, "§c" + message);
+        } else {
+            // For normal messages, use the standard display system
+            sendDeityResponse(player, deityName, message);
+        }
+    }
+
+    /**
+     * Send deity response with improved formatting and display options
      */
     private static void sendDeityResponse(ServerPlayer player, String deityName, String message) {
-        // Check configuration for display preferences
+        // Get display configuration
+        String displayMethod = EidolonUnchainedConfig.COMMON.displayMethod.get();
         boolean useProminentDisplay = EidolonUnchainedConfig.COMMON.useProminentDisplay.get();
-        boolean useChatForLongMessages = EidolonUnchainedConfig.COMMON.useChatForLongMessages.get();
         int maxSubtitleLength = EidolonUnchainedConfig.COMMON.maxSubtitleLength.get();
         
-        if (!useProminentDisplay) {
-            // Use regular chat message
-            Component chatMessage = Component.literal("§6[" + deityName + "]§r " + message);
-            player.sendSystemMessage(chatMessage);
-            return;
+        // Auto-select display method if configured
+        if ("AUTO".equals(displayMethod)) {
+            if (message.length() > maxSubtitleLength) {
+                displayMethod = "ENHANCED_CHAT";
+            } else {
+                displayMethod = "ACTION_BAR";
+            }
         }
         
-        // Create title and subtitle components with enhanced formatting
-        Component titleComponent = Component.literal("§6§l" + deityName); // Bold deity name
+        // Route to appropriate display method
+        switch (displayMethod) {
+            case "TITLE_SUBTITLE":
+                sendLegacyTitleSubtitle(player, deityName, message);
+                break;
+            case "ACTION_BAR":
+                sendActionBarDisplay(player, deityName, message);
+                break;
+            case "ENHANCED_CHAT":
+                sendEnhancedChatMessage(player, deityName, message);
+                break;
+            default:
+                // Fallback to enhanced chat for safety
+                sendEnhancedChatMessage(player, deityName, message);
+        }
+    }
+    
+    /**
+     * Legacy title/subtitle display (original system)
+     */
+    private static void sendLegacyTitleSubtitle(ServerPlayer player, String deityName, String message) {
+        int maxSubtitleLength = EidolonUnchainedConfig.COMMON.maxSubtitleLength.get();
+        
+        Component titleComponent = Component.literal("§6§l" + deityName);
         Component subtitleComponent;
         
-        // Handle long messages
         if (message.length() > maxSubtitleLength) {
-            if (useChatForLongMessages) {
-                // Use regular chat for long messages
-                Component chatMessage = Component.literal("§6[" + deityName + "]§r " + message);
-                player.sendSystemMessage(chatMessage);
-                return;
-            } else {
-                // Split message for display
-                String[] words = message.split(" ");
-                StringBuilder line1 = new StringBuilder();
-                StringBuilder line2 = new StringBuilder();
-                boolean firstLine = true;
-                
-                for (String word : words) {
-                    if (firstLine && (line1.length() + word.length() + 1) <= maxSubtitleLength) {
-                        if (line1.length() > 0) line1.append(" ");
-                        line1.append(word);
-                    } else {
-                        firstLine = false;
-                        if (line2.length() > 0) line2.append(" ");
-                        line2.append(word);
-                    }
+            // Split long messages
+            String[] words = message.split(" ");
+            StringBuilder line1 = new StringBuilder();
+            StringBuilder line2 = new StringBuilder();
+            boolean firstLine = true;
+            
+            for (String word : words) {
+                if (firstLine && (line1.length() + word.length() + 1) <= maxSubtitleLength) {
+                    if (line1.length() > 0) line1.append(" ");
+                    line1.append(word);
+                } else {
+                    firstLine = false;
+                    if (line2.length() > 0) line2.append(" ");
+                    line2.append(word);
                 }
-                
-                // Use action bar for longer messages with better formatting
-                Component actionBarMessage = Component.literal("§f" + line1.toString());
-                if (line2.length() > 0) {
-                    actionBarMessage = Component.literal("§f" + line1.toString() + " §7" + line2.toString());
-                }
-                player.sendSystemMessage(actionBarMessage, true); // true = action bar
-                
-                // Still show deity name as title with indication
-                subtitleComponent = Component.literal("§7⟨ speaks to you ⟩");
+            }
+            
+            subtitleComponent = Component.literal("§f" + line1.toString());
+            if (line2.length() > 0) {
+                // Send second line to action bar
+                Component actionBar = Component.literal("§7" + line2.toString());
+                player.sendSystemMessage(actionBar, true);
             }
         } else {
-            // Short message - use white text for better readability
             subtitleComponent = Component.literal("§f" + message);
         }
         
-        // Set title animation timing (fade in, stay, fade out) in ticks
+        // Send title/subtitle packets
         int fadeInTicks = EidolonUnchainedConfig.COMMON.fadeInTicks.get();
         int displayDurationTicks = EidolonUnchainedConfig.COMMON.displayDurationTicks.get();
         int fadeOutTicks = EidolonUnchainedConfig.COMMON.fadeOutTicks.get();
         
         ClientboundSetTitlesAnimationPacket animationPacket = new ClientboundSetTitlesAnimationPacket(
-            fadeInTicks,
-            displayDurationTicks,
-            fadeOutTicks
-        );
+            fadeInTicks, displayDurationTicks, fadeOutTicks);
         
-        // Send packets to display the title/subtitle
         player.connection.send(animationPacket);
         player.connection.send(new ClientboundSetTitleTextPacket(titleComponent));
         player.connection.send(new ClientboundSetSubtitleTextPacket(subtitleComponent));
+    }
+    
+    /**
+     * Action bar display - centered, readable, persistent
+     */
+    private static void sendActionBarDisplay(ServerPlayer player, String deityName, String message) {
+        int maxSubtitleLength = EidolonUnchainedConfig.COMMON.maxSubtitleLength.get();
+        
+        if (message.length() > maxSubtitleLength) {
+            // Long messages: use action bar + chat combination
+            sendActionBarWithChat(player, deityName, message);
+        } else {
+            // Short messages: use persistent action bar
+            sendPersistentActionBar(player, deityName, message);
+        }
+    }
+    
+    /**
+     * Send enhanced chat message with proper formatting and visual appeal
+     */
+    private static void sendEnhancedChatMessage(ServerPlayer player, String deityName, String message) {
+        // Send a visual separator
+        player.sendSystemMessage(Component.literal("§8§l═══════════════════════════════════════"));
+        
+        // Send deity name header
+        player.sendSystemMessage(Component.literal("§6§l⟦ " + deityName + " ⟧"));
+        
+        // Split long messages into readable chunks
+        String[] words = message.split(" ");
+        StringBuilder currentLine = new StringBuilder();
+        
+        for (String word : words) {
+            if (currentLine.length() + word.length() + 1 > 50) { // 50 chars per line for readability
+                if (currentLine.length() > 0) {
+                    player.sendSystemMessage(Component.literal("§f" + currentLine.toString()));
+                    currentLine = new StringBuilder();
+                }
+            }
+            if (currentLine.length() > 0) currentLine.append(" ");
+            currentLine.append(word);
+        }
+        
+        // Send remaining text
+        if (currentLine.length() > 0) {
+            player.sendSystemMessage(Component.literal("§f" + currentLine.toString()));
+        }
+        
+        // Send footer
+        player.sendSystemMessage(Component.literal("§8§l═══════════════════════════════════════"));
+        
+        // Add a brief action bar notification
+        Component actionBarNotice = Component.literal("§6" + deityName + " §7has spoken to you");
+        player.sendSystemMessage(actionBarNotice, true);
+    }
+    
+    /**
+     * Send action bar message combined with chat for long content
+     */
+    private static void sendActionBarWithChat(ServerPlayer player, String deityName, String message) {
+        // Brief action bar notification
+        Component actionBar = Component.literal("§6§l" + deityName + " §7⟨ speaks ⟩");
+        player.sendSystemMessage(actionBar, true);
+        
+        // Detailed message in chat with better formatting
+        player.sendSystemMessage(Component.literal(""));
+        player.sendSystemMessage(Component.literal("§8§m         §r §6§l" + deityName + " §8§m         "));
+        
+        // Word wrap the message for better readability
+        String[] sentences = message.split("\\. ");
+        for (int i = 0; i < sentences.length; i++) {
+            String sentence = sentences[i];
+            if (i < sentences.length - 1 && !sentence.endsWith(".")) {
+                sentence += ".";
+            }
+            
+            // Further split long sentences
+            if (sentence.length() > 60) {
+                String[] words = sentence.split(" ");
+                StringBuilder line = new StringBuilder();
+                
+                for (String word : words) {
+                    if (line.length() + word.length() + 1 > 60) {
+                        if (line.length() > 0) {
+                            player.sendSystemMessage(Component.literal("§f" + line.toString()));
+                            line = new StringBuilder();
+                        }
+                    }
+                    if (line.length() > 0) line.append(" ");
+                    line.append(word);
+                }
+                
+                if (line.length() > 0) {
+                    player.sendSystemMessage(Component.literal("§f" + line.toString()));
+                }
+            } else {
+                player.sendSystemMessage(Component.literal("§f" + sentence));
+            }
+        }
+        
+        player.sendSystemMessage(Component.literal("§8§m                    "));
+    }
+    
+    /**
+     * Send persistent action bar message that stays visible longer
+     */
+    private static void sendPersistentActionBar(ServerPlayer player, String deityName, String message) {
+        // Create the action bar message with proper formatting
+        String formattedMessage = "§6§l" + deityName + "§r§7: §f" + message;
+        Component actionBarComponent = Component.literal(formattedMessage);
+        
+        // Send multiple times for persistence (action bar messages fade quickly)
+        player.sendSystemMessage(actionBarComponent, true);
+        
+        // Schedule additional sends for persistence
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                Thread.sleep(1000); // 1 second
+                player.sendSystemMessage(actionBarComponent, true);
+                
+                Thread.sleep(1000); // Another second
+                player.sendSystemMessage(actionBarComponent, true);
+                
+                Thread.sleep(1000); // Final send
+                player.sendSystemMessage(actionBarComponent, true);
+                
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        
+        // Also send a brief chat notification for reference
+        player.sendSystemMessage(Component.literal("§8[§6" + deityName + " §8has spoken]"));
     }
 }

@@ -44,6 +44,7 @@ public class EidolonUnchainedConfig {
         // ===========================================
         
         public final ForgeConfigSpec.BooleanValue useProminentDisplay;
+        public final ForgeConfigSpec.ConfigValue<String> displayMethod;
         public final ForgeConfigSpec.IntValue displayDurationTicks;
         public final ForgeConfigSpec.IntValue fadeInTicks;
         public final ForgeConfigSpec.IntValue fadeOutTicks;
@@ -183,6 +184,15 @@ public class EidolonUnchainedConfig {
                         "When true: AI responses appear as titles above the action bar",
                         "When false: AI responses appear as chat messages")
                 .define("use_prominent_display", true);
+            
+            displayMethod = builder
+                .comment("How deity responses are displayed to players:",
+                        "TITLE_SUBTITLE: Traditional title/subtitle (may stretch across screen)",
+                        "ACTION_BAR: Messages appear above hotbar (better readability)",  
+                        "ENHANCED_CHAT: Formatted chat messages with visual separators",
+                        "AUTO: Automatically choose best method based on message length")
+                .defineInList("display_method", "ACTION_BAR", 
+                    java.util.Arrays.asList("TITLE_SUBTITLE", "ACTION_BAR", "ENHANCED_CHAT", "AUTO"));
             
             displayDurationTicks = builder
                 .comment("How long the title/subtitle display stays on screen (in ticks)",

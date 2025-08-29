@@ -365,30 +365,9 @@ public class PrayerSystem {
     }
     
     /**
-     * Send deity message with configurable display mode
+     * Send deity message with configurable display mode using improved system
      */
     private static void sendDeityMessage(ServerPlayer player, String deityName, String message, boolean isError) {
-        // Check configuration for display mode
-        boolean useProminentDisplay = EidolonUnchainedConfig.COMMON.useProminentDisplay.get();
-        boolean useChatForLong = EidolonUnchainedConfig.COMMON.useChatForLongMessages.get();
-        int maxSubtitleLength = EidolonUnchainedConfig.COMMON.maxSubtitleLength.get();
-        
-        // If prominent display is disabled, just use chat
-        if (!useProminentDisplay) {
-            if (message != null) {
-                String chatColor = isError ? "§c" : "§6";
-                player.sendSystemMessage(Component.literal(chatColor + "[" + deityName + "] " + message));
-            }
-            return;
-        }
-        
-        // For long messages, optionally fall back to chat
-        if (message != null && message.length() > maxSubtitleLength && useChatForLong) {
-            String chatColor = isError ? "§c" : "§6";
-            player.sendSystemMessage(Component.literal(chatColor + "[" + deityName + "] " + message));
-            return;
-        }
-
         // Handle temporary/status messages (like "Communing...")
         if (message == null || deityName.contains("Communing") || deityName.contains("Divine Connection")) {
             Component actionBarMessage = Component.literal("§e⟨ " + deityName + " ⟩");
@@ -396,57 +375,8 @@ public class PrayerSystem {
             return;
         }
         
-        // Use prominent title/subtitle display with enhanced formatting
-        Component titleComponent = Component.literal((isError ? "§c§l" : "§6§l") + deityName); // Bold for emphasis
-        Component subtitleComponent;
-        
-        // Split long messages for better display
-        if (message.length() > maxSubtitleLength) {
-            String[] words = message.split(" ");
-            StringBuilder line1 = new StringBuilder();
-            StringBuilder line2 = new StringBuilder();
-            boolean firstLine = true;
-            
-            for (String word : words) {
-                if (firstLine && (line1.length() + word.length() + 1) <= maxSubtitleLength) {
-                    if (line1.length() > 0) line1.append(" ");
-                    line1.append(word);
-                } else {
-                    firstLine = false;
-                    if (line2.length() > 0) line2.append(" ");
-                    line2.append(word);
-                }
-            }
-            
-            // Use action bar for longer messages with better formatting
-            Component actionBarMessage = Component.literal("§f" + line1.toString());
-            if (line2.length() > 0) {
-                actionBarMessage = Component.literal("§f" + line1.toString() + " §7" + line2.toString());
-            }
-            player.sendSystemMessage(actionBarMessage, true); // true = action bar
-            
-            // Show deity is speaking
-            subtitleComponent = Component.literal("§7⟨ speaks to you ⟩");
-        } else {
-            // Short message - use white text for better readability
-            subtitleComponent = Component.literal("§f" + message);
-        }
-        
-        // Get configurable timing values
-        int fadeInTicks = EidolonUnchainedConfig.COMMON.fadeInTicks.get();
-        int displayTicks = EidolonUnchainedConfig.COMMON.displayDurationTicks.get();
-        int fadeOutTicks = EidolonUnchainedConfig.COMMON.fadeOutTicks.get();
-        
-        // Set title animation timing (fade in, stay, fade out) in ticks
-        ClientboundSetTitlesAnimationPacket animationPacket = new ClientboundSetTitlesAnimationPacket(
-            fadeInTicks,   // configurable fade in
-            displayTicks,  // configurable display duration
-            fadeOutTicks   // configurable fade out
-        );
-        
-        // Send packets to display the title/subtitle
-        player.connection.send(animationPacket);
-        player.connection.send(new ClientboundSetTitleTextPacket(titleComponent));
-        player.connection.send(new ClientboundSetSubtitleTextPacket(subtitleComponent));
+        // Use the same improved display system as DeityChat
+        com.bluelotuscoding.eidolonunchained.chat.DeityChat.sendDeityResponsePublic(
+            player, deityName, message, isError);
     }
 }
