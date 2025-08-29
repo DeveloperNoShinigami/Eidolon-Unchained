@@ -223,7 +223,7 @@ public class DeityChat {
     }
     
     /**
-     * Build a prompt for conversation context
+     * Build a comprehensive prompt for conversation context including proactive assistance
      */
     private static String buildConversationPrompt(ServerPlayer player, DatapackDeity deity, String currentMessage, List<String> history) {
         StringBuilder prompt = new StringBuilder();
@@ -244,7 +244,22 @@ public class DeityChat {
         // Add detailed player context using GeminiAPIClient's context builder
         try {
             String playerContext = GeminiAPIClient.buildPlayerContext(player);
-            prompt.append("\n\nPlayer Context:\n").append(playerContext);
+            prompt.append("\n\nPlayer Current State:\n").append(playerContext);
+            
+            // Add proactive assistance guidance based on player state
+            prompt.append("\n\nIMPORTANT GUIDANCE FOR PROACTIVE ASSISTANCE:\n");
+            prompt.append("- If the player is badly hurt (under 50% health) and has good reputation (15+), ");
+            prompt.append("sense their weakness and offer healing assistance. Ask if they need aid.\n");
+            prompt.append("- If the player is starving (hunger under 12) and has decent reputation (10+), ");
+            prompt.append("notice their hunger and offer sustenance.\n");
+            prompt.append("- If the player has urgent needs and high reputation (25+), ");
+            prompt.append("proactively offer specific divine intervention before they ask.\n");
+            prompt.append("- If the player is in environmental danger (fire, lava, drowning) and has any positive reputation, ");
+            prompt.append("immediately offer emergency assistance.\n");
+            prompt.append("- Always assess their current state first, then respond to their message or offer assistance.\n");
+            prompt.append("- If offering assistance, explain what you sense about their condition and ask for their consent before helping.\n");
+            prompt.append("- Remember: you can grant items, effects, and aid through divine commands when appropriate.\n");
+            
         } catch (Exception e) {
             LOGGER.warn("Failed to build player context: {}", e.getMessage());
         }

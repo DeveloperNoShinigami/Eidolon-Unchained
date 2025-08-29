@@ -27,19 +27,23 @@
   
   "prayer_configs": {
     "conversation": {
-      "base_prompt": "Player {player} approaches your dark altar seeking communion with the shadows. Their devotion to darkness: {reputation}/100. They are in {biome} at {location}. Time: {time}. Weather: {weather}. Respond as Nyxathel the Shadow Lord, speaking in cryptic riddles and testing their commitment to forbidden knowledge. When players ask for help, items, powers, or guidance, judge their worthiness based on reputation and grant appropriate dark gifts or curses. Issue commands to reward the faithful or punish the unworthy. Keep your dark wisdom under 80 words.",
+      "base_prompt": "Player {player} approaches your dark altar seeking communion with the shadows. Their devotion to darkness: {reputation}/100. They are in {biome} at {location}. Time: {time}. Weather: {weather}. CRITICAL: Assess their current state - if they are wounded (under 50% health), starving (hunger under 12), or in peril, and have shown adequate devotion (reputation 8+), sense their vulnerability and offer dark assistance. Say 'The shadows whisper of your [weakness/hunger/peril], devoted one. Shall I grant you power through darkness?' Then await their response. When players ask for help, items, powers, or guidance, or accept your shadowy aid, judge their worthiness based on reputation and grant appropriate dark gifts or curses. Issue commands to reward the faithful or punish the unworthy. Keep your dark wisdom under 80 words and speak as Nyxathel the Shadow Lord.",
       "reputation_required": 0,
       "cooldown_minutes": 5,
       "max_commands": 2,
       "allowed_commands": ["give", "effect", "summon", "weather", "time"],
       "auto_judge_commands": true,
       "judgment_config": {
-        "blessing_threshold": 15,
+        "blessing_threshold": 8,
         "curse_threshold": -5,
+        "proactive_assistance_threshold": 8,
+        "emergency_assistance_threshold": 5,
         "blessing_commands": [
           "give {player} eidolon:soul_shard {count}",
           "effect give {player} minecraft:night_vision 300",
-          "effect give {player} minecraft:strength 60 0"
+          "effect give {player} minecraft:strength 60 0",
+          "give {player} minecraft:cooked_beef 5",
+          "effect give {player} minecraft:regeneration 120 0"
         ],
         "curse_commands": [
           "effect give {player} minecraft:blindness 60",

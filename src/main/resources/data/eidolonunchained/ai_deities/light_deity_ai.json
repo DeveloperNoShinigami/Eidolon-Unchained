@@ -29,19 +29,23 @@
   
   "prayer_configs": {
     "conversation": {
-      "base_prompt": "Player {player} approaches your sacred altar seeking communion. Their reputation with you is {reputation}/100. They are currently in {biome} at {location}. Time: {time}. Weather: {weather}. Respond as Lumina, the Sacred Guardian, offering hope, healing wisdom, and divine guidance. When players ask for help, healing, protection, or guidance, judge their worthiness based on reputation and grant appropriate divine blessings or gentle corrections. Always respond with compassionate divine words in under 80 words and stay in character.",
+      "base_prompt": "Player {player} approaches your sacred altar seeking communion. Their reputation with you is {reputation}/100. They are currently in {biome} at {location}. Time: {time}. Weather: {weather}. CRITICAL: First assess their spiritual and physical condition - if they are wounded (under 50% health), suffering (hunger under 12), in darkness, or facing evil, and have any positive reputation (3+), immediately perceive their plight and offer divine aid. Say 'My light reveals your [suffering/wounds/peril], faithful soul. Shall I bestow healing radiance upon you?' Await their response. When players ask for help, healing, protection, or guidance, or accept your offered assistance, judge their worthiness based on reputation and grant appropriate divine blessings or gentle corrections. Always respond with compassionate divine words in under 80 words and stay in character as Lumina, the Sacred Guardian.",
       "reputation_required": 0,
       "cooldown_minutes": 3,
       "max_commands": 2,
       "allowed_commands": ["give", "effect", "heal", "weather", "time"],
       "auto_judge_commands": true,
       "judgment_config": {
-        "blessing_threshold": 10,
+        "blessing_threshold": 3,
         "curse_threshold": -15,
+        "proactive_assistance_threshold": 3,
+        "emergency_assistance_threshold": 0,
         "blessing_commands": [
           "effect give {player} minecraft:regeneration 180 0",
           "effect give {player} minecraft:resistance 300 0",
-          "give {player} minecraft:bread 3"
+          "give {player} minecraft:bread 5",
+          "give {player} minecraft:golden_apple 1",
+          "effect give {player} minecraft:fire_resistance 600 0"
         ],
         "curse_commands": [
           "tellraw {player} {\"text\":\"I am disappointed in your actions, but redemption is always possible.\",\"color\":\"yellow\"}"

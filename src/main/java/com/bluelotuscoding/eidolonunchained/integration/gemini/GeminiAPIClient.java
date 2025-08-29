@@ -323,7 +323,7 @@ public class GeminiAPIClient {
     }
     
     /**
-     * Build context information for AI prompts
+     * Build comprehensive context information for AI prompts with player status analysis
      */
     public static String buildPlayerContext(ServerPlayer player) {
         StringBuilder context = new StringBuilder();
@@ -351,14 +351,68 @@ public class GeminiAPIClient {
         String weather = isThundering ? "thundering" : (isRaining ? "raining" : "clear");
         context.append("Weather: ").append(weather).append("\n");
         
-        // Health and experience
-        context.append("Health: ").append((int)player.getHealth()).append("/").append((int)player.getMaxHealth()).append("\n");
+        // Health and status analysis
+        float health = player.getHealth();
+        float maxHealth = player.getMaxHealth();
+        float healthPercentage = (health / maxHealth) * 100;
+        context.append("Health: ").append((int)health).append("/").append((int)maxHealth);
+        
+        String healthStatus = "";
+        if (healthPercentage <= 25) {
+            healthStatus = " (CRITICALLY INJURED)";
+        } else if (healthPercentage <= 50) {
+            healthStatus = " (BADLY HURT)";
+        } else if (healthPercentage <= 75) {
+            healthStatus = " (WOUNDED)";
+        }
+        context.append(healthStatus).append("\n");
+        
+        // Food level analysis
+        int foodLevel = player.getFoodData().getFoodLevel();
+        float saturation = player.getFoodData().getSaturationLevel();
+        context.append("Hunger: ").append(foodLevel).append("/20");
+        
+        String hungerStatus = "";
+        if (foodLevel <= 6) {
+            hungerStatus = " (STARVING)";
+        } else if (foodLevel <= 12) {
+            hungerStatus = " (HUNGRY)";
+        } else if (foodLevel <= 17) {
+            hungerStatus = " (PECKISH)";
+        }
+        context.append(hungerStatus).append("\n");
+        
+        // Experience Level
         context.append("Experience Level: ").append(player.experienceLevel).append("\n");
+        
+        // Active effects analysis
+        String activeEffects = getActiveEffectsAnalysis(player);
+        if (!activeEffects.isEmpty()) {
+            context.append("Active Effects: ").append(activeEffects).append("\n");
+        }
+        
+        // Equipment analysis
+        String equipmentAnalysis = getEquipmentAnalysis(player);
+        if (!equipmentAnalysis.isEmpty()) {
+            context.append("Equipment: ").append(equipmentAnalysis).append("\n");
+        }
         
         // Inventory summary - highlight notable magical items
         String inventorySummary = getInventorySummary(player);
         if (!inventorySummary.isEmpty()) {
             context.append("Notable Items: ").append(inventorySummary).append("\n");
+        }
+        
+        // Environmental dangers
+        String environmentalStatus = getEnvironmentalStatus(player);
+        if (!environmentalStatus.isEmpty()) {
+            context.append("Environmental Status: ").append(environmentalStatus).append("\n");
+        }
+        
+        // Player needs assessment (AI can use this to offer proactive help)
+        String needsAssessment = assessPlayerNeeds(player, healthPercentage, foodLevel);
+        if (!needsAssessment.isEmpty()) {
+            context.append("Apparent Needs: ").append(needsAssessment).append("\n");
         }
         
         // Ritual history
@@ -370,6 +424,166 @@ public class GeminiAPIClient {
         return context.toString();
     }
     
+    /**
+     * Get active effects analysis for context
+     */
+    private static String getActiveEffectsAnalysis(ServerPlayer player) {
+        java.util.List<String> effects = new java.util.ArrayList<>();
+        
+        player.getActiveEffects().forEach(effectInstance -> {
+            String effectName = effectInstance.getEffect().getDisplayName().getString();
+            int amplifier = effectInstance.getAmplifier();
+            int duration = effectInstance.getDuration();
+            
+            // Only include notable effects (positive, negative, or magical)
+            if (effectInstance.getEffect().isBeneficial() || !effectInstance.getEffect().isBeneficial()) {
+                String effectInfo = effectName;
+                if (amplifier > 0) {
+                    effectInfo += " " + (amplifier + 1);
+                }
+                if (duration < 1200) { // Less than 1 minute
+                    effectInfo += " (expiring soon)";
+                }
+                effects.add(effectInfo);
+            }
+        });
+        
+        return String.join(", ", effects);
+    }
+    
+    /**
+     * Analyze player's equipment status
+     */
+    private static String getEquipmentAnalysis(ServerPlayer player) {
+        java.util.List<String> equipmentStatus = new java.util.ArrayList<>();
+        
+        // Check armor
+        int armorCount = 0;
+        boolean hasEnchantedArmor = false;
+        for (net.minecraft.world.item.ItemStack armorPiece : player.getArmorSlots()) {
+            if (!armorPiece.isEmpty()) {
+                armorCount++;
+                if (armorPiece.isEnchanted()) {
+                    hasEnchantedArmor = true;
+                }
+            }
+        }
+        
+        if (armorCount == 0) {
+            equipmentStatus.add("no armor (vulnerable)");
+        } else if (armorCount < 4) {
+            equipmentStatus.add("partial armor");
+        } else {
+            equipmentStatus.add(hasEnchantedArmor ? "full enchanted armor" : "full armor");
+        }
+        
+        // Check main hand weapon
+        net.minecraft.world.item.ItemStack mainHand = player.getMainHandItem();
+        if (!mainHand.isEmpty()) {
+            String itemName = mainHand.getDisplayName().getString();
+            if (mainHand.isEnchanted()) {
+                equipmentStatus.add("enchanted " + itemName.toLowerCase());
+            } else if (isWeaponItem(mainHand)) {
+                equipmentStatus.add(itemName.toLowerCase());
+            }
+        } else {
+            equipmentStatus.add("bare hands (defenseless)");
+        }
+        
+        return String.join(", ", equipmentStatus);
+    }
+    
+    /**
+     * Check if item is a weapon
+     */
+    private static boolean isWeaponItem(net.minecraft.world.item.ItemStack stack) {
+        String itemId = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(stack.getItem()).toString();
+        return itemId.contains("sword") || itemId.contains("axe") || itemId.contains("bow") || 
+               itemId.contains("crossbow") || itemId.contains("trident") || itemId.contains("wand");
+    }
+    
+    /**
+     * Assess environmental status and dangers
+     */
+    private static String getEnvironmentalStatus(ServerPlayer player) {
+        java.util.List<String> environmental = new java.util.ArrayList<>();
+        
+        // Check if player is in dangerous locations
+        if (player.isInLava()) {
+            environmental.add("IN LAVA");
+        }
+        if (player.isUnderWater() && player.getAirSupply() < player.getMaxAirSupply()) {
+            environmental.add("drowning");
+        }
+        if (player.isOnFire()) {
+            environmental.add("on fire");
+        }
+        
+        // Check dimension
+        String dimension = player.level().dimension().location().toString();
+        if (dimension.equals("minecraft:the_nether")) {
+            environmental.add("in the Nether");
+        } else if (dimension.equals("minecraft:the_end")) {
+            environmental.add("in the End");
+        }
+        
+        // Check height dangers
+        int y = player.blockPosition().getY();
+        if (y < 10) {
+            environmental.add("very deep underground");
+        } else if (y > 200) {
+            environmental.add("very high up");
+        }
+        
+        return String.join(", ", environmental);
+    }
+    
+    /**
+     * Assess what the player might need based on their current state
+     */
+    private static String assessPlayerNeeds(ServerPlayer player, float healthPercentage, int foodLevel) {
+        java.util.List<String> needs = new java.util.ArrayList<>();
+        
+        // Health needs
+        if (healthPercentage <= 25) {
+            needs.add("URGENT HEALING");
+        } else if (healthPercentage <= 50) {
+            needs.add("healing");
+        }
+        
+        // Food needs
+        if (foodLevel <= 6) {
+            needs.add("URGENT FOOD");
+        } else if (foodLevel <= 12) {
+            needs.add("food");
+        }
+        
+        // Equipment needs
+        boolean hasArmor = false;
+        for (net.minecraft.world.item.ItemStack armorPiece : player.getArmorSlots()) {
+            if (!armorPiece.isEmpty()) {
+                hasArmor = true;
+                break;
+            }
+        }
+        if (!hasArmor) {
+            needs.add("protection/armor");
+        }
+        
+        // Weapon needs
+        net.minecraft.world.item.ItemStack mainHand = player.getMainHandItem();
+        if (mainHand.isEmpty() || !isWeaponItem(mainHand)) {
+            needs.add("weapons");
+        }
+        
+        // Environmental protection needs
+        if (player.isOnFire() || player.isInLava()) {
+            needs.add("fire protection");
+        }
+        
+        return String.join(", ", needs);
+    }
+
     /**
      * Get a summary of notable items in player's inventory
      */
