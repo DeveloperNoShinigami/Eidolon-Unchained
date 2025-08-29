@@ -269,7 +269,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
     }
 
     /**
-     * Loads a custom research entry from JSON
+     * Loads a custom research entry from JSON - handles both trigger-based and codex-style research
      */
     private void loadResearchEntry(ResourceLocation location, JsonObject json) {
         try {
@@ -291,268 +291,276 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                 return;
             }
 
-            // Basic fields
-            String titleStr = json.has("title") ? json.get("title").getAsString() : entryId.toString();
-            Component title = (titleStr.contains(":") || titleStr.contains(".") || titleStr.startsWith("eidolonunchained:"))
-                ? Component.translatable(titleStr)
-                : Component.literal(titleStr);
-
-            String descStr = json.has("description") ? json.get("description").getAsString() : "";
-            Component description = (descStr.contains(":") || descStr.contains(".") || descStr.startsWith("eidolonunchained:"))
-                ? Component.translatable(descStr)
-                : Component.literal(descStr);
-
-            ResourceLocation chapter = null;
-            if (json.has("chapter")) {
-                chapter = ResourceLocation.tryParse(json.get("chapter").getAsString());
-            }
-            if (chapter == null) {
-                LOGGER.warn("Research entry {} missing or has invalid 'chapter' field", entryId);
-                return;
-            }
-
-            // Icon parsing
-            ItemStack icon = ItemStack.EMPTY;
-            if (json.has("icon")) {
-                JsonElement iconElem = json.get("icon");
-                if (iconElem.isJsonPrimitive()) {
-                    ResourceLocation itemId = ResourceLocation.tryParse(iconElem.getAsString());
-                    if (itemId != null) {
-                        Item item = ForgeRegistries.ITEMS.getValue(itemId);
-                        if (item != null) icon = new ItemStack(item);
-                    }
-                } else if (iconElem.isJsonObject()) {
-                    JsonObject iconObj = iconElem.getAsJsonObject();
-                    if (iconObj.has("item")) {
-                        ResourceLocation itemId = ResourceLocation.tryParse(iconObj.get("item").getAsString());
-                        Item item = itemId != null ? ForgeRegistries.ITEMS.getValue(itemId) : null;
-                        if (item != null) {
-                            int count = iconObj.has("count") ? iconObj.get("count").getAsInt() : 1;
-                            icon = new ItemStack(item, count);
-                            if (iconObj.has("nbt")) {
-                                try {
-                                    CompoundTag tag = TagParser.parseTag(iconObj.get("nbt").getAsString());
-                                    icon.setTag(tag);
-                                } catch (Exception e) {
-                                    LOGGER.warn("Failed to parse icon NBT for {}: {}", entryId, e.getMessage());
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Prerequisites
-            List<ResourceLocation> prerequisites = new ArrayList<>();
-            if (json.has("prerequisites")) {
-                JsonArray prereqArray = json.getAsJsonArray("prerequisites");
-                for (JsonElement elem : prereqArray) {
-                    ResourceLocation prereq = ResourceLocation.tryParse(elem.getAsString());
-                    if (prereq != null) prerequisites.add(prereq);
-                }
-            }
-
-            // Unlocks
-            List<ResourceLocation> unlocks = new ArrayList<>();
-            if (json.has("unlocks")) {
-                JsonArray unlocksArray = json.getAsJsonArray("unlocks");
-                for (JsonElement elem : unlocksArray) {
-                    ResourceLocation unlock = ResourceLocation.tryParse(elem.getAsString());
-                    if (unlock != null) unlocks.add(unlock);
-                }
-            }
-
-            int x = json.has("x") ? json.get("x").getAsInt() : 0;
-            int y = json.has("y") ? json.get("y").getAsInt() : 0;
-
-            ResearchEntry.ResearchType type = ResearchEntry.ResearchType.BASIC;
-            if (json.has("type")) {
-                String typeStr = json.get("type").getAsString();
-                for (ResearchEntry.ResearchType t : ResearchEntry.ResearchType.values()) {
-                    if (t.getName().equalsIgnoreCase(typeStr)) {
-                        type = t;
-                        break;
-                    }
-                }
-            }
-
-            int requiredStars = -1;
-            if (json.has("required_stars")) {
-                requiredStars = json.get("required_stars").getAsInt();
-            } else if (json.has("additional") && json.get("additional").isJsonObject()) {
-                JsonObject addObj = json.getAsJsonObject("additional");
-                if (addObj.has("required_stars")) {
-                    requiredStars = addObj.get("required_stars").getAsInt();
-                    addObj.remove("required_stars");
-                }
-            }
-
-            // Tasks parsing
-            Map<Integer, List<com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask>> tasks = new HashMap<>();
-            JsonObject tasksContainer = null;
-            if (json.has("tasks") && json.get("tasks").isJsonObject()) {
-                tasksContainer = json.getAsJsonObject("tasks");
-            } else if (json.has("additional") && json.get("additional").isJsonObject()) {
-                JsonObject addObj = json.getAsJsonObject("additional");
-                if (addObj.has("tasks") && addObj.get("tasks").isJsonObject()) {
-                    tasksContainer = addObj.getAsJsonObject("tasks");
-                    addObj.remove("tasks");
-                }
-            }
-
-            if (tasksContainer != null) {
-                for (Map.Entry<String, JsonElement> tierEntry : tasksContainer.entrySet()) {
-                    String tierKey = tierEntry.getKey();
-                    int tier;
-                    try {
-                        tier = Integer.parseInt(tierKey.replace("tier_", ""));
-                    } catch (NumberFormatException ex) {
-                        LOGGER.warn("Invalid task tier '{}' in research {}", tierKey, entryId);
-                        continue;
-                    }
-                    List<com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask> tierTasks = new ArrayList<>();
-                    JsonArray arr = tierEntry.getValue().getAsJsonArray();
-                    for (JsonElement el : arr) {
-                        if (!el.isJsonObject()) continue;
-                        JsonObject tobj = el.getAsJsonObject();
-                        com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task = null;
-                        if (!tobj.has("type")) {
-                            LOGGER.warn("Task in research {} missing type", entryId);
-                            continue;
-                        }
-                        String typeStr = tobj.get("type").getAsString();
-                        ResourceLocation typeId = ResourceLocation.tryParse(typeStr.contains(":") ? typeStr : EidolonUnchained.MODID + ":" + typeStr);
-                        if (typeId == null) {
-                            LOGGER.warn("Invalid task type '{}' in research {}", typeStr, entryId);
-                            continue;
-                        }
-                        com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskType taskType = com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskTypes.get(typeId);
-                        if (taskType == null) {
-                            LOGGER.warn("Unknown task type '{}' in research {}", typeStr, entryId);
-                        } else if (taskType == com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskTypes.KILL_ENTITIES) {
-                            ResourceLocation entity = ResourceLocation.tryParse(tobj.get("entity").getAsString());
-                            int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
-                            task = new KillEntitiesTask(entity, count);
-                        } else if (taskType == com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskTypes.CRAFT_ITEMS) {
-                            ResourceLocation item = ResourceLocation.tryParse(tobj.get("item").getAsString());
-                            int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
-                            task = new CraftItemsTask(item, count);
-                        } else if (taskType == com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskTypes.USE_RITUAL) {
-                            ResourceLocation ritual = ResourceLocation.tryParse(tobj.get("ritual").getAsString());
-                            int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
-                            task = new UseRitualTask(ritual, count);
-                        } else if (taskType == com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskTypes.COLLECT_ITEMS) {
-                            ResourceLocation item = ResourceLocation.tryParse(tobj.get("item").getAsString());
-                            int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
-                            task = new CollectItemsTask(item, count);
-                        } else if (taskType == com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskTypes.EXPLORE_BIOMES) {
-                            ResourceLocation biome = ResourceLocation.tryParse(tobj.get("biome").getAsString());
-                            int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
-                            task = new ExploreBiomesTask(biome, count);
-                        } else if (taskType == com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskTypes.ENTER_DIMENSION) {
-                            ResourceLocation dim = ResourceLocation.tryParse(tobj.get("dimension").getAsString());
-                            task = new EnterDimensionTask(dim);
-                        } else if (taskType == com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskTypes.TIME_WINDOW) {
-                            long min = tobj.has("min") ? tobj.get("min").getAsLong() : 0;
-                            long max = tobj.has("max") ? tobj.get("max").getAsLong() : 24000;
-                            task = new TimeWindowTask(min, max);
-                        } else if (taskType == com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskTypes.WEATHER) {
-                            String weather = tobj.get("weather").getAsString();
-                            task = new WeatherTask(weather);
-                        } else if (taskType == com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskTypes.INVENTORY) {
-                            ResourceLocation item = ResourceLocation.tryParse(tobj.get("item").getAsString());
-                            int count = tobj.has("count") ? tobj.get("count").getAsInt() : 1;
-                            task = new InventoryTask(item, count);
-                        } else if (taskType == com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTaskTypes.HAS_NBT) {
-                            try {
-                                CompoundTag tag = TagParser.parseTag(tobj.get("nbt").getAsString());
-                                task = new HasNbtTask(tag);
-                            } catch (Exception e) {
-                                LOGGER.warn("Failed to parse NBT for task in research {}", entryId, e);
-                            }
-                        }
-                        if (taskType != null) {
-                            try {
-                                task = taskType.decoder().apply(tobj);
-                            } catch (Exception e) {
-                                LOGGER.warn("Failed to parse task of type '{}' in research {}", typeStr, entryId, e);
-                                continue;
-                            }
-                        }
-                        if (task != null) {
-                            tierTasks.add(task);
-                            integrateTask(task);
-                        }
-                    }
-                    if (!tierTasks.isEmpty()) tasks.put(tier, tierTasks);
-                }
-            }
-
-            // Additional custom fields
-            JsonObject additional = new JsonObject();
-            Set<String> known = Set.of("id", "title", "description", "chapter", "icon",
-                                       "prerequisites", "unlocks", "x", "y", "type", "required_stars", "tasks", "additional");
-            for (Map.Entry<String, JsonElement> e : json.entrySet()) {
-                if (!known.contains(e.getKey())) {
-                    additional.add(e.getKey(), e.getValue());
-                }
-            }
-            if (json.has("additional") && json.get("additional").isJsonObject()) {
-                JsonObject addObj = json.getAsJsonObject("additional");
-                for (Map.Entry<String, JsonElement> e : addObj.entrySet()) {
-                    additional.add(e.getKey(), e.getValue());
-                }
-            }
-
-            // Conditional requirements
-            // This block is maintained for backwards compatibility but datapacks
-            // should prefer expressing these as dedicated tasks instead.
-            List<ResearchCondition> conditions = new ArrayList<>();
-            if (json.has("conditional_requirements") && json.get("conditional_requirements").isJsonObject()) {
-                JsonObject cond = json.getAsJsonObject("conditional_requirements");
-                if (cond.has("dimension")) {
-                    ResourceLocation dim = ResourceLocation.tryParse(cond.get("dimension").getAsString());
-                    if (dim != null) conditions.add(new DimensionCondition(dim));
-                }
-                if (cond.has("time_range") && cond.get("time_range").isJsonObject()) {
-                    JsonObject time = cond.getAsJsonObject("time_range");
-                    long min = time.has("min") ? time.get("min").getAsLong() : 0;
-                    long max = time.has("max") ? time.get("max").getAsLong() : 24000;
-                    conditions.add(new TimeCondition(min, max));
-                }
-                if (cond.has("weather")) {
-                    conditions.add(new WeatherCondition(cond.get("weather").getAsString()));
-                }
-                if (cond.has("inventory") && cond.get("inventory").isJsonArray()) {
-                    JsonArray inv = cond.getAsJsonArray("inventory");
-                    for (JsonElement el : inv) {
-                        if (!el.isJsonObject()) continue;
-                        JsonObject obj = el.getAsJsonObject();
-                        if (!obj.has("item")) continue;
-                        ResourceLocation itemId = ResourceLocation.tryParse(obj.get("item").getAsString());
-                        if (itemId == null) continue;
-                        int count = obj.has("count") ? obj.get("count").getAsInt() : 1;
-                        Item item = ForgeRegistries.ITEMS.getValue(itemId);
-                        if (item != null) {
-                            conditions.add(new InventoryCondition(item, count));
-                        }
-                    }
-                }
-            }
-
-            ResearchEntry entry = new ResearchEntry(entryId, title, description, chapter, icon,
-                                                    prerequisites, unlocks, x, y, type, requiredStars, additional, tasks, conditions);
-
-            LOADED_RESEARCH_ENTRIES.put(entryId, entry);
-            RESEARCH_EXTENSIONS.computeIfAbsent(chapter, k -> new ArrayList<>()).add(entry);
-
-            if (!LOADED_RESEARCH_CHAPTERS.containsKey(chapter)) {
-                ENTRIES_WITH_MISSING_CHAPTER.put(entryId, chapter);
+            // Check if this is a trigger-based research (has "triggers" and "stars") or codex-style (has "chapter")
+            if (json.has("triggers") && json.has("stars")) {
+                // This is a trigger-based research - convert to ResearchEntry format
+                loadTriggerBasedResearch(entryId, json);
+            } else if (json.has("chapter") || json.has("target_chapter")) {
+                // This is a codex-style research entry
+                loadCodexStyleResearch(entryId, location, json);
+            } else {
+                LOGGER.warn("Research entry {} at {} is neither trigger-based nor codex-style - missing required fields", entryId, location);
             }
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to load research entry from " + location, e);
         }
+    }
+
+    /**
+     * Loads a trigger-based research (the original working format)
+     */
+    private void loadTriggerBasedResearch(ResourceLocation entryId, JsonObject json) {
+        // Generate basic research entry data from trigger-based research
+        Component title = Component.translatable("eidolonunchained.research." + entryId.getPath() + ".title");
+        Component description = Component.translatable("eidolonunchained.research." + entryId.getPath() + ".description");
+        
+        // Use a default chapter for trigger-based research
+        ResourceLocation chapter = new ResourceLocation(EidolonUnchained.MODID, "trigger_research");
+        
+        // Default icon
+        ItemStack icon = new ItemStack(Items.BOOK);
+        
+        // Parse stars for required_stars field
+        int requiredStars = json.has("stars") ? json.get("stars").getAsInt() : 1;
+        
+        // Parse tasks from the trigger-based format
+        Map<Integer, List<com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask>> tasks = new HashMap<>();
+        
+        if (json.has("tasks") && json.get("tasks").isJsonObject()) {
+            JsonObject tasksObj = json.getAsJsonObject("tasks");
+            for (Map.Entry<String, JsonElement> tierEntry : tasksObj.entrySet()) {
+                String tierKey = tierEntry.getKey();
+                int tier;
+                try {
+                    tier = Integer.parseInt(tierKey);
+                } catch (NumberFormatException ex) {
+                    LOGGER.warn("Invalid task tier '{}' in research {}", tierKey, entryId);
+                    continue;
+                }
+                
+                List<com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask> tierTasks = new ArrayList<>();
+                if (tierEntry.getValue().isJsonArray()) {
+                    JsonArray taskArray = tierEntry.getValue().getAsJsonArray();
+                    for (JsonElement taskElement : taskArray) {
+                        if (taskElement.isJsonObject()) {
+                            JsonObject taskObj = taskElement.getAsJsonObject();
+                            com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task = parseTask(taskObj, entryId);
+                            if (task != null) {
+                                tierTasks.add(task);
+                                integrateTask(task);
+                            }
+                        }
+                    }
+                }
+                if (!tierTasks.isEmpty()) {
+                    tasks.put(tier, tierTasks);
+                }
+            }
+        }
+        
+        // Create the research entry
+        ResearchEntry entry = new ResearchEntry(
+            entryId, title, description, chapter, icon,
+            new ArrayList<>(), // prerequisites
+            new ArrayList<>(), // unlocks  
+            0, 0, // x, y coordinates
+            ResearchEntry.ResearchType.BASIC,
+            requiredStars,
+            new JsonObject(), // additional
+            tasks,
+            new ArrayList<>() // conditions
+        );
+
+        LOADED_RESEARCH_ENTRIES.put(entryId, entry);
+        RESEARCH_EXTENSIONS.computeIfAbsent(chapter, k -> new ArrayList<>()).add(entry);
+        
+        // Ensure the default chapter exists
+        if (!LOADED_RESEARCH_CHAPTERS.containsKey(chapter)) {
+            // Create a default chapter for trigger-based research
+            ResearchChapter defaultChapter = new ResearchChapter(
+                chapter,
+                Component.translatable("eidolonunchained.research.chapter.trigger_research.title"),
+                Component.translatable("eidolonunchained.research.chapter.trigger_research.description"),
+                new ItemStack(Items.BOOK),
+                100, // sortOrder
+                false, // isSecret
+                new ResourceLocation("eidolon", "textures/gui/research_bg.png"), // backgroundTexture
+                "basics", // category - use a default Eidolon category
+                new JsonObject() // additionalData
+            );
+            LOADED_RESEARCH_CHAPTERS.put(chapter, defaultChapter);
+        }
+
+        LOGGER.info("Loaded trigger-based research: {}", entryId);
+    }
+
+    /**
+     * Parse a task from JSON object
+     */
+    private com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask parseTask(JsonObject taskObj, ResourceLocation researchId) {
+        if (!taskObj.has("type")) {
+            LOGGER.warn("Task in research {} missing type", researchId);
+            return null;
+        }
+        
+        String type = taskObj.get("type").getAsString();
+        
+        // Handle the trigger-based research task format
+        switch (type) {
+            case "item":
+                if (taskObj.has("item")) {
+                    ResourceLocation itemId = ResourceLocation.tryParse(taskObj.get("item").getAsString());
+                    int count = taskObj.has("count") ? taskObj.get("count").getAsInt() : 1;
+                    if (itemId != null) {
+                        return new CollectItemsTask(itemId, count);
+                    }
+                }
+                break;
+            case "kill":
+            case "kill_entity":
+                if (taskObj.has("entity")) {
+                    ResourceLocation entityId = ResourceLocation.tryParse(taskObj.get("entity").getAsString());
+                    int count = taskObj.has("count") ? taskObj.get("count").getAsInt() : 1;
+                    if (entityId != null) {
+                        return new KillEntitiesTask(entityId, count);
+                    }
+                }
+                break;
+            case "craft":
+            case "craft_item":
+                if (taskObj.has("item")) {
+                    ResourceLocation itemId = ResourceLocation.tryParse(taskObj.get("item").getAsString());
+                    int count = taskObj.has("count") ? taskObj.get("count").getAsInt() : 1;
+                    if (itemId != null) {
+                        return new CraftItemsTask(itemId, count);
+                    }
+                }
+                break;
+            default:
+                LOGGER.warn("Unknown task type '{}' in research {}", type, researchId);
+                break;
+        }
+        
+        return null;
+    }
+
+    /**
+     * Loads a codex-style research entry (the new format)
+     */
+    private void loadCodexStyleResearch(ResourceLocation entryId, ResourceLocation location, JsonObject json) {
+        // Basic fields
+        String titleStr = json.has("title") ? json.get("title").getAsString() : entryId.toString();
+        Component title = (titleStr.contains(":") || titleStr.contains(".") || titleStr.startsWith("eidolonunchained:"))
+            ? Component.translatable(titleStr)
+            : Component.literal(titleStr);
+
+        String descStr = json.has("description") ? json.get("description").getAsString() : "";
+        Component description = (descStr.contains(":") || descStr.contains(".") || descStr.startsWith("eidolonunchained:"))
+            ? Component.translatable(descStr)
+            : Component.literal(descStr);
+
+        ResourceLocation chapter = null;
+        if (json.has("chapter")) {
+            chapter = ResourceLocation.tryParse(json.get("chapter").getAsString());
+        } else if (json.has("target_chapter")) {
+            // Support legacy "target_chapter" field name
+            String chapterStr = json.get("target_chapter").getAsString();
+            if (chapterStr.contains(":")) {
+                chapter = ResourceLocation.tryParse(chapterStr);
+            } else {
+                // Default to our mod namespace if no namespace specified
+                chapter = new ResourceLocation(EidolonUnchained.MODID, chapterStr);
+            }
+        }
+        if (chapter == null) {
+            LOGGER.warn("Research entry {} missing or has invalid 'chapter'/'target_chapter' field", entryId);
+            return;
+        }
+
+        // Icon parsing
+        ItemStack icon = ItemStack.EMPTY;
+        if (json.has("icon")) {
+            JsonElement iconElem = json.get("icon");
+            if (iconElem.isJsonPrimitive()) {
+                ResourceLocation itemId = ResourceLocation.tryParse(iconElem.getAsString());
+                if (itemId != null) {
+                    Item item = ForgeRegistries.ITEMS.getValue(itemId);
+                    if (item != null) icon = new ItemStack(item);
+                }
+            } else if (iconElem.isJsonObject()) {
+                JsonObject iconObj = iconElem.getAsJsonObject();
+                if (iconObj.has("item")) {
+                    ResourceLocation itemId = ResourceLocation.tryParse(iconObj.get("item").getAsString());
+                    Item item = itemId != null ? ForgeRegistries.ITEMS.getValue(itemId) : null;
+                    if (item != null) {
+                        int count = iconObj.has("count") ? iconObj.get("count").getAsInt() : 1;
+                        icon = new ItemStack(item, count);
+                        if (iconObj.has("nbt")) {
+                            try {
+                                CompoundTag tag = TagParser.parseTag(iconObj.get("nbt").getAsString());
+                                icon.setTag(tag);
+                            } catch (Exception e) {
+                                LOGGER.warn("Failed to parse icon NBT for {}: {}", entryId, e.getMessage());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Prerequisites
+        List<ResourceLocation> prerequisites = new ArrayList<>();
+        if (json.has("prerequisites")) {
+            JsonArray prereqArray = json.getAsJsonArray("prerequisites");
+            for (JsonElement elem : prereqArray) {
+                ResourceLocation prereq = ResourceLocation.tryParse(elem.getAsString());
+                if (prereq != null) prerequisites.add(prereq);
+            }
+        }
+
+        // Unlocks
+        List<ResourceLocation> unlocks = new ArrayList<>();
+        if (json.has("unlocks")) {
+            JsonArray unlocksArray = json.getAsJsonArray("unlocks");
+            for (JsonElement elem : unlocksArray) {
+                ResourceLocation unlock = ResourceLocation.tryParse(elem.getAsString());
+                if (unlock != null) unlocks.add(unlock);
+            }
+        }
+
+        int x = json.has("x") ? json.get("x").getAsInt() : 0;
+        int y = json.has("y") ? json.get("y").getAsInt() : 0;
+
+        ResearchEntry.ResearchType type = ResearchEntry.ResearchType.BASIC;
+        if (json.has("type")) {
+            String typeStr = json.get("type").getAsString();
+            for (ResearchEntry.ResearchType t : ResearchEntry.ResearchType.values()) {
+                if (t.getName().equalsIgnoreCase(typeStr)) {
+                    type = t;
+                    break;
+                }
+            }
+        }
+
+        int requiredStars = -1;
+        if (json.has("required_stars")) {
+            requiredStars = json.get("required_stars").getAsInt();
+        }
+
+        // Create the research entry
+        ResearchEntry entry = new ResearchEntry(entryId, title, description, chapter, icon,
+                                                prerequisites, unlocks, x, y, type, requiredStars, 
+                                                new JsonObject(), new HashMap<>(), new ArrayList<>());
+
+        LOADED_RESEARCH_ENTRIES.put(entryId, entry);
+        RESEARCH_EXTENSIONS.computeIfAbsent(chapter, k -> new ArrayList<>()).add(entry);
+
+        if (!LOADED_RESEARCH_CHAPTERS.containsKey(chapter)) {
+            ENTRIES_WITH_MISSING_CHAPTER.put(entryId, chapter);
+        }
+
+        LOGGER.info("Loaded codex-style research: {}", entryId);
     }
 
     private static void integrateTask(com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task) {
