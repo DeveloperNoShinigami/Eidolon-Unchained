@@ -3,12 +3,12 @@
   "pages": [
     {
       "type": "text",
-      "text": "eidolonunchained.codex.page.natures_communion.description"
+      "text": "eidolonunchained.codex.entry.natures_communion.description"
     },
     {
       "type": "chant",
       "spell": "eidolonunchained:natures_communion",
-      "text": "eidolonunchained.codex.page.natures_communion.chant"
+      "text": "eidolonunchained.codex.entry.natures_communion.chant_description"
     }
   ]
 }

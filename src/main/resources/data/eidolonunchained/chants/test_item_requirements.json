@@ -1,6 +1,6 @@
 {
-  "name": "Test Chant with Item Requirements",
-  "description": "A test chant that requires specific items to cast, demonstrating the new requirement system.",
+  "name": "eidolonunchained.chant.test_item_requirements.name",
+  "description": "eidolonunchained.chant.test_item_requirements.description",
   "category": "examples",
   "mana_cost": 10,
   "cooldown": 60,

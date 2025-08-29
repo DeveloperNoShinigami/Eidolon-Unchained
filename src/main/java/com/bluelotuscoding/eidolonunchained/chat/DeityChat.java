@@ -160,7 +160,7 @@ public class DeityChat {
             String apiKey = APIKeyManager.getAPIKey("gemini");
             if (apiKey == null || apiKey.trim().isEmpty()) {
                 LOGGER.error("No Gemini API key configured. Please set up API key using /eidolon-config or environment variables.");
-                player.sendSystemMessage(Component.literal("§cThe divine connection requires an API key. Please contact server administrator."));
+                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.api_key_required"));
                 player.sendSystemMessage(Component.literal("§7(Set GEMINI_API_KEY environment variable or configure via /eidolon-config)"));
                 endConversation(player);
                 return;
@@ -180,7 +180,7 @@ public class DeityChat {
                 aiConfig.apiSettings.safetySettings
             ).thenAccept(aiResponse -> {
                 if (aiResponse == null) {
-                    player.sendSystemMessage(Component.literal("§cThe deity does not respond..."));
+                    player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.no_response"));
                     return;
                 }
                 

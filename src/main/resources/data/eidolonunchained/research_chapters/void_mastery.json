@@ -1,7 +1,7 @@
 {
   "id": "eidolonunchained:void_mastery",
-  "title": "Void Mastery", 
-  "description": "Chapter dedicated to interdimensional magic and void manipulation",
+  "title": "eidolonunchained.research.chapter.void_mastery.title", 
+  "description": "eidolonunchained.research.chapter.void_mastery.description",
   "category": "spells",
   "icon": {
     "item": "eidolon:void_amulet"

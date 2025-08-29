@@ -1,6 +1,6 @@
 {
-  "name": "Nature's Communion",
-  "description": "Connect with Verdania the Earth Mother, ancient deity of nature, growth, and the wild. Grants nature's gifts and opens communication with the green world.",
+  "name": "eidolonunchained.chant.natures_communion.name",
+  "description": "eidolonunchained.chant.natures_communion.description",
   "category": "examples",
   "codex_icon": "minecraft:flowering_azalea",
   "difficulty": 2,

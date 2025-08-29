@@ -3,11 +3,11 @@
   "pages": [
     {
       "type": "title",
-      "text": "eidolonunchained.codex.entry.text_example"
+      "text": "eidolonunchained.codex.entry.text_example.title"
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.text_example.details"
+      "text": "eidolonunchained.codex.entry.text_example.description"
     }
   ]
 }

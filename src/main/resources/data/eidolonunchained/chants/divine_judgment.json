@@ -1,6 +1,6 @@
 {
-  "name": "Divine Judgment",
-  "description": "Call upon Lumina the Sacred Guardian to judge the worthy and unworthy. A powerful blessing for the righteous, but brings consequences for the wicked.",
+  "name": "eidolonunchained.chant.divine_judgment.name",
+  "description": "eidolonunchained.chant.divine_judgment.description",
   "category": "examples",
   "mana_cost": 40,
   "cooldown": 300,

@@ -4,6 +4,7 @@ import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
 import com.bluelotuscoding.eidolonunchained.ai.AIDeityManager;
 import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
+import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -11,6 +12,12 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+
+import java.util.List;
+import java.util.Map;
+
+// Eidolon integration imports
+import elucent.eidolon.util.KnowledgeUtil;
 
 /**
  * Unified command handler for all Eidolon Unchained commands
@@ -85,12 +92,24 @@ public class UnifiedCommands {
                     .then(Commands.argument("player", StringArgumentType.string())
                         .executes(UnifiedCommands::clearPrayerCooldown))))
             
+            // Research system
+            .then(Commands.literal("research")
+                .then(Commands.literal("clear")
+                    .then(Commands.argument("player", StringArgumentType.string())
+                        .executes(UnifiedCommands::clearPlayerResearch)))
+                .then(Commands.literal("reload")
+                    .executes(UnifiedCommands::reloadResearch))
+                .then(Commands.literal("list")
+                    .executes(UnifiedCommands::listResearchEntries)))
+            
             // Debug commands
             .then(Commands.literal("debug")
                 .then(Commands.literal("toggle")
                     .executes(UnifiedCommands::toggleDebug))
                 .then(Commands.literal("logs")
                     .executes(UnifiedCommands::showDebugLogs))
+                .then(Commands.literal("triggers")
+                    .executes(UnifiedCommands::debugTriggers))
                 .then(Commands.literal("validate-all")
                     .executes(UnifiedCommands::validateAll)))
         );
@@ -336,6 +355,31 @@ public class UnifiedCommands {
         return 1;
     }
     
+    private static int debugTriggers(CommandContext<CommandSourceStack> context) {
+        Map<String, List<com.bluelotuscoding.eidolonunchained.research.triggers.data.ResearchTrigger>> allTriggers = 
+            com.bluelotuscoding.eidolonunchained.research.triggers.ResearchTriggerLoader.getTriggersForAllResearch();
+        
+        StringBuilder msg = new StringBuilder("§6=== Research Triggers Debug ===\n");
+        msg.append(String.format("§eLoaded %d research entries with triggers:\n", allTriggers.size()));
+        
+        for (Map.Entry<String, List<com.bluelotuscoding.eidolonunchained.research.triggers.data.ResearchTrigger>> entry : allTriggers.entrySet()) {
+            String researchId = entry.getKey();
+            List<com.bluelotuscoding.eidolonunchained.research.triggers.data.ResearchTrigger> triggers = entry.getValue();
+            
+            msg.append(String.format("§a%s: §f%d triggers\n", researchId, triggers.size()));
+            for (com.bluelotuscoding.eidolonunchained.research.triggers.data.ResearchTrigger trigger : triggers) {
+                msg.append(String.format("  §7- Type: %s\n", trigger.getType()));
+            }
+        }
+        
+        if (allTriggers.isEmpty()) {
+            msg.append("§cNo research triggers loaded! Check if research files contain 'triggers' arrays.");
+        }
+        
+        context.getSource().sendSuccess(() -> Component.literal(msg.toString()), false);
+        return 1;
+    }
+    
     private static int validateAll(CommandContext<CommandSourceStack> context) {
         context.getSource().sendSuccess(() -> Component.literal("§aValidating all systems..."), false);
         
@@ -382,6 +426,62 @@ public class UnifiedCommands {
             Component.literal("§7Use /eidolon-unchained api set-model <model> to change"), false);
         
         return 1;
+    }
+    
+    // Research command implementations
+    private static int clearPlayerResearch(CommandContext<CommandSourceStack> context) {
+        String playerName = StringArgumentType.getString(context, "player");
+        
+        try {
+            ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+            if (player == null) {
+                context.getSource().sendFailure(Component.literal("§cPlayer not found: " + playerName));
+                return 0;
+            }
+            
+            // Clear research using Eidolon's built-in system
+            KnowledgeUtil.resetResearch(player);
+            
+            context.getSource().sendSuccess(() -> 
+                Component.translatable("eidolonunchained.command.research.cleared", playerName), false);
+            player.sendSystemMessage(Component.literal("§6Your research progress has been reset by an administrator."));
+            
+            return 1;
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cFailed to clear research: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    private static int reloadResearch(CommandContext<CommandSourceStack> context) {
+        try {
+            // Research data reloads automatically with datapacks, but we can trigger it manually
+            context.getSource().sendSuccess(() -> 
+                Component.translatable("eidolonunchained.command.research.reload"), false);
+            return 1;
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cFailed to reload research: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    private static int listResearchEntries(CommandContext<CommandSourceStack> context) {
+        try {
+            context.getSource().sendSuccess(() -> 
+                Component.translatable("eidolonunchained.command.research.status"), false);
+            context.getSource().sendSuccess(() -> 
+                Component.translatable("eidolonunchained.command.research.chapters", ResearchDataManager.getLoadedResearchChapters().size()), false);
+            context.getSource().sendSuccess(() -> 
+                Component.translatable("eidolonunchained.command.research.entries", ResearchDataManager.getLoadedResearchEntries().size()), false);
+            context.getSource().sendSuccess(() -> 
+                Component.translatable("eidolonunchained.command.research.extensions", ResearchDataManager.getResearchExtensions().size()), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§7Use /eidolon-unchained research clear <player> to reset player progress"), false);
+            return 1;
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cFailed to list research: " + e.getMessage()));
+            return 0;
+        }
     }
     
     // Utility methods

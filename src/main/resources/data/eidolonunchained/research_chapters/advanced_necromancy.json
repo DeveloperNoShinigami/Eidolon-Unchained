@@ -1,7 +1,7 @@
 {
   "id": "eidolonunchained:advanced_necromancy",
-  "title": "Advanced Necromancy",
-  "description": "Chapter covering advanced necromantic techniques and forbidden knowledge",
+  "title": "eidolonunchained.research.chapter.advanced_necromancy.title",
+  "description": "eidolonunchained.research.chapter.advanced_necromancy.description",
   "category": "spells",
   "icon": {
     "item": "eidolon:deathbringer_scythe"

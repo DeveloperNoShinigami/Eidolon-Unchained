@@ -1,7 +1,7 @@
 {
   "id": "eidolonunchained:light_deity",
-  "name": "Lumina the Sacred Guardian",
-  "description": "A benevolent deity of light, healing, and protection. Blesses those who perform the sacred chants with divine grace and shields them from harm.",
+  "name": "eidolonunchained.deity.light_deity.name",
+  "description": "eidolonunchained.deity.light_deity.description",
   "colors": {
     "red": 255,
     "green": 230,

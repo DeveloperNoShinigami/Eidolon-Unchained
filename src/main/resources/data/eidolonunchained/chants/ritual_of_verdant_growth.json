@@ -1,6 +1,6 @@
 {
-  "name": "Ritual of Verdant Growth",
-  "description": "A sacred ritual to Verdania that blesses the land with abundant growth and life. Requires offerings of nature's bounty to complete.",
+  "name": "eidolonunchained.chant.ritual_of_verdant_growth.name",
+  "description": "eidolonunchained.chant.ritual_of_verdant_growth.description",
   "category": "divine_rituals",
   "codex_icon": "minecraft:oak_sapling",
   "difficulty": 3,

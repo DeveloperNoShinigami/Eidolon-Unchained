@@ -1,9 +1,6 @@
 {
   "_comment_structure": "Standardized language keys: eidolonunchained.<system>.<category>.<name>.<type>",
   
-  "eidolonunchained.research.entry.void_walker.title": "Void Manipulation",
-  "eidolonunchained.research.entry.void_walker.description": "Learn to harness and control void energies for advanced magical purposes",
-
   "_comment_codex_system": "=== CODEX SYSTEM ===",
   "eidolonunchained.codex.category.examples.name": "Examples",
   "eidolonunchained.codex.category.example_chants.name": "Example Chants",
@@ -55,10 +52,6 @@
   "_comment_research_system": "=== RESEARCH SYSTEM ===",
   "eidolonunchained.research.chapter.simple_examples.title": "Simple Examples",
   "eidolonunchained.research.chapter.divine_rituals.title": "Divine Rituals",
-  "eidolonunchained.research.chapter.void_mastery.title": "Void Mastery",
-  "eidolonunchained.research.chapter.void_mastery.description": "Chapter dedicated to interdimensional magic and void manipulation",
-  "eidolonunchained.research.chapter.advanced_necromancy.title": "Advanced Necromancy",
-  "eidolonunchained.research.chapter.advanced_necromancy.description": "Chapter covering advanced necromantic techniques and forbidden knowledge",
   
   "eidolonunchained.research.entry.undead_hunter.title": "Undead Hunter",
   "eidolonunchained.research.entry.combat_mastery.title": "Combat Mastery",
@@ -73,20 +66,12 @@
   
   "eidolonunchained.research.entry.nature_blessing_ritual.title": "Nature's Blessing Ritual",
   "eidolonunchained.research.entry.nature_blessing_ritual.description": "A sacred ceremony to commune with Verdania, the Nature Guardian",
-  "eidolonunchained.research.entry.nature_blessing_ritual.page1": "§2Verdania, the Nature Guardian§r, responds to this sacred ritual of growth and harmony. The ritual channels the essence of life and natural cycles.$(br2)This ritual can be performed to gain favor with Verdania and may be required to complete divine tasks.",
-  "eidolonunchained.research.entry.nature_blessing_ritual.page2": "Place an §2Oak Sapling§r in the brazier as the ritual focus. Arrange the components on stone hands around the brazier, then activate with an §aEmerald§r.",
-  "eidolonunchained.research.entry.nature_blessing_ritual.components_title": "Ritual Components",
-  "eidolonunchained.research.entry.nature_blessing_ritual.page3": "§lStone Hand Contents:§r$(br)• 4x §2Wheat Seeds§r - symbols of new life$(br)• 2x §aBone Meal§r - nourishment for growth$(br)• 2x §6Oak Log§r - connection to the forest$(br2)Light the brazier when all components are properly placed.",
   
   "eidolonunchained.research.entry.divine_purification_ritual.title": "Divine Purification Ritual",
   "eidolonunchained.research.entry.divine_purification_ritual.description": "A holy ritual to gain Lumina's blessing and cleanse the soul",
   
   "eidolonunchained.research.entry.shadow_embrace_ritual.title": "Shadow Embrace Ritual",
   "eidolonunchained.research.entry.shadow_embrace_ritual.description": "A dangerous ritual to gain power from Nyxathel, the Shadow Lord",
-  "eidolonunchained.research.entry.shadow_embrace_ritual.page1": "§5Nyxathel, the Shadow Lord§r, grants power to those who dare embrace the darkness. This ritual requires rare materials from the Nether's depths and opens your soul to shadow magic.$(br2)The most dangerous of the divine rituals, it may be demanded by Nyxathel himself.",
-  "eidolonunchained.research.entry.shadow_embrace_ritual.page2": "Place §8Soul Sand§r in the brazier as the ritual focus. Arrange the dark components on stone hands around the brazier, then activate with a §dNether Star§r.",
-  "eidolonunchained.research.entry.shadow_embrace_ritual.components_title": "Shadow Components",
-  "eidolonunchained.research.entry.shadow_embrace_ritual.page3": "§lStone Hand Contents:§r$(br)• 4x §8Obsidian§r - unbreakable darkness$(br)• 2x §7Wither Skeleton Skull§r - death's embrace$(br)• 2x §8Soul Soil§r - essence of shadows$(br2)This ritual opens your soul to the shadow realm - proceed with caution.",
   
   "eidolonunchained.research.discovery.need_tools": "You sense something significant about this %s, but you need Note-Taking Tools to investigate further.",
   "eidolonunchained.research.discovery.title": "Research Discovered!",
@@ -112,10 +97,6 @@
   
   "eidolonunchained.chant.forbidden_knowledge.name": "Forbidden Knowledge",
   "eidolonunchained.chant.forbidden_knowledge.description": "Seek out secrets that should remain hidden.",
-  
-  "eidolonunchained.chant.test_item_requirements.name": "Test Chant with Item Requirements",
-  "eidolonunchained.chant.test_item_requirements.description": "A test chant that requires specific items to cast, demonstrating the new requirement system.",
-  
   
   "_comment_deity_system": "=== DEITY SYSTEM ===",
   "eidolonunchained.deity.nature_deity.name": "Verdania, Guardian of Nature",

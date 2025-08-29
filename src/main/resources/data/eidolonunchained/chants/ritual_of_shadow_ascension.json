@@ -1,6 +1,6 @@
 {
-  "name": "Ritual of Shadow Ascension",
-  "description": "A forbidden ceremony to Nyxathel the Shadow Lord that channels dark power and reveals hidden knowledge. Requires offerings from the depths to complete.",
+  "name": "eidolonunchained.chant.ritual_of_shadow_ascension.name",
+  "description": "eidolonunchained.chant.ritual_of_shadow_ascension.description",
   "category": "divine_rituals",
   "codex_icon": "minecraft:soul_sand",
   "difficulty": 4,

@@ -32,8 +32,13 @@ public class KillResearchTriggers {
         LivingEntity killedEntity = event.getEntity();
         ResourceLocation entityType = ForgeRegistries.ENTITY_TYPES.getKey(killedEntity.getType());
         
+        LOGGER.debug("Player {} killed entity: {}", player.getName().getString(), entityType);
+        
         // Get all kill triggers from research files
-        for (Map.Entry<String, List<ResearchTrigger>> entry : ResearchTriggerLoader.getTriggersForAllResearch().entrySet()) {
+        Map<String, List<ResearchTrigger>> allTriggers = ResearchTriggerLoader.getTriggersForAllResearch();
+        LOGGER.debug("Checking {} research entries for kill triggers", allTriggers.size());
+        
+        for (Map.Entry<String, List<ResearchTrigger>> entry : allTriggers.entrySet()) {
             String researchId = entry.getKey();
             
             for (ResearchTrigger trigger : entry.getValue()) {

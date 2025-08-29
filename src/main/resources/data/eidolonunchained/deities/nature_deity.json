@@ -1,7 +1,7 @@
 {
   "id": "eidolonunchained:nature_deity",
-  "name": "Verdania, Guardian of Nature",
-  "description": "Ancient protector of forests and wildlife who speaks to those who honor the natural world",
+  "name": "eidolonunchained.deity.nature_deity.name",
+  "description": "eidolonunchained.deity.nature_deity.description",
   "colors": {
     "red": 34,
     "green": 139,

@@ -3,12 +3,12 @@
   "pages": [
     {
       "type": "text",
-      "text": "eidolonunchained.codex.page.forbidden_knowledge.description"
+      "text": "eidolonunchained.codex.entry.forbidden_knowledge.description"
     },
     {
       "type": "chant",
       "spell": "eidolonunchained:forbidden_knowledge",
-      "text": "eidolonunchained.codex.page.forbidden_knowledge.chant"
+      "text": "eidolonunchained.codex.entry.forbidden_knowledge.chant_description"
     }
   ]
 }

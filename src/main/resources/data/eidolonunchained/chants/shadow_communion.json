@@ -1,6 +1,6 @@
 {
-  "name": "Shadow Communion", 
-  "description": "Reach into the darkness to speak with Nyxathel the Shadow Lord. Grants dark powers and opens forbidden communication.",
+  "name": "eidolonunchained.chant.shadow_communion.name", 
+  "description": "eidolonunchained.chant.shadow_communion.description",
   "category": "examples",
   "codex_icon": "minecraft:wither_skeleton_skull",
   "difficulty": 3,

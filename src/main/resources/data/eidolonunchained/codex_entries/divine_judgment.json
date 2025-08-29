@@ -3,12 +3,12 @@
   "pages": [
     {
       "type": "text",
-      "text": "eidolonunchained.codex.page.divine_judgment.description"
+      "text": "eidolonunchained.codex.entry.divine_judgment.description"
     },
     {
       "type": "chant",
       "spell": "eidolonunchained:divine_judgment",
-      "text": "eidolonunchained.codex.page.divine_judgment.chant"
+      "text": "eidolonunchained.codex.entry.divine_judgment.chant_description"
     }
   ]
 }

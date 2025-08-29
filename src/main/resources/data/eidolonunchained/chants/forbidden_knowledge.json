@@ -1,6 +1,6 @@
 {
-  "name": "Forbidden Knowledge",
-  "description": "A dangerous ritual to seek the darkest secrets from Nyxathel. Grants temporary omniscience but at a cost. Only for the truly devoted.",
+  "name": "eidolonunchained.chant.forbidden_knowledge.name",
+  "description": "eidolonunchained.chant.forbidden_knowledge.description",
   "category": "examples",
   "mana_cost": 50,
   "cooldown": 600,

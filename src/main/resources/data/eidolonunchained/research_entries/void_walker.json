@@ -1,8 +1,8 @@
 {
   "id": "eidolonunchained:void_manipulation",
   "chapter": "eidolonunchained:void_amulet",
-  "title": "Void Manipulation",
-  "description": "Learn to harness and control void energies for advanced magical purposes.",
+  "title": "eidolonunchained.research.entry.void_walker.title",
+  "description": "eidolonunchained.research.entry.void_walker.description",
   "icon": {"item": "eidolon:void_amulet"},
   "prerequisites": ["eidolon:void_amulet"],
   "unlocks": [],

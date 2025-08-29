@@ -9,17 +9,17 @@
   "pages": [
     {
       "type": "text",
-      "text": "§5Nyxathel, the Shadow Lord§r, grants power to those who dare embrace the darkness. This ritual requires rare materials from the Nether's depths and opens your soul to shadow magic.$(br2)The most dangerous of the divine rituals, it may be demanded by Nyxathel himself."
+      "text": "eidolonunchained.research.entry.shadow_embrace_ritual.page1"
     },
     {
       "type": "ritual", 
       "recipe": "eidolonunchained:shadow_embrace",
-      "text": "Place §8Soul Sand§r in the brazier as the ritual focus. Arrange the dark components on stone hands around the brazier, then activate with a §dNether Star§r."
+      "text": "eidolonunchained.research.entry.shadow_embrace_ritual.page2"
     },
     {
       "type": "text",
-      "title": "Shadow Components",
-      "text": "§lStone Hand Contents:§r$(br)• 4x §8Obsidian§r - unbreakable darkness$(br)• 2x §7Wither Skeleton Skull§r - death's embrace$(br)• 2x §8Soul Soil§r - essence of shadows$(br2)This ritual opens your soul to the shadow realm - proceed with caution."
+      "title": "eidolonunchained.research.entry.shadow_embrace_ritual.components_title",
+      "text": "eidolonunchained.research.entry.shadow_embrace_ritual.page3"
     }
   ]
 }

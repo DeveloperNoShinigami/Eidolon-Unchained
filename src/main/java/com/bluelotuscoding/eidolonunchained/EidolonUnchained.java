@@ -131,6 +131,14 @@ public class EidolonUnchained
     public void onAddReloadListeners(AddReloadListenerEvent event) {
         event.addListener(new DatapackDeityManager());
         event.addListener(new DatapackChantManager());
-        LOGGER.info("Eidolon Unchained datapack managers registered");
+        
+        // Register research trigger loader as a reload listener
+        event.addListener((preparationBarrier, resourceManager, profilerFiller, profilerFiller2, backgroundExecutor, gameExecutor) -> {
+            return preparationBarrier.wait(null).thenRunAsync(() -> {
+                com.bluelotuscoding.eidolonunchained.research.triggers.ResearchTriggerLoader.loadTriggers(resourceManager);
+            }, gameExecutor);
+        });
+        
+        LOGGER.info("Eidolon Unchained datapack managers and research trigger loader registered");
     }
 }

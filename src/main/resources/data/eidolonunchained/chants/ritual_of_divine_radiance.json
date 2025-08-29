@@ -1,6 +1,6 @@
 {
-  "name": "Ritual of Divine Radiance",
-  "description": "A holy ceremony to Lumina the Sacred Guardian that purifies the area with divine light and banishes darkness. Requires sacred offerings to complete.",
+  "name": "eidolonunchained.chant.ritual_of_divine_radiance.name",
+  "description": "eidolonunchained.chant.ritual_of_divine_radiance.description",
   "category": "divine_rituals", 
   "codex_icon": "minecraft:glowstone",
   "difficulty": 3,

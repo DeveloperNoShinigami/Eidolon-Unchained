@@ -1,6 +1,6 @@
 {
-  "name": "Gaia's Wrath", 
-  "description": "Channel the fury of Verdania to protect nature from those who would harm it. Powerful but requires great wisdom to use responsibly.",
+  "name": "eidolonunchained.chant.gaias_wrath.name", 
+  "description": "eidolonunchained.chant.gaias_wrath.description",
   "category": "examples",
   "mana_cost": 35,
   "cooldown": 240,

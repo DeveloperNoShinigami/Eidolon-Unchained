@@ -1,7 +1,7 @@
 {
   "id": "eidolonunchained:dark_deity",
-  "name": "Nyxathel the Shadow Lord",
-  "description": "An ancient deity of darkness, death, and forbidden knowledge. Whispers secrets to those brave enough to perform the dark chants.",
+  "name": "eidolonunchained.deity.dark_deity.name",
+  "description": "eidolonunchained.deity.dark_deity.description",
   "colors": {
     "red": 123,
     "green": 85,

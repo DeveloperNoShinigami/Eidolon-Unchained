@@ -2,13 +2,49 @@
   "id": "divine_ritual_discovery",
   "stars": 3,
   "triggers": [
-    "eidolon:brazier",
-    "minecraft:golden_apple", 
-    "minecraft:emerald",
-    "minecraft:diamond",
-    "ritual:eidolonunchained:nature_blessing",
-    "ritual:eidolonunchained:divine_purification",
-    "ritual:eidolonunchained:shadow_embrace"
+    {
+      "type": "block_interaction",
+      "block": "eidolon:brazier"
+    },
+    {
+      "type": "kill_entity",
+      "entity": "minecraft:zombie",
+      "item_requirements": {
+        "check_inventory": true,
+        "items": [
+          {
+            "item": "minecraft:golden_apple",
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "type": "kill_entity",
+      "entity": "minecraft:skeleton",
+      "item_requirements": {
+        "check_inventory": true,
+        "items": [
+          {
+            "item": "minecraft:emerald",
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "type": "kill_entity",
+      "entity": "minecraft:creeper",
+      "item_requirements": {
+        "check_inventory": true,
+        "items": [
+          {
+            "item": "minecraft:diamond",
+            "count": 1
+          }
+        ]
+      }
+    }
   ],
   "tasks": {
     "0": [

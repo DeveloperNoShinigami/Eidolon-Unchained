@@ -1,6 +1,6 @@
 {
-  "name": "Divine Communion",
-  "description": "A sacred chant that opens communication with the Light Deity, Lumina. Blesses the caster and allows direct conversation.",
+  "name": "eidolonunchained.chant.divine_communion.name",
+  "description": "eidolonunchained.chant.divine_communion.description",
   "category": "examples",
   "codex_icon": "minecraft:glowstone",
   "difficulty": 2,

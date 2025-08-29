@@ -74,10 +74,14 @@ public class ResearchTriggerLoader {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(resource.open(), StandardCharsets.UTF_8))) {
             
+            LOGGER.debug("Loading triggers from research file: {}", location);
+            
             JsonObject researchJson = GSON.fromJson(reader, JsonObject.class);
             if (researchJson != null && researchJson.has("triggers")) {
                 String researchId = researchJson.has("id") ? researchJson.get("id").getAsString() : location.getPath();
                 JsonArray triggers = researchJson.getAsJsonArray("triggers");
+                
+                LOGGER.debug("Found {} triggers in research file: {}", triggers.size(), researchId);
                 
                 List<ResearchTrigger> researchTriggers = new ArrayList<>();
                 
@@ -86,13 +90,20 @@ public class ResearchTriggerLoader {
                     if (trigger != null) {
                         researchTriggers.add(trigger);
                         TRIGGERS_BY_TYPE.computeIfAbsent(trigger.getType(), k -> new ArrayList<>()).add(trigger);
+                        LOGGER.debug("Loaded trigger type: {} for research: {}", trigger.getType(), researchId);
+                    } else {
+                        LOGGER.warn("Failed to parse trigger in research file: {}", researchId);
                     }
                 }
                 
                 if (!researchTriggers.isEmpty()) {
                     TRIGGERS_BY_RESEARCH.put(researchId, researchTriggers);
-                    LOGGER.debug("Loaded {} triggers from research {}", researchTriggers.size(), researchId);
+                    LOGGER.info("Successfully loaded {} triggers from research {}", researchTriggers.size(), researchId);
+                } else {
+                    LOGGER.warn("No valid triggers found in research file: {}", researchId);
                 }
+            } else {
+                LOGGER.debug("Research file {} has no triggers section", location);
             }
         } catch (IOException | JsonSyntaxException e) {
             LOGGER.error("Failed to load research triggers from {}: {}", location, e.getMessage());
@@ -138,14 +149,5 @@ public class ResearchTriggerLoader {
      */
     public static Map<String, List<ResearchTrigger>> getTriggersForAllResearch() {
         return new HashMap<>(TRIGGERS_BY_RESEARCH);
-    }
-    
-    @SubscribeEvent
-    public static void onResourceReload(AddReloadListenerEvent event) {
-        event.addListener((preparationBarrier, resourceManager, profilerFiller, profilerFiller2, backgroundExecutor, gameExecutor) -> {
-            return preparationBarrier.wait(null).thenRunAsync(() -> {
-                loadTriggers(resourceManager);
-            }, gameExecutor);
-        });
     }
 }

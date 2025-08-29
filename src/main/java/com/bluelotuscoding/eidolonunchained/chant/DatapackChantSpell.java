@@ -53,6 +53,23 @@ public class DatapackChantSpell extends PrayerSpell {
     }
     
     @Override
+    public boolean canCast(Level world, BlockPos pos, Player player) {
+        // First check the parent's conditions
+        if (!super.canCast(world, pos, player)) {
+            return false;
+        }
+        
+        // Check cooldown
+        if (!ChantCooldownManager.canCastChant(player, chantData)) {
+            int remainingCooldown = ChantCooldownManager.getRemainingCooldown(player, chantData);
+            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.chant.cooldown", remainingCooldown));
+            return false;
+        }
+        
+        return true;
+    }
+    
+    @Override
     public void cast(Level world, BlockPos pos, Player player) {
         if (!(player instanceof ServerPlayer serverPlayer)) {
             return;
@@ -60,7 +77,7 @@ public class DatapackChantSpell extends PrayerSpell {
         
         // Check if chant system is enabled
         if (!EidolonUnchainedConfig.COMMON.enableChantSystem.get()) {
-            serverPlayer.sendSystemMessage(Component.literal("§cChant system is disabled"));
+            serverPlayer.sendSystemMessage(Component.translatable("eidolonunchained.ui.chant.system_disabled"));
             return;
         }
         
@@ -106,19 +123,22 @@ public class DatapackChantSpell extends PrayerSpell {
                     ServerPlayer.class, net.minecraft.resources.ResourceLocation.class);
                 startConversation.invoke(null, serverPlayer, chantData.getLinkedDeity());
                 
-                serverPlayer.sendSystemMessage(Component.literal("§6✨ " + chantData.getName() + " completed! The deity is listening..."));
+                serverPlayer.sendSystemMessage(Component.translatable("eidolonunchained.ui.chant.deity_listening", chantData.getName()));
                 
             } catch (Exception e) {
                 LOGGER.error("Failed to trigger deity conversation for chant: {}", chantData.getId(), e);
                 // Fall back to normal chant execution
                 executeChantEffects(serverPlayer, world, pos);
-                serverPlayer.sendSystemMessage(Component.literal("§6✨ " + chantData.getName() + " completed successfully!"));
+                serverPlayer.sendSystemMessage(Component.translatable("eidolonunchained.ui.chant.success", chantData.getName()));
             }
         } else {
             // Execute normal chant effects
             executeChantEffects(serverPlayer, world, pos);
-            serverPlayer.sendSystemMessage(Component.literal("§6✨ " + chantData.getName() + " completed successfully!"));
+            serverPlayer.sendSystemMessage(Component.translatable("eidolonunchained.ui.chant.success", chantData.getName()));
         }
+        
+        // Set cooldown after successful cast
+        ChantCooldownManager.setCooldown(serverPlayer, chantData);
         
         LOGGER.info("Player {} successfully performed chant: {}", 
                    serverPlayer.getName().getString(), chantData.getId());
@@ -133,7 +153,7 @@ public class DatapackChantSpell extends PrayerSpell {
                 effect.apply(player);
             } catch (Exception e) {
                 LOGGER.error("Failed to execute chant effect for {}: {}", chantData.getId(), e.getMessage());
-                player.sendSystemMessage(Component.literal("§cChant effect failed to execute"));
+                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.chant.effect_failed"));
             }
         }
     }
