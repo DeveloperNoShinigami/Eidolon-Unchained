@@ -40,11 +40,58 @@ public class GeminiAPIClient {
         if (apiKey == null || apiKey.trim().isEmpty()) {
             LOGGER.error("Gemini API key is null or empty. AI features will not work.");
         }
+        
+        // Validate and normalize model name
+        this.model = validateAndNormalizeModelName(model);
         this.apiKey = apiKey;
-        this.model = model;
         this.timeoutSeconds = timeoutSeconds;
         LOGGER.debug("Created GeminiAPIClient with model: {}, timeout: {}s, apiKey present: {}", 
-            model, timeoutSeconds, (apiKey != null && !apiKey.trim().isEmpty()));
+            this.model, timeoutSeconds, (apiKey != null && !apiKey.trim().isEmpty()));
+    }
+    
+    /**
+     * Validate and normalize the Gemini model name
+     */
+    private String validateAndNormalizeModelName(String model) {
+        if (model == null || model.trim().isEmpty()) {
+            LOGGER.warn("Model name is empty, defaulting to gemini-1.5-flash");
+            return "gemini-1.5-flash";
+        }
+        
+        String normalizedModel = model.toLowerCase().trim();
+        
+        // Handle common variations and fix them
+        if (normalizedModel.contains("gemini") && normalizedModel.contains("2.5")) {
+            LOGGER.warn("Gemini 2.5 models don't exist yet, using gemini-1.5-flash instead");
+            return "gemini-1.5-flash";
+        }
+        
+        if (normalizedModel.contains("flash") && normalizedModel.contains("lite")) {
+            LOGGER.warn("Flash-Lite model name corrected to gemini-1.5-flash");
+            return "gemini-1.5-flash";
+        }
+        
+        // Valid model names for Gemini API
+        if (normalizedModel.equals("gemini-1.5-flash") || 
+            normalizedModel.equals("gemini-1.5-pro") ||
+            normalizedModel.equals("gemini-pro") ||
+            normalizedModel.equals("gemini-pro-vision")) {
+            return normalizedModel;
+        }
+        
+        // Try to fix common model name formats
+        if (normalizedModel.contains("1.5") && normalizedModel.contains("flash")) {
+            return "gemini-1.5-flash";
+        }
+        if (normalizedModel.contains("1.5") && normalizedModel.contains("pro")) {
+            return "gemini-1.5-pro";
+        }
+        if (normalizedModel.contains("pro")) {
+            return "gemini-pro";
+        }
+        
+        LOGGER.warn("Unknown model name '{}', defaulting to gemini-1.5-flash", model);
+        return "gemini-1.5-flash";
     }
     
     /**
@@ -76,13 +123,18 @@ public class GeminiAPIClient {
         
         JsonObject request = new JsonObject();
         
-        // Contents array
+        // Contents array - this is the key format for Gemini API
         JsonArray contents = new JsonArray();
         JsonObject content = new JsonObject();
-        JsonArray parts = new JsonArray();
         
+        // Set role to 'user' explicitly
+        content.addProperty("role", "user");
+        
+        JsonArray parts = new JsonArray();
         JsonObject textPart = new JsonObject();
-        String fullPrompt = personality + "\n\n" + prompt;
+        
+        // Combine personality and prompt properly
+        String fullPrompt = personality + "\n\nHuman: " + prompt + "\n\nAssistant:";
         textPart.addProperty("text", fullPrompt);
         parts.add(textPart);
         
@@ -90,20 +142,21 @@ public class GeminiAPIClient {
         contents.add(content);
         request.add("contents", contents);
         
-        // Safety settings
-        JsonArray safetyArray = new JsonArray();
-        addSafetySetting(safetyArray, "HARM_CATEGORY_HARASSMENT", safetySettings.harassment);
-        addSafetySetting(safetyArray, "HARM_CATEGORY_HATE_SPEECH", safetySettings.hate_speech);
-        addSafetySetting(safetyArray, "HARM_CATEGORY_SEXUALLY_EXPLICIT", safetySettings.sexually_explicit);
-        addSafetySetting(safetyArray, "HARM_CATEGORY_DANGEROUS_CONTENT", safetySettings.dangerous_content);
-        request.add("safetySettings", safetyArray);
-        
-        // Generation config with token management
+        // Generation config - use correct field names for Gemini
         JsonObject generationConfig = new JsonObject();
         generationConfig.addProperty("temperature", genConfig.temperature);
-        // Reduce max tokens to prevent truncation and 400 errors
         generationConfig.addProperty("maxOutputTokens", Math.min(genConfig.max_output_tokens, 300));
+        generationConfig.addProperty("topP", 0.8);
+        generationConfig.addProperty("topK", 10);
         request.add("generationConfig", generationConfig);
+        
+        // Safety settings - use proper Gemini format
+        JsonArray safetyArray = new JsonArray();
+        addSafetySetting(safetyArray, "HARM_CATEGORY_HARASSMENT", "BLOCK_MEDIUM_AND_ABOVE");
+        addSafetySetting(safetyArray, "HARM_CATEGORY_HATE_SPEECH", "BLOCK_MEDIUM_AND_ABOVE");
+        addSafetySetting(safetyArray, "HARM_CATEGORY_SEXUALLY_EXPLICIT", "BLOCK_MEDIUM_AND_ABOVE");
+        addSafetySetting(safetyArray, "HARM_CATEGORY_DANGEROUS_CONTENT", "BLOCK_MEDIUM_AND_ABOVE");
+        request.add("safetySettings", safetyArray);
         
         return request;
     }
@@ -121,19 +174,23 @@ public class GeminiAPIClient {
         URL url = new URL(urlString);
         HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
         
-        // Debug logging
-        LOGGER.debug("Making API request to: {}", urlString.replace(apiKey, "***"));
+        // Debug logging - be more careful with API key masking
+        String maskedUrl = urlString.replaceAll("key=[^&]*", "key=***");
+        LOGGER.debug("Making API request to: {}", maskedUrl);
         LOGGER.debug("Request body: {}", requestBody.toString());
         
         connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+        connection.setRequestProperty("Accept", "application/json");
+        connection.setRequestProperty("User-Agent", "EidolonUnchained/1.0");
         connection.setDoOutput(true);
         connection.setConnectTimeout(timeoutSeconds * 1000);
         connection.setReadTimeout(timeoutSeconds * 1000);
         
         // Send request
+        String requestBodyStr = requestBody.toString();
         try (OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8)) {
-            writer.write(requestBody.toString());
+            writer.write(requestBodyStr);
             writer.flush();
         }
         
@@ -151,15 +208,33 @@ public class GeminiAPIClient {
             }
         }
         
+        String responseBody = response.toString();
+        
         if (responseCode >= 400) {
-            LOGGER.error("API request failed. Response code: {}, Response body: {}", responseCode, response.toString());
+            LOGGER.error("API request failed. Response code: {}", responseCode);
+            LOGGER.error("Request URL: {}", maskedUrl);
+            LOGGER.error("Request body: {}", requestBodyStr);
+            LOGGER.error("Response body: {}", responseBody);
+            
             if (responseCode == 400) {
-                LOGGER.error("Bad Request - likely invalid API key or malformed request");
+                LOGGER.error("Bad Request - Check API key validity and request format");
+                // Try to extract actual error message from JSON response
+                try {
+                    JsonObject errorResponse = JsonParser.parseString(responseBody).getAsJsonObject();
+                    if (errorResponse.has("error")) {
+                        JsonObject error = errorResponse.getAsJsonObject("error");
+                        String message = error.has("message") ? error.get("message").getAsString() : "Unknown error";
+                        LOGGER.error("API Error: {}", message);
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("Could not parse error response as JSON, got HTML error page instead");
+                }
             }
-            throw new IOException("API request failed with code " + responseCode + ": " + response.toString());
+            throw new IOException("API request failed with code " + responseCode + ": " + responseBody);
         }
         
-        return response.toString();
+        LOGGER.debug("API response received successfully, length: {}", responseBody.length());
+        return responseBody;
     }
     
     private AIResponse parseResponse(String jsonResponse) {
