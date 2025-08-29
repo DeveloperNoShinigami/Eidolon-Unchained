@@ -49,6 +49,8 @@ public class EidolonUnchainedConfig {
         public final ForgeConfigSpec.IntValue fadeOutTicks;
         public final ForgeConfigSpec.BooleanValue useChatForLongMessages;
         public final ForgeConfigSpec.IntValue maxSubtitleLength;
+        public final ForgeConfigSpec.DoubleValue titleScale;
+        public final ForgeConfigSpec.DoubleValue subtitleScale;
         
         // ===========================================
         // CHANT SYSTEM CONFIGURATION
@@ -204,6 +206,16 @@ public class EidolonUnchainedConfig {
                 .comment("Maximum characters in subtitle before switching to action bar or chat",
                         "Shorter messages look better in title/subtitle format")
                 .defineInRange("max_subtitle_length", 60, 30, 120);
+            
+            titleScale = builder
+                .comment("Scale factor for deity name title text",
+                        "Higher values make the deity name bigger (1.0 = normal size)")
+                .defineInRange("title_scale", 1.2, 0.5, 3.0);
+            
+            subtitleScale = builder
+                .comment("Scale factor for deity response subtitle text",
+                        "Higher values make the response text bigger (1.0 = normal size)")
+                .defineInRange("subtitle_scale", 1.1, 0.5, 3.0);
             
             builder.pop();
             

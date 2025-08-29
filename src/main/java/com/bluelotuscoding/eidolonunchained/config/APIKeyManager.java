@@ -25,14 +25,29 @@ public class APIKeyManager {
      * Get API key for a specific provider
      */
     public static String getAPIKey(String provider) {
+        System.out.println("APIKeyManager.getAPIKey() called with provider: " + provider);
+        
         // Try environment variable first
         String envKey = System.getenv(provider.toUpperCase() + "_API_KEY");
         if (envKey != null && !envKey.isEmpty()) {
+            System.out.println("Found API key in environment variable: " + provider.toUpperCase() + "_API_KEY");
             return envKey;
         }
         
         // Try config file
-        return apiKeys.getProperty(provider.toLowerCase() + ".api_key");
+        String configKey = provider.toLowerCase() + ".api_key";
+        String fileKey = apiKeys.getProperty(configKey);
+        System.out.println("Looking for config key: " + configKey);
+        System.out.println("Found in config file: " + (fileKey != null ? "YES (length: " + fileKey.length() + ")" : "NO"));
+        System.out.println("Total properties in file: " + apiKeys.size());
+        
+        // Debug: print all keys
+        System.out.println("All keys in properties file:");
+        for (String key : apiKeys.stringPropertyNames()) {
+            System.out.println("  - " + key + " = " + (apiKeys.getProperty(key) != null ? "[SET]" : "[NULL]"));
+        }
+        
+        return fileKey;
     }
     
     /**
@@ -40,10 +55,21 @@ public class APIKeyManager {
      */
     public static boolean setAPIKey(String provider, String key) {
         try {
-            apiKeys.setProperty(provider.toLowerCase() + ".api_key", key);
+            String configKey = provider.toLowerCase() + ".api_key";
+            System.out.println("APIKeyManager.setAPIKey() called:");
+            System.out.println("  Provider: " + provider);
+            System.out.println("  Config key: " + configKey);
+            System.out.println("  Key length: " + (key != null ? key.length() : 0));
+            
+            apiKeys.setProperty(configKey, key);
+            System.out.println("  Property set in memory");
+            
             saveAPIKeys();
+            System.out.println("  Properties saved to file");
             return true;
         } catch (Exception e) {
+            System.err.println("Failed to set API key: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
@@ -204,13 +230,19 @@ public class APIKeyManager {
             // Create config directory if it doesn't exist
             Path configDir = Paths.get(CONFIG_DIR);
             Files.createDirectories(configDir);
+            System.out.println("Created config directory: " + configDir.toAbsolutePath());
             
             // Save properties file
-            try (OutputStream output = Files.newOutputStream(Paths.get(API_CONFIG_FILE))) {
+            Path configFile = Paths.get(API_CONFIG_FILE);
+            try (OutputStream output = Files.newOutputStream(configFile)) {
                 apiKeys.store(output, "Eidolon Unchained API Keys - Keep this file secure!");
+                System.out.println("API keys saved to: " + configFile.toAbsolutePath());
+                System.out.println("File exists after save: " + Files.exists(configFile));
+                System.out.println("File size: " + Files.size(configFile) + " bytes");
             }
         } catch (IOException e) {
             System.err.println("Could not save API keys: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     

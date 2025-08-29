@@ -327,9 +327,9 @@ public class DeityChat {
             return;
         }
         
-        // Create title and subtitle components
-        Component titleComponent = Component.literal("§6" + deityName);
-        Component subtitleComponent = Component.literal("§r" + message);
+        // Create title and subtitle components with enhanced formatting
+        Component titleComponent = Component.literal("§6§l" + deityName); // Bold deity name
+        Component subtitleComponent;
         
         // Handle long messages
         if (message.length() > maxSubtitleLength) {
@@ -356,16 +356,19 @@ public class DeityChat {
                     }
                 }
                 
-                // Use action bar for longer messages
-                Component actionBarMessage = Component.literal("§r" + line1.toString());
+                // Use action bar for longer messages with better formatting
+                Component actionBarMessage = Component.literal("§f" + line1.toString());
                 if (line2.length() > 0) {
-                    actionBarMessage = Component.literal("§r" + line1.toString() + " " + line2.toString());
+                    actionBarMessage = Component.literal("§f" + line1.toString() + " §7" + line2.toString());
                 }
                 player.sendSystemMessage(actionBarMessage, true); // true = action bar
                 
-                // Still show deity name as title
-                subtitleComponent = Component.literal("§7speaks to you");
+                // Still show deity name as title with indication
+                subtitleComponent = Component.literal("§7⟨ speaks to you ⟩");
             }
+        } else {
+            // Short message - use white text for better readability
+            subtitleComponent = Component.literal("§f" + message);
         }
         
         // Set title animation timing (fade in, stay, fade out) in ticks

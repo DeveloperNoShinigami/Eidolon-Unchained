@@ -41,10 +41,7 @@ public class PrayerSystem {
     private static final Map<UUID, Map<String, Long>> playerCooldowns = new ConcurrentHashMap<>();
     
     /**
-     * Handle effigy right-click interactions for AI deities - Start chat conversation
-     * @param player The player interacting with the effigy
-     * @param deityId The deity ID associated with the effigy
-     * @return true if AI handled the interaction, false to let Eidolon handle it
+     * Handle effigy interactions - now uses the unified prayer system
      */
     public static boolean handleEffigyInteraction(ServerPlayer player, ResourceLocation deityId) {
         // Get the deity
@@ -52,20 +49,18 @@ public class PrayerSystem {
         if (deity == null) {
             return false; // Let Eidolon handle unknown deities
         }
-        
+
         // Check if AI is enabled for this deity
         AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deityId);
         if (aiConfig == null) {
             return false; // Let Eidolon handle non-AI deities
         }
-        
-        // Start conversation with the deity through the chat system
-        com.bluelotuscoding.eidolonunchained.chat.DeityChat.startConversation(player, deityId);
+
+        // Use the unified prayer system with "conversation" type
+        handlePrayer(player, deityId, "conversation");
         
         return true; // We handled the interaction
-    }
-    
-    /**
+    }    /**
      * Generate a contextual prayer based on player's current situation
      */
     private static String generateContextualPrayer(ServerPlayer player) {
@@ -110,6 +105,9 @@ public class PrayerSystem {
      * Handle prayer requests from players
      */
     public static void handlePrayer(ServerPlayer player, ResourceLocation deityId, String prayerType, String... args) {
+        LOGGER.info("Prayer request received: player={}, deity={}, type={}", 
+            player.getName().getString(), deityId, prayerType);
+        
         // Get the deity
         DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
         if (deity == null) {
@@ -164,9 +162,13 @@ public class PrayerSystem {
         
         // Get API key from APIKeyManager instead of environment variable
         String apiKey = APIKeyManager.getAPIKey("gemini");
+        LOGGER.info("API Key check - hasKey: {}, keyLength: {}", 
+            (apiKey != null && !apiKey.isEmpty()), 
+            (apiKey != null ? apiKey.length() : 0));
+        
         if (apiKey == null || apiKey.isEmpty()) {
             sendDeityMessage(player, deity.getDisplayName(), "The deity remains silent... (API key not configured)", false);
-            LOGGER.warn("No Gemini API key configured for deity interaction");
+            LOGGER.error("No Gemini API key configured for deity interaction. Expected format: gemini.api_key=YOUR_KEY in config/eidolonunchained/server-api-keys.properties");
             return;
         }
         
@@ -386,49 +388,48 @@ public class PrayerSystem {
             player.sendSystemMessage(Component.literal(chatColor + "[" + deityName + "] " + message));
             return;
         }
+
+        // Handle temporary/status messages (like "Communing...")
+        if (message == null || deityName.contains("Communing") || deityName.contains("Divine Connection")) {
+            Component actionBarMessage = Component.literal("§e⟨ " + deityName + " ⟩");
+            player.sendSystemMessage(actionBarMessage, true); // true = action bar
+            return;
+        }
         
-        // Use prominent title/subtitle display
-        Component titleComponent;
+        // Use prominent title/subtitle display with enhanced formatting
+        Component titleComponent = Component.literal((isError ? "§c§l" : "§6§l") + deityName); // Bold for emphasis
         Component subtitleComponent;
         
-        if (message == null) {
-            // Single line message (for communing status)
-            titleComponent = Component.literal(isError ? "§c" + deityName : "§6" + deityName);
-            subtitleComponent = Component.empty();
-        } else {
-            // Two line message (deity name + response)
-            titleComponent = Component.literal(isError ? "§c" + deityName : "§6" + deityName);
+        // Split long messages for better display
+        if (message.length() > maxSubtitleLength) {
+            String[] words = message.split(" ");
+            StringBuilder line1 = new StringBuilder();
+            StringBuilder line2 = new StringBuilder();
+            boolean firstLine = true;
             
-            // Split long messages for better display
-            if (message.length() > maxSubtitleLength) {
-                String[] words = message.split(" ");
-                StringBuilder line1 = new StringBuilder();
-                StringBuilder line2 = new StringBuilder();
-                boolean firstLine = true;
-                
-                for (String word : words) {
-                    if (firstLine && (line1.length() + word.length() + 1) <= maxSubtitleLength) {
-                        if (line1.length() > 0) line1.append(" ");
-                        line1.append(word);
-                    } else {
-                        firstLine = false;
-                        if (line2.length() > 0) line2.append(" ");
-                        line2.append(word);
-                    }
+            for (String word : words) {
+                if (firstLine && (line1.length() + word.length() + 1) <= maxSubtitleLength) {
+                    if (line1.length() > 0) line1.append(" ");
+                    line1.append(word);
+                } else {
+                    firstLine = false;
+                    if (line2.length() > 0) line2.append(" ");
+                    line2.append(word);
                 }
-                
-                // Use action bar for longer messages
-                Component actionBarMessage = Component.literal("§r" + line1.toString());
-                if (line2.length() > 0) {
-                    actionBarMessage = Component.literal("§r" + line1.toString() + " " + line2.toString());
-                }
-                player.sendSystemMessage(actionBarMessage, true); // true = action bar
-                
-                // Still show deity name as title
-                subtitleComponent = Component.literal("§7speaks to you");
-            } else {
-                subtitleComponent = Component.literal("§r" + message);
             }
+            
+            // Use action bar for longer messages with better formatting
+            Component actionBarMessage = Component.literal("§f" + line1.toString());
+            if (line2.length() > 0) {
+                actionBarMessage = Component.literal("§f" + line1.toString() + " §7" + line2.toString());
+            }
+            player.sendSystemMessage(actionBarMessage, true); // true = action bar
+            
+            // Show deity is speaking
+            subtitleComponent = Component.literal("§7⟨ speaks to you ⟩");
+        } else {
+            // Short message - use white text for better readability
+            subtitleComponent = Component.literal("§f" + message);
         }
         
         // Get configurable timing values
