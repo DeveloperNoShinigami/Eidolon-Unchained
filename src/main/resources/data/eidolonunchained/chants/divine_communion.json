@@ -34,11 +34,6 @@
     {
       "type": "send_message",
       "message": "§eA holy light surrounds you as divine presence draws near..."
-    },
-    {
-      "type": "communication",
-      "deity": "eidolonunchained:light_deity",
-      "prayer_type": "conversation"
     }
   ]
 }

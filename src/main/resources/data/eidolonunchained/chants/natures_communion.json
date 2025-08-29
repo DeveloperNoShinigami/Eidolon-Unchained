@@ -44,11 +44,6 @@
     {
       "type": "send_message",
       "message": "§aThe earth beneath your feet pulses with life as nature's embrace surrounds you..."
-    },
-    {
-      "type": "communication",
-      "deity": "eidolonunchained:nature_deity",
-      "prayer_type": "conversation"
     }
   ]
 }

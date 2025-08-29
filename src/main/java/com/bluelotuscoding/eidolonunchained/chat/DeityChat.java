@@ -259,8 +259,12 @@ public class DeityChat {
         
         prompt.append("\nCurrent message: ").append(currentMessage);
         prompt.append("\n\nRespond as the deity, keeping your response conversational and under 80 words. ");
+        prompt.append("If the player asks for help, items, powers, blessings, or requests anything, ");
+        prompt.append("judge their worthiness based on reputation and either grant or deny their request. ");
+        prompt.append("When you grant requests, mention that you are bestowing gifts or power. ");
+        prompt.append("When you deny requests, explain why they are unworthy. ");
         prompt.append("Acknowledge the player's current situation and recent activities if relevant. ");
-        prompt.append("Do not include commands or actions in brackets.");
+        prompt.append("Do not include commands or actions in brackets - the system will handle rewards automatically.");
         
         return prompt.toString();
     }

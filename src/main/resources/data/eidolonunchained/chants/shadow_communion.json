@@ -38,11 +38,6 @@
     {
       "type": "send_message",
       "message": "§5The shadows whisper your name as dark power flows through you..."
-    },
-    {
-      "type": "communication",
-      "deity": "eidolonunchained:dark_deity",
-      "prayer_type": "conversation"
     }
   ]
 }
