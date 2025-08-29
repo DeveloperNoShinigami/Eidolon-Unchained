@@ -421,10 +421,7 @@ public class PrayerSystem {
         player.connection.send(new ClientboundSetTitleTextPacket(titleComponent));
         player.connection.send(new ClientboundSetSubtitleTextPacket(subtitleComponent));
         
-        // Also send to chat for reference (less prominent)
-        if (message != null) {
-            String chatColor = isError ? "§c" : "§7";
-            player.sendSystemMessage(Component.literal(chatColor + "[" + deityName + "] " + message));
-        }
+        // No longer sending to chat to avoid duplication - title/subtitle display is sufficient
+        // Messages appear prominently above action bar instead of cluttering chat
     }
 }
