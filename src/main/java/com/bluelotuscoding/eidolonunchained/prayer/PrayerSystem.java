@@ -8,6 +8,7 @@ import com.bluelotuscoding.eidolonunchained.ai.PrayerAIConfig;
 import com.bluelotuscoding.eidolonunchained.ai.PlayerContext;
 import com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiAPIClient;
 import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
+import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -362,10 +363,31 @@ public class PrayerSystem {
     }
     
     /**
-     * Send deity message with prominent display above action bar
+     * Send deity message with configurable display mode
      */
     private static void sendDeityMessage(ServerPlayer player, String deityName, String message, boolean isError) {
-        // Create title and subtitle components
+        // Check configuration for display mode
+        boolean useProminentDisplay = EidolonUnchainedConfig.COMMON.useProminentDisplay.get();
+        boolean useChatForLong = EidolonUnchainedConfig.COMMON.useChatForLongMessages.get();
+        int maxSubtitleLength = EidolonUnchainedConfig.COMMON.maxSubtitleLength.get();
+        
+        // If prominent display is disabled, just use chat
+        if (!useProminentDisplay) {
+            if (message != null) {
+                String chatColor = isError ? "§c" : "§6";
+                player.sendSystemMessage(Component.literal(chatColor + "[" + deityName + "] " + message));
+            }
+            return;
+        }
+        
+        // For long messages, optionally fall back to chat
+        if (message != null && message.length() > maxSubtitleLength && useChatForLong) {
+            String chatColor = isError ? "§c" : "§6";
+            player.sendSystemMessage(Component.literal(chatColor + "[" + deityName + "] " + message));
+            return;
+        }
+        
+        // Use prominent title/subtitle display
         Component titleComponent;
         Component subtitleComponent;
         
@@ -378,14 +400,14 @@ public class PrayerSystem {
             titleComponent = Component.literal(isError ? "§c" + deityName : "§6" + deityName);
             
             // Split long messages for better display
-            if (message.length() > 60) {
+            if (message.length() > maxSubtitleLength) {
                 String[] words = message.split(" ");
                 StringBuilder line1 = new StringBuilder();
                 StringBuilder line2 = new StringBuilder();
                 boolean firstLine = true;
                 
                 for (String word : words) {
-                    if (firstLine && (line1.length() + word.length() + 1) <= 60) {
+                    if (firstLine && (line1.length() + word.length() + 1) <= maxSubtitleLength) {
                         if (line1.length() > 0) line1.append(" ");
                         line1.append(word);
                     } else {
@@ -409,19 +431,21 @@ public class PrayerSystem {
             }
         }
         
+        // Get configurable timing values
+        int fadeInTicks = EidolonUnchainedConfig.COMMON.fadeInTicks.get();
+        int displayTicks = EidolonUnchainedConfig.COMMON.displayDurationTicks.get();
+        int fadeOutTicks = EidolonUnchainedConfig.COMMON.fadeOutTicks.get();
+        
         // Set title animation timing (fade in, stay, fade out) in ticks
         ClientboundSetTitlesAnimationPacket animationPacket = new ClientboundSetTitlesAnimationPacket(
-            10, // fade in (0.5 seconds)
-            60, // stay (3 seconds)
-            20  // fade out (1 second)
+            fadeInTicks,   // configurable fade in
+            displayTicks,  // configurable display duration
+            fadeOutTicks   // configurable fade out
         );
         
         // Send packets to display the title/subtitle
         player.connection.send(animationPacket);
         player.connection.send(new ClientboundSetTitleTextPacket(titleComponent));
         player.connection.send(new ClientboundSetSubtitleTextPacket(subtitleComponent));
-        
-        // No longer sending to chat to avoid duplication - title/subtitle display is sufficient
-        // Messages appear prominently above action bar instead of cluttering chat
     }
 }

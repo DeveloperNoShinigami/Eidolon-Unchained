@@ -40,6 +40,17 @@ public class EidolonUnchainedConfig {
         public final ForgeConfigSpec.BooleanValue logAIInteractions;
         
         // ===========================================
+        // DISPLAY CONFIGURATION
+        // ===========================================
+        
+        public final ForgeConfigSpec.BooleanValue useProminentDisplay;
+        public final ForgeConfigSpec.IntValue displayDurationTicks;
+        public final ForgeConfigSpec.IntValue fadeInTicks;
+        public final ForgeConfigSpec.IntValue fadeOutTicks;
+        public final ForgeConfigSpec.BooleanValue useChatForLongMessages;
+        public final ForgeConfigSpec.IntValue maxSubtitleLength;
+        
+        // ===========================================
         // CHANT SYSTEM CONFIGURATION
         // ===========================================
         
@@ -152,6 +163,47 @@ public class EidolonUnchainedConfig {
             logAIInteractions = builder
                 .comment("Log AI interactions for debugging (API keys are never logged)")
                 .define("log_ai_interactions", false);
+            
+            builder.pop();
+            
+            // ===========================================
+            // DISPLAY CONFIGURATION
+            // ===========================================
+            builder.comment(
+                "═══════════════════════════════════════════════════════════════════════",
+                " DISPLAY CONFIGURATION",
+                " Configure how AI deity responses are displayed to players",
+                "═══════════════════════════════════════════════════════════════════════"
+            ).push("display");
+            
+            useProminentDisplay = builder
+                .comment("Use prominent title/subtitle display for AI responses instead of chat messages",
+                        "When true: AI responses appear as titles above the action bar",
+                        "When false: AI responses appear as chat messages")
+                .define("use_prominent_display", true);
+            
+            displayDurationTicks = builder
+                .comment("How long the title/subtitle display stays on screen (in ticks)",
+                        "20 ticks = 1 second, recommended range: 40-120 (2-6 seconds)")
+                .defineInRange("display_duration_ticks", 60, 20, 200);
+            
+            fadeInTicks = builder
+                .comment("Fade in animation duration (in ticks)")
+                .defineInRange("fade_in_ticks", 10, 5, 40);
+            
+            fadeOutTicks = builder
+                .comment("Fade out animation duration (in ticks)")
+                .defineInRange("fade_out_ticks", 20, 5, 40);
+            
+            useChatForLongMessages = builder
+                .comment("Use chat messages for long AI responses even when prominent display is enabled",
+                        "Helps with readability of very long deity responses")
+                .define("use_chat_for_long_messages", false);
+            
+            maxSubtitleLength = builder
+                .comment("Maximum characters in subtitle before switching to action bar or chat",
+                        "Shorter messages look better in title/subtitle format")
+                .defineInRange("max_subtitle_length", 60, 30, 120);
             
             builder.pop();
             

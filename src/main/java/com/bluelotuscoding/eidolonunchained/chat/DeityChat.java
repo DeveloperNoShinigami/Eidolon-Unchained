@@ -8,6 +8,7 @@ import com.bluelotuscoding.eidolonunchained.ai.PrayerAIConfig;
 import com.bluelotuscoding.eidolonunchained.ai.PlayerContext;
 import com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiAPIClient;
 import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
+import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
@@ -314,44 +315,68 @@ public class DeityChat {
      * Send deity response with prominent display above action bar (matches PrayerSystem)
      */
     private static void sendDeityResponse(ServerPlayer player, String deityName, String message) {
+        // Check configuration for display preferences
+        boolean useProminentDisplay = EidolonUnchainedConfig.COMMON.useProminentDisplay.get();
+        boolean useChatForLongMessages = EidolonUnchainedConfig.COMMON.useChatForLongMessages.get();
+        int maxSubtitleLength = EidolonUnchainedConfig.COMMON.maxSubtitleLength.get();
+        
+        if (!useProminentDisplay) {
+            // Use regular chat message
+            Component chatMessage = Component.literal("§6[" + deityName + "]§r " + message);
+            player.sendSystemMessage(chatMessage);
+            return;
+        }
+        
         // Create title and subtitle components
         Component titleComponent = Component.literal("§6" + deityName);
         Component subtitleComponent = Component.literal("§r" + message);
         
-        // Handle long messages by using action bar
-        if (message.length() > 60) {
-            String[] words = message.split(" ");
-            StringBuilder line1 = new StringBuilder();
-            StringBuilder line2 = new StringBuilder();
-            boolean firstLine = true;
-            
-            for (String word : words) {
-                if (firstLine && (line1.length() + word.length() + 1) <= 60) {
-                    if (line1.length() > 0) line1.append(" ");
-                    line1.append(word);
-                } else {
-                    firstLine = false;
-                    if (line2.length() > 0) line2.append(" ");
-                    line2.append(word);
+        // Handle long messages
+        if (message.length() > maxSubtitleLength) {
+            if (useChatForLongMessages) {
+                // Use regular chat for long messages
+                Component chatMessage = Component.literal("§6[" + deityName + "]§r " + message);
+                player.sendSystemMessage(chatMessage);
+                return;
+            } else {
+                // Split message for display
+                String[] words = message.split(" ");
+                StringBuilder line1 = new StringBuilder();
+                StringBuilder line2 = new StringBuilder();
+                boolean firstLine = true;
+                
+                for (String word : words) {
+                    if (firstLine && (line1.length() + word.length() + 1) <= maxSubtitleLength) {
+                        if (line1.length() > 0) line1.append(" ");
+                        line1.append(word);
+                    } else {
+                        firstLine = false;
+                        if (line2.length() > 0) line2.append(" ");
+                        line2.append(word);
+                    }
                 }
+                
+                // Use action bar for longer messages
+                Component actionBarMessage = Component.literal("§r" + line1.toString());
+                if (line2.length() > 0) {
+                    actionBarMessage = Component.literal("§r" + line1.toString() + " " + line2.toString());
+                }
+                player.sendSystemMessage(actionBarMessage, true); // true = action bar
+                
+                // Still show deity name as title
+                subtitleComponent = Component.literal("§7speaks to you");
             }
-            
-            // Use action bar for longer messages
-            Component actionBarMessage = Component.literal("§r" + line1.toString());
-            if (line2.length() > 0) {
-                actionBarMessage = Component.literal("§r" + line1.toString() + " " + line2.toString());
-            }
-            player.sendSystemMessage(actionBarMessage, true); // true = action bar
-            
-            // Still show deity name as title
-            subtitleComponent = Component.literal("§7speaks to you");
         }
         
         // Set title animation timing (fade in, stay, fade out) in ticks
+        int fadeInTicks = EidolonUnchainedConfig.COMMON.fadeInTicks.get();
+        int displayDurationTicks = EidolonUnchainedConfig.COMMON.displayDurationTicks.get();
+        int fadeOutTicks = EidolonUnchainedConfig.COMMON.fadeOutTicks.get();
+        
         ClientboundSetTitlesAnimationPacket animationPacket = new ClientboundSetTitlesAnimationPacket(
-            10, // fade in (0.5 seconds)
-            60, // stay (3 seconds)  
-            20  // fade out (1 second)
+            fadeInTicks,
+            displayDurationTicks,
+            fadeOutTicks
         );
         
         // Send packets to display the title/subtitle
