@@ -24,20 +24,18 @@ import java.util.Map;
 /**
  * Handles integration with Eidolon's research system to inject custom research entries.
  * Fully datapack-driven, no reflection or legacy API usage.
+ * 
+ * CRITICAL: Integration is now called from ResearchDataManager after resource loading
+ * completes to ensure proper timing - research entries must be loaded before injection.
  */
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class EidolonResearchIntegration {
     private static final Logger LOGGER = LogUtils.getLogger();
-    
-    @SubscribeEvent
-    public static void onClientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(EidolonResearchIntegration::injectCustomResearch);
-    }
 
     /**
-     * Injects our custom research entries into Eidolon's research system
+     * Injects our custom research entries into Eidolon's research system.
+     * Now called from ResearchDataManager after resource loading completes.
      */
-    private static void injectCustomResearch() {
+    public static void injectCustomResearch() {
         try {
             Map<ResourceLocation, ResearchChapter> customChapters = ResearchDataManager.getLoadedResearchChapters();
             LOGGER.info("Attempting to register {} custom research chapters", customChapters.size());

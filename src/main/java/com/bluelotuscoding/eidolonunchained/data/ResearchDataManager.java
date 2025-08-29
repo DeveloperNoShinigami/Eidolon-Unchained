@@ -44,6 +44,7 @@ import com.bluelotuscoding.eidolonunchained.research.conditions.InventoryConditi
 import com.bluelotuscoding.eidolonunchained.research.conditions.ResearchCondition;
 import com.bluelotuscoding.eidolonunchained.research.conditions.TimeCondition;
 import com.bluelotuscoding.eidolonunchained.research.conditions.WeatherCondition;
+import com.bluelotuscoding.eidolonunchained.integration.EidolonResearchIntegration;
 
 /**
  * Manages loading and registration of custom research entries and chapters from datapacks.
@@ -178,6 +179,15 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
             ENTRIES_WITH_MISSING_CHAPTER.forEach((entryId, chapterId) ->
                 LOGGER.warn("Research entry {} references missing chapter {}", entryId, chapterId)
             );
+        }
+
+        // CRITICAL TIMING FIX: Call Eidolon integration AFTER resource loading completes
+        // This ensures research entries are loaded before attempting to inject them
+        LOGGER.info("Resource loading complete - triggering Eidolon research integration");
+        try {
+            EidolonResearchIntegration.injectCustomResearch();
+        } catch (Exception e) {
+            LOGGER.error("Failed to trigger Eidolon research integration", e);
         }
     }
 

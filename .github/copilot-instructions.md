@@ -6,6 +6,29 @@
 
 ## Architecture Overview
 
+### CRITICAL: System Loading Order Requirements
+**MANDATORY LOADING SEQUENCE - NEVER MODIFY TIMING WITHOUT CAREFUL ANALYSIS:**
+
+1. **Datapack Resource Loading Phase** (Resource Reload Listeners - `SimpleJsonResourceReloadListener`)
+   - `CodexDataManager` - Loads codex entries and chapters from JSON
+   - `ResearchDataManager` - Loads research definitions and converts to Eidolon format
+   - `AIDeityManager` - Loads deity configurations and AI personalities
+   - `DatapackChantManager` - Loads chant definitions from JSON
+
+2. **Integration Phase** (Called from Resource Managers AFTER loading completes)
+   - `EidolonResearchIntegration.injectCustomResearch()` - Called from `ResearchDataManager.apply()`
+   - `EidolonCodexIntegration` - Injects codex entries into Eidolon chapters
+   - Chant registration with Eidolon spell system
+
+3. **Mod Loading Events** (FMLLoadCompleteEvent, FMLClientSetupEvent) 
+   - **WARNING**: These events fire BEFORE resource loading - never use for integration!
+   - Only use for mod component initialization, not datapack-dependent operations
+
+**Why This Order Matters:**
+- Resource reload listeners run ~9 seconds after mod loading events
+- Integration must happen AFTER data is loaded, not during mod initialization
+- Race conditions cause "0 entries loaded" errors when integration runs too early
+
 ### Core System Boundaries
 - **Data Management Layer**: `CodexDataManager`, `ResearchDataManager`, `EidolonResearchDataManager` - Handle JSON datapack loading and validation
 - **AI Integration Layer**: `AIDeityManager`, `GeminiAPIClient` - Async AI API communication with comprehensive error handling
@@ -75,6 +98,14 @@ client.generateResponse(prompt, personality, config, safety)
 ## Critical Errors & Issues Analysis
 
 ### Current Error Categories (from latest.log)
+
+#### 0. TIMING ISSUES - HIGHEST PRIORITY PATTERN
+**CRITICAL**: Always check loading order when systems show "0 entries loaded" despite files existing:
+- **Resource Reload Listeners** (DatapackChantManager, ResearchDataManager, etc.) run 9+ seconds AFTER mod loading events
+- **Integration calls** (EidolonResearchIntegration, EidolonCodexIntegration) MUST happen AFTER resource loading
+- **Fix Pattern**: Call integration from resource manager's `apply()` method, not from FML events
+- **Example Fixed**: ResearchDataManager now calls EidolonResearchIntegration.injectCustomResearch() after loading
+- **Warning Signs**: "Injecting 0 entries" followed later by "Loaded X entries" in logs
 
 #### 1. Chant Loading Errors (HIGH PRIORITY)
 ```
