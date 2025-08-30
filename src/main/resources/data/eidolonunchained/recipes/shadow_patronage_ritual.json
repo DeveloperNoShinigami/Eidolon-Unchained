@@ -1,0 +1,36 @@
+{
+  "type": "eidolon:ritual_brazier_command",
+  "symbol": "eidolon:particle/death_sign",
+  "color": 6291583,
+  "reagent": [
+    {
+      "item": "eidolon:soul_shard"
+    }
+  ],
+  "pedestalItems": [
+    {
+      "item": "eidolon:soul_shard"
+    },
+    {
+      "item": "eidolon:death_essence"
+    },
+    {
+      "item": "eidolon:arcane_gold_ingot"
+    },
+    {
+      "item": "minecraft:wither_skeleton_skull"
+    }
+  ],
+  "focusItems": [],
+  "invariantItems": [
+    {
+      "item": "eidolon:codex"
+    }
+  ],
+  "commands": [
+    "execute as @p[distance=..10] run eidolon-unchained patron choose eidolonunchained:dark_deity",
+    "tellraw @p {\"text\":\"§5The shadows of Nyxathel embrace your soul! You are now bound to darkness!\",\"color\":\"dark_purple\"}",
+    "playsound minecraft:ambient.soul_sand_valley.mood player @p ~ ~ ~ 1.0 0.8",
+    "particle minecraft:soul ~ ~1 ~ 1 1 1 0.1 30 force"
+  ]
+}

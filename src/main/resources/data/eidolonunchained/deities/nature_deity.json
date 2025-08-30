@@ -11,39 +11,59 @@
     "max_reputation": 100,
     "stages": [
       {
-        "id": "eidolonunchained:nature_novice",
-        "reputation": 10,
+        "id": "nature_initiate",
+        "reputation": 0,
         "major": false,
+        "title": "Nature Initiate",
+        "description": "A soul newly awakened to nature's call",
         "rewards": [
-          { "type": "sign", "data": "eidolon:nature_sign" },
-          { "type": "item", "data": "minecraft:oak_sapling", "count": 4 }
+          { "type": "item", "data": "minecraft:oak_sapling", "count": 4 },
+          { "type": "item", "data": "minecraft:bone_meal", "count": 2 }
         ]
       },
       {
-        "id": "eidolonunchained:nature_adept",
+        "id": "nature_acolyte",
         "reputation": 25,
         "major": false,
+        "title": "Nature Acolyte",
+        "description": "Student of the natural mysteries",
         "rewards": [
           { "type": "item", "data": "minecraft:bone_meal", "count": 8 },
           { "type": "effect", "data": "minecraft:regeneration", "duration": 600, "amplifier": 1 }
         ]
       },
       {
-        "id": "eidolonunchained:nature_guardian",
+        "id": "nature_priest",
         "reputation": 50,
         "major": true,
+        "title": "Nature Priest",
+        "description": "Guardian of the forest's sacred wisdom",
         "rewards": [
-          { "type": "sign", "data": "eidolon:warding_sign" },
-          { "type": "item", "data": "minecraft:golden_apple", "count": 2 }
+          { "type": "item", "data": "minecraft:golden_apple", "count": 2 },
+          { "type": "item", "data": "eidolon:fungal_sprouts", "count": 3 }
         ]
       },
       {
-        "id": "eidolonunchained:nature_master",
+        "id": "nature_high_priest",
         "reputation": 75,
         "major": true,
+        "title": "High Priest of Growth",
+        "description": "Keeper of life's eternal cycle",
         "rewards": [
-          { "type": "sign", "data": "eidolon:soul_enchantment" },
-          { "type": "item", "data": "minecraft:enchanted_golden_apple", "count": 1 }
+          { "type": "item", "data": "minecraft:enchanted_golden_apple", "count": 1 },
+          { "type": "item", "data": "eidolon:arcane_gold_ingot", "count": 2 }
+        ]
+      },
+      {
+        "id": "nature_champion",
+        "reputation": 100,
+        "major": true,
+        "title": "Champion of Verdania",
+        "description": "Ultimate protector of all growing things",
+        "rewards": [
+          { "type": "item", "data": "eidolon:enchanted_ash", "count": 3 },
+          { "type": "item", "data": "minecraft:enchanted_golden_apple", "count": 2 },
+          { "type": "item", "data": "eidolon:lesser_soul_gem", "count": 1 }
         ]
       }
     ]

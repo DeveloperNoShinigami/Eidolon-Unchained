@@ -11,29 +11,60 @@
     "max_reputation": 100,
     "stages": [
       {
-        "id": "eidolonunchained:shadow_initiate",
+        "id": "shadow_initiate",
         "reputation": 0,
         "major": false,
+        "title": "Shadow Initiate",
+        "description": "A new soul embraced by the shadows",
         "rewards": [
           { "type": "item", "data": "eidolon:soul_shard", "count": 3 }
         ]
       },
       {
-        "id": "eidolonunchained:dark_scholar",
+        "id": "dark_acolyte",
         "reputation": 25,
         "major": false,
+        "title": "Dark Acolyte",
+        "description": "Proven servant of the shadow realm",
         "rewards": [
           { "type": "item", "data": "eidolon:death_essence", "count": 2 },
           { "type": "item", "data": "eidolon:unholy_symbol", "count": 1 }
         ]
       },
       {
-        "id": "eidolonunchained:shadow_master",
+        "id": "shadow_priest",
         "reputation": 50,
         "major": true,
+        "title": "Shadow Priest",
+        "description": "Bearer of forbidden knowledge and dark mysteries",
         "rewards": [
           { "type": "item", "data": "eidolon:warped_sprouts", "count": 5 },
-          { "type": "item", "data": "eidolon:zombie_heart", "count": 1 }
+          { "type": "item", "data": "eidolon:zombie_heart", "count": 1 },
+          { "type": "item", "data": "eidolon:lesser_soul_gem", "count": 1 }
+        ]
+      },
+      {
+        "id": "void_master",
+        "reputation": 75,
+        "major": true,
+        "title": "Void Master",
+        "description": "Master of the void between life and death",
+        "rewards": [
+          { "type": "item", "data": "eidolon:greater_soul_gem", "count": 1 },
+          { "type": "item", "data": "eidolon:tattered_cloth", "count": 3 },
+          { "type": "item", "data": "eidolon:arcane_gold_ingot", "count": 2 }
+        ]
+      },
+      {
+        "id": "shadow_champion",
+        "reputation": 100,
+        "major": true,
+        "title": "Shadow Champion",
+        "description": "Ultimate champion of Nyxathel's dark dominion",
+        "rewards": [
+          { "type": "item", "data": "eidolon:shadow_gem", "count": 1 },
+          { "type": "item", "data": "eidolon:death_essence", "count": 5 },
+          { "type": "item", "data": "eidolon:arcane_gold_ingot", "count": 3 }
         ]
       }
     ]

@@ -148,6 +148,23 @@ public class UnifiedCommands {
                 .then(Commands.literal("list")
                     .executes(UnifiedCommands::listResearchEntries)))
             
+            // 🎯 DEBUG SYSTEM - Reputation & Progression Testing
+            .then(Commands.literal("debug")
+                .requires(cs -> cs.hasPermission(2))
+                .then(Commands.literal("progression")
+                    .then(Commands.argument("player", StringArgumentType.string())
+                        .executes(UnifiedCommands::debugPlayerProgression)))
+                .then(Commands.literal("force-progression-check")
+                    .then(Commands.argument("player", StringArgumentType.string())
+                        .executes(UnifiedCommands::forceProgressionCheck)))
+                .then(Commands.literal("test-command")
+                    .then(Commands.argument("command", StringArgumentType.greedyString())
+                        .executes(UnifiedCommands::testDeityCommand)))
+                .then(Commands.literal("reputation")
+                    .then(Commands.argument("player", StringArgumentType.string())
+                        .then(Commands.argument("deity", StringArgumentType.string())
+                            .executes(UnifiedCommands::debugPlayerReputation)))))
+            
             // TODO: Reputation system commands - implement these methods when needed
             /*
             .then(Commands.literal("reputation")
@@ -1105,6 +1122,237 @@ public class UnifiedCommands {
         } catch (Exception e) {
             context.getSource().sendFailure(Component.literal("§cError firing ritual completion: " + e.getMessage()));
             return 0;
+        }
+    }
+    
+    // =====================================
+    // 🎯 DEBUG SYSTEM COMMANDS
+    // =====================================
+    
+    /**
+     * 🔍 DEBUG PLAYER PROGRESSION
+     * 
+     * Shows detailed progression information for a player with all deities.
+     * Usage: /eidolon-unchained debug progression <player>
+     */
+    private static int debugPlayerProgression(CommandContext<CommandSourceStack> context) {
+        try {
+            String playerName = StringArgumentType.getString(context, "player");
+            ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+            
+            if (player == null) {
+                context.getSource().sendFailure(Component.literal("§cPlayer not found: " + playerName));
+                return 0;
+            }
+            
+            context.getSource().sendSuccess(() -> Component.literal("§6=== PROGRESSION DEBUG: " + playerName + " ==="), false);
+            
+            // Check progression with each deity
+            for (com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity : 
+                 com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getAllDeities().values()) {
+                
+                double reputation = deity.getPlayerReputation(player);
+                String progressionLevel = getDynamicProgressionLevel(deity, player);
+                
+                context.getSource().sendSuccess(() -> Component.literal(
+                    String.format("§e%s: §b%.1f rep §7(§f%s§7)", 
+                        deity.getName(), reputation, progressionLevel)), false);
+                
+                // Show available stages
+                Map<String, Object> stagesMap = deity.getProgressionStages();
+                for (Map.Entry<String, Object> stageEntry : stagesMap.entrySet()) {
+                    String stageName = stageEntry.getKey();
+                    Object stageData = stageEntry.getValue();
+                    
+                    // Handle the case where stage data is a Map
+                    if (!(stageData instanceof Map)) continue;
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> stageDataMap = (Map<String, Object>) stageData;
+                    
+                    Object repReq = stageDataMap.get("reputationRequired");
+                    if (repReq instanceof Number) {
+                        double required = ((Number) repReq).doubleValue();
+                        boolean qualified = reputation >= required;
+                        
+                        context.getSource().sendSuccess(() -> Component.literal(
+                            String.format("  §7- §f%s: §e%d rep %s", 
+                                stageName, (int)required, qualified ? "§a✓" : "§c✗")), false);
+                    }
+                }
+            }
+            
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError debugging progression: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    /**
+     * 🔄 FORCE PROGRESSION CHECK
+     * 
+     * Manually triggers a progression check for a player.
+     * Usage: /eidolon-unchained debug force-progression-check <player>
+     */
+    private static int forceProgressionCheck(CommandContext<CommandSourceStack> context) {
+        try {
+            String playerName = StringArgumentType.getString(context, "player");
+            ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+            
+            if (player == null) {
+                context.getSource().sendFailure(Component.literal("§cPlayer not found: " + playerName));
+                return 0;
+            }
+            
+            // Trigger manual progression check
+            com.bluelotuscoding.eidolonunchained.events.ReputationEventBridge.triggerProgressionCheck(player);
+            
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§6Forced progression check for " + playerName), false);
+            
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError forcing progression check: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    /**
+     * 🧪 TEST DEITY COMMAND
+     * 
+     * Tests command execution as if triggered by deity AI.
+     * Usage: /eidolon-unchained debug test-command <command>
+     */
+    private static int testDeityCommand(CommandContext<CommandSourceStack> context) {
+        try {
+            String command = StringArgumentType.getString(context, "command");
+            ServerPlayer executor = context.getSource().getPlayerOrException();
+            
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§6Testing deity command: §f" + command), false);
+            
+            // Execute the command as a deity would
+            net.minecraft.commands.CommandSourceStack deitySource = context.getSource().getServer()
+                .createCommandSourceStack()
+                .withSource(net.minecraft.commands.CommandSource.NULL)
+                .withLevel(executor.serverLevel())
+                .withPosition(executor.position())
+                .withPermission(2);
+            
+            String cleanCommand = command.startsWith("/") ? command.substring(1) : command;
+            int result = context.getSource().getServer().getCommands().performPrefixedCommand(deitySource, cleanCommand);
+            
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§7Command result: " + (result > 0 ? "§aSuccess (" + result + ")" : "§cFailed (" + result + ")")), false);
+            
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError testing command: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    /**
+     * 📊 DEBUG PLAYER REPUTATION
+     * 
+     * Shows detailed reputation information for a player with a specific deity.
+     * Usage: /eidolon-unchained debug reputation <player> <deity>
+     */
+    private static int debugPlayerReputation(CommandContext<CommandSourceStack> context) {
+        try {
+            String playerName = StringArgumentType.getString(context, "player");
+            String deityId = StringArgumentType.getString(context, "deity");
+            
+            ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+            if (player == null) {
+                context.getSource().sendFailure(Component.literal("§cPlayer not found: " + playerName));
+                return 0;
+            }
+            
+            net.minecraft.resources.ResourceLocation deityLocation = new net.minecraft.resources.ResourceLocation(deityId);
+            com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = 
+                com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(deityLocation);
+            
+            if (deity == null) {
+                context.getSource().sendFailure(Component.literal("§cDeity not found: " + deityId));
+                return 0;
+            }
+            
+            double reputation = deity.getPlayerReputation(player);
+            String progressionLevel = getDynamicProgressionLevel(deity, player);
+            
+            context.getSource().sendSuccess(() -> Component.literal("§6=== REPUTATION DEBUG ==="), false);
+            context.getSource().sendSuccess(() -> Component.literal("§ePlayer: §f" + playerName), false);
+            context.getSource().sendSuccess(() -> Component.literal("§eDeity: §f" + deity.getName()), false);
+            context.getSource().sendSuccess(() -> Component.literal("§eReputation: §b" + String.format("%.2f", reputation)), false);
+            context.getSource().sendSuccess(() -> Component.literal("§eProgression: §f" + progressionLevel), false);
+            
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError debugging reputation: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    /**
+     * 🎭 HELPER METHOD FOR PROGRESSION LEVEL
+     * 
+     * Gets dynamic progression level for debug commands.
+     * This mirrors the logic from our fixed AI system.
+     */
+    private static String getDynamicProgressionLevel(com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity, ServerPlayer player) {
+        double reputation = deity.getPlayerReputation(player);
+        
+        try {
+            // Get deity's progression stages from JSON
+            Map<String, Object> stagesMap = deity.getProgressionStages();
+            
+            if (stagesMap.isEmpty()) {
+                // Fallback to hardcoded levels if no JSON stages defined
+                if (reputation >= 75) return "master";
+                if (reputation >= 50) return "advanced";
+                if (reputation >= 25) return "intermediate";
+                if (reputation >= 10) return "novice";
+                return "beginner";
+            }
+            
+            // Find the highest stage the player qualifies for
+            String bestStage = "initiate";
+            double highestQualifyingReputation = -1;
+            
+            for (Map.Entry<String, Object> stageEntry : stagesMap.entrySet()) {
+                String stageName = stageEntry.getKey();
+                Object stageData = stageEntry.getValue();
+                
+                // Handle the case where stage data is a Map
+                if (!(stageData instanceof Map)) continue;
+                @SuppressWarnings("unchecked")
+                Map<String, Object> stageDataMap = (Map<String, Object>) stageData;
+                
+                Object repReqObj = stageDataMap.get("reputationRequired");
+                if (!(repReqObj instanceof Number)) continue;
+                
+                double requiredReputation = ((Number) repReqObj).doubleValue();
+                
+                if (reputation >= requiredReputation && requiredReputation > highestQualifyingReputation) {
+                    bestStage = stageName;
+                    highestQualifyingReputation = requiredReputation;
+                }
+            }
+            
+            return bestStage;
+            
+        } catch (Exception e) {
+            // Fallback progression levels
+            if (reputation >= 75) return "master";
+            if (reputation >= 50) return "advanced";
+            if (reputation >= 25) return "intermediate";
+            if (reputation >= 10) return "novice";
+            return "beginner";
         }
     }
     

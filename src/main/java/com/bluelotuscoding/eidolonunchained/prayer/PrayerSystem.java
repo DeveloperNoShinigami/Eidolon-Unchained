@@ -201,9 +201,11 @@ public class PrayerSystem {
         // Create player context for dynamic personality
         PlayerContext playerContext = new PlayerContext(player, deity);
         playerContext.researchCount = 0; // TODO: Get from research system if available
-        playerContext.progressionLevel = (playerContext.reputation > 50) ? "advanced" : 
-                                        (playerContext.reputation > 25) ? "intermediate" : 
-                                        (playerContext.reputation > 0) ? "novice" : "beginner";
+        
+        // 🎯 USE DYNAMIC PROGRESSION INSTEAD OF HARDCODED LOGIC
+        // This fixes the AI treating 50 reputation players as "new members"
+        playerContext.progressionLevel = getProgressionLevel(deity, player);
+        
         playerContext.biome = player.level().getBiome(player.blockPosition()).unwrapKey()
             .map(resourceKey -> resourceKey.location().toString())
             .orElse("minecraft:plains");
@@ -305,8 +307,69 @@ public class PrayerSystem {
         return basePrompt;
     }
     
+    /**
+     * 🎯 DYNAMIC PROGRESSION LEVEL DETECTION
+     * 
+     * Gets the player's current progression level based on JSON-defined stages
+     * instead of hardcoded reputation thresholds. This fixes the AI treating
+     * 50 reputation players as "new members" when they should be "priests".
+     */
     private static String getProgressionLevel(DatapackDeity deity, ServerPlayer player) {
-        int reputation = (int) Math.round(deity.getPlayerReputation(player));
+        double reputation = deity.getPlayerReputation(player);
+        
+        try {
+            // Get deity's progression stages from JSON
+            Map<String, Object> stagesMap = deity.getProgressionStages();
+            
+            if (stagesMap.isEmpty()) {
+                LOGGER.debug("🔍 No progression stages defined for deity {}, using fallback", deity.getId());
+                return getFallbackProgressionLevel(reputation);
+            }
+            
+            // Find the highest stage the player qualifies for
+            String bestStage = "initiate"; // Default lowest stage
+            double highestQualifyingReputation = -1;
+            
+            for (Map.Entry<String, Object> stageEntry : stagesMap.entrySet()) {
+                String stageName = stageEntry.getKey();
+                Object stageData = stageEntry.getValue();
+                
+                // Handle the case where stage data is a Map
+                if (!(stageData instanceof Map)) continue;
+                @SuppressWarnings("unchecked")
+                Map<String, Object> stageDataMap = (Map<String, Object>) stageData;
+                
+                Object repReqObj = stageDataMap.get("reputationRequired");
+                if (!(repReqObj instanceof Number)) continue;
+                
+                double requiredReputation = ((Number) repReqObj).doubleValue();
+                
+                // Check if player qualifies for this stage and it's higher than current best
+                if (reputation >= requiredReputation && requiredReputation > highestQualifyingReputation) {
+                    bestStage = stageName;
+                    highestQualifyingReputation = requiredReputation;
+                }
+            }
+            
+            LOGGER.debug("🎭 Player {} progression with {}: {} ({}rep vs {}req)", 
+                player.getName().getString(), deity.getName(), bestStage, (int)reputation, (int)highestQualifyingReputation);
+            
+            return bestStage;
+            
+        } catch (Exception e) {
+            LOGGER.error("🚨 Error determining progression level for {}/{}, using fallback", 
+                player.getName().getString(), deity.getId(), e);
+            return getFallbackProgressionLevel(reputation);
+        }
+    }
+    
+    /**
+     * 🔄 FALLBACK PROGRESSION LEVELS
+     * 
+     * Used when JSON progression stages are not available.
+     * These are the old hardcoded levels for compatibility.
+     */
+    private static String getFallbackProgressionLevel(double reputation) {
         if (reputation >= 75) return "master";
         if (reputation >= 50) return "advanced";
         if (reputation >= 25) return "intermediate";
@@ -324,39 +387,83 @@ public class PrayerSystem {
         return "unknown";
     }
     
+    /**
+     * 🔧 ENHANCED COMMAND EXECUTION WITH TRACKING
+     * 
+     * Executes deity commands with comprehensive logging and debug output.
+     * This addresses the issue of "no command triggers in chat logs".
+     */
     private static void executeCommands(ServerPlayer player, java.util.List<String> commands, PrayerAIConfig prayerConfig) {
         MinecraftServer server = player.getServer();
-        if (server == null) return;
+        if (server == null) {
+            LOGGER.error("🚨 Cannot execute commands: server is null for player {}", player.getName().getString());
+            return;
+        }
         
         Commands commandManager = server.getCommands();
         int commandsExecuted = 0;
+        int commandsSkipped = 0;
+        
+        LOGGER.info("🎯 DEITY COMMAND EXECUTION: Starting {} commands for player {}", 
+            commands.size(), player.getName().getString());
         
         for (String command : commands) {
             if (commandsExecuted >= prayerConfig.max_commands) {
+                LOGGER.warn("🚫 Command limit reached ({}/{}), skipping remaining commands", 
+                    commandsExecuted, prayerConfig.max_commands);
                 break;
             }
             
             // Validate command is allowed
             if (!isCommandAllowed(command, prayerConfig.allowed_commands)) {
-                LOGGER.warn("Deity attempted to use disallowed command: " + command);
+                LOGGER.warn("🚫 BLOCKED COMMAND: Deity attempted disallowed command: {}", command);
+                commandsSkipped++;
                 continue;
             }
             
             try {
-                // Create command source as the player
+                // Create command source as the player with proper permissions
                 CommandSourceStack source = player.createCommandSourceStack()
                     .withPermission(2) // Op level 2 for deity commands
                     .withSuppressedOutput();
                 
-                // Execute command
-                commandManager.performPrefixedCommand(source, command.startsWith("/") ? command.substring(1) : command);
+                // Clean command format
+                String cleanCommand = command.startsWith("/") ? command.substring(1) : command;
+                
+                LOGGER.info("🔮 EXECUTING DEITY COMMAND: '{}' for player {}", cleanCommand, player.getName().getString());
+                
+                // Execute command and capture result
+                int result = commandManager.performPrefixedCommand(source, cleanCommand);
                 commandsExecuted++;
                 
-                LOGGER.debug("Executed deity command for {}: {}", player.getName().getString(), command);
+                if (result > 0) {
+                    LOGGER.info("✅ COMMAND SUCCESS: '{}' executed successfully (result: {})", cleanCommand, result);
+                    
+                    // Send feedback to player
+                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "§6✦ Divine intervention: §7" + cleanCommand));
+                } else {
+                    LOGGER.warn("⚠️ COMMAND WARNING: '{}' executed but returned {}", cleanCommand, result);
+                }
                 
             } catch (Exception e) {
-                LOGGER.error("Failed to execute deity command: " + command, e);
+                LOGGER.error("🚨 COMMAND FAILED: '{}' execution error: {}", command, e.getMessage());
+                commandsSkipped++;
+                
+                // Send error feedback to player
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                    "§c✖ Divine power faltered..."));
             }
+        }
+        
+        // Summary logging
+        LOGGER.info("📊 COMMAND EXECUTION SUMMARY: {}/{} executed, {} skipped for player {}", 
+            commandsExecuted, commands.size(), commandsSkipped, player.getName().getString());
+        
+        if (commandsExecuted > 0) {
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                "§6Divine blessings granted: " + commandsExecuted + " intervention" + 
+                (commandsExecuted == 1 ? "" : "s")));
         }
     }
     

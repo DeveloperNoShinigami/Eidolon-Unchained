@@ -339,14 +339,25 @@ public class DeityChat {
         prompt.append("You are ").append(deity.getName()).append(", a deity in the world of Minecraft. ");
         prompt.append("You are having a conversation with ").append(player.getName().getString()).append(". ");
         
-        // Add context about player's reputation
-        int reputation = (int) deity.getPlayerReputation(player);
-        if (reputation > 25) {
-            prompt.append("This player is highly favored by you (reputation: ").append(reputation).append("). ");
-        } else if (reputation < -25) {
-            prompt.append("This player has greatly displeased you (reputation: ").append(reputation).append("). ");
+        // 🎯 ADD DYNAMIC PROGRESSION CONTEXT INSTEAD OF HARDCODED THRESHOLDS
+        // This ensures AI recognizes the player's actual progression level
+        double reputation = deity.getPlayerReputation(player);
+        String progressionLevel = getDynamicProgressionLevel(deity, player);
+        
+        prompt.append("This player holds the rank of ").append(progressionLevel)
+              .append(" with you (reputation: ").append((int)reputation).append("). ");
+        
+        // Add progression-aware context
+        if (progressionLevel.equals("champion") || progressionLevel.equals("master")) {
+            prompt.append("Treat them as a highly revered champion of your faith. ");
+        } else if (progressionLevel.equals("priest") || progressionLevel.equals("high_priest")) {
+            prompt.append("They are a trusted servant worthy of respect and guidance. ");
+        } else if (progressionLevel.equals("acolyte") || progressionLevel.equals("intermediate")) {
+            prompt.append("They have proven their dedication and earned your attention. ");
+        } else if (progressionLevel.equals("novice") || progressionLevel.equals("initiate")) {
+            prompt.append("They are still learning your ways but show promise. ");
         } else {
-            prompt.append("This player is neutral in your eyes (reputation: ").append(reputation).append("). ");
+            prompt.append("They are new to your teachings and require guidance. ");
         }
         
         // Add detailed player context using GeminiAPIClient's context builder
@@ -742,5 +753,69 @@ public class DeityChat {
         
         // Also send a brief chat notification for reference
         player.sendSystemMessage(Component.literal("§8[§6" + deityName + " §8has spoken]"));
+    }
+    
+    /**
+     * 🎯 DYNAMIC PROGRESSION LEVEL HELPER
+     * 
+     * Gets the player's current progression level based on JSON-defined stages.
+     * This replaces hardcoded reputation thresholds and ensures AI recognizes
+     * the player's actual rank (e.g., 50 reputation = "priest", not "new member").
+     */
+    private static String getDynamicProgressionLevel(DatapackDeity deity, ServerPlayer player) {
+        double reputation = deity.getPlayerReputation(player);
+        
+        try {
+            // Get deity's progression stages from JSON
+            Map<String, Object> stagesMap = deity.getProgressionStages();
+            
+            if (stagesMap.isEmpty()) {
+                // Fallback to hardcoded levels if no JSON stages defined
+                if (reputation >= 75) return "master";
+                if (reputation >= 50) return "advanced";
+                if (reputation >= 25) return "intermediate";
+                if (reputation >= 10) return "novice";
+                return "beginner";
+            }
+            
+            // Find the highest stage the player qualifies for
+            String bestStage = "initiate"; // Default lowest stage
+            double highestQualifyingReputation = -1;
+            
+            for (Map.Entry<String, Object> stageEntry : stagesMap.entrySet()) {
+                String stageName = stageEntry.getKey();
+                Object stageData = stageEntry.getValue();
+                
+                // Handle the case where stage data is a Map
+                if (!(stageData instanceof Map)) continue;
+                @SuppressWarnings("unchecked")
+                Map<String, Object> stageDataMap = (Map<String, Object>) stageData;
+                
+                Object repReqObj = stageDataMap.get("reputationRequired");
+                if (!(repReqObj instanceof Number)) continue;
+                
+                double requiredReputation = ((Number) repReqObj).doubleValue();
+                
+                // Check if player qualifies for this stage and it's higher than current best
+                if (reputation >= requiredReputation && requiredReputation > highestQualifyingReputation) {
+                    bestStage = stageName;
+                    highestQualifyingReputation = requiredReputation;
+                }
+            }
+            
+            LOGGER.debug("🎭 Chat progression for {}/{}: {} ({}rep)", 
+                player.getName().getString(), deity.getName(), bestStage, (int)reputation);
+            
+            return bestStage;
+            
+        } catch (Exception e) {
+            LOGGER.error("🚨 Error determining chat progression level, using fallback", e);
+            // Fallback progression levels
+            if (reputation >= 75) return "master";
+            if (reputation >= 50) return "advanced";
+            if (reputation >= 25) return "intermediate";
+            if (reputation >= 10) return "novice";
+            return "beginner";
+        }
     }
 }

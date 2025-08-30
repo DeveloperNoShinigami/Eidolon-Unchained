@@ -11,18 +11,22 @@
     "max_reputation": 100,
     "stages": [
       {
-        "id": "eidolonunchained:blessed_novice",
-        "reputation": 10,
+        "id": "light_initiate",
+        "reputation": 0,
         "major": false,
+        "title": "Light Initiate",
+        "description": "A soul touched by divine radiance",
         "rewards": [
-          { "type": "item", "data": "minecraft:golden_apple", "count": 2 },
+          { "type": "item", "data": "minecraft:golden_apple", "count": 1 },
           { "type": "effect", "data": "minecraft:regeneration", "duration": 300, "amplifier": 0 }
         ]
       },
       {
-        "id": "eidolonunchained:sacred_devotee",
+        "id": "light_acolyte",
         "reputation": 25,
         "major": false,
+        "title": "Light Acolyte",
+        "description": "Faithful servant of the sacred light",
         "rewards": [
           { "type": "item", "data": "eidolon:gold_inlay", "count": 3 },
           { "type": "item", "data": "eidolon:holy_symbol", "count": 1 },
@@ -30,13 +34,39 @@
         ]
       },
       {
-        "id": "eidolonunchained:light_champion",
+        "id": "light_priest",
         "reputation": 50,
         "major": true,
+        "title": "Light Priest",
+        "description": "Bearer of Lumina's sacred blessing",
+        "rewards": [
+          { "type": "item", "data": "minecraft:golden_apple", "count": 3 },
+          { "type": "item", "data": "eidolon:blessed_bone", "count": 2 },
+          { "type": "effect", "data": "minecraft:absorption", "duration": 1200, "amplifier": 1 }
+        ]
+      },
+      {
+        "id": "light_high_priest",
+        "reputation": 75,
+        "major": true,
+        "title": "High Priest of Radiance",
+        "description": "Guardian of the sacred flame",
         "rewards": [
           { "type": "item", "data": "minecraft:totem_of_undying", "count": 1 },
-          { "type": "item", "data": "eidolon:blessed_bone", "count": 2 },
-          { "type": "effect", "data": "minecraft:absorption", "duration": 1200, "amplifier": 2 }
+          { "type": "item", "data": "eidolon:arcane_gold_ingot", "count": 2 },
+          { "type": "effect", "data": "minecraft:absorption", "duration": 1800, "amplifier": 2 }
+        ]
+      },
+      {
+        "id": "light_champion",
+        "reputation": 100,
+        "major": true,
+        "title": "Champion of Lumina",
+        "description": "Ultimate vessel of divine light",
+        "rewards": [
+          { "type": "item", "data": "minecraft:totem_of_undying", "count": 2 },
+          { "type": "item", "data": "eidolon:lesser_soul_gem", "count": 1 },
+          { "type": "item", "data": "eidolon:blessed_bone", "count": 5 }
         ]
       }
     ]
