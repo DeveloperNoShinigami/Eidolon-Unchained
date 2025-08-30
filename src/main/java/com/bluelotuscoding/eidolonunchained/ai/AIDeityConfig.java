@@ -11,7 +11,7 @@ import java.util.*;
  * Contains all behavioral rules, API settings, prayer configurations, and patron allegiance rules.
  */
 public class AIDeityConfig {
-    // Basic AI settings
+    // Basic AI settings - set automatically by DatapackDeityManager
     public ResourceLocation deityId;
     public String aiProvider = "gemini";
     public String model = "gemini-1.5-pro";
@@ -246,11 +246,11 @@ public class AIDeityConfig {
             return PatronRelationship.FOLLOWER;
         }
         
-        if (patronConfig.opposingDeities.contains(playerPatron)) {
+        if (patronConfig.opposingDeities.contains(playerPatron.toString())) {
             return PatronRelationship.ENEMY;
         }
         
-        if (patronConfig.alliedDeities.contains(playerPatron)) {
+        if (patronConfig.alliedDeities.contains(playerPatron.toString())) {
             return PatronRelationship.ALLIED;
         }
         
@@ -325,8 +325,8 @@ public class AIDeityConfig {
     public static class PatronConfig {
         public boolean acceptsFollowers = true;
         public String requiresPatronStatus = "any"; // "follower_only", "no_enemies", "any"
-        public List<ResourceLocation> opposingDeities = new ArrayList<>();
-        public List<ResourceLocation> alliedDeities = new ArrayList<>();
+        public List<String> opposingDeities = new ArrayList<>();
+        public List<String> alliedDeities = new ArrayList<>();
         public String neutralResponseMode = "normal"; // "normal", "cautious", "cold"
         public String enemyResponseMode = "hostile"; // "hostile", "reject", "mock"
         
