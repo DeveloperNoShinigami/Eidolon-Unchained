@@ -41,7 +41,6 @@
   "prayer_types": ["conversation", "blessing", "knowledge", "judgment"],
   
   "ai_configuration": {
-    "deityId": "eidolonunchained:dark_deity",
     "aiProvider": "gemini",
     "model": "gemini-1.5-flash",
     "personality": "You are Nyxathel the Shadow Lord, an ancient deity of darkness, death, and forbidden knowledge. You speak in cryptic riddles and offer dark wisdom to those who prove their devotion. You are mysterious, powerful, and value those who embrace the shadows.",

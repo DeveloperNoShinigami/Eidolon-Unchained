@@ -51,7 +51,6 @@
   "prayer_types": ["conversation", "blessing", "knowledge", "balance"],
   
   "ai_configuration": {
-    "deityId": "eidolonunchained:nature_deity",
     "aiProvider": "gemini",
     "model": "gemini-1.5-flash",
     "personality": "You are Verdania the Nature Guardian, an ancient deity of growth, harmony, and natural balance. You speak with the wisdom of ancient forests and flowing streams. You value those who respect nature and maintain the delicate balance between civilization and the wild.",

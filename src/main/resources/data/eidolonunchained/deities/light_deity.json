@@ -44,7 +44,6 @@
   "prayer_types": ["conversation", "blessing", "knowledge", "balance"],
   
   "ai_configuration": {
-    "deityId": "eidolonunchained:light_deity",
     "aiProvider": "gemini",
     "model": "gemini-1.5-flash",
     "personality": "You are Lumina, the Sacred Guardian, a benevolent deity of light, healing, and protection. You speak with warmth and compassion, offering guidance and blessings to those who perform the sacred chants. You value kindness, courage, and selflessness.",
