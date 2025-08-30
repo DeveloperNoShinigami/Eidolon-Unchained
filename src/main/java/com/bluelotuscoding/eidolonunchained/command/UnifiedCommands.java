@@ -263,7 +263,9 @@ public class UnifiedCommands {
                     .then(Commands.literal("test")
                         .then(Commands.argument("ritual_id", StringArgumentType.string())
                             .suggests(RITUAL_SUGGESTIONS)
-                            .executes(UnifiedCommands::testRitualExecution))))
+                            .executes(UnifiedCommands::testRitualExecution)))
+                    .then(Commands.literal("diagnose")
+                        .executes(UnifiedCommands::diagnoseRitualSystem)))
                 .then(Commands.literal("clear-rewards")
                     .then(Commands.argument("player", StringArgumentType.string())
                         .suggests(PLAYER_SUGGESTIONS)
@@ -1581,6 +1583,123 @@ public class UnifiedCommands {
             context.getSource().sendFailure(Component.literal("§cError testing ritual: " + e.getMessage()));
             return 0;
         }
+    }
+    
+    /**
+     * 🔬 ADVANCED RITUAL DIAGNOSTICS
+     * 
+     * Performs comprehensive ritual system diagnostics to identify why rituals aren't starting
+     */
+    private static int diagnoseRitualSystem(CommandContext<CommandSourceStack> context) {
+        var source = context.getSource();
+        
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(Component.literal("§cThis command must be run by a player"));
+            return 0;
+        }
+        
+        StringBuilder diagnostic = new StringBuilder("§6=== 🔬 RITUAL SYSTEM DIAGNOSTICS ===\n");
+        
+        try {
+            var server = source.getServer();
+            var level = player.serverLevel();
+            
+            // 1. Check recipe loading
+            diagnostic.append("§e1. Recipe Loading Status:\n");
+            var recipeManager = server.getRecipeManager();
+            var commandRituals = recipeManager.getAllRecipesFor(elucent.eidolon.registries.EidolonRecipes.COMMAND_RITUAL_TYPE.get());
+            var genericRituals = recipeManager.getAllRecipesFor(elucent.eidolon.registries.EidolonRecipes.RITUAL_TYPE.get());
+            
+            diagnostic.append(String.format("   Command Rituals: §a%d loaded\n", commandRituals.size()));
+            diagnostic.append(String.format("   Generic Rituals: §a%d loaded\n", genericRituals.size()));
+            
+            // 2. List loaded ritual IDs
+            diagnostic.append("§e2. Loaded Ritual IDs:\n");
+            commandRituals.forEach(recipe -> {
+                diagnostic.append(String.format("   §b%s §7(command)\n", recipe.getId()));
+            });
+            genericRituals.forEach(recipe -> {
+                diagnostic.append(String.format("   §b%s §7(generic)\n", recipe.getId()));
+            });
+            
+            // 3. Check for nearby braziers
+            diagnostic.append("§e3. Nearby Brazier Analysis:\n");
+            var nearbyEntities = level.getEntitiesOfClass(
+                net.minecraft.world.entity.Entity.class,
+                player.getBoundingBox().inflate(10)
+            );
+            
+            long brazierCount = nearbyEntities.stream()
+                .filter(entity -> entity.getClass().getName().contains("BrazierTileEntity"))
+                .count();
+            
+            if (brazierCount == 0) {
+                diagnostic.append("   §c⚠ No braziers found within 10 blocks\n");
+                diagnostic.append("   §7Suggestion: Place a Brazier and try performing a ritual\n");
+            } else {
+                diagnostic.append(String.format("   §a%d brazier(s) found nearby\n", brazierCount));
+            }
+            
+            // 4. Check registry integration
+            diagnostic.append("§e4. Ritual Registry Integration:\n");
+            try {
+                var ritualRegistry = elucent.eidolon.registries.RitualRegistry.class;
+                var findMethod = ritualRegistry.getMethod("find", ResourceLocation.class);
+                
+                // Test some known ritual IDs
+                String[] testRituals = {
+                    "eidolonunchained:light_patronage_ritual",
+                    "eidolonunchained:nature_patronage_ritual", 
+                    "eidolonunchained:shadow_patronage_ritual"
+                };
+                
+                for (String ritualId : testRituals) {
+                    var ritual = findMethod.invoke(null, new ResourceLocation(ritualId));
+                    if (ritual != null) {
+                        diagnostic.append(String.format("   §a✅ %s found in registry\n", ritualId));
+                    } else {
+                        diagnostic.append(String.format("   §c❌ %s NOT in registry\n", ritualId));
+                    }
+                }
+            } catch (Exception e) {
+                diagnostic.append(String.format("   §c❌ Registry access failed: %s\n", e.getMessage()));
+            }
+            
+            // 5. Check items in inventory
+            diagnostic.append("§e5. Player Inventory Analysis:\n");
+            var inventory = player.getInventory();
+            boolean hasCodex = inventory.hasAnyMatching(stack -> 
+                stack.getItem().toString().contains("codex"));
+            boolean hasGlowstone = inventory.hasAnyMatching(stack -> 
+                stack.getItem().toString().contains("glowstone"));
+            boolean hasGoldenApple = inventory.hasAnyMatching(stack -> 
+                stack.getItem().toString().contains("golden_apple"));
+            
+            diagnostic.append(String.format("   Codex: %s\n", hasCodex ? "§a✅" : "§c❌"));
+            diagnostic.append(String.format("   Glowstone: %s\n", hasGlowstone ? "§a✅" : "§c❌"));
+            diagnostic.append(String.format("   Golden Apple: %s\n", hasGoldenApple ? "§a✅" : "§c❌"));
+            
+            if (!hasCodex) {
+                diagnostic.append("   §7Suggestion: Get an Eidolon Codex for invariant items\n");
+            }
+            
+            // 6. Final recommendations
+            diagnostic.append("§e6. Ritual Execution Checklist:\n");
+            diagnostic.append("   §71. Place Brazier\n");
+            diagnostic.append("   §72. Place Glowstone Dust in center\n");
+            diagnostic.append("   §73. Place pedestals around brazier (4 blocks away)\n");
+            diagnostic.append("   §74. Put required items on pedestals\n");
+            diagnostic.append("   §75. Have Codex in inventory (invariant item)\n");
+            diagnostic.append("   §76. Light brazier with Flint & Steel\n");
+            diagnostic.append("   §77. Wait for ritual to find ingredients (4 seconds)\n");
+            diagnostic.append("   §78. Watch for ritual symbol and effects\n");
+            
+        } catch (Exception e) {
+            diagnostic.append(String.format("§c❌ Diagnostic failed: %s\n", e.getMessage()));
+        }
+        
+        source.sendSuccess(() -> Component.literal(diagnostic.toString()), false);
+        return 1;
     }
     
     // Utility methods
