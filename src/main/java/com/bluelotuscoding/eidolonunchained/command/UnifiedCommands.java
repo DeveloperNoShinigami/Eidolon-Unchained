@@ -163,7 +163,11 @@ public class UnifiedCommands {
                 .then(Commands.literal("reputation")
                     .then(Commands.argument("player", StringArgumentType.string())
                         .then(Commands.argument("deity", StringArgumentType.string())
-                            .executes(UnifiedCommands::debugPlayerReputation)))))
+                            .executes(UnifiedCommands::debugPlayerReputation))))
+                .then(Commands.literal("clear-rewards")
+                    .then(Commands.argument("player", StringArgumentType.string())
+                        .then(Commands.argument("deity", StringArgumentType.string())
+                            .executes(UnifiedCommands::clearPlayerRewards)))))
             
             // TODO: Reputation system commands - implement these methods when needed
             /*
@@ -1353,6 +1357,50 @@ public class UnifiedCommands {
             if (reputation >= 25) return "intermediate";
             if (reputation >= 10) return "novice";
             return "beginner";
+        }
+    }
+    
+    /**
+     * 🧹 CLEAR PLAYER REWARDS (For Testing)
+     * 
+     * Clears reward history for a player with a specific deity.
+     * Usage: /eidolon-unchained debug clear-rewards <player> <deity>
+     */
+    private static int clearPlayerRewards(CommandContext<CommandSourceStack> context) {
+        try {
+            String playerName = StringArgumentType.getString(context, "player");
+            String deityId = StringArgumentType.getString(context, "deity");
+            
+            ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+            if (player == null) {
+                context.getSource().sendFailure(Component.literal("§cPlayer not found: " + playerName));
+                return 0;
+            }
+            
+            net.minecraft.resources.ResourceLocation deityLocation = new net.minecraft.resources.ResourceLocation(deityId);
+            com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = 
+                com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(deityLocation);
+            
+            if (deity == null) {
+                context.getSource().sendFailure(Component.literal("§cDeity not found: " + deityId));
+                return 0;
+            }
+            
+            // Clear the player's reward history for this deity
+            deity.clearPlayerRewardHistory(player.getUUID());
+            
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§6Cleared reward history for " + playerName + " with " + deity.getName()), false);
+            
+            // Also notify the player
+            player.sendSystemMessage(Component.literal(
+                "§6Your reward history with " + deity.getName() + " has been reset for testing."));
+            
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError clearing rewards: " + e.getMessage()));
+            return 0;
         }
     }
     

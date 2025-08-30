@@ -42,52 +42,40 @@ public class ReputationProgressionHandler {
     private static final int CHECK_INTERVAL = 20;
     
     /**
-     * 🔄 PERIODIC REPUTATION MONITORING
+     * � EMERGENCY DISABLE: SERVER TICK EVENT
      * 
-     * Checks all online players' reputation levels every second to detect progression changes.
-     * This ensures immediate response to reputation gains from any source.
+     * TEMPORARILY DISABLED - This was causing game freezing.
+     * We'll use login-based checks instead of constant ticking.
      */
-    @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
-        
-        tickCounter++;
-        if (tickCounter >= CHECK_INTERVAL) {
-            tickCounter = 0;
-            checkAllPlayersProgression();
-        }
+    // @SubscribeEvent
+    public static void onServerTick_DISABLED(TickEvent.ServerTickEvent event) {
+        // DISABLED TO PREVENT GAME FREEZING
+        // The constant ticking was blocking the main thread
+        return;
     }
     
     /**
-     * 🔍 CHECK ALL ONLINE PLAYERS
+     * � EMERGENCY DISABLE: ALL PLAYERS PROGRESSION CHECK
      * 
-     * Iterates through all online players and checks their reputation progression
-     * against all registered datapack deities.
+     * TEMPORARILY DISABLED - This was part of the freezing issue.
+     * The method had no access to server player list and was causing loops.
      */
-    private static void checkAllPlayersProgression() {
-        try {
-            // Get all registered datapack deities
-            Map<ResourceLocation, DatapackDeity> deities = DatapackDeityManager.getAllDeities();
-            if (deities.isEmpty()) return;
-            
-            // Check each deity for each online player
-            for (DatapackDeity deity : deities.values()) {
-                checkDeityProgressionForAllPlayers(deity);
-            }
-        } catch (Exception e) {
-            LOGGER.error("🚨 Error during reputation progression check", e);
-        }
+    private static void checkAllPlayersProgression_DISABLED() {
+        // DISABLED - This was causing the game to freeze
+        // We need server access to get player list, which this method doesn't have
+        return;
     }
     
     /**
-     * 🏛️ CHECK SPECIFIC DEITY PROGRESSION
+     * 🚨 EMERGENCY DISABLE: DEITY PROGRESSION CHECK
      * 
-     * Examines all online players' reputation with a specific deity and triggers
-     * progression events when thresholds are crossed.
+     * TEMPORARILY DISABLED - This was causing infinite loops.
      */
-    private static void checkDeityProgressionForAllPlayers(DatapackDeity deity) {
-        // This would need server access - let's modify to work with events instead
-        LOGGER.debug("🔍 Checking progression for deity: {}", deity.getId());
+    private static void checkDeityProgressionForAllPlayers_DISABLED(DatapackDeity deity) {
+        // DISABLED - This method had no way to access the server player list
+        // and was part of the freezing issue
+        LOGGER.debug("🔍 Progression check disabled for deity: {}", deity.getId());
+        return;
     }
     
     /**

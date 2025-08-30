@@ -34,6 +34,9 @@ public class DatapackDeity extends Deity {
     private final Set<String> prayerTypes = new HashSet<>();
     private int maxReputation = 100;
     
+    // 🎯 REWARD TRACKING SYSTEM - Prevents duplicate rewards
+    private final Map<UUID, Set<String>> playerRewardHistory = new HashMap<>();
+    
     public DatapackDeity(ResourceLocation id, String name, String description, int red, int green, int blue) {
         super(id, red, green, blue);
         this.displayName = name;
@@ -68,14 +71,41 @@ public class DatapackDeity extends Deity {
     
     @Override
     public void onReputationUnlock(Player player, ResourceLocation lock) {
-        // Apply datapack-defined rewards
+        UUID playerId = player.getUUID();
         String lockString = lock.toString();
+        
+        // 🎯 CHECK IF REWARDS ALREADY GIVEN - Prevents duplicate rewards!
+        Set<String> playerRewards = playerRewardHistory.computeIfAbsent(playerId, k -> new HashSet<>());
+        
+        if (playerRewards.contains(lockString)) {
+            LOGGER.debug("🔄 Player {} already received rewards for {}, skipping duplicate", 
+                player.getName().getString(), lockString);
+            
+            // Still send unlock message for feedback
+            if (player instanceof ServerPlayer serverPlayer) {
+                String stageTitle = getStageDisplayName(lock.getPath());
+                String message = String.format("§6[%s]§r You maintain your rank: %s", displayName, stageTitle);
+                serverPlayer.connection.send(new ClientboundSetActionBarTextPacket(Component.literal(message)));
+            }
+            return;
+        }
+        
+        // Apply datapack-defined rewards (only if not already given)
         List<String> rewards = stageRewards.get(lockString);
         
-        if (rewards != null) {
+        if (rewards != null && !rewards.isEmpty()) {
+            LOGGER.info("🎁 Granting {} rewards to {} for unlocking {}", 
+                rewards.size(), player.getName().getString(), lockString);
+            
             for (String reward : rewards) {
                 applyReward(player, reward);
             }
+            
+            // 🔒 MARK REWARDS AS GIVEN - This prevents future duplicates
+            playerRewards.add(lockString);
+            
+            LOGGER.info("✅ Rewards granted and tracked for player {} stage {}", 
+                player.getName().getString(), lockString);
         }
         
         // Update patron title if this is their patron deity
@@ -408,5 +438,32 @@ public class DatapackDeity extends Deity {
         } else {
             return "beginner";
         }
+    }
+    
+    // =====================================
+    // 🎯 REWARD TRACKING UTILITIES
+    // =====================================
+    
+    /**
+     * 🧹 Clear reward history for a player (useful for testing)
+     */
+    public void clearPlayerRewardHistory(UUID playerId) {
+        playerRewardHistory.remove(playerId);
+        LOGGER.info("🧹 Cleared reward history for player {}", playerId);
+    }
+    
+    /**
+     * 🔍 Check if player has received rewards for a specific stage
+     */
+    public boolean hasReceivedRewards(UUID playerId, String stage) {
+        Set<String> playerRewards = playerRewardHistory.get(playerId);
+        return playerRewards != null && playerRewards.contains(stage);
+    }
+    
+    /**
+     * 📊 Get reward history for debugging
+     */
+    public Set<String> getPlayerRewardHistory(UUID playerId) {
+        return playerRewardHistory.getOrDefault(playerId, new HashSet<>());
     }
 }
