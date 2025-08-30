@@ -1,0 +1,213 @@
+{
+  "_comment_structure": "Standardized language keys: eidolonunchained.<system>.<category>.<name>.<type>",
+  
+  "_comment_codex_system": "=== CODEX SYSTEM ===",
+  "eidolonunchained.codex.category.examples.name": "Examples",
+  "eidolonunchained.codex.category.example_chants.name": "Example Chants",
+  "eidolonunchained.codex.category.custom_research.name": "Custom Research",
+  "eidolonunchained.codex.category.ai_deity_chants.name": "AI Deity Communion",
+  
+  "eidolonunchained.codex.chapter.getting_started.title": "Getting Started",
+  "eidolonunchained.codex.chapter.examples.title": "Example Chants",
+  "eidolonunchained.codex.chapter.ai_deity_chants.title": "AI Deity Communion",
+  "eidolonunchained.codex.chapter.custom_research.title": "Custom Research",
+  "eidolonunchained.codex.chapter.divine_rituals.title": "Divine Rituals",
+  
+  "eidolonunchained.codex.entry.text_example.title": "Text Example",
+  "eidolonunchained.codex.entry.text_example.description": "This is a simple text example showing how to create codex entries.",
+  "eidolonunchained.codex.entry.text_example.details": "Text entries are the simplest type of codex content. They display formatted text to the reader.",
+  
+  "eidolonunchained.codex.entry.recipe_example.title": "Recipe Example",
+  "eidolonunchained.codex.entry.recipe_example.description": "Learn how to display crafting recipes in your codex entries.",
+  "eidolonunchained.codex.entry.recipe_example.explanation": "Recipe pages automatically display crafting grids and ingredients.",
+  
+  "eidolonunchained.codex.entry.entity_example.title": "Entity Example",
+  "eidolonunchained.codex.entry.entity_example.description": "This entry demonstrates how to display entities in the codex.",
+  "eidolonunchained.codex.entry.entity_example.details": "This example demonstrates how to show entity information.",
+  
+  "eidolonunchained.codex.entry.shadow_communion.title": "Shadow Communion",
+  "eidolonunchained.codex.entry.shadow_communion.description": "Commune with Nyxathel the Shadow Lord through dark rituals. This chant opens a direct communication channel with the deity of shadows.",
+  "eidolonunchained.codex.entry.shadow_communion.chant_description": "Draw the signs of Wicked, Wicked, and Blood to establish contact with the shadow realm.",
+  
+  "eidolonunchained.codex.entry.divine_communion.title": "Divine Communion",
+  "eidolonunchained.codex.entry.divine_communion.description": "Seek guidance from Lumina the Sacred Guardian. This blessed chant allows communication with the deity of light and protection.",
+  "eidolonunchained.codex.entry.divine_communion.chant_description": "Draw the signs of Sacred, Harmony, and Warding to call upon divine blessing.",
+  
+  "eidolonunchained.codex.entry.natures_communion.title": "Nature's Communion",
+  "eidolonunchained.codex.entry.natures_communion.description": "Connect with Verdania, Guardian of Nature. This chant harmonizes your spirit with the natural world.",
+  "eidolonunchained.codex.entry.natures_communion.chant_description": "Draw the signs of Harmony, Soul, and Sacred to commune with nature's guardian.",
+  
+  "eidolonunchained.codex.entry.divine_judgment.title": "Divine Judgment",
+  "eidolonunchained.codex.entry.divine_judgment.description": "A powerful offensive chant that calls upon divine power to destroy the wicked.",
+  "eidolonunchained.codex.entry.divine_judgment.chant_description": "Channel the wrath of the divine to strike down evil. Draw the signs of Sacred, Flame, and Death to invoke divine judgment.",
+  
+  "eidolonunchained.codex.entry.gaias_wrath.title": "Gaia's Wrath",
+  "eidolonunchained.codex.entry.gaias_wrath.description": "A destructive chant that channels the earth's anger against those who would harm the natural world.",
+  "eidolonunchained.codex.entry.gaias_wrath.chant_description": "Unleash the fury of the earth itself. Draw the signs of Harmony, Flame, and Death to invoke nature's devastating power.",
+  
+  "eidolonunchained.codex.entry.forbidden_knowledge.title": "Forbidden Knowledge",
+  "eidolonunchained.codex.entry.forbidden_knowledge.description": "A dangerous chant that reveals hidden knowledge at a terrible price.",
+  "eidolonunchained.codex.entry.forbidden_knowledge.chant_description": "Seek out secrets that should remain hidden. Draw the signs of Wicked, Mind, and Magic to access forbidden lore.",
+  
+  "_comment_research_system": "=== RESEARCH SYSTEM ===",
+  "eidolonunchained.research.chapter.simple_examples.title": "Simple Examples",
+  "eidolonunchained.research.chapter.divine_rituals.title": "Divine Rituals",
+  
+  "eidolonunchained.research.entry.undead_hunter.title": "Undead Hunter",
+  "eidolonunchained.research.entry.combat_mastery.title": "Combat Mastery",
+  "eidolonunchained.research.entry.arcane_studies.title": "Arcane Studies",
+  "eidolonunchained.research.entry.advanced_exploration.title": "Advanced Exploration",
+  "eidolonunchained.research.entry.desert_mysteries.title": "Desert Mysteries",
+  "eidolonunchained.research.entry.nether_expedition.title": "Nether Expedition",
+  "eidolonunchained.research.entry.test_death_essence.title": "Death Essence Study",
+  
+  "eidolonunchained.research.entry.simple_example.title": "Simple Research Example",
+  "eidolonunchained.research.entry.simple_example.description": "A basic example of the research system",
+  
+  "eidolonunchained.research.entry.nature_blessing_ritual.title": "Nature's Blessing Ritual",
+  "eidolonunchained.research.entry.nature_blessing_ritual.description": "A sacred ceremony to commune with Verdania, the Nature Guardian",
+  
+  "eidolonunchained.research.entry.divine_purification_ritual.title": "Divine Purification Ritual",
+  "eidolonunchained.research.entry.divine_purification_ritual.description": "A holy ritual to gain Lumina's blessing and cleanse the soul",
+  
+  "eidolonunchained.research.entry.shadow_embrace_ritual.title": "Shadow Embrace Ritual",
+  "eidolonunchained.research.entry.shadow_embrace_ritual.description": "A dangerous ritual to gain power from Nyxathel, the Shadow Lord",
+  
+  "eidolonunchained.research.discovery.need_tools": "You sense something significant about this %s, but you need Note-Taking Tools to investigate further.",
+  "eidolonunchained.research.discovery.title": "Research Discovered!",
+  "eidolonunchained.research.discovery.location": "Location: %s",
+  "eidolonunchained.research.discovery.research": "Research: %s",
+  "eidolonunchained.research.discovery.check_inventory": "Check your inventory for Research Notes!",
+  
+  "_comment_chant_system": "=== CHANT SYSTEM ===",
+  "eidolonunchained.chant.shadow_communion.name": "Shadow Communion",
+  "eidolonunchained.chant.shadow_communion.description": "Reach into the darkness to speak with Nyxathel the Shadow Lord.",
+  
+  "eidolonunchained.chant.divine_communion.name": "Divine Communion",
+  "eidolonunchained.chant.divine_communion.description": "A sacred chant that opens communication with the Light Deity, Lumina.",
+  
+  "eidolonunchained.chant.natures_communion.name": "Nature's Communion",
+  "eidolonunchained.chant.natures_communion.description": "Connect with the natural world and speak with Sylvana, the Nature Deity.",
+  
+  "eidolonunchained.chant.divine_judgment.name": "Divine Judgment",
+  "eidolonunchained.chant.divine_judgment.description": "Channel the wrath of the divine to strike down evil.",
+  
+  "eidolonunchained.chant.gaias_wrath.name": "Gaia's Wrath",
+  "eidolonunchained.chant.gaias_wrath.description": "Unleash the fury of the earth itself.",
+  
+  "eidolonunchained.chant.forbidden_knowledge.name": "Forbidden Knowledge",
+  "eidolonunchained.chant.forbidden_knowledge.description": "Seek out secrets that should remain hidden.",
+  
+  "_comment_deity_system": "=== DEITY SYSTEM ===",
+  "eidolonunchained.deity.nature_deity.name": "Verdania, Guardian of Nature",
+  "eidolonunchained.deity.nature_deity.description": "Ancient protector of forests and growing things",
+  
+  "eidolonunchained.deity.light_deity.name": "Lumina, Sacred Guardian",
+  "eidolonunchained.deity.light_deity.description": "Divine protector of the innocent and bringer of light",
+  
+  "eidolonunchained.deity.dark_deity.name": "Nyxathel, Shadow Lord",
+  "eidolonunchained.deity.dark_deity.description": "Master of shadows and forbidden knowledge",
+  
+  "_comment_command_system": "=== COMMAND SYSTEM ===",
+  "eidolonunchained.command.research.cleared": "Cleared all research progress for player: %s",
+  "eidolonunchained.command.research.reload": "Research system reloaded successfully!",
+  "eidolonunchained.command.research.status": "Research System Status",
+  "eidolonunchained.command.research.chapters": "Loaded chapters: %d",
+  "eidolonunchained.command.research.entries": "Loaded entries: %d",
+  "eidolonunchained.command.research.extensions": "Extensions: %d",
+  
+  "eidolonunchained.command.api.key_set": "API key set for provider: %s",
+  "eidolonunchained.command.api.key_test_success": "API connection test successful!",
+  "eidolonunchained.command.api.key_test_failed": "API key set but connection test failed. Please verify your key.",
+  "eidolonunchained.command.api.key_missing": "No API key found for provider: %s",
+  
+  "eidolonunchained.command.config.reloaded": "Configuration reloaded successfully!",
+  "eidolonunchained.command.config.validated": "All configurations validated successfully!",
+  "eidolonunchained.command.config.status": "System Status",
+  
+  "_comment_keybind_system": "=== KEYBIND SYSTEM ===",
+  "eidolonunchained.keybind.category": "Eidolon Unchained",
+  "eidolonunchained.keybind.chant_slot_1": "Sign/Chant Slot 1",
+  "eidolonunchained.keybind.chant_slot_2": "Sign/Chant Slot 2",
+  "eidolonunchained.keybind.chant_slot_3": "Sign/Chant Slot 3",
+  "eidolonunchained.keybind.chant_slot_4": "Sign/Chant Slot 4",
+  "eidolonunchained.keybind.open_chant_interface": "Open Chant Interface",
+  
+  "_comment_task_system": "=== TASK SYSTEM ===",
+  "eidolonunchained.task.enter_dimension.minecraft_nether": "Enter the Nether",
+  "eidolonunchained.task.enter_dimension.minecraft_the_end": "Enter the End",
+  "eidolonunchained.task.enter_dimension.minecraft_overworld": "Return to the Overworld",
+  "eidolonunchained.task.enter_dimension.generic": "Enter %s",
+  
+  "eidolonunchained.task.explore_biome.minecraft_desert": "Explore a Desert",
+  "eidolonunchained.task.explore_biome.minecraft_jungle": "Explore a Jungle",
+  "eidolonunchained.task.explore_biome.minecraft_swamp": "Explore a Swamp",
+  "eidolonunchained.task.explore_biome.minecraft_taiga": "Explore a Taiga",
+  "eidolonunchained.task.explore_biome.minecraft_ocean": "Explore an Ocean",
+  "eidolonunchained.task.explore_biome.minecraft_mountains": "Explore Mountains",
+  "eidolonunchained.task.explore_biome.minecraft_plains": "Explore Plains",
+  "eidolonunchained.task.explore_biome.minecraft_forest": "Explore a Forest",
+  "eidolonunchained.task.explore_biome.generic": "Explore %s",
+  "eidolonunchained.task.explore_biome.multiple": "Explore %s %d times",
+  
+  "eidolonunchained.task.weather.clear": "Complete during Clear Weather",
+  "eidolonunchained.task.weather.rain": "Complete during Rain",
+  "eidolonunchained.task.weather.thunder": "Complete during Thunderstorm",
+  
+  "eidolonunchained.task.has_nbt.single": "User contains '%s'",
+  "eidolonunchained.task.has_nbt.multiple": "User contains %d data fields",
+  
+  "_comment_ui_system": "=== UI SYSTEM ===",
+  "eidolonunchained.ui.chant.cooldown": "Chant is on cooldown for %d seconds",
+  "eidolonunchained.ui.chant.system_disabled": "Chant system is disabled",
+  "eidolonunchained.ui.chant.success": "✨ %s completed successfully!",
+  "eidolonunchained.ui.chant.deity_listening": "✨ %s completed! The deity is listening...",
+  "eidolonunchained.ui.chant.effect_failed": "Chant effect failed to execute",
+  
+  "eidolonunchained.ui.deity.api_key_required": "The divine connection requires an API key. Please contact server administrator.",
+  "eidolonunchained.ui.deity.no_response": "The deity does not respond...",
+  "eidolonunchained.ui.deity.connection_weak": "No effigy found nearby - deity communication may be weaker",
+  
+  "_comment_legacy_compatibility": "=== LEGACY COMPATIBILITY (Deprecated) ===",
+  "eidolon.codex.category.examples": "Examples",
+  "eidolon.codex.category.example_chants": "Example Chants",
+  "research.eidolonunchained.undead_hunter": "Undead Hunter",
+  "research.eidolonunchained.combat_mastery": "Combat Mastery",
+  "research.eidolonunchained.arcane_studies": "Arcane Studies",
+  "research.eidolonunchained.advanced_exploration": "Advanced Exploration",
+  "research.eidolonunchained.desert_mysteries": "Desert Mysteries",
+  "research.eidolonunchained.nether_expedition": "Nether Expedition",
+  "research.eidolonunchained.test_death_essence": "Death Essence Study",
+  "eidolon.research.eidolonunchained.undead_hunter": "Undead Hunter",
+  "eidolon.research.eidolonunchained.combat_mastery": "Combat Mastery",
+  "eidolon.research.eidolonunchained.arcane_studies": "Arcane Studies",
+  "eidolon.research.eidolonunchained.advanced_exploration": "Advanced Exploration",
+  "eidolon.research.eidolonunchained.desert_mysteries": "Desert Mysteries",
+  "eidolon.research.eidolonunchained.nether_expedition": "Nether Expedition",
+  "eidolon.research.eidolonunchained.test_death_essence": "Death Essence Study",
+  "task.eidolonunchained.enter_dimension.minecraft.nether": "Enter the Nether",
+  "task.eidolonunchained.enter_dimension.minecraft.the_end": "Enter the End",
+  "task.eidolonunchained.enter_dimension.minecraft.overworld": "Return to the Overworld",
+  "task.eidolonunchained.enter_dimension.generic": "Enter %s",
+  "task.eidolonunchained.explore_biome.minecraft.desert": "Explore a Desert",
+  "task.eidolonunchained.explore_biome.minecraft.jungle": "Explore a Jungle",
+  "task.eidolonunchained.explore_biome.minecraft.swamp": "Explore a Swamp",
+  "task.eidolonunchained.explore_biome.minecraft.taiga": "Explore a Taiga",
+  "task.eidolonunchained.explore_biome.minecraft.ocean": "Explore an Ocean",
+  "task.eidolonunchained.explore_biome.minecraft.mountains": "Explore Mountains",
+  "task.eidolonunchained.explore_biome.minecraft.plains": "Explore Plains",
+  "task.eidolonunchained.explore_biome.minecraft.forest": "Explore a Forest",
+  "task.eidolonunchained.explore_biome.generic": "Explore %s",
+  "task.eidolonunchained.explore_biome.multiple": "Explore %s %d times",
+  "task.eidolonunchained.weather.clear": "Complete during Clear Weather",
+  "task.eidolonunchained.weather.rain": "Complete during Rain",
+  "task.eidolonunchained.weather.thunder": "Complete during Thunderstorm",
+  "task.eidolonunchained.has_nbt.single": "User contains '%s'",
+  "task.eidolonunchained.has_nbt.multiple": "User contains %d data fields",
+  "key.categories.eidolonunchained": "Eidolon Unchained",
+  "key.eidolonunchained.chant_slot_1": "Sign/Chant Slot 1",
+  "key.eidolonunchained.chant_slot_2": "Sign/Chant Slot 2",
+  "key.eidolonunchained.chant_slot_3": "Sign/Chant Slot 3",
+  "key.eidolonunchained.chant_slot_4": "Sign/Chant Slot 4",
+  "key.eidolonunchained.open_chant_interface": "Open Chant Interface"
+}
