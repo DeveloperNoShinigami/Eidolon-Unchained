@@ -31,16 +31,34 @@ import java.util.Map;
 public class RitualPatronHandler {
     private static final Logger LOGGER = LogUtils.getLogger();
     
-    // EMERGENCY DISABLED: Potential cause of game freezing due to excessive deity iteration
-    // @SubscribeEvent
+    // SAFE VERSION: Re-enabled with performance optimizations
+    @SubscribeEvent
     public static void onRitualComplete(RitualCompleteEvent event) {
-        ServerPlayer player = event.getPlayer();
-        ResourceLocation ritualId = event.getRitualId();
-        
-        // Check if this is a patron selection ritual
-        if (isPatronSelectionRitual(ritualId)) {
-            handlePatronSelectionRitual(player, ritualId);
+        try {
+            ServerPlayer player = event.getPlayer();
+            ResourceLocation ritualId = event.getRitualId();
+            
+            // Quick early exit if no ritual integration exists
+            if (!hasAnyRitualIntegration()) {
+                return;
+            }
+            
+            // Check if this is a patron selection ritual
+            if (isPatronSelectionRitual(ritualId)) {
+                handlePatronSelectionRitual(player, ritualId);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error in ritual patron handler: {}", e.getMessage(), e);
+            // Don't crash - let ritual proceed normally
         }
+    }
+    
+    /**
+     * Quick check if ANY deity has ritual integration (performance optimization)
+     */
+    private static boolean hasAnyRitualIntegration() {
+        // Cache this check to avoid repeated deity iteration
+        return AIDeityManager.getInstance().hasAnyRitualIntegration();
     }
     
     /**

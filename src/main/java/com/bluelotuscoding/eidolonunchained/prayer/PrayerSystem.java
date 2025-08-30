@@ -253,7 +253,25 @@ public class PrayerSystem {
             })
             .exceptionally(throwable -> {
                 LOGGER.error("Prayer failed for player " + player.getName().getString(), throwable);
-                sendDeityMessage(player, "Divine Connection", "was interrupted.", true);
+                
+                // Enhanced error handling for specific issues
+                String errorMessage = throwable.getMessage();
+                if (errorMessage != null) {
+                    if (errorMessage.toLowerCase().contains("quota") || errorMessage.toLowerCase().contains("limit")) {
+                        sendDeityMessage(player, deity.getDisplayName(), "is conserving divine energy...", true);
+                        player.sendSystemMessage(Component.literal("§7(API quota exceeded - try again later)"));
+                    } else if (errorMessage.toLowerCase().contains("token")) {
+                        sendDeityMessage(player, deity.getDisplayName(), "has much to say but little time...", true);
+                        player.sendSystemMessage(Component.literal("§7(Response too long - try shorter prayers)"));
+                    } else if (errorMessage.toLowerCase().contains("timeout")) {
+                        sendDeityMessage(player, deity.getDisplayName(), "requires more time to consider...", true);
+                        player.sendSystemMessage(Component.literal("§7(API timeout - try again)"));
+                    } else {
+                        sendDeityMessage(player, "Divine Connection", "was interrupted.", true);
+                    }
+                } else {
+                    sendDeityMessage(player, "Divine Connection", "was interrupted.", true);
+                }
                 return null;
             });
     }

@@ -328,7 +328,28 @@ public class DeityChat {
                 
             }).exceptionally(throwable -> {
                 LOGGER.error("Error generating AI response: {}", throwable.getMessage(), throwable);
-                sendDeityResponse(player, "Divine Connection", "falters...");
+                
+                // Enhanced error handling for specific issues
+                String errorMessage = throwable.getMessage();
+                if (errorMessage != null) {
+                    if (errorMessage.toLowerCase().contains("quota") || errorMessage.toLowerCase().contains("limit")) {
+                        player.sendSystemMessage(Component.literal("§c" + deity.getName() + " §7is overwhelmed by divine energy..."));
+                        player.sendSystemMessage(Component.literal("§7(API quota exceeded - try again later)"));
+                        sendDeityResponse(player, deity.getName(), "I must conserve my divine energy for now...");
+                    } else if (errorMessage.toLowerCase().contains("token")) {
+                        player.sendSystemMessage(Component.literal("§c" + deity.getName() + " §7speaks too much for mortal comprehension..."));
+                        player.sendSystemMessage(Component.literal("§7(Response too long - try shorter messages)"));
+                        sendDeityResponse(player, deity.getName(), "My words exceed mortal understanding...");
+                    } else if (errorMessage.toLowerCase().contains("timeout")) {
+                        player.sendSystemMessage(Component.literal("§c" + deity.getName() + " §7takes time to consider your words..."));
+                        player.sendSystemMessage(Component.literal("§7(API timeout - try again)"));
+                        sendDeityResponse(player, deity.getName(), "Give me a moment to ponder...");
+                    } else {
+                        sendDeityResponse(player, "Divine Connection", "falters...");
+                    }
+                } else {
+                    sendDeityResponse(player, "Divine Connection", "falters...");
+                }
                 return null;
             });
             

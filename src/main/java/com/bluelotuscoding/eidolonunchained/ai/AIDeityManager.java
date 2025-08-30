@@ -450,6 +450,15 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
     }
     
     /**
+     * Performance optimization: Check if ANY deity has ritual integration
+     * Used to avoid expensive iteration when no ritual integration exists
+     */
+    public boolean hasAnyRitualIntegration() {
+        return aiConfigs.values().stream()
+            .anyMatch(config -> config.ritual_integration != null && !config.ritual_integration.isEmpty());
+    }
+    
+    /**
      * Register an AI configuration programmatically.
      * Used by DatapackDeityManager for consolidated deity files.
      */
