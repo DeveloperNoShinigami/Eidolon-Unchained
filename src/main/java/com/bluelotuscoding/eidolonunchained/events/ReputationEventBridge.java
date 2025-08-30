@@ -25,44 +25,25 @@ public class ReputationEventBridge {
     private static final Logger LOGGER = LogUtils.getLogger();
     
     /**
-     * 🎯 PLAYER LOGIN PROGRESSION CHECK
+     * 🚨 EMERGENCY DISABLE: PLAYER LOGIN PROGRESSION CHECK
      * 
-     * When a player logs in, check their current progression status.
-     * This ensures any missed progression events are caught up.
+     * TEMPORARILY DISABLED - Might be causing freezing during login.
      */
-    @SubscribeEvent
-    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        
-        try {
-            LOGGER.info("🔍 Checking progression for player {} on login", player.getName().getString());
-            
-            // Trigger a progression check to catch up any missed events
-            ReputationProgressionHandler.checkPlayerProgression(player);
-            
-        } catch (Exception e) {
-            LOGGER.error("🚨 Error checking progression on player login", e);
-        }
+    // @SubscribeEvent
+    public static void onPlayerLogin_DISABLED(PlayerEvent.PlayerLoggedInEvent event) {
+        // DISABLED - This might be causing freezing during login
+        return;
     }
     
     /**
-     * 🧹 PLAYER LOGOUT CLEANUP
+     * 🚨 EMERGENCY DISABLE: PLAYER LOGOUT CLEANUP
      * 
-     * Clean up progression tracking data when player disconnects.
+     * TEMPORARILY DISABLED - Being extra safe.
      */
-    @SubscribeEvent
-    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        
-        try {
-            LOGGER.debug("🧹 Cleaning up progression data for player {}", player.getName().getString());
-            
-            // Clean up tracking data to prevent memory leaks
-            ReputationProgressionHandler.cleanupPlayer(player.getUUID());
-            
-        } catch (Exception e) {
-            LOGGER.error("🚨 Error cleaning up progression data on logout", e);
-        }
+    // @SubscribeEvent
+    public static void onPlayerLogout_DISABLED(PlayerEvent.PlayerLoggedOutEvent event) {
+        // DISABLED - Being extra safe about event handling
+        return;
     }
     
     /**
