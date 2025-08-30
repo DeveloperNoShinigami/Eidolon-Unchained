@@ -1679,20 +1679,23 @@ public class UnifiedCommands {
             diagnostic.append(String.format("   Glowstone: %s\n", hasGlowstone ? "§a✅" : "§c❌"));
             diagnostic.append(String.format("   Golden Apple: %s\n", hasGoldenApple ? "§a✅" : "§c❌"));
             
-            if (!hasCodex) {
-                diagnostic.append("   §7Suggestion: Get an Eidolon Codex for invariant items\n");
-            }
+            diagnostic.append("   §c⚠ NOTE: Codex must be in NECROTIC FOCUS, not inventory!\n");
             
             // 6. Final recommendations
             diagnostic.append("§e6. Ritual Execution Checklist:\n");
             diagnostic.append("   §71. Place Brazier\n");
-            diagnostic.append("   §72. Place Glowstone Dust in center\n");
-            diagnostic.append("   §73. Place pedestals around brazier (4 blocks away)\n");
-            diagnostic.append("   §74. Put required items on pedestals\n");
-            diagnostic.append("   §75. Have Codex in inventory (invariant item)\n");
-            diagnostic.append("   §76. Light brazier with Flint & Steel\n");
-            diagnostic.append("   §77. Wait for ritual to find ingredients (4 seconds)\n");
-            diagnostic.append("   §78. Watch for ritual symbol and effects\n");
+            diagnostic.append("   §72. Place Glowstone Dust in center of brazier\n");
+            diagnostic.append("   §73. Place 4 Stone Hands around brazier (4 blocks away)\n");
+            diagnostic.append("   §74. Put pedestalItems on Stone Hands:\n");
+            diagnostic.append("      §7- Glowstone Dust\n");
+            diagnostic.append("      §7- Golden Apple\n");
+            diagnostic.append("      §7- Arcane Gold Ingot\n");
+            diagnostic.append("      §7- Holy Symbol\n");
+            diagnostic.append("   §75. Place 1 Necrotic Focus near brazier\n");
+            diagnostic.append("   §76. Put Eidolon Codex in Necrotic Focus (invariant item)\n");
+            diagnostic.append("   §77. Light brazier with Flint & Steel\n");
+            diagnostic.append("   §78. Wait for ritual to find ingredients (4 seconds)\n");
+            diagnostic.append("   §79. Watch for ritual symbol and effects\n");
             
         } catch (Exception e) {
             diagnostic.append(String.format("§c❌ Diagnostic failed: %s\n", e.getMessage()));
