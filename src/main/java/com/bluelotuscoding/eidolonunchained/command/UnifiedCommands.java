@@ -164,6 +164,12 @@ public class UnifiedCommands {
                     .then(Commands.argument("player", StringArgumentType.string())
                         .then(Commands.argument("deity", StringArgumentType.string())
                             .executes(UnifiedCommands::debugPlayerReputation))))
+                .then(Commands.literal("ritual")
+                    .then(Commands.literal("list")
+                        .executes(UnifiedCommands::listLoadedRituals))
+                    .then(Commands.literal("test")
+                        .then(Commands.argument("ritual_id", StringArgumentType.string())
+                            .executes(UnifiedCommands::testRitualExecution))))
                 .then(Commands.literal("clear-rewards")
                     .then(Commands.argument("player", StringArgumentType.string())
                         .then(Commands.argument("deity", StringArgumentType.string())
@@ -1400,6 +1406,76 @@ public class UnifiedCommands {
             
         } catch (Exception e) {
             context.getSource().sendFailure(Component.literal("§cError clearing rewards: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    /**
+     * 🔮 LIST LOADED RITUALS
+     * 
+     * Shows all loaded ritual recipes for debugging
+     */
+    private static int listLoadedRituals(CommandContext<CommandSourceStack> context) {
+        try {
+            var server = context.getSource().getServer();
+            var recipeManager = server.getRecipeManager();
+            
+            context.getSource().sendSuccess(() -> Component.literal("§6=== LOADED RITUALS ==="), false);
+            
+            var commandRituals = recipeManager.getAllRecipesFor(elucent.eidolon.registries.EidolonRecipes.COMMAND_RITUAL_TYPE.get());
+            var basicRituals = recipeManager.getAllRecipesFor(elucent.eidolon.registries.EidolonRecipes.RITUAL_TYPE.get());
+            
+            context.getSource().sendSuccess(() -> Component.literal("§eCommand Rituals: §f" + commandRituals.size()), false);
+            commandRituals.forEach(recipe -> {
+                context.getSource().sendSuccess(() -> Component.literal("  §7- §b" + recipe.getId()), false);
+            });
+            
+            context.getSource().sendSuccess(() -> Component.literal("§eBasic Rituals: §f" + basicRituals.size()), false);
+            basicRituals.forEach(recipe -> {
+                context.getSource().sendSuccess(() -> Component.literal("  §7- §a" + recipe.getId()), false);
+            });
+            
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError listing rituals: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    /**
+     * 🧪 TEST RITUAL EXECUTION
+     * 
+     * Manually triggers a ritual for testing (fires the RitualCompleteEvent)
+     */
+    private static int testRitualExecution(CommandContext<CommandSourceStack> context) {
+        try {
+            String ritualId = StringArgumentType.getString(context, "ritual_id");
+            var source = context.getSource();
+            
+            if (!(source.getEntity() instanceof ServerPlayer player)) {
+                source.sendFailure(Component.literal("§cThis command must be run by a player"));
+                return 0;
+            }
+            
+            ResourceLocation ritualLocation = new ResourceLocation(ritualId);
+            
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§6Testing ritual execution: §f" + ritualId), false);
+            
+            // Create and fire the ritual complete event
+            RitualCompleteEvent event = new RitualCompleteEvent(player, ritualLocation, true);
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event);
+            
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§aRitualCompleteEvent fired successfully!"), false);
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§7Check logs and game for any triggered effects"), false);
+            
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError testing ritual: " + e.getMessage()));
             return 0;
         }
     }

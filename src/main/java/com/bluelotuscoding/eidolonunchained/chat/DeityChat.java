@@ -375,6 +375,10 @@ public class DeityChat {
         double reputation = deity.getPlayerReputation(player);
         String progressionLevel = getDynamicProgressionLevel(deity, player);
         
+        // 🐛 DEBUG: Log what the AI is actually seeing
+        LOGGER.info("🤖 AI DEBUG for {}/{}: reputation={}, progressionLevel='{}'", 
+            player.getName().getString(), deity.getName(), reputation, progressionLevel);
+        
         prompt.append("This player holds the rank of ").append(progressionLevel)
               .append(" with you (reputation: ").append((int)reputation).append("). ");
         

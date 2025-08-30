@@ -284,10 +284,17 @@ public class PrayerSystem {
         String ritualHistory = com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.getRitualHistorySummary(player);
         
         // Replace placeholders
+        double reputation = deity.getPlayerReputation(player);
+        String progressionLevel = getProgressionLevel(deity, player);
+        
+        // 🐛 DEBUG: Log what the AI is actually seeing (Prayer System)
+        LOGGER.info("🙏 PRAYER DEBUG for {}/{}: reputation={}, progressionLevel='{}'", 
+            player.getName().getString(), deity.getName(), reputation, progressionLevel);
+        
         basePrompt = basePrompt.replace("{player}", player.getName().getString());
-        basePrompt = basePrompt.replace("{reputation}", String.valueOf(deity.getPlayerReputation(player)));
+        basePrompt = basePrompt.replace("{reputation}", String.valueOf(reputation));
         basePrompt = basePrompt.replace("{research_count}", "0"); // TODO: Integrate with research system
-        basePrompt = basePrompt.replace("{progression_level}", getProgressionLevel(deity, player));
+        basePrompt = basePrompt.replace("{progression_level}", progressionLevel);
         
         // Add context
         String context = GeminiAPIClient.buildPlayerContext(player);
