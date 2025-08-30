@@ -199,8 +199,9 @@ public class DeityChat {
     
     /**
      * Handle chat events for active conversations
+     * EMERGENCY DISABLED: Potential cause of game freezing
      */
-    @SubscribeEvent
+    // @SubscribeEvent
     public static void onServerChat(ServerChatEvent event) {
         ServerPlayer player = event.getPlayer();
         UUID playerId = player.getUUID();

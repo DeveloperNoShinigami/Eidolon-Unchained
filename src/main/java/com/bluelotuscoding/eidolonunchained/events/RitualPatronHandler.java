@@ -31,7 +31,8 @@ import java.util.Map;
 public class RitualPatronHandler {
     private static final Logger LOGGER = LogUtils.getLogger();
     
-    @SubscribeEvent
+    // EMERGENCY DISABLED: Potential cause of game freezing due to excessive deity iteration
+    // @SubscribeEvent
     public static void onRitualComplete(RitualCompleteEvent event) {
         ServerPlayer player = event.getPlayer();
         ResourceLocation ritualId = event.getRitualId();
