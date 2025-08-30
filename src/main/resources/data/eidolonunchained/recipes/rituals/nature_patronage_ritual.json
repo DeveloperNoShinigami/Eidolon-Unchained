@@ -1,10 +1,12 @@
 {
-  "type": "eidolon:command_ritual",
-  "ritual": "eidolonunchained:nature_patronage",
-  "symbol": "eidolonunchained:textures/symbols/nature_patronage.png",
-  "reagent": {
-    "item": "minecraft:oak_sapling"
-  },
+  "type": "eidolon:ritual_brazier_command",
+  "symbol": "eidolon:particle/harmony_sign",
+  "color": 4767824,
+  "reagent": [
+    {
+      "item": "minecraft:oak_sapling"
+    }
+  ],
   "pedestalItems": [
     {
       "item": "minecraft:oak_sapling"
@@ -30,14 +32,5 @@
     "tellraw @p {\"text\":\"§2Verdania's blessing flows through you as nature accepts your devotion!\",\"color\":\"green\"}",
     "playsound minecraft:block.grass.break player @p ~ ~ ~ 1.0 1.2",
     "particle minecraft:happy_villager ~ ~1 ~ 2 2 2 0.1 50 force"
-  ],
-  "color": "0x4F7F4F",
-  "health_requirement": 0.0,
-  "description": [
-    "§2Nature Patronage Ritual",
-    "§7Dedicate yourself to the service of Verdania, the Nature Deity.",
-    "§7Requires 25+ reputation and offerings of life and growth.",
-    "§7Warning: Abandoning your current patron will incur penalties.",
-    "§7Focus: Eidolon Codex (not consumed)"
   ]
 }

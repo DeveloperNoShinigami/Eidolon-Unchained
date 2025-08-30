@@ -1,10 +1,12 @@
 {
-  "type": "eidolon:command_ritual",
-  "ritual": "eidolonunchained:light_patronage",
-  "symbol": "eidolonunchained:textures/symbols/light_patronage.png",
-  "reagent": {
-    "item": "minecraft:glowstone_dust"
-  },
+  "type": "eidolon:ritual_brazier_command",
+  "symbol": "eidolon:particle/sacred_sign",
+  "color": 16773120,
+  "reagent": [
+    {
+      "item": "minecraft:glowstone_dust"
+    }
+  ],
   "pedestalItems": [
     {
       "item": "minecraft:glowstone_dust"
@@ -30,15 +32,5 @@
     "tellraw @p {\"text\":\"§eThe sacred light of Lumina fills your soul! You are now blessed as her champion!\",\"color\":\"yellow\"}",
     "playsound minecraft:block.beacon.activate player @p ~ ~ ~ 1.0 1.2",
     "particle minecraft:end_rod ~ ~1 ~ 1 1 1 0.1 30 force"
-  ],
-  "color": "0xFFD700",
-  "health_requirement": 0.0,
-  "description": [
-    "§6Light Patronage Ritual",
-    "§7Dedicate your soul to Luminara, the Light Deity.",
-    "§7Requires 30+ reputation and must be performed during day.",
-    "§eThe pure of heart are welcome in the divine light.",
-    "§7Let righteousness guide your path.",
-    "§7Focus: Eidolon Codex (not consumed)"
   ]
 }
