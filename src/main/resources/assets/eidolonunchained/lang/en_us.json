@@ -209,5 +209,34 @@
   "key.eidolonunchained.chant_slot_2": "Sign/Chant Slot 2",
   "key.eidolonunchained.chant_slot_3": "Sign/Chant Slot 3",
   "key.eidolonunchained.chant_slot_4": "Sign/Chant Slot 4",
-  "key.eidolonunchained.open_chant_interface": "Open Chant Interface"
+  "key.eidolonunchained.open_chant_interface": "Open Chant Interface",
+  
+  "_comment_patron_titles": "=== PATRON TITLE SYSTEM ===",
+  "_comment_dark_deity_titles": "Dark Deity (Nyxathel) - Shadow Path",
+  "eidolonunchained.patron.title.dark_deity.initiate": "Shadow Initiate",
+  "eidolonunchained.patron.title.dark_deity.acolyte": "Dark Acolyte",
+  "eidolonunchained.patron.title.dark_deity.priest": "Shadow Priest",
+  "eidolonunchained.patron.title.dark_deity.high_priest": "Void Master",
+  "eidolonunchained.patron.title.dark_deity.champion": "Shadow Champion",
+  
+  "_comment_light_deity_titles": "Light Deity (Lumina) - Sacred Path",
+  "eidolonunchained.patron.title.light_deity.initiate": "Light Bearer",
+  "eidolonunchained.patron.title.light_deity.acolyte": "Sacred Acolyte", 
+  "eidolonunchained.patron.title.light_deity.priest": "Divine Priest",
+  "eidolonunchained.patron.title.light_deity.high_priest": "Radiant Oracle",
+  "eidolonunchained.patron.title.light_deity.champion": "Light Champion",
+  
+  "_comment_nature_deity_titles": "Nature Deity (Verdania) - Natural Path",
+  "eidolonunchained.patron.title.nature_deity.initiate": "Nature's Child",
+  "eidolonunchained.patron.title.nature_deity.acolyte": "Grove Keeper",
+  "eidolonunchained.patron.title.nature_deity.priest": "Druid",
+  "eidolonunchained.patron.title.nature_deity.high_priest": "Elder Druid",
+  "eidolonunchained.patron.title.nature_deity.champion": "Nature's Champion",
+  
+  "_comment_generic_titles": "Generic Fallback Titles",
+  "eidolonunchained.patron.title.generic.initiate": "Initiate",
+  "eidolonunchained.patron.title.generic.acolyte": "Acolyte",
+  "eidolonunchained.patron.title.generic.priest": "Priest",
+  "eidolonunchained.patron.title.generic.high_priest": "High Priest",
+  "eidolonunchained.patron.title.generic.champion": "Champion"
 }
