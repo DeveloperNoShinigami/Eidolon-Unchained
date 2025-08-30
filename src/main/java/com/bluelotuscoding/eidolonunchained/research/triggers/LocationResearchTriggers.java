@@ -18,8 +18,10 @@ import net.minecraftforge.fml.common.Mod;
 import org.slf4j.Logger;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -30,6 +32,9 @@ public class LocationResearchTriggers {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Map<UUID, Integer> PLAYER_CHECK_TIMERS = new HashMap<>();
     private static final int CHECK_INTERVAL = 60; // Check every 3 seconds (60 ticks)
+    
+    // Track triggered research per player to prevent infinite loops
+    private static final Map<String, Set<String>> PLAYER_TRIGGERED_RESEARCH = new HashMap<>();
     
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
@@ -52,14 +57,44 @@ public class LocationResearchTriggers {
      * Check all location-based triggers for a player
      */
     private static void checkLocationTriggers(ServerPlayer player) {
+        // Check if player has notetaking tools (required for research discovery)
+        if (!hasNotetakingTools(player)) {
+            return; // No tools, no research discovery
+        }
+        
         Map<String, List<ResearchTrigger>> allTriggers = ResearchTriggerLoader.getTriggersForAllResearch();
+        String playerKey = player.getUUID().toString();
         
         for (Map.Entry<String, List<ResearchTrigger>> entry : allTriggers.entrySet()) {
             String researchId = entry.getKey();
             
+            // Check if this research has already been triggered enough times for this player
+            String triggerKey = playerKey + ":" + researchId;
+            Set<String> triggeredResearch = PLAYER_TRIGGERED_RESEARCH.getOrDefault(playerKey, new HashSet<>());
+            
             for (ResearchTrigger trigger : entry.getValue()) {
                 if (shouldCheckTrigger(trigger, player)) {
-                    giveResearchNote(player, researchId);
+                    // Check max_found limit
+                    long currentCount = triggeredResearch.stream()
+                        .filter(key -> key.startsWith(researchId + ":"))
+                        .count();
+                    
+                    if (currentCount < trigger.getMaxFound()) {
+                        // Consume notetaking tool before giving research
+                        if (consumeNotetakingTool(player)) {
+                            giveResearchNote(player, researchId);
+                            
+                            // Track this trigger
+                            triggeredResearch.add(triggerKey + ":" + System.currentTimeMillis());
+                            PLAYER_TRIGGERED_RESEARCH.put(playerKey, triggeredResearch);
+                            
+                            LOGGER.debug("Player {} triggered location research '{}' ({}/{} times)", 
+                                player.getName().getString(), researchId, currentCount + 1, trigger.getMaxFound());
+                        } else {
+                            LOGGER.warn("Failed to consume notetaking tool for player {}, research discovery cancelled", 
+                                player.getName().getString());
+                        }
+                    }
                 }
             }
         }
@@ -196,6 +231,50 @@ public class LocationResearchTriggers {
             
         } catch (Exception e) {
             LOGGER.error("Failed to check structure trigger: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Check if player has notetaking tools required for research discovery
+     */
+    private static boolean hasNotetakingTools(ServerPlayer player) {
+        try {
+            // Check for Eidolon notetaking tools only
+            return player.getInventory().hasAnyMatching(stack -> {
+                String itemName = stack.getItem().toString().toLowerCase();
+                return itemName.contains("notetaking");
+            });
+        } catch (Exception e) {
+            LOGGER.error("Failed to check notetaking tools: {}", e.getMessage());
+            return false; // Default to no tools if check fails
+        }
+    }
+    
+    /**
+     * Consume one notetaking tool from player's inventory
+     */
+    private static boolean consumeNotetakingTool(ServerPlayer player) {
+        try {
+            var inventory = player.getInventory();
+            
+            // Find and consume one notetaking tool
+            for (int i = 0; i < inventory.getContainerSize(); i++) {
+                ItemStack stack = inventory.getItem(i);
+                if (!stack.isEmpty()) {
+                    String itemName = stack.getItem().toString().toLowerCase();
+                    if (itemName.contains("notetaking")) {
+                        stack.shrink(1); // Remove 1 count
+                        LOGGER.debug("Consumed 1 notetaking tool from player {}", player.getName().getString());
+                        return true;
+                    }
+                }
+            }
+            
+            LOGGER.warn("Failed to find notetaking tool to consume for player {}", player.getName().getString());
+            return false;
+        } catch (Exception e) {
+            LOGGER.error("Failed to consume notetaking tool: {}", e.getMessage());
             return false;
         }
     }

@@ -119,12 +119,11 @@ public class ResearchTriggerLoader {
                 return null;
             }
         } else if (triggerElement.isJsonPrimitive()) {
-            // Handle legacy simple triggers (entity names)
-            String triggerStr = triggerElement.getAsString();
-            ResearchTrigger trigger = new ResearchTrigger();
-            trigger.setType("kill_entity");
-            trigger.setEntity(triggerStr);
-            return trigger;
+            // Skip simple string triggers - these are handled by Eidolon's native system
+            // Simple strings like "minecraft:zombie" are for entity discovery/interaction, not kills
+            LOGGER.debug("Skipping simple string trigger '{}' - handled by Eidolon's native research system", 
+                triggerElement.getAsString());
+            return null;
         }
         
         return null;

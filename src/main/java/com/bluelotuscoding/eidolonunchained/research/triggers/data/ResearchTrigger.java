@@ -36,6 +36,10 @@ public class ResearchTrigger {
     @SerializedName("proximity_range")
     private double proximityRange = 1.0;
     
+    // Trigger limiting (prevents infinite location triggers)
+    @SerializedName("max_found")
+    private int maxFound = 1; // Default: trigger only once per player
+    
     // Coordinate-based triggers (optional)
     @SerializedName("coordinates")
     private Coordinates coordinates;
@@ -104,6 +108,10 @@ public class ResearchTrigger {
         return proximityRange;
     }
     
+    public int getMaxFound() {
+        return maxFound;
+    }
+    
     public Coordinates getCoordinates() {
         return coordinates;
     }
@@ -147,6 +155,10 @@ public class ResearchTrigger {
     
     public void setProximityRange(double proximityRange) {
         this.proximityRange = proximityRange;
+    }
+    
+    public void setMaxFound(int maxFound) {
+        this.maxFound = maxFound;
     }
     
     public void setCoordinates(Coordinates coordinates) {
