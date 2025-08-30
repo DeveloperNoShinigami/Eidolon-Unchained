@@ -14,8 +14,12 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceLocation;
@@ -23,6 +27,8 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 // Eidolon integration imports
 import elucent.eidolon.util.KnowledgeUtil;
@@ -34,6 +40,79 @@ import net.minecraftforge.common.MinecraftForge;
  * Consolidates configuration, AI, deity, prayer, chant, and patron commands
  */
 public class UnifiedCommands {
+    
+    // 🎯 SUGGESTION PROVIDERS FOR TAB COMPLETION
+    
+    /**
+     * Suggests available deity IDs
+     */
+    private static final SuggestionProvider<CommandSourceStack> DEITY_SUGGESTIONS = (context, builder) -> {
+        return SharedSuggestionProvider.suggest(
+            DatapackDeityManager.getAllDeities().keySet().stream()
+                .map(ResourceLocation::toString)
+                .collect(Collectors.toList()),
+            builder
+        );
+    };
+    
+    /**
+     * Suggests online player names
+     */
+    private static final SuggestionProvider<CommandSourceStack> PLAYER_SUGGESTIONS = (context, builder) -> {
+        return SharedSuggestionProvider.suggest(
+            context.getSource().getServer().getPlayerList().getPlayers().stream()
+                .map(player -> player.getName().getString())
+                .collect(Collectors.toList()),
+            builder
+        );
+    };
+    
+    /**
+     * Suggests available API providers
+     */
+    private static final SuggestionProvider<CommandSourceStack> API_PROVIDER_SUGGESTIONS = (context, builder) -> {
+        return SharedSuggestionProvider.suggest(
+            List.of("gemini", "openai", "anthropic"),
+            builder
+        );
+    };
+    
+    /**
+     * Suggests available ritual IDs
+     */
+    private static final SuggestionProvider<CommandSourceStack> RITUAL_SUGGESTIONS = (context, builder) -> {
+        var server = context.getSource().getServer();
+        var recipeManager = server.getRecipeManager();
+        
+        var ritualIds = java.util.stream.Stream.concat(
+            recipeManager.getAllRecipesFor(elucent.eidolon.registries.EidolonRecipes.COMMAND_RITUAL_TYPE.get()).stream(),
+            recipeManager.getAllRecipesFor(elucent.eidolon.registries.EidolonRecipes.RITUAL_TYPE.get()).stream()
+        ).map(recipe -> recipe.getId().toString()).collect(Collectors.toList());
+        
+        return SharedSuggestionProvider.suggest(ritualIds, builder);
+    };
+    
+    /**
+     * Suggests available chant IDs
+     */
+    private static final SuggestionProvider<CommandSourceStack> CHANT_SUGGESTIONS = (context, builder) -> {
+        // Get chants from DatapackChantManager if available
+        try {
+            var chantIds = com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager.getAllChants()
+                .keySet().stream().collect(Collectors.toList());
+            if (!chantIds.isEmpty()) {
+                return SharedSuggestionProvider.suggest(chantIds, builder);
+            }
+        } catch (Exception e) {
+            // Fallback to examples if manager is not available
+        }
+        
+        // Fallback examples
+        return SharedSuggestionProvider.suggest(
+            List.of("example:nature_blessing", "example:divine_protection", "example:shadow_step"),
+            builder
+        );
+    };
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         
@@ -56,6 +135,7 @@ public class UnifiedCommands {
             .then(Commands.literal("api")
                 .then(Commands.literal("set")
                     .then(Commands.argument("provider", StringArgumentType.string())
+                        .suggests(API_PROVIDER_SUGGESTIONS)
                         .then(Commands.argument("key", StringArgumentType.string())
                             .executes(UnifiedCommands::setApiKey))))
                 .then(Commands.literal("set-model")
@@ -65,11 +145,13 @@ public class UnifiedCommands {
                     .executes(UnifiedCommands::getAIModel))
                 .then(Commands.literal("test")
                     .then(Commands.argument("provider", StringArgumentType.string())
+                        .suggests(API_PROVIDER_SUGGESTIONS)
                         .executes(UnifiedCommands::testApiKey)))
                 .then(Commands.literal("list")
                     .executes(UnifiedCommands::listApiKeys))
                 .then(Commands.literal("remove")
                     .then(Commands.argument("provider", StringArgumentType.string())
+                        .suggests(API_PROVIDER_SUGGESTIONS)
                         .executes(UnifiedCommands::removeApiKey)))
                 .then(Commands.literal("retry")
                     .then(Commands.literal("status")
@@ -91,12 +173,14 @@ public class UnifiedCommands {
                     .executes(UnifiedCommands::reloadDeities))
                 .then(Commands.literal("status")
                     .then(Commands.argument("deity", StringArgumentType.string())
+                        .suggests(DEITY_SUGGESTIONS)
                         .executes(UnifiedCommands::showDeityStatus))))
             
             // Patron system
             .then(Commands.literal("patron")
                 .then(Commands.literal("choose")
                     .then(Commands.argument("deity", StringArgumentType.string())
+                        .suggests(DEITY_SUGGESTIONS)
                         .executes(UnifiedCommands::choosePatron)))
                 .then(Commands.literal("abandon")
                     .executes(UnifiedCommands::abandonPatron))
@@ -106,6 +190,7 @@ public class UnifiedCommands {
                     .executes(UnifiedCommands::listPatronTitles))
                 .then(Commands.literal("confirm")
                     .then(Commands.argument("deity", StringArgumentType.string())
+                        .suggests(DEITY_SUGGESTIONS)
                         .executes(UnifiedCommands::confirmPatronChoice))))
             
             // Chant system
@@ -118,6 +203,7 @@ public class UnifiedCommands {
                     .executes(UnifiedCommands::generateChants))
                 .then(Commands.literal("test")
                     .then(Commands.argument("chant", StringArgumentType.string())
+                        .suggests(CHANT_SUGGESTIONS)
                         .executes(UnifiedCommands::testChant))))
             
             // Prayer system
@@ -126,6 +212,7 @@ public class UnifiedCommands {
                     .executes(UnifiedCommands::showPrayerHistory))
                 .then(Commands.literal("clear-cooldown")
                     .then(Commands.argument("player", StringArgumentType.string())
+                        .suggests(PLAYER_SUGGESTIONS)
                         .executes(UnifiedCommands::clearPrayerCooldown))))
             
             // Conversation system  
@@ -134,6 +221,7 @@ public class UnifiedCommands {
                     .executes(UnifiedCommands::showConversationStats))
                 .then(Commands.literal("clear")
                     .then(Commands.argument("deity", StringArgumentType.string())
+                        .suggests(DEITY_SUGGESTIONS)
                         .executes(UnifiedCommands::clearConversationHistory)))
                 .then(Commands.literal("clear-all")
                     .executes(UnifiedCommands::clearAllConversationHistory)))
@@ -142,6 +230,7 @@ public class UnifiedCommands {
             .then(Commands.literal("research")
                 .then(Commands.literal("clear")
                     .then(Commands.argument("player", StringArgumentType.string())
+                        .suggests(PLAYER_SUGGESTIONS)
                         .executes(UnifiedCommands::clearPlayerResearch)))
                 .then(Commands.literal("reload")
                     .executes(UnifiedCommands::reloadResearch))
@@ -153,26 +242,33 @@ public class UnifiedCommands {
                 .requires(cs -> cs.hasPermission(2))
                 .then(Commands.literal("progression")
                     .then(Commands.argument("player", StringArgumentType.string())
+                        .suggests(PLAYER_SUGGESTIONS)
                         .executes(UnifiedCommands::debugPlayerProgression)))
                 .then(Commands.literal("force-progression-check")
                     .then(Commands.argument("player", StringArgumentType.string())
+                        .suggests(PLAYER_SUGGESTIONS)
                         .executes(UnifiedCommands::forceProgressionCheck)))
                 .then(Commands.literal("test-command")
                     .then(Commands.argument("command", StringArgumentType.greedyString())
                         .executes(UnifiedCommands::testDeityCommand)))
                 .then(Commands.literal("reputation")
                     .then(Commands.argument("player", StringArgumentType.string())
+                        .suggests(PLAYER_SUGGESTIONS)
                         .then(Commands.argument("deity", StringArgumentType.string())
+                            .suggests(DEITY_SUGGESTIONS)
                             .executes(UnifiedCommands::debugPlayerReputation))))
                 .then(Commands.literal("ritual")
                     .then(Commands.literal("list")
                         .executes(UnifiedCommands::listLoadedRituals))
                     .then(Commands.literal("test")
                         .then(Commands.argument("ritual_id", StringArgumentType.string())
+                            .suggests(RITUAL_SUGGESTIONS)
                             .executes(UnifiedCommands::testRitualExecution))))
                 .then(Commands.literal("clear-rewards")
                     .then(Commands.argument("player", StringArgumentType.string())
+                        .suggests(PLAYER_SUGGESTIONS)
                         .then(Commands.argument("deity", StringArgumentType.string())
+                            .suggests(DEITY_SUGGESTIONS)
                             .executes(UnifiedCommands::clearPlayerRewards)))))
             
             // TODO: Reputation system commands - implement these methods when needed
@@ -209,18 +305,25 @@ public class UnifiedCommands {
                     .executes(UnifiedCommands::debugTriggers))
                 .then(Commands.literal("commands")
                     .then(Commands.argument("player", StringArgumentType.string())
+                        .suggests(PLAYER_SUGGESTIONS)
                         .then(Commands.argument("deity", StringArgumentType.string())
+                            .suggests(DEITY_SUGGESTIONS)
                             .executes(UnifiedCommands::showCommandHistory))))
                 .then(Commands.literal("report")
                     .then(Commands.argument("player", StringArgumentType.string())
+                        .suggests(PLAYER_SUGGESTIONS)
                         .then(Commands.argument("deity", StringArgumentType.string())
+                            .suggests(DEITY_SUGGESTIONS)
                             .executes(UnifiedCommands::generateCommandReport))))
                 .then(Commands.literal("personality")
                     .then(Commands.argument("player", StringArgumentType.string())
+                        .suggests(PLAYER_SUGGESTIONS)
                         .then(Commands.argument("deity", StringArgumentType.string())
+                            .suggests(DEITY_SUGGESTIONS)
                             .executes(UnifiedCommands::debugPersonality))))
                 .then(Commands.literal("fire-ritual-completion")
                     .then(Commands.argument("ritual", StringArgumentType.string())
+                        .suggests(RITUAL_SUGGESTIONS)
                         .executes(UnifiedCommands::fireRitualCompletion)))
                 .then(Commands.literal("validate-all")
                     .executes(UnifiedCommands::validateAll)))
