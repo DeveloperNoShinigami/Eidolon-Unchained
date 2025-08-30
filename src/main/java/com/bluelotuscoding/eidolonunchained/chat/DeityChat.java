@@ -199,32 +199,41 @@ public class DeityChat {
     
     /**
      * Handle chat events for active conversations
-     * EMERGENCY DISABLED: Potential cause of game freezing
+     * SAFE VERSION: Only processes messages for players in active conversations
      */
-    // @SubscribeEvent
+    @SubscribeEvent
     public static void onServerChat(ServerChatEvent event) {
         ServerPlayer player = event.getPlayer();
         UUID playerId = player.getUUID();
         
+        // SAFETY CHECK: Only process if player is actually in a conversation
         if (!activeConversations.containsKey(playerId)) {
-            return; // Not in a conversation
+            return; // Not in a conversation - let normal chat proceed
         }
         
-        String message = event.getMessage().getString();
-        
-        // Check for conversation end commands
-        if (message.equalsIgnoreCase("amen") || message.equalsIgnoreCase("end") || message.equalsIgnoreCase("stop")) {
+        try {
+            String message = event.getMessage().getString();
+            
+            // Check for conversation end commands
+            if (message.equalsIgnoreCase("amen") || message.equalsIgnoreCase("end") || message.equalsIgnoreCase("stop")) {
+                endConversation(player);
+                event.setCanceled(true); // Don't broadcast the end command
+                return;
+            }
+            
+            // Process the message with the deity
+            ResourceLocation deityId = activeConversations.get(playerId);
+            if (deityId != null) {
+                processDeityConversation(player, deityId, message);
+                event.setCanceled(true); // Only cancel if successfully processed
+            }
+            
+        } catch (Exception e) {
+            // SAFETY: If anything goes wrong, end the conversation and let chat proceed normally
+            LOGGER.error("Error in deity chat handler, ending conversation for safety: {}", e.getMessage());
             endConversation(player);
-            event.setCanceled(true); // Don't broadcast the end command
-            return;
+            // Don't cancel the event so normal chat works
         }
-        
-        // Process the message with the deity
-        ResourceLocation deityId = activeConversations.get(playerId);
-        processDeityConversation(player, deityId, message);
-        
-        // Cancel the event to prevent normal chat broadcasting
-        event.setCanceled(true);
     }
     
     /**
