@@ -6,7 +6,8 @@
   "refmap": "eidolonunchained.refmap.json",
   "mixins": [
     "ReputationImplMixin",
-    "CommandRitualRecipeSerializerMixin"
+    "CommandRitualRecipeSerializerMixin",
+    "GenericRitualRecipeMixin"
   ],
   "client": [
   ],
