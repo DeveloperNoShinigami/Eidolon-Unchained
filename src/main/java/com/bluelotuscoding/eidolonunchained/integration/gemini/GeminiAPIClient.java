@@ -106,13 +106,73 @@ public class GeminiAPIClient {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 JsonObject requestBody = buildRequestBody(prompt, personality, genConfig, safetySettings);
-                String response = sendRequest(requestBody);
+                String response = sendRequestWithRetry(requestBody);
                 return parseResponse(response);
+            } catch (IOException e) {
+                // Enhanced error handling with specific messages for different scenarios
+                if (e.getMessage() != null && e.getMessage().contains("503")) {
+                    LOGGER.error("API overloaded even after retries: {}", e.getMessage());
+                    return new AIResponse(false, "The divine channels are overwhelmed. Please try again in a moment.", List.of());
+                } else if (e.getMessage() != null && e.getMessage().contains("401")) {
+                    LOGGER.error("API authentication failed: {}", e.getMessage());
+                    return new AIResponse(false, "The divine connection is misconfigured. Please check your sacred keys.", List.of());
+                } else if (e.getMessage() != null && e.getMessage().contains("429")) {
+                    LOGGER.error("Rate limit exceeded: {}", e.getMessage());
+                    return new AIResponse(false, "You have prayed too often. Please wait before seeking divine wisdom again.", List.of());
+                } else {
+                    LOGGER.error("Failed to generate AI response", e);
+                    return new AIResponse(false, "I cannot hear your prayer clearly right now. Please try again later.", List.of());
+                }
             } catch (Exception e) {
-                LOGGER.error("Failed to generate AI response", e);
-                return new AIResponse(false, "I cannot hear your prayer clearly right now. Please try again later.", List.of());
+                LOGGER.error("Unexpected error generating AI response", e);
+                return new AIResponse(false, "The divine realm is experiencing disturbances. Please try again later.", List.of());
             }
         }, EXECUTOR);
+    }
+    
+    /**
+     * Send request with automatic retry logic for overloaded servers
+     */
+    private String sendRequestWithRetry(JsonObject requestBody) throws IOException {
+        // Get retry configuration from config
+        boolean retryEnabled = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.enableApiRetry.get();
+        if (!retryEnabled) {
+            return sendRequest(requestBody);
+        }
+        
+        int maxRetries = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.maxRetryAttempts.get();
+        long baseDelayMs = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.retryBaseDelayMs.get();
+        double backoffMultiplier = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.retryBackoffMultiplier.get();
+        
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                return sendRequest(requestBody);
+            } catch (IOException e) {
+                // Check if this is a 503 (Service Unavailable) error
+                boolean isOverloadError = e.getMessage() != null && 
+                    (e.getMessage().contains("503") || e.getMessage().toLowerCase().contains("overloaded"));
+                
+                if (isOverloadError && attempt < maxRetries) {
+                    long delayMs = Math.round(baseDelayMs * Math.pow(backoffMultiplier, attempt - 1));
+                    LOGGER.warn("API overloaded (attempt {}/{}). Retrying in {}ms...", attempt, maxRetries, delayMs);
+                    
+                    try {
+                        Thread.sleep(delayMs);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new IOException("Retry interrupted", ie);
+                    }
+                } else {
+                    // Not an overload error, or we've exhausted retries
+                    if (isOverloadError) {
+                        LOGGER.error("API still overloaded after {} attempts. Giving up.", maxRetries);
+                    }
+                    throw e;
+                }
+            }
+        }
+        
+        throw new IOException("Unexpected error: retry loop should not reach here");
     }
     
     private JsonObject buildRequestBody(
@@ -216,21 +276,35 @@ public class GeminiAPIClient {
             LOGGER.error("Request body: {}", requestBodyStr);
             LOGGER.error("Response body: {}", responseBody);
             
-            if (responseCode == 400) {
+            // Enhanced error handling for different response codes
+            if (responseCode == 503) {
+                LOGGER.warn("Google Gemini API is currently overloaded (503). This is temporary - retrying...");
+                throw new IOException("503 Service Unavailable - API overloaded");
+            } else if (responseCode == 429) {
+                LOGGER.warn("Rate limit exceeded (429). Response: {}", responseBody);
+                throw new IOException("429 Too Many Requests - Rate limit exceeded");
+            } else if (responseCode == 401) {
+                LOGGER.error("Invalid API key (401). Response: {}", responseBody);
+                throw new IOException("401 Unauthorized - Invalid API key");
+            } else if (responseCode == 400) {
                 LOGGER.error("Bad Request - Check API key validity and request format");
                 // Try to extract actual error message from JSON response
+                String specificError = "Bad request format";
                 try {
                     JsonObject errorResponse = JsonParser.parseString(responseBody).getAsJsonObject();
                     if (errorResponse.has("error")) {
                         JsonObject error = errorResponse.getAsJsonObject("error");
-                        String message = error.has("message") ? error.get("message").getAsString() : "Unknown error";
-                        LOGGER.error("API Error: {}", message);
+                        specificError = error.has("message") ? error.get("message").getAsString() : "Unknown error";
+                        LOGGER.error("API Error: {}", specificError);
                     }
                 } catch (Exception e) {
                     LOGGER.error("Could not parse error response as JSON, got HTML error page instead");
                 }
+                throw new IOException("400 Bad Request - " + specificError);
+            } else {
+                LOGGER.error("Unexpected API error with code {}: {}", responseCode, responseBody);
+                throw new IOException("HTTP " + responseCode + " - " + (responseBody.isEmpty() ? "Unknown error" : responseBody));
             }
-            throw new IOException("API request failed with code " + responseCode + ": " + responseBody);
         }
         
         LOGGER.debug("API response received successfully, length: {}", responseBody.length());

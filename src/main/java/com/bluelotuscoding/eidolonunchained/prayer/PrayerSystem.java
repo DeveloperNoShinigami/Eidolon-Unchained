@@ -100,6 +100,51 @@ public class PrayerSystem {
         
         return prayer.toString();
     }
+    
+    /**
+     * Send patron-specific prayer rejection message
+     */
+    private static void sendPatronPrayerRejection(ServerPlayer player, DatapackDeity deity, AIDeityConfig aiConfig, String prayerType) {
+        try {
+            player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
+                .ifPresent(patronData -> {
+                    ResourceLocation playerPatron = patronData.getPatron(player);
+                    AIDeityConfig.PatronRelationship relationship = aiConfig.determinePatronRelationship(playerPatron);
+                    
+                    switch (relationship) {
+                        case NO_PATRON:
+                            player.sendSystemMessage(Component.literal("§c" + deity.getDisplayName() + " §7ignores your godless prayers."));
+                            player.sendSystemMessage(Component.literal("§7Dedicate yourself to a patron to earn divine favor."));
+                            break;
+                        case ENEMY:
+                            player.sendSystemMessage(Component.literal("§4" + deity.getDisplayName() + " §crejects your corrupt prayers with disgust!"));
+                            
+                            // Check for auto-punish prayer attempts
+                            if (aiConfig.patronConfig.conversationRules.containsKey("enemy_restrictions")) {
+                                Map<String, Object> rules = (Map<String, Object>) aiConfig.patronConfig.conversationRules.get("enemy_restrictions");
+                                if (rules.containsKey("reputation_penalty_on_contact")) {
+                                    int penalty = (Integer) rules.get("reputation_penalty_on_contact");
+                                    player.level().getCapability(elucent.eidolon.capability.IReputation.INSTANCE)
+                                        .ifPresent(reputation -> {
+                                            double currentRep = reputation.getReputation(player, aiConfig.deityId);
+                                            reputation.setReputation(player, aiConfig.deityId, currentRep + penalty);
+                                            player.sendSystemMessage(Component.literal("§4Your boldness angers " + deity.getDisplayName() + "! (§c" + penalty + " reputation§4)"));
+                                        });
+                                }
+                            }
+                            break;
+                        case NEUTRAL:
+                            if (aiConfig.patronConfig.requiresPatronStatus.equals("follower_only")) {
+                                player.sendSystemMessage(Component.literal("§e" + deity.getDisplayName() + " §7only hears the prayers of their faithful servants."));
+                                player.sendSystemMessage(Component.literal("§7Become their devoted follower to gain their ear."));
+                            }
+                            break;
+                    }
+                });
+        } catch (Exception e) {
+            player.sendSystemMessage(Component.literal("§c" + deity.getDisplayName() + " §7does not hear your prayer."));
+        }
+    }
 
     /**
      * Handle prayer requests from players
@@ -119,6 +164,12 @@ public class PrayerSystem {
         AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deityId);
         if (aiConfig == null) {
             player.sendSystemMessage(Component.literal("§e" + deity.getDisplayName() + " §cdoes not respond to prayers at this time."));
+            return;
+        }
+        
+        // PATRON ALLEGIANCE CHECK - Core new functionality
+        if (!aiConfig.canRespondToPlayer(player)) {
+            sendPatronPrayerRejection(player, deity, aiConfig, prayerType);
             return;
         }
         

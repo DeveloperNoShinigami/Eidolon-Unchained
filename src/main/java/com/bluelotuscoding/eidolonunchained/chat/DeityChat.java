@@ -47,6 +47,27 @@ public class DeityChat {
     public static void startConversation(ServerPlayer player, ResourceLocation deityId) {
         UUID playerId = player.getUUID();
         
+        // Check if deity exists
+        DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
+        if (deity == null) {
+            player.sendSystemMessage(Component.literal("§cDeity not found: " + deityId));
+            return;
+        }
+        
+        // Check AI configuration and patron allegiance rules
+        AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deityId);
+        if (aiConfig == null) {
+            player.sendSystemMessage(Component.literal("§e" + deity.getName() + " §cdoes not respond to mortal contact."));
+            return;
+        }
+        
+        // PATRON ALLEGIANCE CHECK - Core new functionality
+        if (!aiConfig.canRespondToPlayer(player)) {
+            // Send patron-specific rejection message
+            sendPatronRejectionMessage(player, deity, aiConfig);
+            return;
+        }
+        
         // End any existing conversation
         if (activeConversations.containsKey(playerId)) {
             endConversation(player);
@@ -56,21 +77,98 @@ public class DeityChat {
         activeConversations.put(playerId, deityId);
         conversationHistory.put(playerId, new ArrayList<>());
         
-        // Get deity info
-        DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
-        if (deity == null) {
-            player.sendSystemMessage(Component.literal("§cDeity not found: " + deityId));
-            return;
-        }
-        
         String deityName = deity.getName();
         
-        // Send initial message
-        player.sendSystemMessage(Component.literal("§6You feel a divine presence..."));
-        player.sendSystemMessage(Component.literal("§e" + deityName + " is listening to your prayers."));
-        player.sendSystemMessage(Component.literal("§7Speak your mind in chat, or type 'amen' to end the conversation."));
+        // Send patron-aware initial message
+        sendPatronAwareGreeting(player, deity, aiConfig);
         
         LOGGER.info("Started conversation between player {} and deity {}", player.getName().getString(), deityName);
+    }
+    
+    /**
+     * Send patron-specific rejection message based on allegiance
+     */
+    private static void sendPatronRejectionMessage(ServerPlayer player, DatapackDeity deity, AIDeityConfig aiConfig) {
+        try {
+            player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
+                .ifPresent(patronData -> {
+                    ResourceLocation playerPatron = patronData.getPatron(player);
+                    AIDeityConfig.PatronRelationship relationship = aiConfig.determinePatronRelationship(playerPatron);
+                    
+                    switch (relationship) {
+                        case NO_PATRON:
+                            player.sendSystemMessage(Component.literal("§c" + deity.getName() + " §7does not heed the prayers of the godless."));
+                            player.sendSystemMessage(Component.literal("§7Choose a patron deity to earn divine attention."));
+                            break;
+                        case ENEMY:
+                            player.sendSystemMessage(Component.literal("§4" + deity.getName() + " §crecoils from your corrupted presence!"));
+                            player.sendSystemMessage(Component.literal("§7Your allegiance to enemies has sealed this path."));
+                            // Apply reputation penalty for daring to contact enemy
+                            if (aiConfig.patronConfig.conversationRules.containsKey("enemy_restrictions")) {
+                                Map<String, Object> rules = (Map<String, Object>) aiConfig.patronConfig.conversationRules.get("enemy_restrictions");
+                                if (rules.containsKey("reputation_penalty_on_contact")) {
+                                    int penalty = (Integer) rules.get("reputation_penalty_on_contact");
+                                    // Apply penalty through Eidolon's reputation system
+                                    player.level().getCapability(elucent.eidolon.capability.IReputation.INSTANCE)
+                                        .ifPresent(reputation -> {
+                                            double currentRep = reputation.getReputation(player, aiConfig.deityId);
+                                            reputation.setReputation(player, aiConfig.deityId, currentRep + penalty);
+                                        });
+                                }
+                            }
+                            break;
+                        case NEUTRAL:
+                            if (aiConfig.patronConfig.requiresPatronStatus.equals("follower_only")) {
+                                player.sendSystemMessage(Component.literal("§e" + deity.getName() + " §7speaks only to their faithful servants."));
+                                player.sendSystemMessage(Component.literal("§7Prove your devotion to earn their attention."));
+                            }
+                            break;
+                    }
+                });
+        } catch (Exception e) {
+            player.sendSystemMessage(Component.literal("§c" + deity.getName() + " §7is silent."));
+        }
+    }
+    
+    /**
+     * Send patron-aware greeting message
+     */
+    private static void sendPatronAwareGreeting(ServerPlayer player, DatapackDeity deity, AIDeityConfig aiConfig) {
+        try {
+            player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
+                .ifPresent(patronData -> {
+                    ResourceLocation playerPatron = patronData.getPatron(player);
+                    AIDeityConfig.PatronRelationship relationship = aiConfig.determinePatronRelationship(playerPatron);
+                    String title = patronData.getTitle(player);
+                    
+                    switch (relationship) {
+                        case FOLLOWER:
+                            player.sendSystemMessage(Component.literal("§6A warm divine presence envelops you..."));
+                            if (title != null && !title.isEmpty()) {
+                                player.sendSystemMessage(Component.literal("§e" + deity.getName() + " §6recognizes their faithful " + title + "."));
+                            } else {
+                                player.sendSystemMessage(Component.literal("§e" + deity.getName() + " §6welcomes their devoted servant."));
+                            }
+                            break;
+                        case ALLIED:
+                            player.sendSystemMessage(Component.literal("§b" + deity.getName() + " §7acknowledges an ally of the divine."));
+                            break;
+                        case NEUTRAL:
+                            player.sendSystemMessage(Component.literal("§7A cautious divine presence observes you..."));
+                            player.sendSystemMessage(Component.literal("§e" + deity.getName() + " §7regards you with wariness."));
+                            break;
+                        default:
+                            player.sendSystemMessage(Component.literal("§6You feel a divine presence..."));
+                            player.sendSystemMessage(Component.literal("§e" + deity.getName() + " is listening to your prayers."));
+                    }
+                });
+        } catch (Exception e) {
+            // Fallback to generic greeting
+            player.sendSystemMessage(Component.literal("§6You feel a divine presence..."));
+            player.sendSystemMessage(Component.literal("§e" + deity.getName() + " is listening to your prayers."));
+        }
+        
+        player.sendSystemMessage(Component.literal("§7Speak your mind in chat, or type 'amen' to end the conversation."));
     }
     
     /**
@@ -161,7 +259,7 @@ public class DeityChat {
             String conversationPrompt = buildConversationPrompt(player, deity, message, deityId);
             
             // Generate AI response
-            String personality = aiConfig.buildDynamicPersonality(new PlayerContext(player, deity));
+            String personality = aiConfig.buildDynamicPersonalityWithPatron(new PlayerContext(player, deity), player);
             
             // Get API key using the API key manager
             String apiKey = APIKeyManager.getAPIKey("gemini");

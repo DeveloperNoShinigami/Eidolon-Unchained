@@ -450,6 +450,25 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
     }
     
     /**
+     * Register an AI configuration programmatically.
+     * Used by DatapackDeityManager for consolidated deity files.
+     */
+    public void registerAIConfig(ResourceLocation deityId, AIDeityConfig config) {
+        if (config == null) {
+            LOGGER.warn("Attempted to register null AI config for deity: {}", deityId);
+            return;
+        }
+        
+        // Ensure deity ID is set correctly
+        config.deityId = deityId;
+        
+        // Store the configuration
+        aiConfigs.put(deityId, config);
+        
+        LOGGER.debug("Registered AI configuration for deity: {}", deityId);
+    }
+    
+    /**
      * Generate a default prompt for a prayer type
      */
     private String generateDefaultPrompt(String prayerType) {

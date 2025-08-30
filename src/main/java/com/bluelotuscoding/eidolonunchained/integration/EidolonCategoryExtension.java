@@ -4,6 +4,8 @@ import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
 import com.bluelotuscoding.eidolonunchained.research.ResearchChapter;
 import elucent.eidolon.codex.*;
+import elucent.eidolon.codex.IndexPage.IndexEntry;
+import elucent.eidolon.codex.IndexPage.ReputationLockedEntry;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -34,6 +36,7 @@ import java.util.ArrayList;
  * ✅ JSON datapack-driven category loading
  * ✅ Full chapter creation and injection
  * ✅ Item mapping and GUI integration
+ * ✅ Dynamic entry addition to existing categories
  * 
  * MIGRATION PLAN: Replace reflection with event system when available
  */
@@ -494,6 +497,106 @@ public class EidolonCategoryExtension {
             
         } catch (Exception e) {
             LOGGER.error("❌ Failed category scanning with reflection", e);
+        }
+    }
+    
+    // New methods for deity progression integration
+    
+    /**
+     * Finds an existing category by name.
+     */
+    public Category findCategory(String categoryName) {
+        try {
+            Class<?> codexChaptersClass = Class.forName(CLASS_CODEX_CHAPTERS);
+            Field categoriesField = codexChaptersClass.getDeclaredField(FIELD_CATEGORIES);
+            categoriesField.setAccessible(true);
+            
+            @SuppressWarnings("unchecked")
+            java.util.List<Category> categories = (java.util.List<Category>) categoriesField.get(null);
+            
+            for (Category category : categories) {
+                // Use reflection to get category key/name
+                Field keyField = Category.class.getDeclaredField("key");
+                keyField.setAccessible(true);
+                String key = (String) keyField.get(category);
+                
+                if (categoryName.equals(key)) {
+                    return category;
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to find category: {}", categoryName, e);
+        }
+        return null;
+    }
+    
+    /**
+     * Creates a new category with the given entries.
+     */
+    public Category createCategory(String categoryName, String displayName, ItemStack icon, int color, List<ReputationLockedEntry> entries) {
+        try {
+            // Create index page with entries
+            IndexPage indexPage = new IndexPage(entries.toArray(new IndexEntry[0]));
+            
+            // Create index
+            Index categoryIndex = new Index(
+                "eidolonunchained.codex.category." + categoryName,
+                indexPage
+            );
+            
+            // Create category
+            Category newCategory = new Category(categoryName, icon, color, categoryIndex);
+            
+            // Add to categories list
+            Class<?> codexChaptersClass = Class.forName(CLASS_CODEX_CHAPTERS);
+            Field categoriesField = codexChaptersClass.getDeclaredField(FIELD_CATEGORIES);
+            categoriesField.setAccessible(true);
+            
+            @SuppressWarnings("unchecked")
+            java.util.List<Category> categories = (java.util.List<Category>) categoriesField.get(null);
+            categories.add(newCategory);
+            
+            LOGGER.info("Created new category '{}' with {} entries", categoryName, entries.size());
+            return newCategory;
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to create category: {}", categoryName, e);
+            return null;
+        }
+    }
+    
+    /**
+     * Adds entries to an existing category by modifying its index.
+     */
+    public void addEntriesToCategory(Category category, List<ReputationLockedEntry> newEntries) {
+        try {
+            // Get the category's index
+            Field chapterField = Category.class.getDeclaredField("chapter");
+            chapterField.setAccessible(true);
+            Index categoryIndex = (Index) chapterField.get(category);
+            
+            // Get the index's pages
+            Field pagesField = Chapter.class.getDeclaredField("pages");
+            pagesField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            List<Page> pages = (List<Page>) pagesField.get(categoryIndex);
+            
+            // Find the index page and add entries
+            for (Page page : pages) {
+                if (page instanceof IndexPage indexPage) {
+                    Field entriesField = IndexPage.class.getDeclaredField("entries");
+                    entriesField.setAccessible(true);
+                    @SuppressWarnings("unchecked")
+                    List<IndexEntry> entries = (List<IndexEntry>) entriesField.get(indexPage);
+                    
+                    entries.addAll(newEntries);
+                    LOGGER.info("Added {} entries to existing category", newEntries.size());
+                    return;
+                }
+            }
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to add entries to category", e);
         }
     }
 }

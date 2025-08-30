@@ -3,11 +3,12 @@ package com.bluelotuscoding.eidolonunchained.ai;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
+import com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler;
 import java.util.*;
 
 /**
  * Complete AI configuration for a deity.
- * Contains all behavioral rules, API settings, and prayer configurations.
+ * Contains all behavioral rules, API settings, prayer configurations, and patron allegiance rules.
  */
 public class AIDeityConfig {
     // Basic AI settings
@@ -15,6 +16,9 @@ public class AIDeityConfig {
     public String aiProvider = "gemini";
     public String model = "gemini-1.5-pro";
     public String personality = "You are a mystical deity in Minecraft.";
+    
+    // Patron allegiance configuration
+    public PatronConfig patronConfig = new PatronConfig();
     
     // API configuration
     public String apiKeyEnv = "GEMINI_API_KEY";
@@ -40,6 +44,9 @@ public class AIDeityConfig {
     
     // API settings
     public APISettings apiSettings = new APISettings();
+    
+    // Ritual integration configuration for patron selection
+    public Map<String, Object> ritual_integration = new HashMap<>();
     
     public AIDeityConfig() {
         // Default safety settings
@@ -171,5 +178,166 @@ public class AIDeityConfig {
         }
         
         return personality.toString();
+    }
+    
+    /**
+     * Build dynamic personality with patron context awareness
+     */
+    public String buildDynamicPersonalityWithPatron(PlayerContext playerContext, ServerPlayer player) {
+        StringBuilder personality = new StringBuilder(this.personality);
+        
+        // Check patron status and modify personality accordingly
+        try {
+            player.level().getCapability(CapabilityHandler.PATRON_DATA_CAPABILITY)
+                .ifPresent(patronData -> {
+                    ResourceLocation playerPatron = patronData.getPatron(player);
+                    PatronRelationship relationship = determinePatronRelationship(playerPatron);
+                    
+                    // Apply patron-specific personality modifiers
+                    String patronModifier = getPatronPersonalityModifier(relationship, patronData.getTitle(player));
+                    if (patronModifier != null) {
+                        personality.append(" ").append(patronModifier);
+                    }
+                });
+        } catch (Exception e) {
+            // Fallback to basic personality if patron system fails
+        }
+        
+        // Add existing dynamic modifiers
+        String repBehavior = getReputationBehavior(playerContext.reputation);
+        if (repBehavior != null) {
+            personality.append(" ").append(repBehavior);
+        }
+        
+        String researchBehavior = getResearchBehavior(playerContext.researchCount);
+        if (researchBehavior != null) {
+            personality.append(" ").append(researchBehavior);
+        }
+        
+        String timeBehavior = getTimeBehavior(playerContext.timeOfDay);
+        if (timeBehavior != null) {
+            personality.append(" ").append(timeBehavior);
+        }
+        
+        String biomeBehavior = getBiomeBehavior(playerContext.biome);
+        if (biomeBehavior != null) {
+            personality.append(" ").append(biomeBehavior);
+        }
+        
+        if (playerContext.progressionLevel != null && playerContext.progressionLevel.equals("master")) {
+            String masterPersonality = getPersonalityShift("master_level");
+            if (masterPersonality != null) {
+                personality.append(" ").append(masterPersonality);
+            }
+        }
+        
+        return personality.toString();
+    }
+    
+    /**
+     * Determine patron relationship between player and this deity
+     */
+    public PatronRelationship determinePatronRelationship(ResourceLocation playerPatron) {
+        if (playerPatron == null) {
+            return PatronRelationship.NO_PATRON;
+        }
+        
+        if (playerPatron.equals(this.deityId)) {
+            return PatronRelationship.FOLLOWER;
+        }
+        
+        if (patronConfig.opposingDeities.contains(playerPatron)) {
+            return PatronRelationship.ENEMY;
+        }
+        
+        if (patronConfig.alliedDeities.contains(playerPatron)) {
+            return PatronRelationship.ALLIED;
+        }
+        
+        return PatronRelationship.NEUTRAL;
+    }
+    
+    /**
+     * Get personality modifier based on patron relationship
+     */
+    private String getPatronPersonalityModifier(PatronRelationship relationship, String playerTitle) {
+        switch (relationship) {
+            case FOLLOWER:
+                return patronConfig.followerPersonalityModifiers.getOrDefault(
+                    playerTitle, patronConfig.followerPersonalityModifiers.get("default"));
+            case ENEMY:
+                return patronConfig.enemyPersonalityModifier;
+            case NEUTRAL:
+                return patronConfig.neutralPersonalityModifier;
+            case NO_PATRON:
+                return patronConfig.noPatronPersonalityModifier;
+            case ALLIED:
+                return patronConfig.alliedPersonalityModifier;
+            default:
+                return null;
+        }
+    }
+    
+    /**
+     * Check if this deity can respond to the player based on patron rules
+     */
+    public boolean canRespondToPlayer(ServerPlayer player) {
+        if (!patronConfig.acceptsFollowers) {
+            return false;
+        }
+        
+        try {
+            return player.level().getCapability(CapabilityHandler.PATRON_DATA_CAPABILITY)
+                .map(patronData -> {
+                    ResourceLocation playerPatron = patronData.getPatron(player);
+                    PatronRelationship relationship = determinePatronRelationship(playerPatron);
+                    
+                    switch (patronConfig.requiresPatronStatus) {
+                        case "follower_only":
+                            return relationship == PatronRelationship.FOLLOWER;
+                        case "no_enemies":
+                            return relationship != PatronRelationship.ENEMY;
+                        case "any":
+                            return true;
+                        default:
+                            return true;
+                    }
+                }).orElse(true);
+        } catch (Exception e) {
+            return true; // Default to allowing response if patron system fails
+        }
+    }
+    
+    /**
+     * Patron relationship types
+     */
+    public enum PatronRelationship {
+        FOLLOWER,    // Player serves this deity
+        ENEMY,       // Player serves opposing deity
+        NEUTRAL,     // Player serves unrelated deity
+        ALLIED,      // Player serves allied deity
+        NO_PATRON    // Player has no patron
+    }
+    
+    /**
+     * Patron configuration data class
+     */
+    public static class PatronConfig {
+        public boolean acceptsFollowers = true;
+        public String requiresPatronStatus = "any"; // "follower_only", "no_enemies", "any"
+        public List<ResourceLocation> opposingDeities = new ArrayList<>();
+        public List<ResourceLocation> alliedDeities = new ArrayList<>();
+        public String neutralResponseMode = "normal"; // "normal", "cautious", "cold"
+        public String enemyResponseMode = "hostile"; // "hostile", "reject", "mock"
+        
+        // Personality modifiers
+        public Map<String, String> followerPersonalityModifiers = new HashMap<>();
+        public String neutralPersonalityModifier = "";
+        public String enemyPersonalityModifier = "";
+        public String noPatronPersonalityModifier = "";
+        public String alliedPersonalityModifier = "";
+        
+        // Response rules
+        public Map<String, Object> conversationRules = new HashMap<>();
     }
 }

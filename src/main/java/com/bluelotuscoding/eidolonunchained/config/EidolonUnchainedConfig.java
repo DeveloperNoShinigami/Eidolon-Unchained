@@ -39,6 +39,12 @@ public class EidolonUnchainedConfig {
         public final ForgeConfigSpec.BooleanValue enableAIDeities;
         public final ForgeConfigSpec.BooleanValue logAIInteractions;
         
+        // Retry system configuration
+        public final ForgeConfigSpec.BooleanValue enableApiRetry;
+        public final ForgeConfigSpec.IntValue maxRetryAttempts;
+        public final ForgeConfigSpec.IntValue retryBaseDelayMs;
+        public final ForgeConfigSpec.DoubleValue retryBackoffMultiplier;
+        
         // ===========================================
         // DISPLAY CONFIGURATION
         // ===========================================
@@ -167,9 +173,27 @@ public class EidolonUnchainedConfig {
                 .comment("Log AI interactions for debugging (API keys are never logged)")
                 .define("log_ai_interactions", false);
             
-            builder.pop();
+            // Retry system configuration
+            enableApiRetry = builder
+                .comment("Enable automatic retry for failed API requests (especially 503 overload errors)")
+                .define("enable_api_retry", true);
             
-            // ===========================================
+            maxRetryAttempts = builder
+                .comment("Maximum number of retry attempts for failed API requests",
+                        "Set to 1 to disable retries, recommended range: 2-5")
+                .defineInRange("max_retry_attempts", 3, 1, 10);
+            
+            retryBaseDelayMs = builder
+                .comment("Base delay in milliseconds before first retry attempt",
+                        "Actual delays use exponential backoff (e.g., 2s, 4s, 8s)")
+                .defineInRange("retry_base_delay_ms", 2000, 1000, 10000);
+            
+            retryBackoffMultiplier = builder
+                .comment("Exponential backoff multiplier for retry delays",
+                        "Each retry waits: base_delay * (backoff^attempt)")
+                .defineInRange("retry_backoff_multiplier", 2.0, 1.5, 5.0);
+
+            builder.pop();            // ===========================================
             // DISPLAY CONFIGURATION
             // ===========================================
             builder.comment(

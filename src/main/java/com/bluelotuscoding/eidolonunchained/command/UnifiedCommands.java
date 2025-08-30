@@ -7,8 +7,12 @@ import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
 import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
 import com.bluelotuscoding.eidolonunchained.chat.ConversationHistoryManager;
 import com.bluelotuscoding.eidolonunchained.chat.ConversationMessage;
+import com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler;
+import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
+import com.bluelotuscoding.eidolonunchained.events.RitualCompleteEvent;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -22,10 +26,12 @@ import java.util.UUID;
 
 // Eidolon integration imports
 import elucent.eidolon.util.KnowledgeUtil;
+import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.common.MinecraftForge;
 
 /**
  * Unified command handler for all Eidolon Unchained commands
- * Consolidates configuration, AI, deity, prayer, and chant commands
+ * Consolidates configuration, AI, deity, prayer, chant, and patron commands
  */
 public class UnifiedCommands {
     
@@ -64,7 +70,18 @@ public class UnifiedCommands {
                     .executes(UnifiedCommands::listApiKeys))
                 .then(Commands.literal("remove")
                     .then(Commands.argument("provider", StringArgumentType.string())
-                        .executes(UnifiedCommands::removeApiKey))))
+                        .executes(UnifiedCommands::removeApiKey)))
+                .then(Commands.literal("retry")
+                    .then(Commands.literal("status")
+                        .executes(UnifiedCommands::showRetryStatus))
+                    .then(Commands.literal("toggle")
+                        .executes(UnifiedCommands::toggleRetry))
+                    .then(Commands.literal("attempts")
+                        .then(Commands.argument("count", IntegerArgumentType.integer(1, 10))
+                            .executes(UnifiedCommands::setMaxRetryAttempts)))
+                    .then(Commands.literal("delay")
+                        .then(Commands.argument("milliseconds", IntegerArgumentType.integer(1000, 10000))
+                            .executes(UnifiedCommands::setRetryDelay)))))
             
             // Deity management
             .then(Commands.literal("deities")
@@ -75,6 +92,21 @@ public class UnifiedCommands {
                 .then(Commands.literal("status")
                     .then(Commands.argument("deity", StringArgumentType.string())
                         .executes(UnifiedCommands::showDeityStatus))))
+            
+            // Patron system
+            .then(Commands.literal("patron")
+                .then(Commands.literal("choose")
+                    .then(Commands.argument("deity", StringArgumentType.string())
+                        .executes(UnifiedCommands::choosePatron)))
+                .then(Commands.literal("abandon")
+                    .executes(UnifiedCommands::abandonPatron))
+                .then(Commands.literal("status")
+                    .executes(UnifiedCommands::patronStatus))
+                .then(Commands.literal("titles")
+                    .executes(UnifiedCommands::listPatronTitles))
+                .then(Commands.literal("confirm")
+                    .then(Commands.argument("deity", StringArgumentType.string())
+                        .executes(UnifiedCommands::confirmPatronChoice))))
             
             // Chant system
             .then(Commands.literal("chants")
@@ -116,6 +148,30 @@ public class UnifiedCommands {
                 .then(Commands.literal("list")
                     .executes(UnifiedCommands::listResearchEntries)))
             
+            // TODO: Reputation system commands - implement these methods when needed
+            /*
+            .then(Commands.literal("reputation")
+                .then(Commands.literal("get")
+                    .then(Commands.argument("player", StringArgumentType.string())
+                        .then(Commands.argument("deity", StringArgumentType.string())
+                            .executes(UnifiedCommands::getPlayerReputation))))
+                .then(Commands.literal("set")
+                    .requires(cs -> cs.hasPermission(2))
+                    .then(Commands.argument("player", StringArgumentType.string())
+                        .then(Commands.argument("deity", StringArgumentType.string())
+                            .then(Commands.argument("amount", DoubleArgumentType.doubleArg(-100, 100))
+                                .executes(UnifiedCommands::setPlayerReputation)))))
+                .then(Commands.literal("add")
+                    .requires(cs -> cs.hasPermission(2))
+                    .then(Commands.argument("player", StringArgumentType.string())
+                        .then(Commands.argument("deity", StringArgumentType.string())
+                            .then(Commands.argument("amount", DoubleArgumentType.doubleArg(-100, 100))
+                                .executes(UnifiedCommands::addPlayerReputation)))))
+                .then(Commands.literal("list")
+                    .then(Commands.argument("player", StringArgumentType.string())
+                        .executes(UnifiedCommands::listPlayerReputations))))
+            */
+            
             // Debug commands
             .then(Commands.literal("debug")
                 .then(Commands.literal("toggle")
@@ -132,6 +188,13 @@ public class UnifiedCommands {
                     .then(Commands.argument("player", StringArgumentType.string())
                         .then(Commands.argument("deity", StringArgumentType.string())
                             .executes(UnifiedCommands::generateCommandReport))))
+                .then(Commands.literal("personality")
+                    .then(Commands.argument("player", StringArgumentType.string())
+                        .then(Commands.argument("deity", StringArgumentType.string())
+                            .executes(UnifiedCommands::debugPersonality))))
+                .then(Commands.literal("fire-ritual-completion")
+                    .then(Commands.argument("ritual", StringArgumentType.string())
+                        .executes(UnifiedCommands::fireRitualCompletion)))
                 .then(Commands.literal("validate-all")
                     .executes(UnifiedCommands::validateAll)))
         );
@@ -656,6 +719,391 @@ public class UnifiedCommands {
             
         } catch (Exception e) {
             context.getSource().sendFailure(Component.literal("§cError generating command report: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    private static int debugPersonality(CommandContext<CommandSourceStack> context) {
+        try {
+            String playerName = StringArgumentType.getString(context, "player");
+            String deityId = StringArgumentType.getString(context, "deity");
+            
+            ServerPlayer targetPlayer = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+            if (targetPlayer == null) {
+                context.getSource().sendFailure(Component.literal("§cPlayer not found: " + playerName));
+                return 0;
+            }
+            
+            ResourceLocation deityLocation = new ResourceLocation(deityId);
+            
+            // Get deity
+            com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = 
+                com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(deityLocation);
+            if (deity == null) {
+                context.getSource().sendFailure(Component.literal("§cDeity not found: " + deityId));
+                return 0;
+            }
+            
+            // Get AI config
+            com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig = 
+                com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance().getAIConfig(deityLocation);
+            if (aiConfig == null) {
+                context.getSource().sendFailure(Component.literal("§cAI config not found for deity: " + deityId));
+                return 0;
+            }
+            
+            // Create player context
+            com.bluelotuscoding.eidolonunchained.ai.PlayerContext playerContext = 
+                new com.bluelotuscoding.eidolonunchained.ai.PlayerContext(targetPlayer, deity);
+                
+            // Generate context-aware personality
+            String personality = aiConfig.buildDynamicPersonality(playerContext);
+            
+            StringBuilder report = new StringBuilder("§6=== Personality Debug Report ===\n");
+            report.append("§ePlayer: §b").append(playerName).append("\n");
+            report.append("§eDeity: §b").append(deityId).append("\n");
+            report.append("§eReputation: §b").append(String.format("%.1f", playerContext.reputation)).append("\n");
+            report.append("§eBiome: §b").append(playerContext.biome).append("\n");
+            report.append("§eTime: §b").append(playerContext.timeOfDay).append("\n");
+            report.append("§eProgression: §b").append(playerContext.progressionLevel).append("\n\n");
+            
+            // Show individual behavior rules
+            String repBehavior = aiConfig.getReputationBehavior(playerContext.reputation);
+            String timeBehavior = aiConfig.getTimeBehavior(playerContext.timeOfDay);
+            String biomeBehavior = aiConfig.getBiomeBehavior(playerContext.biome);
+            
+            report.append("§6=== Applied Behavior Rules ===\n");
+            report.append("§eReputation Rule: §a").append(repBehavior != null ? repBehavior : "None").append("\n");
+            report.append("§eTime Rule: §a").append(timeBehavior != null ? timeBehavior : "None").append("\n");
+            report.append("§eBiome Rule: §a").append(biomeBehavior != null ? biomeBehavior : "None").append("\n\n");
+            
+            report.append("§6=== Final Personality ===\n§f").append(personality);
+            
+            context.getSource().sendSuccess(() -> Component.literal(report.toString()), false);
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError debugging personality: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    // ===========================================
+    // RETRY CONFIGURATION COMMANDS
+    // ===========================================
+    
+    private static int showRetryStatus(CommandContext<CommandSourceStack> context) {
+        try {
+            boolean enabled = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.enableApiRetry.get();
+            int maxAttempts = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.maxRetryAttempts.get();
+            long baseDelay = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.retryBaseDelayMs.get();
+            double backoff = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.retryBackoffMultiplier.get();
+            
+            StringBuilder status = new StringBuilder("§6=== API Retry Configuration ===\n");
+            status.append("§eEnabled: ").append(enabled ? "§aYES" : "§cNO").append("\n");
+            status.append("§eMax Attempts: §b").append(maxAttempts).append("\n");
+            status.append("§eBase Delay: §b").append(baseDelay).append("ms\n");
+            status.append("§eBackoff Multiplier: §b").append(String.format("%.1f", backoff)).append("\n");
+            
+            if (enabled && maxAttempts > 1) {
+                status.append("\n§eRetry Schedule: ");
+                for (int i = 1; i < maxAttempts; i++) {
+                    long delay = Math.round(baseDelay * Math.pow(backoff, i - 1));
+                    status.append("§b").append(delay).append("ms");
+                    if (i < maxAttempts - 1) status.append("§e, ");
+                }
+            }
+            
+            context.getSource().sendSuccess(() -> Component.literal(status.toString()), false);
+            return 1;
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError getting retry status: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    private static int toggleRetry(CommandContext<CommandSourceStack> context) {
+        try {
+            // Note: This would require config modification capabilities
+            // For now, show current status and instruction to modify config file
+            boolean enabled = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.enableApiRetry.get();
+            
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§eAPI Retry is currently: " + (enabled ? "§aENABLED" : "§cDISABLED") + "\n" +
+                "§7To change this setting, modify 'enable_api_retry' in config/eidolonunchained-common.toml"
+            ), false);
+            return 1;
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError toggling retry: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    private static int setMaxRetryAttempts(CommandContext<CommandSourceStack> context) {
+        try {
+            int attempts = IntegerArgumentType.getInteger(context, "count");
+            
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§eRetry attempts would be set to: §b" + attempts + "\n" +
+                "§7To change this setting, modify 'max_retry_attempts' in config/eidolonunchained-common.toml"
+            ), false);
+            return 1;
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError setting retry attempts: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    private static int setRetryDelay(CommandContext<CommandSourceStack> context) {
+        try {
+            int delay = IntegerArgumentType.getInteger(context, "milliseconds");
+            
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§eRetry base delay would be set to: §b" + delay + "ms\n" +
+                "§7To change this setting, modify 'retry_base_delay_ms' in config/eidolonunchained-common.toml"
+            ), false);
+            return 1;
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError setting retry delay: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    // Patron system commands
+    
+    private static int choosePatron(CommandContext<CommandSourceStack> context) {
+        try {
+            if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+                context.getSource().sendFailure(Component.literal("§cThis command can only be used by players"));
+                return 0;
+            }
+            
+            String deityIdString = StringArgumentType.getString(context, "deity");
+            ResourceLocation deityId = ResourceLocation.tryParse(deityIdString);
+            
+            if (deityId == null) {
+                context.getSource().sendFailure(Component.literal("§cInvalid deity ID: " + deityIdString));
+                return 0;
+            }
+            
+            // Check if deity exists
+            if (DatapackDeityManager.getDeity(deityId) == null) {
+                context.getSource().sendFailure(Component.literal("§cDeity not found: " + deityIdString));
+                return 0;
+            }
+            
+            // Set patron using the capability system
+            player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
+                .ifPresent(patronData -> {
+                    ResourceLocation currentPatron = patronData.getPatron(player);
+                    if (currentPatron != null && currentPatron.equals(deityId)) {
+                        context.getSource().sendSuccess(
+                            () -> Component.literal("§e" + deityIdString + " is already your patron deity"), 
+                            false
+                        );
+                    } else {
+                        patronData.setPatron(player, deityId);
+                        context.getSource().sendSuccess(
+                            () -> Component.literal("§6You have chosen " + deityIdString + " as your patron deity"), 
+                            false
+                        );
+                    }
+                });
+            
+            if (!player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY).isPresent()) {
+                context.getSource().sendFailure(Component.literal("§cFailed to access patron data"));
+                return 0;
+            }
+            
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError choosing patron: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    private static int abandonPatron(CommandContext<CommandSourceStack> context) {
+        try {
+            if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+                context.getSource().sendFailure(Component.literal("§cThis command can only be used by players"));
+                return 0;
+            }
+            
+            player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
+                .ifPresent(
+                    patronData -> {
+                        ResourceLocation currentPatron = patronData.getPatron(player);
+                        if (currentPatron == null) {
+                            context.getSource().sendFailure(Component.literal("§cYou don't have a patron deity"));
+                        } else {
+                            patronData.setPatron(player, null);
+                            context.getSource().sendSuccess(
+                                () -> Component.literal("§6You have abandoned your patron deity: " + currentPatron), 
+                                false
+                            );
+                        }
+                    }
+                );
+            
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError abandoning patron: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    private static int patronStatus(CommandContext<CommandSourceStack> context) {
+        try {
+            if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+                context.getSource().sendFailure(Component.literal("§cThis command can only be used by players"));
+                return 0;
+            }
+            
+            player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
+                .ifPresent(
+                    patronData -> {
+                        ResourceLocation patron = patronData.getPatron(player);
+                        String title = patronData.getTitle(player);
+                        
+                        if (patron == null) {
+                            context.getSource().sendSuccess(
+                                () -> Component.literal("§eYou have no patron deity"), 
+                                false
+                            );
+                        } else {
+                            String statusText = "§6Patron Deity: §f" + patron;
+                            if (title != null && !title.isEmpty()) {
+                                statusText += "\n§6Current Title: §f" + title;
+                            }
+                            
+                            // Show reputation with patron
+                            try {
+                                double reputation = player.level().getCapability(elucent.eidolon.capability.IReputation.INSTANCE)
+                                    .map(rep -> rep.getReputation(player, patron))
+                                    .orElse(0.0);
+                                statusText += "\n§6Reputation: §f" + String.format("%.1f", reputation);
+                            } catch (Exception e) {
+                                // Ignore reputation errors
+                            }
+                            
+                            final String finalStatusText = statusText;
+                            context.getSource().sendSuccess(
+                                () -> Component.literal(finalStatusText), 
+                                false
+                            );
+                        }
+                    }
+                );
+            
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError showing patron status: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    private static int listPatronTitles(CommandContext<CommandSourceStack> context) {
+        try {
+            if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+                context.getSource().sendFailure(Component.literal("§cThis command can only be used by players"));
+                return 0;
+            }
+            
+            player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
+                .ifPresent(
+                    patronData -> {
+                        ResourceLocation patron = patronData.getPatron(player);
+                        if (patron == null) {
+                            context.getSource().sendFailure(Component.literal("§cYou don't have a patron deity"));
+                            return;
+                        }
+                        
+                        // Get deity and show available titles
+                        DatapackDeity deity = DatapackDeityManager.getDeity(patron);
+                        if (deity != null) {
+                            StringBuilder titleList = new StringBuilder("§6Available Titles for " + deity.getName() + ":\n");
+                            
+                            Map<String, Object> stages = deity.getProgressionStages();
+                            if (stages != null && !stages.isEmpty()) {
+                                stages.forEach((stageName, stageData) -> {
+                                    String displayName = deity.getStageDisplayName(stageName);
+                                    if (stageData instanceof Map<?, ?> stageMap) {
+                                        Object repReq = stageMap.get("reputationRequired");
+                                        int reputation = repReq instanceof Number ? ((Number) repReq).intValue() : 0;
+                                        titleList.append("§e- ").append(displayName)
+                                                .append(" §7(").append(reputation).append(" reputation)\n");
+                                    }
+                                });
+                            }
+                            
+                            String currentTitle = patronData.getTitle(player);
+                            if (currentTitle != null && !currentTitle.isEmpty()) {
+                                titleList.append("§6Current Title: §f").append(currentTitle);
+                            }
+                            
+                            context.getSource().sendSuccess(
+                                () -> Component.literal(titleList.toString()), 
+                                false
+                            );
+                        } else {
+                            context.getSource().sendFailure(Component.literal("§cPatron deity configuration not found"));
+                        }
+                    }
+                );
+            
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError listing patron titles: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    private static int confirmPatronChoice(CommandContext<CommandSourceStack> context) {
+        try {
+            if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+                context.getSource().sendFailure(Component.literal("§cThis command can only be used by players"));
+                return 0;
+            }
+            
+            // For now, just redirect to choosePatron - in the future this could handle confirmations
+            return choosePatron(context);
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError confirming patron choice: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    /**
+     * Debug command to manually fire ritual completion events
+     */
+    private static int fireRitualCompletion(CommandContext<CommandSourceStack> context) {
+        try {
+            if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+                context.getSource().sendFailure(Component.literal("§cThis command can only be used by players"));
+                return 0;
+            }
+            
+            String ritualIdString = StringArgumentType.getString(context, "ritual");
+            ResourceLocation ritualId = new ResourceLocation(ritualIdString);
+            
+            // Fire the ritual completion event
+            RitualCompleteEvent event = new RitualCompleteEvent(player, ritualId, true);
+            MinecraftForge.EVENT_BUS.post(event);
+            
+            context.getSource().sendSuccess(
+                () -> Component.literal("§6Fired ritual completion event for: §f" + ritualId), 
+                false
+            );
+            
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError firing ritual completion: " + e.getMessage()));
             return 0;
         }
     }

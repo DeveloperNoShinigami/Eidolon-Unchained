@@ -1,0 +1,22 @@
+{
+  "target_chapter": "deity_rituals",
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolonunchained.codex.entry.nature_patronage_ritual"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.nature_patronage_ritual.description"
+    },
+    {
+      "type": "ritual",
+      "title": "eidolonunchained.codex.page.nature_patronage_ritual",
+      "ritual": "eidolonunchained:nature_patronage"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.nature_patronage_ritual.effects"
+    }
+  ]
+}

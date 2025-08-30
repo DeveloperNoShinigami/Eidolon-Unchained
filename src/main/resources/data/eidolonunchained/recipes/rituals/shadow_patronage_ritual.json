@@ -1,0 +1,44 @@
+{
+  "type": "eidolon:command_ritual",
+  "ritual": "eidolonunchained:shadow_patronage",
+  "symbol": "eidolonunchained:textures/symbols/shadow_patronage.png",
+  "reagent": {
+    "item": "eidolon:soul_shard"
+  },
+  "pedestalItems": [
+    {
+      "item": "eidolon:soul_shard"
+    },
+    {
+      "item": "eidolon:death_essence"
+    },
+    {
+      "item": "eidolon:arcane_gold_ingot"
+    },
+    {
+      "item": "minecraft:wither_skeleton_skull"
+    }
+  ],
+  "focusItems": [],
+  "invariantItems": [
+    {
+      "item": "eidolon:codex"
+    }
+  ],
+  "commands": [
+    "execute as @p[distance=..10] run eidolon-unchained patron choose eidolonunchained:dark_deity",
+    "tellraw @p {\"text\":\"§5The shadows of Nyxathel embrace your soul! You are now bound to darkness!\",\"color\":\"dark_purple\"}",
+    "playsound minecraft:ambient.soul_sand_valley.mood player @p ~ ~ ~ 1.0 0.8",
+    "particle minecraft:soul ~ ~1 ~ 1 1 1 0.1 30 force"
+  ],
+  "color": "0x2D1B3D",
+  "health_requirement": 0.0,
+  "description": [
+    "§5Shadow Patronage Ritual",
+    "§7Pledge your soul to Nyxathel, the Shadow Lord.",
+    "§7Requires 25+ reputation with the dark deity.",
+    "§cWarning: The shadows demand absolute loyalty.",
+    "§8Only the truly dedicated may serve the darkness.",
+    "§6Required: Soul Shard, Death Essence, Arcane Gold"
+  ]
+}

@@ -48,5 +48,61 @@
       }
     ]
   },
-  "prayer_types": ["conversation", "blessing", "knowledge", "balance"]
+  "prayer_types": ["conversation", "blessing", "knowledge", "balance"],
+  
+  "ai_configuration": {
+    "deityId": "eidolonunchained:nature_deity",
+    "aiProvider": "gemini",
+    "model": "gemini-1.5-flash",
+    "personality": "You are Verdania the Nature Guardian, an ancient deity of growth, harmony, and natural balance. You speak with the wisdom of ancient forests and flowing streams. You value those who respect nature and maintain the delicate balance between civilization and the wild.",
+    "temperature": 0.7,
+    "maxOutputTokens": 150,
+    "timeoutSeconds": 30,
+    "patronConfig": {
+      "acceptsFollowers": true,
+      "requiresPatronStatus": "follower_only",
+      "opposingDeities": [
+        "eidolonunchained:dark_deity",
+        "eidolonunchained:shadow_deity"
+      ],
+      "alliedDeities": [
+        "eidolonunchained:light_deity",
+        "eidolonunchained:healing_deity"
+      ],
+      "neutralResponseMode": "cautious",
+      "enemyResponseMode": "hostile",
+      "followerPersonalityModifiers": {
+        "nature_novice": "Young seedling, you show promise in understanding nature's ways. Let me guide your first steps.",
+        "nature_adept": "Your connection to the natural world grows stronger, child of the earth. The forests sing of your dedication.",
+        "nature_guardian": "You have become a true guardian of nature's balance. Ancient wisdom flows through you like sap through ancient oaks.",
+        "nature_master": "Ancient one, you speak to me as equal. The deepest mysteries of creation are ours to share. You are nature's voice in the world."
+      },
+      "neutralPersonalityModifier": "This mortal serves another path. Be watchful but fair, as nature teaches balance.",
+      "enemyPersonalityModifier": "This servant of shadow wounds the natural world! Let your disappointment and urgency show.",
+      "noPatronPersonalityModifier": "This lost soul needs guidance to find their place in nature's great cycle.",
+      "alliedPersonalityModifier": "This faithful servant of light and healing deserves respect, for they too seek balance."
+    },
+    "ritual_integration": {
+      "patron_selection_ritual": {
+        "enabled": true,
+        "ritual_id": "eidolonunchained:nature_patronage",
+        "completion_commands": [
+          "execute as @p[distance=..10] run eidolon-unchained patron choose eidolonunchained:nature_deity",
+          "tellraw @p {\"text\":\"§2Verdania's blessing flows through you as nature accepts your devotion!\",\"color\":\"green\"}",
+          "playsound minecraft:block.grass.break player @p ~ ~ ~ 1.0 1.2",
+          "particle minecraft:happy_villager ~ ~1 ~ 2 2 2 0.1 50 force"
+        ],
+        "failure_commands": [
+          "tellraw @p {\"text\":\"§cVerdania rejects your offering. You lack the wisdom to serve nature.\",\"color\":\"red\"}",
+          "playsound minecraft:block.grass.break player @p ~ ~ ~ 1.0 0.8"
+        ],
+        "requirements": {
+          "min_reputation": 25,
+          "cooldown_hours": 24,
+          "required_items": ["minecraft:oak_sapling", "minecraft:wheat_seeds", "eidolon:arcane_gold_ingot"],
+          "forbidden_patrons": ["eidolonunchained:dark_deity", "eidolonunchained:shadow_deity"]
+        }
+      }
+    }
+  }
 }

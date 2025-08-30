@@ -1,0 +1,22 @@
+{
+  "target_chapter": "deity_rituals",
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolonunchained.codex.entry.light_patronage_ritual"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.light_patronage_ritual.description"
+    },
+    {
+      "type": "ritual",
+      "title": "eidolonunchained.codex.page.light_patronage_ritual",
+      "ritual": "eidolonunchained:light_patronage"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.light_patronage_ritual.effects"
+    }
+  ]
+}

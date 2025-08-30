@@ -2,6 +2,8 @@ package com.bluelotuscoding.eidolonunchained.data;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
+import com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig;
+import com.bluelotuscoding.eidolonunchained.ai.AIDeityManager;
 import com.google.gson.*;
 import com.mojang.logging.LogUtils;
 import elucent.eidolon.api.deity.Deity;
@@ -103,6 +105,13 @@ public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
         
         LOGGER.info("Loaded {} datapack deities with {} errors", loaded, errors);
         
+        // Create codex entries for deity progression stages
+        try {
+            com.bluelotuscoding.eidolonunchained.integration.DeityProgressionCodexIntegration.createProgressionCodexEntries();
+        } catch (Exception e) {
+            LOGGER.error("Failed to create deity progression codex entries", e);
+        }
+        
         // Notify that deities have been loaded - AI system can now link to them
         MinecraftForge.EVENT_BUS.post(new DatapackDeitiesLoadedEvent(deities));
     }
@@ -140,6 +149,16 @@ public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
         // Load prayer types (basic structure, AI will enhance these)
         if (json.has("prayer_types")) {
             loadPrayerTypes(deity, json.getAsJsonArray("prayer_types"));
+        }
+        
+        // Extract and register AI configuration if present
+        if (json.has("ai_configuration")) {
+            try {
+                loadAIConfiguration(deityId, json.getAsJsonObject("ai_configuration"));
+                LOGGER.debug("Loaded AI configuration for deity: {}", deityId);
+            } catch (Exception e) {
+                LOGGER.error("Failed to load AI configuration for deity {}", deityId, e);
+            }
         }
         
         // Register with Eidolon's deity system
@@ -248,6 +267,31 @@ public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
         for (JsonElement typeElement : prayerTypes) {
             String prayerType = typeElement.getAsString();
             deity.addPrayerType(prayerType);
+        }
+    }
+    
+    /**
+     * Extract AI configuration from consolidated deity JSON and register it with AIDeityManager.
+     * This allows single-file deity definitions that include both basic deity data and AI behavior.
+     */
+    private void loadAIConfiguration(ResourceLocation deityId, JsonObject aiConfig) {
+        try {
+            // Convert the JSON to an AIDeityConfig object
+            AIDeityConfig config = GSON.fromJson(aiConfig, AIDeityConfig.class);
+            
+            // Ensure the deity ID matches
+            if (config.deityId == null) {
+                config.deityId = deityId;
+            }
+            
+            // Register with AIDeityManager for unified access
+            AIDeityManager.getInstance().registerAIConfig(deityId, config);
+            
+            LOGGER.debug("Successfully registered AI configuration for deity: {}", deityId);
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to parse AI configuration for deity {}: {}", deityId, e.getMessage());
+            throw e;
         }
     }
 }
