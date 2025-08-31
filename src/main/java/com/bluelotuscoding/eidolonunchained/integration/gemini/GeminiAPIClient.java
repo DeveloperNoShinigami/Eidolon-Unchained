@@ -2,6 +2,7 @@ package com.bluelotuscoding.eidolonunchained.integration.gemini;
 
 import com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig;
 import com.bluelotuscoding.eidolonunchained.ai.GenerationConfig;
+import com.bluelotuscoding.eidolonunchained.ai.PrayerAIConfig;
 import com.bluelotuscoding.eidolonunchained.ai.SafetySettings;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -496,6 +497,131 @@ public class GeminiAPIClient {
         }
         
         return context.toString();
+    }
+    
+    /**
+     * Build enhanced context with real-time world data and reference commands for AI
+     */
+    public static String buildEnhancedPlayerContext(ServerPlayer player, PrayerAIConfig prayerConfig) {
+        StringBuilder context = new StringBuilder();
+        
+        // Start with real-time world data instead of static context
+        context.append(com.bluelotuscoding.eidolonunchained.integration.world.WorldDataReader.buildRealTimeWorldContext(player));
+        
+        // Add enhanced player analysis  
+        context.append("\n=== ENHANCED PLAYER ANALYSIS ===\n");
+        context.append(getPlayerHealthAnalysis(player));
+        context.append(getPlayerInventoryAnalysis(player));
+        context.append(getPlayerEffectsAnalysis(player));
+        
+        // Add item registry information
+        context.append("\n=== AVAILABLE ITEMS FOR COMMANDS ===\n");
+        context.append("Popular Minecraft Items: minecraft:diamond, minecraft:golden_apple, minecraft:enchanted_golden_apple, ");
+        context.append("minecraft:emerald, minecraft:iron_ingot, minecraft:gold_ingot, minecraft:netherite_ingot, ");
+        context.append("minecraft:totem_of_undying, minecraft:elytra, minecraft:beacon, minecraft:dragon_egg\n");
+        
+        context.append("Eidolon Items: eidolon:soul_shard, eidolon:death_essence, eidolon:arcane_gold_ingot, ");
+        context.append("eidolon:pewter_ingot, eidolon:silver_ingot, eidolon:lead_ingot, eidolon:shadow_gem, ");
+        context.append("eidolon:wicked_weave, eidolon:warped_sprouts, eidolon:research_notes\n");
+        
+        context.append("Common Effects: minecraft:regeneration, minecraft:strength, minecraft:speed, minecraft:resistance, ");
+        context.append("minecraft:night_vision, minecraft:water_breathing, minecraft:fire_resistance, minecraft:invisibility, ");
+        context.append("minecraft:jump_boost, minecraft:slowness, minecraft:weakness, minecraft:poison, minecraft:blindness\n");
+        
+        // Add reference commands if available
+        if (prayerConfig != null && !prayerConfig.referenceCommands.isEmpty()) {
+            context.append("\n=== REFERENCE COMMAND TEMPLATES ===\n");
+            context.append("Use these as examples (replace {player} with actual player name):\n");
+            for (String refCmd : prayerConfig.referenceCommands) {
+                context.append("- ").append(refCmd).append("\n");
+            }
+        }
+        
+        // Add additional prompts if available
+        if (prayerConfig != null && !prayerConfig.additionalPrompts.isEmpty()) {
+            context.append("\n=== DEVELOPER GUIDANCE ===\n");
+            for (String prompt : prayerConfig.additionalPrompts) {
+                context.append(prompt).append("\n");
+            }
+        }
+        
+        // Add item type information for better command generation
+        context.append("\n=== ITEM CATEGORIES FOR BETTER COMMANDS ===\n");
+        context.append("FOOD: minecraft:golden_apple, minecraft:enchanted_golden_apple, minecraft:cooked_beef, minecraft:bread\n");
+        context.append("TOOLS: minecraft:diamond_sword, minecraft:diamond_pickaxe, minecraft:bow, minecraft:crossbow\n");
+        context.append("ARMOR: minecraft:diamond_helmet, minecraft:diamond_chestplate, minecraft:netherite_boots\n");
+        context.append("MAGICAL: eidolon:soul_shard, eidolon:death_essence, eidolon:shadow_gem, eidolon:research_notes\n");
+        context.append("BLOCKS: minecraft:diamond_block, minecraft:gold_block, minecraft:beacon, minecraft:enchanting_table\n");
+        
+        return context.toString();
+    }
+    
+    private static String getPlayerHealthAnalysis(ServerPlayer player) {
+        StringBuilder analysis = new StringBuilder();
+        
+        float health = player.getHealth();
+        float maxHealth = player.getMaxHealth();
+        float healthPercentage = (health / maxHealth) * 100;
+        
+        analysis.append("Health Status: ").append(String.format("%.1f", health)).append("/").append(String.format("%.1f", maxHealth));
+        
+        if (healthPercentage <= 25) {
+            analysis.append(" (CRITICAL - needs immediate healing)\n");
+        } else if (healthPercentage <= 50) {
+            analysis.append(" (INJURED - would benefit from healing)\n");
+        } else if (healthPercentage <= 75) {
+            analysis.append(" (WOUNDED - minor healing helpful)\n");
+        } else {
+            analysis.append(" (HEALTHY)\n");
+        }
+        
+        return analysis.toString();
+    }
+    
+    private static String getPlayerInventoryAnalysis(ServerPlayer player) {
+        StringBuilder analysis = new StringBuilder();
+        
+        int emptySlots = 0;
+        int totalSlots = player.getInventory().getContainerSize();
+        
+        for (int i = 0; i < totalSlots; i++) {
+            if (player.getInventory().getItem(i).isEmpty()) {
+                emptySlots++;
+            }
+        }
+        
+        analysis.append("Inventory: ").append(totalSlots - emptySlots).append("/").append(totalSlots).append(" slots used");
+        
+        if (emptySlots <= 3) {
+            analysis.append(" (FULL - may not have space for gifts)\n");
+        } else if (emptySlots <= 9) {
+            analysis.append(" (MOSTLY FULL - limited space)\n");
+        } else {
+            analysis.append(" (SPACE AVAILABLE)\n");
+        }
+        
+        return analysis.toString();
+    }
+    
+    private static String getPlayerEffectsAnalysis(ServerPlayer player) {
+        StringBuilder analysis = new StringBuilder();
+        
+        var activeEffects = player.getActiveEffects();
+        if (activeEffects.isEmpty()) {
+            analysis.append("Active Effects: None\n");
+        } else {
+            analysis.append("Active Effects: ");
+            activeEffects.forEach(effect -> {
+                String effectName = effect.getEffect().getDescriptionId();
+                int duration = effect.getDuration();
+                int amplifier = effect.getAmplifier();
+                
+                analysis.append(effectName).append(" (").append(duration).append("t, lvl ").append(amplifier + 1).append("), ");
+            });
+            analysis.append("\n");
+        }
+        
+        return analysis.toString();
     }
     
     /**

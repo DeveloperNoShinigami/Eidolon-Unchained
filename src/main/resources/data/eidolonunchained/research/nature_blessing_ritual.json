@@ -5,6 +5,7 @@
     {
       "type": "ritual",
       "ritual": "eidolonunchained:nature_blessing",
+      "max_found": 1,
       "item_requirements": {
         "check_inventory": true,
         "items": []

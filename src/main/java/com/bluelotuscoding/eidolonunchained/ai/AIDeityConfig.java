@@ -36,6 +36,11 @@ public class AIDeityConfig {
     private final Map<String, String> timeBehaviors = new HashMap<>();
     private final Map<String, String> biomeBehaviors = new HashMap<>();
     
+    // Enhanced behavior rules
+    private final Map<String, String> blessingBehaviors = new HashMap<>();
+    private final Map<String, String> curseBehaviors = new HashMap<>(); 
+    private final Map<String, String> giftBehaviors = new HashMap<>();
+    
     // Prayer configurations
     public final Map<String, PrayerAIConfig> prayerConfigs = new HashMap<>();
     
@@ -115,6 +120,33 @@ public class AIDeityConfig {
     
     public String getBiomeBehavior(String biome) {
         return biomeBehaviors.get(biome);
+    }
+    
+    // Blessing behaviors
+    public void addBlessingBehavior(String condition, String behavior) {
+        blessingBehaviors.put(condition, behavior);
+    }
+    
+    public String getBlessingBehavior(String condition) {
+        return blessingBehaviors.get(condition);
+    }
+    
+    // Curse behaviors  
+    public void addCurseBehavior(String condition, String behavior) {
+        curseBehaviors.put(condition, behavior);
+    }
+    
+    public String getCurseBehavior(String condition) {
+        return curseBehaviors.get(condition);
+    }
+    
+    // Gift behaviors
+    public void addGiftBehavior(String condition, String behavior) {
+        giftBehaviors.put(condition, behavior);
+    }
+    
+    public String getGiftBehavior(String condition) {
+        return giftBehaviors.get(condition);
     }
     
     // Safety settings

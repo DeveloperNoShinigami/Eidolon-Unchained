@@ -21,7 +21,11 @@
       "item": "minecraft:wither_skeleton_skull"
     }
   ],
-  "focusItems": [],
+  "focusItems": [
+    {
+      "item": "eidolon:zombie_heart"
+    }
+  ],
   "invariantItems": [
     {
       "item": "eidolon:codex"

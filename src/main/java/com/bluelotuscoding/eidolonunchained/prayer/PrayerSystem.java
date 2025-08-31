@@ -206,6 +206,10 @@ public class PrayerSystem {
         // This fixes the AI treating 50 reputation players as "new members"
         playerContext.progressionLevel = getProgressionLevel(deity, player);
         
+        // 🎯 EVENT-DRIVEN PROGRESSION CHECK DURING PRAYER
+        // Check if player has progressed since last prayer (replaces emergency-disabled server tick polling)
+        com.bluelotuscoding.eidolonunchained.events.PrayerProgressionHandler.forceProgressionCheckDuringPrayer(player, deityId);
+        
         playerContext.biome = player.level().getBiome(player.blockPosition()).unwrapKey()
             .map(resourceKey -> resourceKey.location().toString())
             .orElse("minecraft:plains");
@@ -286,18 +290,20 @@ public class PrayerSystem {
         // Replace placeholders
         double reputation = deity.getPlayerReputation(player);
         String progressionLevel = getProgressionLevel(deity, player);
+        String progressionTitle = getProgressionTitle(deity, player);
         
         // 🐛 DEBUG: Log what the AI is actually seeing (Prayer System)
-        LOGGER.info("🙏 PRAYER DEBUG for {}/{}: reputation={}, progressionLevel='{}'", 
-            player.getName().getString(), deity.getName(), reputation, progressionLevel);
+        LOGGER.info("🙏 PRAYER DEBUG for {}/{}: reputation={}, progressionLevel='{}', progressionTitle='{}'", 
+            player.getName().getString(), deity.getName(), reputation, progressionLevel, progressionTitle);
         
         basePrompt = basePrompt.replace("{player}", player.getName().getString());
         basePrompt = basePrompt.replace("{reputation}", String.valueOf(reputation));
         basePrompt = basePrompt.replace("{research_count}", "0"); // TODO: Integrate with research system
         basePrompt = basePrompt.replace("{progression_level}", progressionLevel);
+        basePrompt = basePrompt.replace("{progression_title}", progressionTitle);
         
         // Add context
-        String context = GeminiAPIClient.buildPlayerContext(player);
+        String context = GeminiAPIClient.buildEnhancedPlayerContext(player, prayerConfig);
         basePrompt = basePrompt.replace("{location}", extractFromContext(context, "Location"));
         basePrompt = basePrompt.replace("{biome}", extractFromContext(context, "Biome"));
         basePrompt = basePrompt.replace("{time}", extractFromContext(context, "Time"));
@@ -400,6 +406,81 @@ public class PrayerSystem {
         if (reputation >= 25) return "intermediate";
         if (reputation >= 10) return "novice";
         return "beginner";
+    }
+    
+    /**
+     * 🎭 GET PROGRESSION TITLE FROM JSON
+     * 
+     * Gets the proper progression title for the player based on their current
+     * reputation and the deity's JSON progression stages.
+     * 
+     * This provides the proper title that the AI should use when addressing the player
+     * (e.g., "Shadow Initiate", "Dark Acolyte", etc.)
+     */
+    private static String getProgressionTitle(DatapackDeity deity, ServerPlayer player) {
+        double reputation = deity.getPlayerReputation(player);
+        
+        try {
+            // Get deity's progression stages from JSON
+            Map<String, Object> stagesMap = deity.getProgressionStages();
+            
+            if (stagesMap.isEmpty()) {
+                LOGGER.debug("🔍 No progression stages defined for deity {}, using fallback title", deity.getId());
+                return getFallbackProgressionTitle(reputation);
+            }
+            
+            // Find the highest stage the player qualifies for
+            String bestTitle = "Initiate"; // Default lowest title
+            double highestQualifyingReputation = -1;
+            
+            for (Map.Entry<String, Object> stageEntry : stagesMap.entrySet()) {
+                String stageName = stageEntry.getKey();
+                Object stageData = stageEntry.getValue();
+                
+                // Handle the case where stage data is a Map
+                if (!(stageData instanceof Map)) continue;
+                @SuppressWarnings("unchecked")
+                Map<String, Object> stageDataMap = (Map<String, Object>) stageData;
+                
+                Object repReqObj = stageDataMap.get("reputationRequired");
+                if (!(repReqObj instanceof Number)) continue;
+                
+                double requiredReputation = ((Number) repReqObj).doubleValue();
+                
+                // Check if player qualifies for this stage and it's higher than current best
+                if (reputation >= requiredReputation && requiredReputation > highestQualifyingReputation) {
+                    // Get the title from this stage
+                    String title = (String) stageDataMap.get("title");
+                    if (title != null) {
+                        bestTitle = title;
+                        highestQualifyingReputation = requiredReputation;
+                    }
+                }
+            }
+            
+            LOGGER.debug("🎭 Player {} title with {}: '{}' ({}rep)", 
+                player.getName().getString(), deity.getName(), bestTitle, (int)reputation);
+            
+            return bestTitle;
+            
+        } catch (Exception e) {
+            LOGGER.error("🚨 Error determining progression title for {}/{}, using fallback", 
+                player.getName().getString(), deity.getId(), e);
+            return getFallbackProgressionTitle(reputation);
+        }
+    }
+    
+    /**
+     * 🔄 FALLBACK PROGRESSION TITLES
+     * 
+     * Used when JSON progression stages are not available.
+     */
+    private static String getFallbackProgressionTitle(double reputation) {
+        if (reputation >= 75) return "Master";
+        if (reputation >= 50) return "Priest";
+        if (reputation >= 25) return "Acolyte";
+        if (reputation >= 10) return "Novice";
+        return "Initiate";
     }
     
     private static String extractFromContext(String context, String key) {

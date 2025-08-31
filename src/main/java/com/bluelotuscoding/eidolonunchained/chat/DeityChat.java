@@ -397,7 +397,7 @@ public class DeityChat {
         
         // Add detailed player context using GeminiAPIClient's context builder
         try {
-            String playerContext = GeminiAPIClient.buildPlayerContext(player);
+            String playerContext = GeminiAPIClient.buildEnhancedPlayerContext(player, null);
             prompt.append("\n\nPlayer Current State:\n").append(playerContext);
         } catch (Exception e) {
             LOGGER.warn("Failed to build player context: {}", e.getMessage());

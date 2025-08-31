@@ -6,6 +6,7 @@
     {
       "type": "kill_entity",
       "entity": "minecraft:zombie",
+      "max_found": 1,
       "nbt": {},
       "item_requirements": {
         "check_inventory": true,
@@ -21,6 +22,7 @@
     {
       "type": "biome",
       "biome": "minecraft:desert",
+      "max_found": 1,
       "coordinates": {
         "x": 100,
         "z": 200,
@@ -50,6 +52,13 @@
       {
         "type": "item",
         "item": "minecraft:cobblestone",
+        "count": 5
+      }
+    ],
+    "2": [
+      {
+        "type": "item",
+        "item": "minecraft:stone",
         "count": 5
       }
     ]

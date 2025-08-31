@@ -4,11 +4,13 @@
   "triggers": [
     {
       "type": "block_interaction",
-      "block": "eidolon:brazier"
+      "block": "eidolon:brazier",
+      "max_found": 1
     },
     {
       "type": "kill_entity",
       "entity": "minecraft:zombie",
+      "max_found": 1,
       "item_requirements": {
         "check_inventory": true,
         "items": [
@@ -22,6 +24,7 @@
     {
       "type": "kill_entity",
       "entity": "minecraft:skeleton",
+      "max_found": 1,
       "item_requirements": {
         "check_inventory": true,
         "items": [

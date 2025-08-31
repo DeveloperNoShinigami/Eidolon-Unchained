@@ -95,14 +95,14 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 JsonObject json = element.getAsJsonObject();
                 
                 // Get the deity this AI config applies to
-                if (!json.has("deity_id")) {
-                    LOGGER.error("AI config {} is missing required 'deity_id' field", location);
+                if (!json.has("deity")) {
+                    LOGGER.error("AI config {} is missing required 'deity' field", location);
                     continue;
                 }
                 
-                JsonElement deityIdElement = json.get("deity_id");
+                JsonElement deityIdElement = json.get("deity");
                 if (deityIdElement == null || deityIdElement.isJsonNull()) {
-                    LOGGER.error("AI config {} has null 'deity_id' field", location);
+                    LOGGER.error("AI config {} has null 'deity' field", location);
                     continue;
                 }
                 
@@ -280,6 +280,36 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             }
         }
         
+        // Blessing behavior rules
+        if (rules.has("blessings")) {
+            JsonObject blessings = rules.getAsJsonObject("blessings");
+            for (Map.Entry<String, JsonElement> entry : blessings.entrySet()) {
+                String condition = entry.getKey();
+                String behavior = entry.getValue().getAsString();
+                config.addBlessingBehavior(condition, behavior);
+            }
+        }
+        
+        // Curse behavior rules
+        if (rules.has("curses")) {
+            JsonObject curses = rules.getAsJsonObject("curses");
+            for (Map.Entry<String, JsonElement> entry : curses.entrySet()) {
+                String condition = entry.getKey();
+                String behavior = entry.getValue().getAsString();
+                config.addCurseBehavior(condition, behavior);
+            }
+        }
+        
+        // Gift behavior rules  
+        if (rules.has("gifts")) {
+            JsonObject gifts = rules.getAsJsonObject("gifts");
+            for (Map.Entry<String, JsonElement> entry : gifts.entrySet()) {
+                String condition = entry.getKey();
+                String behavior = entry.getValue().getAsString();
+                config.addGiftBehavior(condition, behavior);
+            }
+        }
+        
         // Time-based behaviors
         if (rules.has("time_behaviors")) {
             JsonObject timeBehaviors = rules.getAsJsonObject("time_behaviors");
@@ -339,6 +369,28 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 for (JsonElement cmd : commands) {
                     prayer.allowedCommands.add(cmd.getAsString());
                     prayer.allowed_commands.add(cmd.getAsString()); // Keep both for compatibility
+                }
+            }
+            
+            // Load additional prompts for extra developer guidance
+            if (prayerConfig.has("additional_prompts")) {
+                JsonArray prompts = prayerConfig.getAsJsonArray("additional_prompts");
+                prayer.additionalPrompts.clear();
+                prayer.additional_prompts.clear();
+                for (JsonElement prompt : prompts) {
+                    prayer.additionalPrompts.add(prompt.getAsString());
+                    prayer.additional_prompts.add(prompt.getAsString());
+                }
+            }
+            
+            // Load reference commands for AI templates
+            if (prayerConfig.has("reference_commands")) {
+                JsonArray refCmds = prayerConfig.getAsJsonArray("reference_commands");
+                prayer.referenceCommands.clear(); // Clear defaults
+                prayer.reference_commands.clear(); // Clear defaults
+                for (JsonElement cmd : refCmds) {
+                    prayer.referenceCommands.add(cmd.getAsString());
+                    prayer.reference_commands.add(cmd.getAsString());
                 }
             }
             

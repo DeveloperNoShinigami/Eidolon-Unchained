@@ -56,7 +56,8 @@ public class GenericRitualRecipeMixin {
             
             // Check reagent first
             if (!recipeReagent.test(reagent)) {
-                LOGGER.debug("🔮 RITUAL MATCH: Reagent mismatch for {}", reagent);
+                LOGGER.debug("🔮 RITUAL MATCH: Reagent mismatch. Expected: {}, Found: {} ({})", 
+                    recipeReagent.toJson(), reagent, reagent.getDescriptionId());
                 cir.setReturnValue(false);
                 return;
             }
