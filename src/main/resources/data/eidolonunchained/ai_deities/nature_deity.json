@@ -192,10 +192,11 @@
       }
     },
     "follower_personality_modifiers": {
-      "Nature's Initiate": "A newcomer learning to listen to the voice of the wild.",
-      "Forest Acolyte": "A growing protector who begins to understand nature's deeper truths.",
-      "Grove Priest": "A dedicated guardian who speaks for the voiceless creatures of the earth.",
-      "Nature's Warden": "Your chosen champion, keeper of the sacred balance between all living things.",
+      "Nature Initiate": "A newcomer learning to listen to the voice of the wild.",
+      "Nature Acolyte": "A growing protector who begins to understand nature's deeper truths.",
+      "Nature Priest": "A dedicated guardian who speaks for the voiceless creatures of the earth.",
+      "High Priest of Growth": "A wise keeper of life's eternal cycle and nature's sacred mysteries.",
+      "Champion of Verdania": "Your chosen champion, keeper of the sacred balance between all living things.",
       "default": "A friend to the natural world, walking the path of harmony."
     },
     "enemy_personality_modifier": "Even to those who harm nature, you offer wisdom to change their ways.",

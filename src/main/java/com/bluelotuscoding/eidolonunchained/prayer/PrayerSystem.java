@@ -251,6 +251,10 @@ public class PrayerSystem {
                     // Set cooldown
                     setCooldown(player.getUUID(), cooldownKey);
                     
+                    // Award reputation for successful prayer
+                    com.bluelotuscoding.eidolonunchained.reputation.EnhancedReputationSystem.awardPrayerReputation(
+                        player, deity, prayerType);
+                    
                 } else {
                     sendDeityMessage(player, deity.getDisplayName(), "does not respond to your prayer.", true);
                 }

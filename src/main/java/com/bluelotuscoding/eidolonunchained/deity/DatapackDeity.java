@@ -466,4 +466,28 @@ public class DatapackDeity extends Deity {
     public Set<String> getPlayerRewardHistory(UUID playerId) {
         return playerRewardHistory.getOrDefault(playerId, new HashSet<>());
     }
+    
+    /**
+     * Get current progression stage name based on reputation
+     */
+    public String getCurrentProgressionStage(double reputation) {
+        // This would need to parse the JSON progression data
+        // For now, return a simple mapping based on reputation thresholds
+        if (reputation >= 100) return "Champion";
+        if (reputation >= 75) return "High Priest";
+        if (reputation >= 50) return "Priest";
+        if (reputation >= 25) return "Acolyte";
+        return "Initiate";
+    }
+    
+    /**
+     * Get information about the next progression stage
+     */
+    public String getNextProgressionInfo(double reputation) {
+        if (reputation >= 100) return "Maximum stage reached";
+        if (reputation >= 75) return String.format("Champion at 100 reputation (%.1f needed)", 100 - reputation);
+        if (reputation >= 50) return String.format("High Priest at 75 reputation (%.1f needed)", 75 - reputation);
+        if (reputation >= 25) return String.format("Priest at 50 reputation (%.1f needed)", 50 - reputation);
+        return String.format("Acolyte at 25 reputation (%.1f needed)", 25 - reputation);
+    }
 }

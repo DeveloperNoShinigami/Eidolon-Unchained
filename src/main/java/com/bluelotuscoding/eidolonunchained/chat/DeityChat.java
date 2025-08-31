@@ -299,15 +299,30 @@ public class DeityChat {
                     return;
                 }
                 
-                String response = aiResponse.dialogue;
+                String rawResponse = aiResponse.dialogue;
                 
-                // Add response to history
-                history.add("Deity: " + response);
+                // Process AI response for commands and clean message
+                var processedResponse = com.bluelotuscoding.eidolonunchained.integration.ai.AIResponseProcessor.processAIResponse(
+                    rawResponse, player, deity.getName(), "unknown", 
+                    aiConfig.prayerConfigs.get("conversation"));
+                
+                // Use cleaned message for display
+                String cleanedResponse = processedResponse.cleanedMessage;
+                
+                // Add response to history (using cleaned version)
+                history.add("Deity: " + cleanedResponse);
                 
                 // Add to persistent history
-                ConversationHistoryManager.get().addMessage(player.getUUID(), deityId, deity.getName(), response);
+                ConversationHistoryManager.get().addMessage(player.getUUID(), deityId, deity.getName(), cleanedResponse);
                 
-                // Check for auto-judgment and commands
+                // Log command execution if any
+                if (processedResponse.hasCommands()) {
+                    LOGGER.info("🤖 AI {} executed {} commands for {}: {}", 
+                        deity.getName(), processedResponse.getCommandCount(), 
+                        player.getName().getString(), processedResponse.extractedCommands);
+                }
+                
+                // Check for auto-judgment and additional commands (legacy system)
                 if (aiConfig.prayerConfigs.containsKey("conversation")) {
                     PrayerAIConfig prayerConfig = aiConfig.prayerConfigs.get("conversation");
                     if (prayerConfig.autoJudgeCommands) {
@@ -318,13 +333,17 @@ public class DeityChat {
                                 "Reputation: " + (int)deity.getPlayerReputation(player) + ", Health: " + (int)player.getHealth(), commands);
                             
                             executeCommands(player, deityId, commands);
-                            response += "\n\n§6[Divine intervention enacted]";
+                            cleanedResponse += "\n\n§6[Divine intervention enacted]";
                         }
                     }
                 }
                 
                 // Send deity response to player using prominent title/subtitle display
-                sendDeityResponse(player, deity.getName(), response);
+                sendDeityResponse(player, deity.getName(), cleanedResponse);
+                
+                // Award reputation for meaningful conversations
+                com.bluelotuscoding.eidolonunchained.reputation.EnhancedReputationSystem.awardConversationReputation(
+                    player, deity, "meaningful_conversation");
                 
             }).exceptionally(throwable -> {
                 LOGGER.error("Error generating AI response: {}", throwable.getMessage(), throwable);

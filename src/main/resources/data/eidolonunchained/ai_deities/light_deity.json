@@ -193,7 +193,8 @@
       "Light Initiate": "A new soul seeking the path of righteousness, deserving of patient guidance.",
       "Light Acolyte": "A dedicated servant growing in wisdom and divine favor.",
       "Light Priest": "A trusted shepherd who spreads your sacred light to others.",
-      "Light High Priest": "Your most blessed champion, worthy of your ultimate grace.",
+      "High Priest of Radiance": "A guardian of the sacred flame, blessed with divine authority.",
+      "Champion of Lumina": "Your most blessed champion, ultimate vessel of divine light and grace.",
       "default": "A faithful follower walking in the light of truth."
     },
     "enemy_personality_modifier": "Even to lost souls who serve darkness, you offer a chance at redemption.",

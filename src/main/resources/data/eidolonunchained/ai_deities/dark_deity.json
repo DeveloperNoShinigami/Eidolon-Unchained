@@ -138,13 +138,13 @@
   "api_settings": {
     "model": "gemini-1.5-pro",
     "temperature": 0.8,
-    "max_tokens": 1000,
+    "max_tokens": 400,
     "timeout_seconds": 30,
     "generation_config": {
       "temperature": 0.8,
       "topK": 40,
       "topP": 0.9,
-      "maxOutputTokens": 1000
+      "maxOutputTokens": 400
     },
     "safety_settings": {
       "harassment": "BLOCK_MEDIUM_AND_ABOVE",

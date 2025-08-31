@@ -10,6 +10,8 @@ import com.bluelotuscoding.eidolonunchained.chat.ConversationMessage;
 import com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
 import com.bluelotuscoding.eidolonunchained.events.RitualCompleteEvent;
+import com.bluelotuscoding.eidolonunchained.reputation.EnhancedReputationSystem;
+import elucent.eidolon.capability.IReputation;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -22,6 +24,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
@@ -318,6 +321,12 @@ public class UnifiedCommands {
                             .suggests(DEITY_SUGGESTIONS)
                             .executes(UnifiedCommands::generateCommandReport))))
                 .then(Commands.literal("personality")
+            
+            // Reputation status command
+            .then(Commands.literal("status")
+                .then(Commands.argument("deity", StringArgumentType.string())
+                    .suggests(DEITY_SUGGESTIONS)
+                    .executes(UnifiedCommands::showReputationStatus)))
                     .then(Commands.argument("player", StringArgumentType.string())
                         .suggests(PLAYER_SUGGESTIONS)
                         .then(Commands.argument("deity", StringArgumentType.string())
@@ -1702,6 +1711,62 @@ public class UnifiedCommands {
         }
         
         source.sendSuccess(() -> Component.literal(diagnostic.toString()), false);
+        return 1;
+    }
+    
+    private static int showReputationStatus(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        
+        try {
+            String deityId = StringArgumentType.getString(context, "deity");
+            Player player = source.getPlayerOrException();
+            
+            // Get the deity
+            ResourceLocation deityRL = new ResourceLocation(deityId);
+            DatapackDeity deity = DatapackDeityManager.getDeity(deityRL);
+            
+            if (deity == null) {
+                source.sendFailure(Component.literal("§cDeity not found: " + deityId));
+                return 0;
+            }
+            
+            // Get player's reputation with the specified deity
+            double currentReputation = deity.getPlayerReputation(player);
+            String currentStage = deity.getCurrentProgressionStage(currentReputation);
+            String nextInfo = deity.getNextProgressionInfo(currentReputation);
+            
+            StringBuilder status = new StringBuilder();
+            status.append("§6=== Reputation Status ===\n");
+            status.append(String.format("§eDeity: §b%s\n", deity.getName()));
+            status.append(String.format("§eReputation: §a%.1f\n", currentReputation));
+            status.append(String.format("§eCurrent Stage: §d%s\n", currentStage));
+            status.append(String.format("§eNext Stage: §7%s\n", nextInfo));
+            
+            // Show cooldown info
+            String cooldownKey = player.getStringUUID() + "_" + deityId;
+            long lastConversation = EnhancedReputationSystem.lastConversationTime.getOrDefault(cooldownKey, 0L);
+            long timeSinceLastConversation = (System.currentTimeMillis() - lastConversation) / 1000;
+            long conversationCooldown = 30 * 60; // 30 minutes
+            
+            if (timeSinceLastConversation < conversationCooldown) {
+                long remaining = conversationCooldown - timeSinceLastConversation;
+                status.append(String.format("§eConversation Cooldown: §c%d minutes\n", remaining / 60));
+            } else {
+                status.append("§eConversation Cooldown: §aReady\n");
+            }
+            
+            // Show daily conversation count
+            String dailyKey = cooldownKey + "_" + EnhancedReputationSystem.getCurrentDateKey();
+            int dailyCount = EnhancedReputationSystem.dailyConversationCount.getOrDefault(dailyKey, 0);
+            status.append(String.format("§eDaily Conversations: §b%d/5\n", dailyCount));
+            
+            source.sendSuccess(() -> Component.literal(status.toString()), false);
+            
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("§cError checking reputation status: " + e.getMessage()));
+            return 0;
+        }
+        
         return 1;
     }
     
