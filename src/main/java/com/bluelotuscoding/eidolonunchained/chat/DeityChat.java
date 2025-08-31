@@ -271,26 +271,36 @@ public class DeityChat {
             // Generate AI response
             String personality = aiConfig.buildDynamicPersonalityWithPatron(new PlayerContext(player, deity), player);
             
-            // Get API key using the API key manager
-            String apiKey = APIKeyManager.getAPIKey("gemini");
+            // Generate AI response using configured provider
+            String apiKey = APIKeyManager.getAPIKey(EidolonUnchainedConfig.COMMON.aiProvider.get());
             if (apiKey == null || apiKey.trim().isEmpty()) {
-                LOGGER.error("No Gemini API key configured. Please set up API key using /eidolon-config or environment variables.");
+                String provider = EidolonUnchainedConfig.COMMON.aiProvider.get();
+                LOGGER.error("No {} API key configured. Please set up API key using /eidolon-unchained api set {} YOUR_KEY", provider, provider);
                 player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.api_key_required"));
-                player.sendSystemMessage(Component.literal("§7(Set GEMINI_API_KEY environment variable or configure via /eidolon-config)"));
+                player.sendSystemMessage(Component.literal("§7(Set API key: /eidolon-unchained api set " + provider + " YOUR_KEY)"));
                 endConversation(player);
                 return;
             }
             
-            GeminiAPIClient client = new GeminiAPIClient(
-                apiKey,
-                aiConfig.apiSettings.getModel(),
-                aiConfig.apiSettings.timeoutSeconds
-            );
+            // Create AI provider based on configuration
+            com.bluelotuscoding.eidolonunchained.ai.AIProviderFactory.AIProvider provider = 
+                com.bluelotuscoding.eidolonunchained.ai.AIProviderFactory.createProvider();
+            
+            if (!provider.isAvailable()) {
+                LOGGER.error("AI provider {} is not available", provider.getProviderName());
+                player.sendSystemMessage(Component.literal("§cAI provider not available: " + provider.getProviderName()));
+                endConversation(player);
+                return;
+            }
+            
+            // Build context for AI provider
+            String context = "deity:" + deityId.toString() + ",player:" + player.getStringUUID();
             
             // Generate AI response asynchronously
-            client.generateResponse(
+            provider.generateResponse(
                 conversationPrompt, 
-                personality, 
+                personality,
+                context,
                 aiConfig.apiSettings.generationConfig, 
                 aiConfig.apiSettings.safetySettings
             ).thenAccept(aiResponse -> {

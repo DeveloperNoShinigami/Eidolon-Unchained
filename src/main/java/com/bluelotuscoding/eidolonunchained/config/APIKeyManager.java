@@ -139,12 +139,19 @@ public class APIKeyManager {
             return false;
         }
         
-        // For now, just check if key exists and looks valid
-        if (provider.equals("gemini")) {
-            return apiKey.startsWith("AIza") && apiKey.length() > 20;
+        // Validate key format based on provider
+        switch (provider.toLowerCase()) {
+            case "gemini":
+                return apiKey.startsWith("AIza") && apiKey.length() > 20;
+            case "player2ai":
+            case "player2":
+                // Player2AI keys are typically UUID format or start with specific prefix
+                return apiKey.length() > 10; // Basic validation
+            case "openai":
+                return apiKey.startsWith("sk-") && apiKey.length() > 20;
+            default:
+                return false; // Unknown provider
         }
-        
-        return false; // Unknown provider
     }
     
     /**
@@ -177,6 +184,18 @@ public class APIKeyManager {
             results.put("Gemini API", testConnection("gemini"));
         } else {
             results.put("Gemini API", false);
+        }
+        
+        if (hasAPIKey("player2ai")) {
+            results.put("Player2AI", testConnection("player2ai"));
+        } else {
+            results.put("Player2AI", false);
+        }
+        
+        if (hasAPIKey("openai")) {
+            results.put("OpenAI", testConnection("openai"));
+        } else {
+            results.put("OpenAI", false);
         }
         
         return results;

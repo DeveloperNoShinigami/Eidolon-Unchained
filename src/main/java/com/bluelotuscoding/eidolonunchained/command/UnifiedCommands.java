@@ -3,6 +3,7 @@ package com.bluelotuscoding.eidolonunchained.command;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
 import com.bluelotuscoding.eidolonunchained.ai.AIDeityManager;
+import com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig;
 import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
 import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
 import com.bluelotuscoding.eidolonunchained.chat.ConversationHistoryManager;
@@ -75,7 +76,7 @@ public class UnifiedCommands {
      */
     private static final SuggestionProvider<CommandSourceStack> API_PROVIDER_SUGGESTIONS = (context, builder) -> {
         return SharedSuggestionProvider.suggest(
-            List.of("gemini", "openai", "anthropic"),
+            List.of("gemini", "player2ai", "openai", "anthropic"),
             builder
         );
     };
@@ -167,6 +168,28 @@ public class UnifiedCommands {
                     .then(Commands.literal("delay")
                         .then(Commands.argument("milliseconds", IntegerArgumentType.integer(1000, 10000))
                             .executes(UnifiedCommands::setRetryDelay)))))
+            
+            // Player2AI specific management
+            .then(Commands.literal("player2ai")
+                .then(Commands.literal("auth")
+                    .then(Commands.literal("auto")
+                        .executes(UnifiedCommands::authenticatePlayer2AIAuto)))
+                .then(Commands.literal("memory")
+                    .then(Commands.literal("clear")
+                        .then(Commands.argument("deity", StringArgumentType.string())
+                            .suggests(DEITY_SUGGESTIONS)
+                            .executes(UnifiedCommands::clearPlayer2AIMemory)))
+                    .then(Commands.literal("show")
+                        .then(Commands.argument("deity", StringArgumentType.string())
+                            .suggests(DEITY_SUGGESTIONS)
+                            .executes(UnifiedCommands::showPlayer2AIMemory))))
+                .then(Commands.literal("characters")
+                    .then(Commands.literal("list")
+                        .executes(UnifiedCommands::listPlayer2AICharacters))
+                    .then(Commands.literal("update-personality")
+                        .then(Commands.argument("deity", StringArgumentType.string())
+                            .suggests(DEITY_SUGGESTIONS)
+                            .executes(UnifiedCommands::updatePlayer2AIPersonality)))))
             
             // Deity management
             .then(Commands.literal("deities")
@@ -308,6 +331,8 @@ public class UnifiedCommands {
                     .executes(UnifiedCommands::showDebugLogs))
                 .then(Commands.literal("triggers")
                     .executes(UnifiedCommands::debugTriggers))
+                .then(Commands.literal("status")
+                    .executes(UnifiedCommands::systemStatus))
                 .then(Commands.literal("commands")
                     .then(Commands.argument("player", StringArgumentType.string())
                         .suggests(PLAYER_SUGGESTIONS)
@@ -578,6 +603,45 @@ public class UnifiedCommands {
     
     private static int showDebugLogs(CommandContext<CommandSourceStack> context) {
         context.getSource().sendSuccess(() -> Component.literal("§6=== Recent Debug Logs ===\n§eDebug log viewing feature coming soon"), false);
+        return 1;
+    }
+    
+    private static int systemStatus(CommandContext<CommandSourceStack> context) {
+        StringBuilder status = new StringBuilder("§6=== Eidolon Unchained System Status ===\n");
+        
+        // AI Provider Status
+        String aiProvider = EidolonUnchainedConfig.COMMON.aiProvider.get();
+        status.append(String.format("§eAI Provider: §f%s\n", aiProvider));
+        
+        // Player2AI Health Signal Status (for jam submission compliance)
+        if ("player2ai".equals(aiProvider)) {
+            boolean healthSignalActive = com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2HealthSignal.isHealthSignalActive();
+            int interval = com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2HealthSignal.getHealthSignalInterval();
+            status.append(String.format("§ePlayer2AI Health Signal: %s (every %d seconds)\n", 
+                healthSignalActive ? "§aACTIVE" : "§cINACTIVE", interval));
+            
+            String apiKey = APIKeyManager.getAPIKey("player2ai");
+            boolean hasApiKey = apiKey != null && !apiKey.trim().isEmpty();
+            status.append(String.format("§ePlayer2AI API Key: %s\n", hasApiKey ? "§aCONFIGURED" : "§cMISSING"));
+            
+            if (hasApiKey) {
+                boolean isLocal = apiKey.contains("localhost") || apiKey.contains("127.0.0.1");
+                status.append(String.format("§eInstance Type: §f%s\n", isLocal ? "Local (Desktop App)" : "Cloud"));
+            }
+        }
+        
+        // System Health
+        status.append(String.format("§eDebug Mode: %s\n", 
+            EidolonUnchainedConfig.COMMON.enableDebugMode.get() ? "§aEnabled" : "§cDisabled"));
+        
+        // Jam Compliance Check
+        if ("player2ai".equals(aiProvider)) {
+            boolean isCompliant = com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2HealthSignal.isHealthSignalActive();
+            status.append(String.format("§ePlayer2AI Jam Compliance: %s\n", 
+                isCompliant ? "§a✓ COMPLIANT" : "§c✗ NON-COMPLIANT"));
+        }
+        
+        context.getSource().sendSuccess(() -> Component.literal(status.toString()), false);
         return 1;
     }
     
@@ -1768,6 +1832,183 @@ public class UnifiedCommands {
         }
         
         return 1;
+    }
+    
+    // Player2AI Management Commands
+    
+    private static int clearPlayer2AIMemory(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        
+        try {
+            String deityId = StringArgumentType.getString(context, "deity");
+            Player player = source.getPlayerOrException();
+            
+            if (!"player2ai".equals(EidolonUnchainedConfig.COMMON.aiProvider.get())) {
+                source.sendFailure(Component.literal("§cPlayer2AI is not the current AI provider"));
+                return 0;
+            }
+            
+            // Create Player2AI client and clear memory
+            String apiKey = APIKeyManager.getAPIKey("player2ai");
+            if (apiKey == null) {
+                source.sendFailure(Component.literal("§cNo Player2AI API key configured"));
+                return 0;
+            }
+            
+            com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient client = 
+                new com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient(apiKey, 30);
+            
+            client.clearPlayerMemory(deityId, player.getStringUUID()).thenAccept(success -> {
+                if (success) {
+                    source.sendSuccess(() -> Component.literal("§aCleared Player2AI memory for " + deityId), false);
+                } else {
+                    source.sendFailure(Component.literal("§cFailed to clear Player2AI memory"));
+                }
+            });
+            
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("§cError clearing Player2AI memory: " + e.getMessage()));
+            return 0;
+        }
+        
+        return 1;
+    }
+    
+    private static int showPlayer2AIMemory(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        
+        try {
+            String deityId = StringArgumentType.getString(context, "deity");
+            Player player = source.getPlayerOrException();
+            
+            if (!"player2ai".equals(EidolonUnchainedConfig.COMMON.aiProvider.get())) {
+                source.sendFailure(Component.literal("§cPlayer2AI is not the current AI provider"));
+                return 0;
+            }
+            
+            // Create Player2AI client and get memory
+            String apiKey = APIKeyManager.getAPIKey("player2ai");
+            if (apiKey == null) {
+                source.sendFailure(Component.literal("§cNo Player2AI API key configured"));
+                return 0;
+            }
+            
+            com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient client = 
+                new com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient(apiKey, 30);
+            
+            client.getCharacterMemory(deityId, player.getStringUUID()).thenAccept(memory -> {
+                source.sendSuccess(() -> Component.literal("§6=== Player2AI Memory for " + deityId + " ===\n" + memory), false);
+            });
+            
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("§cError getting Player2AI memory: " + e.getMessage()));
+            return 0;
+        }
+        
+        return 1;
+    }
+    
+    private static int listPlayer2AICharacters(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        
+        if (!"player2ai".equals(EidolonUnchainedConfig.COMMON.aiProvider.get())) {
+            source.sendFailure(Component.literal("§cPlayer2AI is not the current AI provider"));
+            return 0;
+        }
+        
+        source.sendSuccess(() -> Component.literal("§6=== Player2AI Characters ===\n" +
+            "§ePlayer2AI characters are created automatically when you first interact with each deity.\n" +
+            "§eCharacters persist memory and relationships across conversations.\n" +
+            "§eUse /eidolon-unchained player2ai memory show <deity> to see character memory."), false);
+        
+        return 1;
+    }
+    
+    private static int updatePlayer2AIPersonality(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        
+        try {
+            String deityId = StringArgumentType.getString(context, "deity");
+            
+            if (!"player2ai".equals(EidolonUnchainedConfig.COMMON.aiProvider.get())) {
+                source.sendFailure(Component.literal("§cPlayer2AI is not the current AI provider"));
+                return 0;
+            }
+            
+            // Get deity to get current personality
+            ResourceLocation deityRL = new ResourceLocation(deityId);
+            DatapackDeity deity = DatapackDeityManager.getDeity(deityRL);
+            if (deity == null) {
+                source.sendFailure(Component.literal("§cDeity not found: " + deityId));
+                return 0;
+            }
+            
+            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deityRL);
+            if (aiConfig == null) {
+                source.sendFailure(Component.literal("§cAI configuration not found for deity: " + deityId));
+                return 0;
+            }
+            
+            // Create Player2AI client and update personality
+            String apiKey = APIKeyManager.getAPIKey("player2ai");
+            if (apiKey == null) {
+                source.sendFailure(Component.literal("§cNo Player2AI API key configured"));
+                return 0;
+            }
+            
+            com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient client = 
+                new com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient(apiKey, 30);
+            
+            client.updateCharacterPersonality(deityId, aiConfig.personality).thenAccept(success -> {
+                if (success) {
+                    source.sendSuccess(() -> Component.literal("§aUpdated Player2AI personality for " + deity.getName()), false);
+                } else {
+                    source.sendFailure(Component.literal("§cFailed to update Player2AI personality"));
+                }
+            });
+            
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("§cError updating Player2AI personality: " + e.getMessage()));
+            return 0;
+        }
+        
+        return 1;
+    }
+    
+    private static int authenticatePlayer2AIAuto(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        
+        try {
+            source.sendSuccess(() -> Component.literal("§6Attempting Player2AI Quick Start authentication..."), false);
+            
+            // Try to get API key from Player2 App
+            String apiKey = com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient.authenticateWithPlayer2App();
+            
+            if (apiKey != null && !apiKey.trim().isEmpty()) {
+                // Save the API key
+                APIKeyManager.setAPIKey("player2ai", apiKey);
+                EidolonUnchainedConfig.COMMON.aiProvider.set("player2ai");
+                EidolonUnchainedConfig.COMMON_SPEC.save();
+                
+                source.sendSuccess(() -> Component.literal("§a✓ Successfully authenticated with Player2 App!"), false);
+                source.sendSuccess(() -> Component.literal("§a✓ Player2AI set as active AI provider"), false);
+                source.sendSuccess(() -> Component.literal("§7API Key: " + maskApiKey(apiKey)), false);
+                return 1;
+            } else {
+                source.sendFailure(Component.literal("§cPlayer2 App authentication failed"));
+                source.sendFailure(Component.literal("§7Make sure:"));
+                source.sendFailure(Component.literal("§7• Player2 App is installed and running"));
+                source.sendFailure(Component.literal("§7• You're logged into Player2 App"));
+                source.sendFailure(Component.literal("§7• No firewall blocking localhost:4316"));
+                source.sendFailure(Component.literal("§7"));
+                source.sendFailure(Component.literal("§7Alternative: Use manual setup with your API key:"));
+                source.sendFailure(Component.literal("§7/eidolon-unchained api set player2ai <your-api-key>"));
+                return 0;
+            }
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("§cError during Player2AI authentication: " + e.getMessage()));
+            return 0;
+        }
     }
     
     // Utility methods

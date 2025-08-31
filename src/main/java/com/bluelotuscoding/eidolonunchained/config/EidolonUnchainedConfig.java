@@ -34,6 +34,9 @@ public class EidolonUnchainedConfig {
         public final ForgeConfigSpec.ConfigValue<String> geminiApiKey;
         public final ForgeConfigSpec.ConfigValue<String> geminiModel;
         public final ForgeConfigSpec.IntValue geminiTimeout;
+        public final ForgeConfigSpec.ConfigValue<String> player2aiApiKey;
+        public final ForgeConfigSpec.BooleanValue enableMemoryPersistence;
+        public final ForgeConfigSpec.BooleanValue enableRelationshipTracking;
         public final ForgeConfigSpec.DoubleValue aiTemperature;
         public final ForgeConfigSpec.IntValue maxTokens;
         public final ForgeConfigSpec.BooleanValue enableAIDeities;
@@ -146,7 +149,7 @@ public class EidolonUnchainedConfig {
                 .define("enable_ai_deities", true);
             
             aiProvider = builder
-                .comment("AI provider to use (gemini, openai, proxy)")
+                .comment("AI provider to use (gemini, player2ai, openai, proxy)")
                 .define("ai_provider", "gemini");
             
             geminiApiKey = builder
@@ -160,6 +163,19 @@ public class EidolonUnchainedConfig {
             geminiTimeout = builder
                 .comment("API request timeout in seconds")
                 .defineInRange("gemini_timeout_seconds", 30, 5, 120);
+            
+            // Player2AI Configuration
+            player2aiApiKey = builder
+                .comment("Player2AI API key (leave empty to use environment variable EIDOLON_PLAYER2AI_API_KEY)")
+                .define("player2ai_api_key", "");
+            
+            enableMemoryPersistence = builder
+                .comment("Enable Player2AI memory persistence (characters remember past conversations)")
+                .define("enable_memory_persistence", true);
+            
+            enableRelationshipTracking = builder
+                .comment("Enable Player2AI relationship tracking (AI learns player preferences)")
+                .define("enable_relationship_tracking", true);
             
             aiTemperature = builder
                 .comment("AI response creativity (0.0 = predictable, 1.0 = creative)")
