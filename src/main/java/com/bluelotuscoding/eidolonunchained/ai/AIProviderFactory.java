@@ -3,6 +3,7 @@ package com.bluelotuscoding.eidolonunchained.ai;
 import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiAPIClient;
+import com.bluelotuscoding.eidolonunchained.integration.openrouter.OpenRouterClient;
 import com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient;
 import com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2HealthSignal;
 import org.apache.logging.log4j.LogManager;
@@ -30,8 +31,37 @@ public class AIProviderFactory {
             case "player2ai":
             case "player2":
                 return createPlayer2AIProvider();
+            case "openrouter":
+                return createOpenRouterProvider();
             case "openai":
                 return createOpenAIProvider(); // Future implementation
+            default:
+                LOGGER.warn("Unknown AI provider: {}, falling back to Gemini", provider);
+                return createGeminiProvider();
+        }
+    }
+    
+    /**
+     * Create an AI client based on specified provider and model (for deity-specific configurations)
+     */
+    public static AIProvider createProvider(String provider, String model) {
+        if (provider == null || provider.trim().isEmpty()) {
+            LOGGER.warn("No provider specified, using global configuration");
+            return createProvider();
+        }
+        
+        provider = provider.toLowerCase();
+        
+        switch (provider) {
+            case "gemini":
+                return createGeminiProvider(model);
+            case "player2ai":
+            case "player2":
+                return createPlayer2AIProvider(); // Player2AI doesn't use model parameter
+            case "openrouter":
+                return createOpenRouterProvider(model);
+            case "openai":
+                return createOpenAIProvider(model); // Future implementation
             default:
                 LOGGER.warn("Unknown AI provider: {}, falling back to Gemini", provider);
                 return createGeminiProvider();
@@ -42,13 +72,24 @@ public class AIProviderFactory {
      * Create Gemini AI provider
      */
     private static AIProvider createGeminiProvider() {
+        String model = EidolonUnchainedConfig.COMMON.geminiModel.get();
+        return createGeminiProvider(model);
+    }
+    
+    /**
+     * Create Gemini AI provider with specific model
+     */
+    private static AIProvider createGeminiProvider(String model) {
         String apiKey = APIKeyManager.getAPIKey("gemini");
         if (apiKey == null || apiKey.trim().isEmpty()) {
             LOGGER.error("No Gemini API key configured");
             return new DummyAIProvider();
         }
         
-        String model = EidolonUnchainedConfig.COMMON.geminiModel.get();
+        if (model == null || model.trim().isEmpty()) {
+            model = EidolonUnchainedConfig.COMMON.geminiModel.get();
+        }
+        
         int timeout = EidolonUnchainedConfig.COMMON.geminiTimeout.get();
         
         GeminiAPIClient client = new GeminiAPIClient(apiKey, model, timeout);
@@ -85,11 +126,91 @@ public class AIProviderFactory {
     }
     
     /**
+     * Create OpenRouter provider
+     */
+    private static AIProvider createOpenRouterProvider() {
+        String model = EidolonUnchainedConfig.COMMON.openrouterModel.get();
+        return createOpenRouterProvider(model);
+    }
+    
+    /**
+     * Create OpenRouter provider with specific model
+     */
+    private static AIProvider createOpenRouterProvider(String model) {
+        String apiKey = APIKeyManager.getAPIKey("openrouter");
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+            LOGGER.error("No OpenRouter API key configured");
+            return new DummyAIProvider();
+        }
+        
+        if (model == null || model.trim().isEmpty()) {
+            model = EidolonUnchainedConfig.COMMON.openrouterModel.get();
+        }
+        
+        int timeout = EidolonUnchainedConfig.COMMON.geminiTimeout.get(); // Reuse timeout setting
+        
+        // Map common model names to OpenRouter format
+        String openRouterModel = mapToOpenRouterModel(model);
+        
+        OpenRouterClient client = new OpenRouterClient(apiKey, openRouterModel, timeout);
+        return new OpenRouterAIProvider(client);
+    }
+    
+    /**
+     * Map common model names to OpenRouter model identifiers
+     */
+    private static String mapToOpenRouterModel(String model) {
+        if (model == null || model.trim().isEmpty()) {
+            return "anthropic/claude-3.5-sonnet"; // Default to Claude 3.5 Sonnet
+        }
+        
+        // If it's already in OpenRouter format (contains '/'), use as-is
+        if (model.contains("/")) {
+            return model;
+        }
+        
+        // Map common names to OpenRouter identifiers
+        switch (model.toLowerCase()) {
+            case "claude":
+            case "claude-3.5":
+            case "claude-3.5-sonnet":
+                return "anthropic/claude-3.5-sonnet";
+            case "claude-3-haiku":
+                return "anthropic/claude-3-haiku";
+            case "gpt-4":
+            case "gpt-4o":
+                return "openai/gpt-4o";
+            case "gpt-4-turbo":
+                return "openai/gpt-4-turbo";
+            case "gpt-3.5":
+            case "gpt-3.5-turbo":
+                return "openai/gpt-3.5-turbo";
+            case "llama":
+            case "llama-3.1":
+            case "llama-3.1-8b":
+                return "meta-llama/llama-3.1-8b-instruct";
+            case "llama-3.1-70b":
+                return "meta-llama/llama-3.1-70b-instruct";
+            default:
+                LOGGER.warn("Unknown model '{}', defaulting to Claude 3.5 Sonnet", model);
+                return "anthropic/claude-3.5-sonnet";
+        }
+    }
+
+    /**
      * Create OpenAI provider (future implementation)
      */
     private static AIProvider createOpenAIProvider() {
         LOGGER.warn("OpenAI provider not yet implemented, falling back to Gemini");
         return createGeminiProvider();
+    }
+    
+    /**
+     * Create OpenAI provider with specific model (future implementation)
+     */
+    private static AIProvider createOpenAIProvider(String model) {
+        LOGGER.warn("OpenAI provider not yet implemented, falling back to Gemini with model: {}", model);
+        return createGeminiProvider(model);
     }
     
     /**
@@ -193,6 +314,34 @@ public class AIProviderFactory {
                 }
             }
             return "unknown_player";
+        }
+    }
+    
+    /**
+     * OpenRouter AI provider implementation
+     */
+    public static class OpenRouterAIProvider implements AIProvider {
+        private final OpenRouterClient client;
+        
+        public OpenRouterAIProvider(OpenRouterClient client) {
+            this.client = client;
+        }
+        
+        @Override
+        public CompletableFuture<GeminiAPIClient.AIResponse> generateResponse(
+                String prompt, String personality, String context,
+                GenerationConfig genConfig, SafetySettings safetySettings) {
+            return client.generateResponse(prompt, personality, genConfig, safetySettings);
+        }
+        
+        @Override
+        public String getProviderName() {
+            return "OpenRouter (" + client.getModel() + ")";
+        }
+        
+        @Override
+        public boolean isAvailable() {
+            return APIKeyManager.hasAPIKey("openrouter");
         }
     }
     

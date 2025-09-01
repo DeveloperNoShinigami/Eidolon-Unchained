@@ -271,20 +271,20 @@ public class DeityChat {
             // Generate AI response
             String personality = aiConfig.buildDynamicPersonalityWithPatron(new PlayerContext(player, deity), player);
             
-            // Generate AI response using configured provider
-            String apiKey = APIKeyManager.getAPIKey(EidolonUnchainedConfig.COMMON.aiProvider.get());
+            // Generate AI response using deity-specific provider configuration
+            String deityProvider = aiConfig.aiProvider != null ? aiConfig.aiProvider : EidolonUnchainedConfig.COMMON.aiProvider.get();
+            String apiKey = APIKeyManager.getAPIKey(deityProvider);
             if (apiKey == null || apiKey.trim().isEmpty()) {
-                String provider = EidolonUnchainedConfig.COMMON.aiProvider.get();
-                LOGGER.error("No {} API key configured. Please set up API key using /eidolon-unchained api set {} YOUR_KEY", provider, provider);
+                LOGGER.error("No {} API key configured. Please set up API key using /eidolon-unchained api set {} YOUR_KEY", deityProvider, deityProvider);
                 player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.api_key_required"));
-                player.sendSystemMessage(Component.literal("§7(Set API key: /eidolon-unchained api set " + provider + " YOUR_KEY)"));
+                player.sendSystemMessage(Component.literal("§7(Set API key: /eidolon-unchained api set " + deityProvider + " YOUR_KEY)"));
                 endConversation(player);
                 return;
             }
             
-            // Create AI provider based on configuration
+            // Create AI provider based on deity-specific configuration
             com.bluelotuscoding.eidolonunchained.ai.AIProviderFactory.AIProvider provider = 
-                com.bluelotuscoding.eidolonunchained.ai.AIProviderFactory.createProvider();
+                com.bluelotuscoding.eidolonunchained.ai.AIProviderFactory.createProvider(aiConfig.aiProvider, aiConfig.model);
             
             if (!provider.isAvailable()) {
                 LOGGER.error("AI provider {} is not available", provider.getProviderName());

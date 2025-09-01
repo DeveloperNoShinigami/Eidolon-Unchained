@@ -77,7 +77,7 @@ public class UnifiedCommands {
      */
     private static final SuggestionProvider<CommandSourceStack> API_PROVIDER_SUGGESTIONS = (context, builder) -> {
         return SharedSuggestionProvider.suggest(
-            List.of("gemini", "player2ai", "openai", "anthropic"),
+            List.of("gemini", "player2ai", "openrouter", "openai", "anthropic"),
             builder
         );
     };
@@ -521,7 +521,7 @@ public class UnifiedCommands {
     private static int listApiKeys(CommandContext<CommandSourceStack> context) {
         StringBuilder list = new StringBuilder("§6=== Configured API Keys ===\n");
         
-        String[] providers = {"gemini", "openai", "proxy"};
+        String[] providers = {"gemini", "openai", "openrouter", "player2ai", "proxy"};
         for (String provider : providers) {
             String key = APIKeyManager.getAPIKey(provider);
             if (key != null && !key.isEmpty()) {

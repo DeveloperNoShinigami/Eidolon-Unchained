@@ -35,6 +35,8 @@ public class EidolonUnchainedConfig {
         public final ForgeConfigSpec.ConfigValue<String> geminiModel;
         public final ForgeConfigSpec.IntValue geminiTimeout;
         public final ForgeConfigSpec.ConfigValue<String> player2aiApiKey;
+        public final ForgeConfigSpec.ConfigValue<String> openrouterApiKey;
+        public final ForgeConfigSpec.ConfigValue<String> openrouterModel;
         public final ForgeConfigSpec.BooleanValue enableMemoryPersistence;
         public final ForgeConfigSpec.BooleanValue enableRelationshipTracking;
         public final ForgeConfigSpec.DoubleValue aiTemperature;
@@ -149,7 +151,7 @@ public class EidolonUnchainedConfig {
                 .define("enable_ai_deities", true);
             
             aiProvider = builder
-                .comment("AI provider to use (gemini, player2ai, openai, proxy)")
+                .comment("AI provider to use (gemini, player2ai, openrouter, openai, proxy)")
                 .define("ai_provider", "gemini");
             
             geminiApiKey = builder
@@ -176,6 +178,15 @@ public class EidolonUnchainedConfig {
             enableRelationshipTracking = builder
                 .comment("Enable Player2AI relationship tracking (AI learns player preferences)")
                 .define("enable_relationship_tracking", true);
+            
+            // OpenRouter Configuration
+            openrouterApiKey = builder
+                .comment("OpenRouter API key (leave empty to use environment variable EIDOLON_OPENROUTER_API_KEY)")
+                .define("openrouter_api_key", "");
+            
+            openrouterModel = builder
+                .comment("OpenRouter model to use (anthropic/claude-3-haiku, openai/gpt-4-turbo, meta-llama/llama-3.1-8b-instruct)")
+                .define("openrouter_model", "anthropic/claude-3-haiku");
             
             aiTemperature = builder
                 .comment("AI response creativity (0.0 = predictable, 1.0 = creative)")
