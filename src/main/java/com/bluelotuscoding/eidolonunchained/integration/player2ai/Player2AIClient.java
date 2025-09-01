@@ -30,38 +30,24 @@ import java.util.stream.Collectors;
  */
 public class Player2AIClient {
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final String PLAYER2_CLOUD_API_BASE = "https://api.player2.game/v1/npc/";
     private static final String PLAYER2_LOCAL_API_BASE = "http://127.0.0.1:4315/v1/chat/completions"; // OpenAI-compatible endpoint
     private static final String PLAYER2_AUTH_BASE = "http://localhost:4316/v1/login/web/";
     private static final String GAME_CLIENT_ID = "eidolon-unchained"; // Player2AI game client ID
     private static final Executor EXECUTOR = Executors.newCachedThreadPool();
     
-    private final String apiKey;
     private final int timeoutSeconds;
-    private final boolean useLocalInstance;
     private final Map<String, String> characterCache = new HashMap<>();
     
     /**
      * Default constructor for local Player2 App connection
      */
     public Player2AIClient() {
-        this("local", 30); // Use "local" as placeholder and 30 second timeout
+        this(30); // Use 30 second timeout
     }
     
-    public Player2AIClient(String apiKey, int timeoutSeconds) {
-        this.apiKey = apiKey;
+    public Player2AIClient(int timeoutSeconds) {
         this.timeoutSeconds = timeoutSeconds;
-        // Determine if using local instance (no API key or localhost URL)
-        this.useLocalInstance = apiKey == null || apiKey.trim().isEmpty() || 
-            apiKey.contains("localhost") || apiKey.contains("127.0.0.1") || 
-            "local".equals(apiKey.trim().toLowerCase());
-        
-        if (useLocalInstance) {
-            LOGGER.info("Player2AI client initialized for LOCAL instance (Player2AI desktop app)");
-        } else {
-            LOGGER.info("Player2AI client initialized for CLOUD instance with API key: {}...", 
-                apiKey.substring(0, Math.min(8, apiKey.length())));
-        }
+        LOGGER.info("Player2AI client initialized for LOCAL instance (Player2AI desktop app)");
     }
     
     /**
@@ -299,9 +285,8 @@ public class Player2AIClient {
         request.addProperty("max_tokens", 150);
         request.addProperty("temperature", 0.8);
         
-        // Send request to the OpenAI-compatible endpoint
-        String endpoint = useLocalInstance ? PLAYER2_LOCAL_API_BASE : PLAYER2_CLOUD_API_BASE + "chat/completions";
-        String response = sendRequest(endpoint, "POST", request.toString());
+        // Send request to the local OpenAI-compatible endpoint
+        String response = sendRequest(PLAYER2_LOCAL_API_BASE, "POST", request.toString());
         
         // Parse OpenAI-compatible response
         JsonObject responseObj = JsonParser.parseString(response).getAsJsonObject();
@@ -426,10 +411,8 @@ public class Player2AIClient {
         connection.setRequestProperty("Accept", "application/json");
         connection.setRequestProperty("player2-game-key", GAME_CLIENT_ID);
         
-        // Set authentication based on instance type
-        if (!useLocalInstance && apiKey != null && !apiKey.trim().isEmpty()) {
-            connection.setRequestProperty("Authorization", "Bearer " + apiKey);
-        }
+        // Set authentication for local instance
+        connection.setRequestProperty("player2-game-key", GAME_CLIENT_ID);
         connection.setDoOutput(true);
         connection.setConnectTimeout(timeoutSeconds * 1000);
         connection.setReadTimeout(timeoutSeconds * 1000);

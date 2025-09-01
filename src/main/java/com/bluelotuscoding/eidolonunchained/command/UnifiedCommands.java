@@ -11,7 +11,6 @@ import com.bluelotuscoding.eidolonunchained.chat.ConversationMessage;
 import com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
 import com.bluelotuscoding.eidolonunchained.events.RitualCompleteEvent;
-import com.bluelotuscoding.eidolonunchained.reputation.EnhancedReputationSystem;
 import com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient;
 import elucent.eidolon.capability.IReputation;
 import com.mojang.brigadier.CommandDispatcher;
@@ -674,8 +673,8 @@ public class UnifiedCommands {
             status.append(String.format("§ePlayer2AI API Key: %s\n", hasApiKey ? "§aCONFIGURED" : "§cMISSING"));
             
             if (hasApiKey) {
-                boolean isLocal = apiKey.contains("localhost") || apiKey.contains("127.0.0.1");
-                status.append(String.format("§eInstance Type: §f%s\n", isLocal ? "Local (Desktop App)" : "Cloud"));
+                // Player2AI is always local (desktop app only)
+                status.append(String.format("§eInstance Type: §fLocal (Desktop App)\n"));
             }
         }
         
@@ -1909,23 +1908,8 @@ public class UnifiedCommands {
             status.append(String.format("§eCurrent Stage: §d%s\n", currentStage));
             status.append(String.format("§eNext Stage: §7%s\n", nextInfo));
             
-            // Show cooldown info
-            String cooldownKey = player.getStringUUID() + "_" + deityId;
-            long lastConversation = EnhancedReputationSystem.lastConversationTime.getOrDefault(cooldownKey, 0L);
-            long timeSinceLastConversation = (System.currentTimeMillis() - lastConversation) / 1000;
-            long conversationCooldown = 30 * 60; // 30 minutes
-            
-            if (timeSinceLastConversation < conversationCooldown) {
-                long remaining = conversationCooldown - timeSinceLastConversation;
-                status.append(String.format("§eConversation Cooldown: §c%d minutes\n", remaining / 60));
-            } else {
-                status.append("§eConversation Cooldown: §aReady\n");
-            }
-            
-            // Show daily conversation count
-            String dailyKey = cooldownKey + "_" + EnhancedReputationSystem.getCurrentDateKey();
-            int dailyCount = EnhancedReputationSystem.dailyConversationCount.getOrDefault(dailyKey, 0);
-            status.append(String.format("§eDaily Conversations: §b%d/5\n", dailyCount));
+            // Show cooldown info (simplified without EnhancedReputationSystem dependency)
+            status.append("§7Conversation cooldowns managed by AI system\n");
             
             source.sendSuccess(() -> Component.literal(status.toString()), false);
             
@@ -1959,7 +1943,7 @@ public class UnifiedCommands {
             }
             
             com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient client = 
-                new com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient(apiKey, 30);
+                new com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient(30);
             
             client.clearPlayerMemory(deityId, player.getStringUUID()).thenAccept(success -> {
                 if (success) {
@@ -1997,7 +1981,7 @@ public class UnifiedCommands {
             }
             
             com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient client = 
-                new com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient(apiKey, 30);
+                new com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient(30);
             
             client.getCharacterMemory(deityId, player.getStringUUID()).thenAccept(memory -> {
                 source.sendSuccess(() -> Component.literal("§6=== Player2AI Memory for " + deityId + " ===\n" + memory), false);
@@ -2060,7 +2044,7 @@ public class UnifiedCommands {
             }
             
             com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient client = 
-                new com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient(apiKey, 30);
+                new com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient(30);
             
             client.updateCharacterPersonality(deityId, aiConfig.personality).thenAccept(success -> {
                 if (success) {

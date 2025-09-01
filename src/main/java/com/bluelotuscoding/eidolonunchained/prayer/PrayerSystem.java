@@ -251,9 +251,18 @@ public class PrayerSystem {
                     // Set cooldown
                     setCooldown(player.getUUID(), cooldownKey);
                     
-                    // Award reputation for successful prayer
-                    com.bluelotuscoding.eidolonunchained.reputation.EnhancedReputationSystem.awardPrayerReputation(
-                        player, deity, prayerType);
+                    // Award reputation for successful prayer using Eidolon's reputation system
+                    player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE).ifPresent(reputation -> {
+                        double prayerGain = switch (prayerType.toLowerCase()) {
+                            case "bless" -> 1.0;
+                            case "heal" -> 1.5;
+                            case "protect" -> 2.0;
+                            case "curse" -> 1.5;
+                            default -> 0.5;
+                        };
+                        
+                        reputation.addReputation(player.getUUID(), deity.getId(), prayerGain);
+                    });
                     
                 } else {
                     sendDeityMessage(player, deity.getDisplayName(), "does not respond to your prayer.", true);

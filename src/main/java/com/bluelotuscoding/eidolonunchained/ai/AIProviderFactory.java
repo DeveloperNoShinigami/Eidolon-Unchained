@@ -108,16 +108,8 @@ public class AIProviderFactory {
         
         int timeout = EidolonUnchainedConfig.COMMON.geminiTimeout.get(); // Reuse timeout setting
         
-        Player2AIClient client;
-        
-        // Check if this is a local connection (no real API key needed)
-        if ("local".equals(apiKey.trim().toLowerCase())) {
-            client = new Player2AIClient(); // Use default constructor for local connection
-            LOGGER.info("Creating Player2AI provider for local Player2 App connection");
-        } else {
-            client = new Player2AIClient(apiKey, timeout); // Use API key for cloud connection
-            LOGGER.info("Creating Player2AI provider for cloud connection");
-        }
+        Player2AIClient client = new Player2AIClient(timeout); // Always use local connection
+        LOGGER.info("Creating Player2AI provider for local Player2 App connection");
         
         // Start health signal as required by Player2AI jam submission rules
         Player2HealthSignal.startHealthSignal();

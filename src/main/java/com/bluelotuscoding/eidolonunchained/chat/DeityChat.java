@@ -363,9 +363,26 @@ public class DeityChat {
                 // Send deity response to player using prominent title/subtitle display
                 sendDeityResponse(player, deity.getName(), cleanedResponse);
                 
-                // Award reputation for meaningful conversations
-                com.bluelotuscoding.eidolonunchained.reputation.EnhancedReputationSystem.awardConversationReputation(
-                    player, deity, "meaningful_conversation");
+                // Award reputation for meaningful conversations using Eidolon's reputation system
+                player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE).ifPresent(reputation -> {
+                    double currentRep = reputation.getReputation(player.getUUID(), deity.getId());
+                    // Calculate conversation reputation gain (diminishing returns)
+                    double baseGain = 2.0;
+                    if (currentRep > 75) {
+                        baseGain *= 0.3; // Much slower gain at high reputation
+                    } else if (currentRep > 50) {
+                        baseGain *= 0.5; // Slower gain at medium reputation  
+                    } else if (currentRep > 25) {
+                        baseGain *= 0.7; // Slightly slower gain
+                    }
+                    
+                    reputation.addReputation(player.getUUID(), deity.getId(), baseGain);
+                    
+                    // Notify player of reputation gain
+                    player.sendSystemMessage(Component.literal(
+                        "§e✨ " + deity.getDisplayName() + " §7acknowledges your devotion §e(+" + 
+                        String.format("%.1f", baseGain) + " reputation)"));
+                });
                 
             }).exceptionally(throwable -> {
                 LOGGER.error("Error generating AI response: {}", throwable.getMessage(), throwable);
