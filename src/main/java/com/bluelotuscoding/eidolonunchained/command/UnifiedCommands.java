@@ -174,6 +174,8 @@ public class UnifiedCommands {
                 .then(Commands.literal("auth")
                     .then(Commands.literal("auto")
                         .executes(UnifiedCommands::authenticatePlayer2AIAuto)))
+                .then(Commands.literal("test")
+                    .executes(UnifiedCommands::testPlayer2AIConnection))
                 .then(Commands.literal("memory")
                     .then(Commands.literal("clear")
                         .then(Commands.argument("deity", StringArgumentType.string())
@@ -1996,19 +1998,55 @@ public class UnifiedCommands {
                 return 1;
             } else {
                 source.sendFailure(Component.literal("§cPlayer2 App authentication failed"));
-                source.sendFailure(Component.literal("§7Make sure:"));
-                source.sendFailure(Component.literal("§7• Player2 App is installed and running"));
-                source.sendFailure(Component.literal("§7• You're logged into Player2 App"));
-                source.sendFailure(Component.literal("§7• No firewall blocking localhost:4316"));
+                source.sendFailure(Component.literal("§7This is normal if Player2 App isn't installed."));
                 source.sendFailure(Component.literal("§7"));
-                source.sendFailure(Component.literal("§7Alternative: Use manual setup with your API key:"));
-                source.sendFailure(Component.literal("§7/eidolon-unchained api set player2ai <your-api-key>"));
+                source.sendFailure(Component.literal("§7Options:"));
+                source.sendFailure(Component.literal("§7• Download Player2 App from https://player2.game/"));
+                source.sendFailure(Component.literal("§7• Or manually set API key: /eidolon-unchained api set player2ai <key>"));
                 return 0;
             }
         } catch (Exception e) {
             source.sendFailure(Component.literal("§cError during Player2AI authentication: " + e.getMessage()));
             return 0;
         }
+    }
+    
+    private static int testPlayer2AIConnection(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        
+        try {
+            source.sendSuccess(() -> Component.literal("§6Testing Player2 App connection..."), false);
+            
+            String diagnostics = com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient.testPlayer2AppConnection();
+            
+            source.sendSuccess(() -> Component.literal("§7Connection Test Results:"), false);
+            
+            String[] lines = diagnostics.split("\n");
+            for (String line : lines) {
+                if (line.contains("AVAILABLE")) {
+                    source.sendSuccess(() -> Component.literal("§a" + line), false);
+                } else if (line.contains("CONNECTION REFUSED")) {
+                    source.sendSuccess(() -> Component.literal("§c" + line), false);
+                } else {
+                    source.sendSuccess(() -> Component.literal("§e" + line), false);
+                }
+            }
+            
+            if (diagnostics.contains("AVAILABLE")) {
+                source.sendSuccess(() -> Component.literal("§a✓ Player2 App detected and responding!"), false);
+                source.sendSuccess(() -> Component.literal("§7Try running: /eidolon-unchained player2ai auth auto"), false);
+            } else {
+                source.sendFailure(Component.literal("§cNo responsive Player2 App found"));
+                source.sendFailure(Component.literal("§7Make sure Player2 App is running"));
+                source.sendFailure(Component.literal("§7Download from: https://player2.game/"));
+            }
+            
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("§cError testing Player2AI connection: " + e.getMessage()));
+            return 0;
+        }
+        
+        return 1;
     }
     
     // Utility methods

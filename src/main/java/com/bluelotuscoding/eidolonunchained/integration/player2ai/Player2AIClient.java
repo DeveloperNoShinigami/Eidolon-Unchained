@@ -96,8 +96,50 @@ public class Player2AIClient {
                 return null;
             }
         } catch (Exception e) {
-            LOGGER.debug("Player2 App not available for quick authentication: {}", e.getMessage());
+            // This is normal when Player2 App isn't installed/running
+            // Only log connection issues at trace level to avoid spam
+            if (e.getMessage() != null && e.getMessage().contains("Connection refused")) {
+                LOGGER.trace("Player2 App not running locally (normal): {}", e.getMessage());
+            } else {
+                LOGGER.debug("Player2 App not available for authentication: {}", e.getMessage());
+            }
             return null;
+        }
+    }
+    
+    /**
+     * Test connection to Player2 App and return diagnostic information
+     */
+    public static String testPlayer2AppConnection() {
+        try {
+            // Test different common ports for Player2 App
+            String[] testPorts = {"4316", "4315", "3000", "8080"};
+            StringBuilder results = new StringBuilder();
+            
+            for (String port : testPorts) {
+                try {
+                    URL testUrl = URI.create("http://localhost:" + port + "/v1/health").toURL();
+                    HttpURLConnection testConn = (HttpURLConnection) testUrl.openConnection();
+                    testConn.setRequestMethod("GET");
+                    testConn.setConnectTimeout(3000); // 3 second timeout
+                    testConn.setReadTimeout(3000);
+                    
+                    int responseCode = testConn.getResponseCode();
+                    results.append("Port ").append(port).append(": ").append(responseCode).append(" ");
+                    
+                    if (responseCode == 200) {
+                        results.append("(AVAILABLE)\n");
+                    } else {
+                        results.append("(HTTP ERROR)\n");
+                    }
+                } catch (Exception e) {
+                    results.append("Port ").append(port).append(": CONNECTION REFUSED\n");
+                }
+            }
+            
+            return results.toString();
+        } catch (Exception e) {
+            return "Diagnostic failed: " + e.getMessage();
         }
     }
     
