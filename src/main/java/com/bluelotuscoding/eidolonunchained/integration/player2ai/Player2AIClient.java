@@ -156,6 +156,31 @@ public class Player2AIClient {
                 results.append("This means Player2 App is not running or not responding\n");
             }
             
+            // Test authentication endpoint (different port)
+            try {
+                URL authUrl = URI.create("http://127.0.0.1:4316/v1/login/web/" + GAME_CLIENT_ID).toURL();
+                HttpURLConnection authConn = (HttpURLConnection) authUrl.openConnection();
+                authConn.setRequestMethod("POST");
+                authConn.setRequestProperty("Content-Type", "application/json");
+                authConn.setConnectTimeout(3000);
+                authConn.setReadTimeout(3000);
+                authConn.setDoOutput(true);
+                
+                int authCode = authConn.getResponseCode();
+                results.append("Player2 Auth API (4316): ").append(authCode);
+                
+                if (authCode == 200) {
+                    results.append(" (AVAILABLE - Authentication ready)\n");
+                } else {
+                    results.append(" (RESPONDING - Auth may need login)\n");
+                }
+                
+            } catch (Exception e) {
+                results.append("Player2 Auth API (4316): CONNECTION REFUSED\n");
+                results.append("NOTE: Auth port 4316 not responding. This is common.\n");
+                results.append("You can still use Player2AI with manual API key setup.\n");
+            }
+            
             // Also test health endpoint
             try {
                 URL healthUrl = URI.create("http://127.0.0.1:4315/v1/health").toURL();
@@ -224,9 +249,15 @@ public class Player2AIClient {
                 
             } catch (Exception e) {
                 LOGGER.error("Player2AI request failed", e);
-                return new GeminiAPIClient.AIResponse(false, 
-                    "The deity's voice echoes from beyond the veil, but their words are lost in the void...", 
-                    Collections.emptyList());
+                
+                // In debug mode or development, show actual error details
+                String errorMessage = "The deity's voice echoes from beyond the veil...";
+                if (LOGGER.isDebugEnabled() || e.getMessage().contains("Connection refused")) {
+                    errorMessage = "Player2AI Error: " + e.getMessage() + 
+                        " (Check if Player2 App is running on localhost:4315)";
+                }
+                
+                return new GeminiAPIClient.AIResponse(false, errorMessage, Collections.emptyList());
             }
         }, EXECUTOR);
     }

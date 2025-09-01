@@ -216,7 +216,8 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 AIDeityConfig config = new AIDeityConfig();
                 config.deityId = deityId;
                 config.aiProvider = json.get("ai_provider").getAsString();
-                config.model = json.get("model").getAsString();
+                // Model field is optional - some providers like Player2AI don't need it
+                config.model = json.has("model") ? json.get("model").getAsString() : null;
                 config.personality = json.get("personality").getAsString();
                 
                 // Parse behavior rules

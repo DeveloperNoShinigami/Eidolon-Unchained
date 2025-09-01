@@ -180,6 +180,9 @@ public class UnifiedCommands {
                         .executes(UnifiedCommands::authenticatePlayer2AIAuto)))
                 .then(Commands.literal("test")
                     .executes(UnifiedCommands::testPlayer2AIConnection))
+                .then(Commands.literal("debug-chat")
+                    .then(Commands.argument("message", StringArgumentType.greedyString())
+                        .executes(UnifiedCommands::testPlayer2AIChat)))
                 .then(Commands.literal("memory")
                     .then(Commands.literal("clear")
                         .then(Commands.argument("deity", StringArgumentType.string())
@@ -2142,6 +2145,44 @@ public class UnifiedCommands {
         } catch (Exception e) {
             source.sendFailure(Component.literal("§cError testing Player2AI connection: " + e.getMessage()));
             return 0;
+        }
+        
+        return 1;
+    }
+    
+    private static int testPlayer2AIChat(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        String message = StringArgumentType.getString(context, "message");
+        
+        try {
+            source.sendSuccess(() -> Component.literal("§6Testing Player2AI chat with message: §f" + message), false);
+            
+            // Create a test Player2AI client
+            com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient client = 
+                new com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient();
+            
+            // Test with a simple personality
+            String testPersonality = "You are a test deity. Respond briefly to user messages.";
+            String testCharacterId = "debug_deity";
+            String playerUUID = "debug_player";
+            
+            client.generateResponse(message, testPersonality, testCharacterId, playerUUID, null, null)
+                .thenAccept(response -> {
+                    if (response.success) {
+                        source.sendSuccess(() -> Component.literal("§a✓ Player2AI Response: §f" + response.dialogue), false);
+                    } else {
+                        source.sendFailure(Component.literal("§cPlayer2AI Error: " + response.dialogue));
+                    }
+                })
+                .exceptionally(error -> {
+                    source.sendFailure(Component.literal("§cPlayer2AI Exception: " + error.getMessage()));
+                    return null;
+                });
+                
+            source.sendSuccess(() -> Component.literal("§7Request sent, waiting for response..."), false);
+
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("§cDebug test failed: " + e.getMessage()));
         }
         
         return 1;

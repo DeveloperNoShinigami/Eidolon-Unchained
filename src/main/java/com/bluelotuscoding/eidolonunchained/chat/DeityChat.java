@@ -274,17 +274,29 @@ public class DeityChat {
             // Generate AI response using deity-specific provider configuration
             String deityProvider = aiConfig.aiProvider != null ? aiConfig.aiProvider : EidolonUnchainedConfig.COMMON.aiProvider.get();
             String apiKey = APIKeyManager.getAPIKey(deityProvider);
+            
+            // If deity-specific provider doesn't have API key, fall back to global provider
             if (apiKey == null || apiKey.trim().isEmpty()) {
-                LOGGER.error("No {} API key configured. Please set up API key using /eidolon-unchained api set {} YOUR_KEY", deityProvider, deityProvider);
-                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.api_key_required"));
-                player.sendSystemMessage(Component.literal("§7(Set API key: /eidolon-unchained api set " + deityProvider + " YOUR_KEY)"));
-                endConversation(player);
-                return;
+                String globalProvider = EidolonUnchainedConfig.COMMON.aiProvider.get();
+                String globalApiKey = APIKeyManager.getAPIKey(globalProvider);
+                
+                if (globalApiKey != null && !globalApiKey.trim().isEmpty()) {
+                    LOGGER.info("Deity {} specified provider '{}' has no API key, falling back to global provider '{}'", 
+                        deityId, deityProvider, globalProvider);
+                    deityProvider = globalProvider;
+                    apiKey = globalApiKey;
+                } else {
+                    LOGGER.error("No {} API key configured. Please set up API key using /eidolon-unchained api set {} YOUR_KEY", deityProvider, deityProvider);
+                    player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.api_key_required"));
+                    player.sendSystemMessage(Component.literal("§7(Set API key: /eidolon-unchained api set " + deityProvider + " YOUR_KEY)"));
+                    endConversation(player);
+                    return;
+                }
             }
             
-            // Create AI provider based on deity-specific configuration
+            // Create AI provider based on effective provider (deity-specific or fallback)
             com.bluelotuscoding.eidolonunchained.ai.AIProviderFactory.AIProvider provider = 
-                com.bluelotuscoding.eidolonunchained.ai.AIProviderFactory.createProvider(aiConfig.aiProvider, aiConfig.model);
+                com.bluelotuscoding.eidolonunchained.ai.AIProviderFactory.createProvider(deityProvider, aiConfig.model);
             
             if (!provider.isAvailable()) {
                 LOGGER.error("AI provider {} is not available", provider.getProviderName());
