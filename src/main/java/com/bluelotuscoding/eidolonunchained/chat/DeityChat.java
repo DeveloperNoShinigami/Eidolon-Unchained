@@ -404,24 +404,34 @@ public class DeityChat {
         double reputation = deity.getPlayerReputation(player);
         String progressionLevel = getDynamicProgressionLevel(deity, player);
         
-        // 🐛 DEBUG: Log what the AI is actually seeing
-        LOGGER.info("🤖 AI DEBUG for {}/{}: reputation={}, progressionLevel='{}'", 
-            player.getName().getString(), deity.getName(), reputation, progressionLevel);
+        // 🐛 DEBUG: Log what the AI is actually seeing for troubleshooting
+        LOGGER.info("🤖 AI DEBUG for {}/{}: reputation={}, progressionLevel='{}', stages={}", 
+            player.getName().getString(), deity.getName(), reputation, progressionLevel,
+            deity.getProgressionStages().keySet());
         
-        prompt.append("This player holds the rank of ").append(progressionLevel)
-              .append(" with you (reputation: ").append((int)reputation).append("). ");
+        prompt.append("This player holds the rank of '").append(progressionLevel)
+              .append("' with you (reputation: ").append((int)reputation).append("). ");
         
-        // Add progression-aware context
-        if (progressionLevel.equals("champion") || progressionLevel.equals("master")) {
-            prompt.append("Treat them as a highly revered champion of your faith. ");
-        } else if (progressionLevel.equals("priest") || progressionLevel.equals("high_priest")) {
-            prompt.append("They are a trusted servant worthy of respect and guidance. ");
-        } else if (progressionLevel.equals("acolyte") || progressionLevel.equals("intermediate")) {
-            prompt.append("They have proven their dedication and earned your attention. ");
-        } else if (progressionLevel.equals("novice") || progressionLevel.equals("initiate")) {
-            prompt.append("They are still learning your ways but show promise. ");
+        // Add progression-aware context with the actual title
+        prompt.append("Address them using their proper title: ").append(progressionLevel).append(". ");
+        
+        // Add progression-aware context based on their actual rank
+        Map<String, Object> stagesMap = deity.getProgressionStages();
+        if (!stagesMap.isEmpty() && stagesMap.containsKey(progressionLevel)) {
+            prompt.append("As a ").append(progressionLevel).append(" of your faith, they have earned your respect. ");
         } else {
-            prompt.append("They are new to your teachings and require guidance. ");
+            // Fallback context based on reputation level
+            if (reputation >= 75) {
+                prompt.append("They are a master of your teachings, worthy of great respect. ");
+            } else if (reputation >= 50) {
+                prompt.append("They are an advanced follower who has proven their dedication. ");
+            } else if (reputation >= 25) {
+                prompt.append("They have shown consistent devotion and earned your attention. ");
+            } else if (reputation >= 10) {
+                prompt.append("They are learning your ways and show promise. ");
+            } else {
+                prompt.append("They are new to your teachings and require guidance. ");
+            }
         }
         
         // Add detailed player context using GeminiAPIClient's context builder
@@ -446,20 +456,16 @@ public class DeityChat {
         prompt.append("\n\nPlayer's Current Message: \"").append(currentMessage).append("\"\n");
         
         // Enhanced proactive assistance and request handling guidance
-        prompt.append("\n\nCRITICAL DIVINE RESPONSE INSTRUCTIONS:\n");
-        prompt.append("1. ANALYZE PLAYER'S MESSAGE: Look for requests, questions, or needs\n");
-        prompt.append("2. ASSESS THEIR CONDITION: Check health, hunger, and danger status\n");
-        prompt.append("3. CONSIDER YOUR RELATIONSHIP: Factor in reputation and past interactions\n");
-        prompt.append("4. RESPOND APPROPRIATELY:\n");
-        prompt.append("   - If they ask for help/items/powers: Judge worthiness and grant/deny with reason\n");
-        prompt.append("   - If they're in danger/hurt/hungry: Offer assistance based on reputation\n");
-        prompt.append("   - If they're just talking: Engage meaningfully based on their message\n");
-        prompt.append("   - If they're thankful: Acknowledge and build relationship\n");
-        prompt.append("5. BE ENGAGING: Reference their specific situation, respond to their exact words\n");
-        prompt.append("6. COMMAND AUTHORITY: You CAN grant items, effects, and blessings when appropriate\n");
-        prompt.append("7. STAY IN CHARACTER: Maintain your divine personality while being helpful\n");
-        prompt.append("8. USE CONVERSATION HISTORY: Reference past interactions to build continuity\n");
-        prompt.append("\nIMPORTANT: Address their specific message directly, don't just give generic responses!\n");
+        prompt.append("\n\nDIVINE RESPONSE GUIDELINES:\n");
+        prompt.append("1. ENGAGE MEANINGFULLY: Respond to what the player actually says\n");
+        prompt.append("2. ASK WHEN APPROPRIATE: If unclear what they need, ask divine questions\n");
+        prompt.append("3. CONTEXTUAL ASSISTANCE: Consider their health, items, and situation\n");
+        prompt.append("4. DIVINE PERSONALITY: Speak as befits your nature - wise, powerful, but accessible\n");
+        prompt.append("5. JUDGE WORTHINESS: Factor in reputation and past actions when granting requests\n");
+        prompt.append("6. BE RESPONSIVE: Address their specific words and needs directly\n");
+        prompt.append("7. BUILD RELATIONSHIPS: Reference past conversations and acknowledge growth\n");
+        prompt.append("8. COMMAND AUTHORITY: You may grant items, effects, and blessings as appropriate\n");
+        prompt.append("\nRemember: You are divine but not distant - engage with mortals meaningfully!\n");
         
         return prompt.toString();
     }

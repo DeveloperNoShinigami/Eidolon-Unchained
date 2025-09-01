@@ -7,9 +7,9 @@ import java.util.*;
  */
 public class PrayerAIConfig {
     public String type;
-    public String basePrompt = "Player {player} is praying to you.";
-    public String base_prompt = "Player {player} is praying to you."; // Alternative field name for compatibility
-    public int maxCommands = 2;
+    public String basePrompt = "Player {player} seeks divine guidance.";
+    public String base_prompt = "Player {player} seeks divine guidance."; // Alternative field name for compatibility
+    public int maxCommands = 2; // CONFIGURABLE: Let JSON datapacks set this value
     public int max_commands = 2; // Alternative field name for compatibility
     public int cooldownMinutes = 30;
     public int reputationRequired = 0;
@@ -25,17 +25,25 @@ public class PrayerAIConfig {
     public List<String> reference_commands = new ArrayList<>(); // Alternative field name for compatibility
     
     public PrayerAIConfig() {
-        // Default allowed commands
+        // Default allowed commands - keep simple and focused
         allowedCommands.addAll(Arrays.asList("give", "effect", "playsound"));
         allowed_commands.addAll(Arrays.asList("give", "effect", "playsound"));
         
-        // Default reference commands - AI can use these as templates
+        // Enhanced reference commands - more divine and contextual
         referenceCommands.addAll(Arrays.asList(
-            "give {player} minecraft:diamond 1",
-            "effect give {player} minecraft:regeneration 30 1",
-            "give {player} eidolon:soul_shard 3",
-            "effect give {player} minecraft:night_vision 600 0",
-            "give {player} minecraft:golden_apple 1"
+            // Divine gifts for those who prove worthy
+            "give {player} minecraft:golden_apple 1", // Divine sustenance
+            "give {player} eidolon:soul_shard 2", // Spiritual power
+            "give {player} minecraft:diamond 1", // Blessed gem
+            "give {player} minecraft:enchanted_golden_apple 1", // Greatest blessing
+            // Divine effects for protection and aid  
+            "effect give {player} minecraft:regeneration 120 1", // Divine healing
+            "effect give {player} minecraft:resistance 300 0", // Divine protection
+            "effect give {player} minecraft:night_vision 1200 0", // Divine sight
+            "effect give {player} minecraft:water_breathing 600 0", // Divine breath
+            "effect give {player} minecraft:fire_resistance 600 0", // Divine immunity
+            // Divine sounds for atmosphere
+            "playsound minecraft:block.bell.use master {player} ~ ~ ~ 1.0 0.8" // Divine chime
         ));
         reference_commands.addAll(referenceCommands);
     }
