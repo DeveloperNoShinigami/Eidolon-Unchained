@@ -133,7 +133,7 @@ public class OpenRouterClient {
                 
                 LOGGER.debug("OpenRouter API response received, content length: {}", content.length());
                 
-                return new GeminiAPIClient.AIResponse(content, null, true);
+                return new GeminiAPIClient.AIResponse(true, content, null);
             } else {
                 LOGGER.warn("OpenRouter API response missing choices: {}", responseBody);
                 return createErrorResponse("Invalid response format");
@@ -150,9 +150,9 @@ public class OpenRouterClient {
      */
     private GeminiAPIClient.AIResponse createErrorResponse(String error) {
         return new GeminiAPIClient.AIResponse(
+            false,
             "The deity remains silent...", 
-            error, 
-            false
+            null
         );
     }
     
