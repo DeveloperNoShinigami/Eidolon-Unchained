@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public class Player2AIClient {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String PLAYER2_CLOUD_API_BASE = "https://api.player2.game/v1/npc/";
-    private static final String PLAYER2_LOCAL_API_BASE = "http://127.0.0.1:4315/v1/npc/";
+    private static final String PLAYER2_LOCAL_API_BASE = "http://127.0.0.1:4315/v1/chat/completions"; // OpenAI-compatible endpoint
     private static final String PLAYER2_AUTH_BASE = "http://localhost:4316/v1/login/web/";
     private static final String GAME_CLIENT_ID = "eidolon-unchained"; // Player2AI game client ID
     private static final Executor EXECUTOR = Executors.newCachedThreadPool();
@@ -112,29 +112,62 @@ public class Player2AIClient {
      */
     public static String testPlayer2AppConnection() {
         try {
-            // Test different common ports for Player2 App
-            String[] testPorts = {"4316", "4315", "3000", "8080"};
+            // Test the OpenAI-compatible chat completions endpoint that MCA uses
             StringBuilder results = new StringBuilder();
             
-            for (String port : testPorts) {
-                try {
-                    URL testUrl = URI.create("http://localhost:" + port + "/v1/health").toURL();
-                    HttpURLConnection testConn = (HttpURLConnection) testUrl.openConnection();
-                    testConn.setRequestMethod("GET");
-                    testConn.setConnectTimeout(3000); // 3 second timeout
-                    testConn.setReadTimeout(3000);
-                    
-                    int responseCode = testConn.getResponseCode();
-                    results.append("Port ").append(port).append(": ").append(responseCode).append(" ");
-                    
-                    if (responseCode == 200) {
-                        results.append("(AVAILABLE)\n");
-                    } else {
-                        results.append("(HTTP ERROR)\n");
-                    }
-                } catch (Exception e) {
-                    results.append("Port ").append(port).append(": CONNECTION REFUSED\n");
+            try {
+                URL testUrl = URI.create("http://127.0.0.1:4315/v1/chat/completions").toURL();
+                HttpURLConnection testConn = (HttpURLConnection) testUrl.openConnection();
+                testConn.setRequestMethod("POST");
+                testConn.setRequestProperty("Content-Type", "application/json");
+                testConn.setRequestProperty("player2-game-key", GAME_CLIENT_ID);
+                testConn.setConnectTimeout(3000);
+                testConn.setReadTimeout(3000);
+                testConn.setDoOutput(true);
+                
+                // Send minimal test payload
+                String testPayload = "{\"model\":\"player2\",\"messages\":[{\"role\":\"user\",\"content\":\"test\"}]}";
+                try (OutputStreamWriter writer = new OutputStreamWriter(testConn.getOutputStream())) {
+                    writer.write(testPayload);
+                    writer.flush();
                 }
+                
+                int responseCode = testConn.getResponseCode();
+                results.append("Player2 App Chat API (4315): ").append(responseCode);
+                
+                if (responseCode == 200) {
+                    results.append(" (AVAILABLE - Player2 App is running!)\n");
+                } else if (responseCode == 400 || responseCode == 422) {
+                    results.append(" (AVAILABLE - App running, expects different format)\n");
+                } else {
+                    results.append(" (HTTP ERROR - App may not be fully initialized)\n");
+                }
+                
+            } catch (Exception e) {
+                results.append("Player2 App Chat API (4315): CONNECTION REFUSED\n");
+                results.append("This means Player2 App is not running or not responding\n");
+            }
+            
+            // Also test health endpoint
+            try {
+                URL healthUrl = URI.create("http://127.0.0.1:4315/v1/health").toURL();
+                HttpURLConnection healthConn = (HttpURLConnection) healthUrl.openConnection();
+                healthConn.setRequestMethod("GET");
+                healthConn.setRequestProperty("player2-game-key", GAME_CLIENT_ID);
+                healthConn.setConnectTimeout(3000);
+                healthConn.setReadTimeout(3000);
+                
+                int healthCode = healthConn.getResponseCode();
+                results.append("Player2 Health Check (4315): ").append(healthCode);
+                
+                if (healthCode == 200) {
+                    results.append(" (HEALTHY)\n");
+                } else {
+                    results.append(" (RESPONDING)\n");
+                }
+                
+            } catch (Exception e) {
+                results.append("Player2 Health Check (4315): CONNECTION REFUSED\n");
             }
             
             return results.toString();
@@ -144,7 +177,7 @@ public class Player2AIClient {
     }
     
     /**
-     * Generate AI response for deity interaction using Player2AI character persistence
+     * Generate AI response for deity interaction using Player2AI OpenAI-compatible endpoint
      */
     public CompletableFuture<GeminiAPIClient.AIResponse> generateResponse(
             String prompt, 
@@ -156,11 +189,8 @@ public class Player2AIClient {
         
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // Ensure character exists
-                String npcId = ensureCharacterExists(characterId, personality);
-                
-                // Send message to character
-                String response = sendMessageToCharacter(npcId, prompt, playerUUID);
+                // Use OpenAI-compatible chat completions format like MCA
+                String response = sendChatCompletionRequest(prompt, personality, characterId, playerUUID);
                 
                 return new GeminiAPIClient.AIResponse(true, response, Collections.emptyList());
                 
@@ -171,6 +201,54 @@ public class Player2AIClient {
                     Collections.emptyList());
             }
         }, EXECUTOR);
+    }
+    
+    /**
+     * Send OpenAI-compatible chat completion request to Player2 App (like MCA does)
+     */
+    private String sendChatCompletionRequest(String prompt, String personality, String characterId, String playerUUID) throws IOException {
+        // Build OpenAI-compatible request
+        JsonObject request = new JsonObject();
+        request.addProperty("model", "player2");
+        
+        JsonArray messages = new JsonArray();
+        
+        // System message with personality
+        JsonObject systemMessage = new JsonObject();
+        systemMessage.addProperty("role", "system");
+        systemMessage.addProperty("content", personality + "\n\nYou are " + characterId + 
+            ", a deity in a Minecraft world. Respond in character. Keep responses concise and immersive.");
+        messages.add(systemMessage);
+        
+        // User message
+        JsonObject userMessage = new JsonObject();
+        userMessage.addProperty("role", "user");
+        userMessage.addProperty("name", playerUUID);
+        userMessage.addProperty("content", prompt);
+        messages.add(userMessage);
+        
+        request.add("messages", messages);
+        
+        // Optional parameters
+        request.addProperty("max_tokens", 150);
+        request.addProperty("temperature", 0.8);
+        
+        // Send request to the OpenAI-compatible endpoint
+        String endpoint = useLocalInstance ? PLAYER2_LOCAL_API_BASE : PLAYER2_CLOUD_API_BASE + "chat/completions";
+        String response = sendRequest(endpoint, "POST", request.toString());
+        
+        // Parse OpenAI-compatible response
+        JsonObject responseObj = JsonParser.parseString(response).getAsJsonObject();
+        if (responseObj.has("choices")) {
+            JsonArray choices = responseObj.getAsJsonArray("choices");
+            if (choices.size() > 0) {
+                JsonObject firstChoice = choices.get(0).getAsJsonObject();
+                JsonObject message = firstChoice.getAsJsonObject("message");
+                return message.get("content").getAsString();
+            }
+        }
+        
+        throw new IOException("Invalid OpenAI response format: " + response);
     }
     
     /**
@@ -270,22 +348,21 @@ public class Player2AIClient {
     }
     
     /**
-     * Send HTTP request to Player2AI API
+     * Send HTTP request to Player2AI API (OpenAI-compatible format)
      */
-    private String sendRequest(String endpoint, String method, String jsonBody) throws IOException {
-        String baseUrl = useLocalInstance ? PLAYER2_LOCAL_API_BASE : PLAYER2_CLOUD_API_BASE;
-        String urlString = baseUrl + endpoint;
+    private String sendRequest(String urlString, String method, String jsonBody) throws IOException {
         URL url = URI.create(urlString).toURL();
-        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         
         // Configure connection
         connection.setRequestMethod(method);
         connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("Accept", "application/json");
         connection.setRequestProperty("player2-game-key", GAME_CLIENT_ID);
         
         // Set authentication based on instance type
         if (!useLocalInstance && apiKey != null && !apiKey.trim().isEmpty()) {
-            connection.setRequestProperty("X-API-Key", apiKey);
+            connection.setRequestProperty("Authorization", "Bearer " + apiKey);
         }
         connection.setDoOutput(true);
         connection.setConnectTimeout(timeoutSeconds * 1000);
@@ -293,7 +370,7 @@ public class Player2AIClient {
         
         // Send request body
         if (jsonBody != null && !jsonBody.isEmpty()) {
-            try (OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream())) {
+            try (OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8)) {
                 writer.write(jsonBody);
                 writer.flush();
             }
@@ -306,7 +383,7 @@ public class Player2AIClient {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                 responseCode >= 200 && responseCode < 300 
                     ? connection.getInputStream() 
-                    : connection.getErrorStream()))) {
+                    : connection.getErrorStream(), StandardCharsets.UTF_8))) {
             
             String line;
             while ((line = reader.readLine()) != null) {
