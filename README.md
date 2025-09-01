@@ -1,145 +1,158 @@
-# Eidolon Unchained Documentation
+# Eidolon Unchained
 
-**Complete guide to creating custom content with Eidolon Unchained**
+**AI-Powered Deity Conversations for Minecraft 1.20.1**
 
-## Quick Navigation
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.20.1-green.svg)](https://minecraft.net)
+[![Forge](https://img.shields.io/badge/Forge-47.3.0+-orange.svg)](https://files.minecraftforge.net)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](.)
 
-📚 **[Getting Started](getting-started.md)** - Create your first entry in 5 minutes  
-
-### Major Features
-
-📖 **Codex System**
-- **[Overview](codex-system/overview.md)** - How the system works
-- **[Page Types](codex-system/page-types.md)** - All 9 available page types
-
-🧪 **Research System**  
-- **[Overview](research-system/overview.md)** - Auto-discovery mechanics
-- **[Visual Diagrams](research-system/diagrams.md)** - System flow charts
-- **[Examples](research-system/examples.md)** - Working research configurations
-- **[Integration Guide](research-system/integration.md)** - Connect with codex entries
-
-🏗️ **Datapack Creation**
-- **[Structure Guide](datapack/structure.md)** - Organize your projects
-
-### Additional Topics
-
-💡 **Miscellaneous**
-- **[Tips & Best Practices](misc/tips-and-future.md)** - Pro techniques and quality assurance
-
-## Learning Path
-
-### Beginner (First Entry)
-1. **[Getting Started](getting-started.md)** - Create a basic entry
-2. **[Page Types](codex-system/page-types.md)** - Learn available content types
-3. Try creating 2-3 simple entries
-
-### Intermediate (Multiple Entries)
-1. **[Codex Overview](codex-system/overview.md)** - Understand the system
-2. **[Research System](research-system/overview.md)** - Add auto-discovery
-3. **[Integration Guide](research-system/integration.md)** - Connect systems together
-4. **[Project Structure](datapack/structure.md)** - Organize content
-
-### Advanced (Large Projects)
-1. **[Examples Collection](research-system/examples.md)** - Advanced configurations
-2. **[Tips & Best Practices](misc/tips-and-future.md)** - Pro techniques
-3. Complex multi-stage research chains
-4. Large-scale content organization
-
-## What You Can Create
-
-### Content Types
-🔮 **Codex Entries** - Add pages to existing Eidolon chapters  
-⚗️ **Research Content** - Auto-discoverable progression systems  
-📚 **Recipe Integration** - Display crafting, ritual, and crucible recipes  
-🌟 **Multi-Language** - Translation support for international audiences
-
-### Current Capabilities
-- **9 Page Types** - Title, text, recipe, entity, list, ritual, crucible, workbench, smelting
-- **Auto-Discovery Research** - Kill triggers, location discovery, interaction triggers
-- **Translation System** - Robust multi-language support with caching
-- **Recipe Integration** - Works with vanilla and modded recipes
-
-## Quick Reference
-
-### Basic Entry Structure
-```json
-{
-  "target_chapter": "getting_started",
-  "pages": [
-    {"type": "title", "text": "mod.entry.name"},
-    {"type": "text", "text": "mod.entry.name.details"},
-    {"type": "recipe", "recipe": "minecraft:crafting_table"}
-  ]
-}
-```
-
-### Translation Pattern
-```json
-{
-  "mod.entry.name.title": "Entry Title",
-  "mod.entry.name": "Main content for title page",
-  "mod.entry.name.details": "Additional content for text pages"
-}
-```
-
-### Actual File Structure
-```
-data/your_mod/
-├── codex_entries/          # Entry definitions
-│   ├── basic_entries/
-│   └── advanced_entries/
-├── eidolon_research/       # Research definitions
-└── research_entries/       # Research content
-
-assets/your_mod/lang/
-└── en_us.json             # Translation files
-```
-
-## Working Examples
-
-The mod includes working examples you can reference:
-```
-src/main/resources/data/eidolonunchained/codex_entries/
-├── text_example.json
-├── recipe_example.json  
-└── entity_example.json
-```
-
-These demonstrate the correct structure and implementation.
-
-## Common Issues & Solutions
-
-### Entry Not Appearing
-- ✅ Check `target_chapter` spelling matches existing Eidolon chapters
-- ✅ Verify JSON syntax with online validator
-- ✅ Ensure datapack is loaded (`/datapack list`)
-- ✅ Check game logs for errors
-
-### Translation Problems  
-- ✅ Use `%%` for literal percent signs
-- ✅ Match translation keys exactly (case sensitive)
-- ✅ Provide both base key and `.title` version for title pages
-- ✅ Check language file location in `assets/` folder
-
-### Recipe/Entity Pages Empty
-- ✅ Verify the ID exists and is spelled correctly
-- ✅ Ensure required mods are loaded
-- ✅ Test that the recipe/entity works in-game
-
-## Version Information
-
-**Current Version**: 1.0.0  
-**Minecraft**: 1.20.1  
-**Forge**: 47.4.0+  
-**Eidolon**: 0.3.8+
-
-## Getting Help
-
-- **GitHub Issues** - Bug reports and feature requests
-- **Working Examples** - Check the included example files
-- **Documentation** - You're reading it!
+**Eidolon Unchained** extends the Eidolon mod with **AI-powered deity conversations**, **JSON-driven datapack systems**, and **flexible patron allegiance mechanics**. Chat with intelligent deities that remember your conversations and respond based on your actions, reputation, and world state.
 
 ---
 
-**Ready to start?** Jump to **[Getting Started](getting-started.md)** and create your first entry!
+## 🚀 Quick Start
+
+1. **Install Prerequisites**: Minecraft 1.20.1 + Forge 47.3.0+ + Eidolon mod
+2. **Install Eidolon Unchained**: Add the .jar to your mods folder
+3. **Configure AI Provider**: `/eidolon-unchained api set gemini YOUR_API_KEY`
+4. **Test Deity Chat**: Perform chant sequence → Right-click effigy → Chat with AI deity
+
+**👉 [Complete Setup Guide](wiki/01-QUICK-START.md)**
+
+---
+
+## ✨ Key Features
+
+### 🧠 **AI Deity Conversations**
+- **Real-time chat** with AI-powered deities using Google Gemini, OpenRouter, or Player2AI
+- **Context awareness** of player health, inventory, location, reputation, and past actions
+- **Dynamic personalities** that change based on your patron status and progression
+
+### 🏛️ **JSON-Driven Deity System**  
+- **Single-file configurations** combining deity data and AI behavior
+- **No hardcoded values** - everything customizable via datapack JSON
+- **Complete patron allegiance system** with opposition/alliance mechanics
+
+### ⚡ **Flexible Chant Casting**
+- **Configurable keybinds** for spells and sign sequences
+- **Datapack-driven chants** with custom effects and requirements
+- **Integration** with Eidolon's existing sign-based magic system
+
+### 📚 **Comprehensive Documentation System**
+- **9 different page types** for rich in-game content display
+- **Automatic content discovery** from datapack configurations
+- **Chapter-based organization** with category management
+
+---
+
+## 📖 Complete Documentation
+
+### 🎯 **Getting Started**
+- **[Quick Start Guide](wiki/01-QUICK-START.md)** - 5-minute setup
+- **[Installation & Setup](wiki/02-INSTALLATION.md)** - Detailed installation
+- **[Project Architecture](wiki/03-ARCHITECTURE.md)** - Understanding the codebase
+
+### 🏛️ **Core Systems**  
+- **[AI Deity System](wiki/04-AI-DEITY-SYSTEM.md)** - AI conversation mechanics
+- **[Datapack Deities](wiki/05-DATAPACK-DEITIES.md)** - Creating custom deities
+- **[Patron System](wiki/06-PATRON-SYSTEM.md)** - Player-deity relationships
+- **[Chant System](wiki/07-CHANT-SYSTEM.md)** - Flexible spell casting
+
+### 📚 **Content Creation**
+- **[Codex System](wiki/08-CODEX-SYSTEM.md)** - In-game documentation
+- **[Research System](wiki/09-RESEARCH-SYSTEM.md)** - Auto-discovery mechanics  
+- **[Recipe Integration](wiki/10-RECIPE-INTEGRATION.md)** - Custom rituals
+
+### 🔧 **Advanced Features**
+- **[AI Provider System](wiki/11-AI-PROVIDERS.md)** - Multiple AI backends
+- **[Command System](wiki/12-COMMANDS.md)** - Admin & debug commands
+- **[Keybind System](wiki/13-KEYBINDS.md)** - Custom key assignments
+
+### 📖 **Reference**
+- **[JSON Field Reference](wiki/14-JSON-REFERENCE.md)** - Complete configuration guide
+- **[Language Keys](wiki/15-LANGUAGE-KEYS.md)** - Localization standards
+- **[API Reference](wiki/16-API-REFERENCE.md)** - Developer documentation
+
+### 🛠️ **Development**
+- **[Debugging Guide](wiki/17-DEBUGGING.md)** - Troubleshooting & testing
+- **[Extension Guide](wiki/18-EXTENSIONS.md)** - Creating addon mods
+- **[Future Roadmap](wiki/19-ROADMAP.md)** - Planned features
+
+---
+
+## 🎮 Example: AI Deity Interaction
+
+```bash
+# 1. Perform chant sequence near effigy
+# Cast: Wicked Sign → Wicked Sign → Blood Sign
+
+# 2. Right-click effigy to start conversation
+# Effigy attunes to Nyxathel, Shadow Lord
+
+# 3. Type your message
+Player: "I seek knowledge of the shadow arts"
+
+# 4. Receive contextual AI response
+Nyxathel: "Ah, a mortal seeks the forbidden paths... I sense you have 
+defeated 3 undead recently and carry a soul shard. Interesting. 
+The shadows whisper that you show promise, but are you truly 
+prepared for what the darkness demands?"
+```
+
+The AI has full awareness of your:
+- **Recent actions** (defeating undead)
+- **Inventory contents** (soul shard)
+- **Reputation level** with the deity
+- **Location & time** of interaction
+- **Conversation history** and relationship
+
+---
+
+## 🏗️ Technical Highlights
+
+### Architecture Principles
+- **JSON-First Design**: All configuration via datapack JSON files
+- **No Hardcoding**: Maximum flexibility and customization
+- **Standards-Based**: Consistent patterns and structures
+- **Performance Optimized**: Async processing and smart caching
+
+### Current Status
+- ✅ **100% Compilation Success** - No build errors
+- ✅ **Multi-AI Support** - Gemini, OpenRouter, Player2AI
+- ✅ **Complete Patron System** - Full allegiance mechanics  
+- ✅ **Flexible Content Creation** - Easy datapack-based expansion
+- ✅ **Comprehensive Testing** - All major features validated
+
+---
+
+## 🤝 Community & Support
+
+### Getting Help
+- **[Debugging Guide](wiki/17-DEBUGGING.md)** - Self-service troubleshooting
+- **[Command Reference](wiki/12-COMMANDS.md)** - Built-in diagnostic tools
+- **GitHub Issues** - Bug reports and feature requests
+
+### Contributing
+- **[Extension Guide](wiki/18-EXTENSIONS.md)** - Building on the platform
+- **[JSON Reference](wiki/14-JSON-REFERENCE.md)** - Creating custom content
+- **Pull Requests** - Code contributions welcome
+
+### Roadmap
+- **[Future Plans](wiki/19-ROADMAP.md)** - Upcoming features and vision
+- **Community Input** - Feature requests and feedback valued
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🎯 Ready to Get Started?
+
+**👉 [Start with the Quick Start Guide](wiki/01-QUICK-START.md)** to get AI deity conversations running in 5 minutes!
+
+**🏛️ [Explore the Complete Wiki](wiki/00-HOME.md)** for comprehensive documentation and guides!
 
