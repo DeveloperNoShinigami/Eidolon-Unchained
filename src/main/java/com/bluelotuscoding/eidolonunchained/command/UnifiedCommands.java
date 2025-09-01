@@ -12,6 +12,7 @@ import com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
 import com.bluelotuscoding.eidolonunchained.events.RitualCompleteEvent;
 import com.bluelotuscoding.eidolonunchained.reputation.EnhancedReputationSystem;
+import com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient;
 import elucent.eidolon.capability.IReputation;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -138,6 +139,9 @@ public class UnifiedCommands {
             // API key management
             .then(Commands.literal("api")
                 .then(Commands.literal("set")
+                    // Special shortcut for player2ai - no API key needed
+                    .then(Commands.literal("player2ai")
+                        .executes(UnifiedCommands::setupPlayer2AI))
                     .then(Commands.argument("provider", StringArgumentType.string())
                         .suggests(API_PROVIDER_SUGGESTIONS)
                         .then(Commands.argument("key", StringArgumentType.string())
@@ -457,6 +461,46 @@ public class UnifiedCommands {
             return 1;
         } catch (Exception e) {
             context.getSource().sendFailure(Component.literal("§cFailed to set API key: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    /**
+     * Sets up Player2AI as the AI provider without requiring an API key.
+     * This configures the system to use the local Player2 App.
+     */
+    private static int setupPlayer2AI(CommandContext<CommandSourceStack> context) {
+        try {
+            // Set provider to player2ai with "local" key (local connection doesn't need real API key)
+            APIKeyManager.setAPIKey("player2ai", "local");
+            
+            // Set the AI provider configuration to player2ai
+            EidolonUnchainedConfig.COMMON.aiProvider.set("player2ai");
+            EidolonUnchainedConfig.COMMON.aiProvider.save();
+            
+            // Test the connection immediately
+            Player2AIClient client = new Player2AIClient();
+            boolean connected = Player2AIClient.isPlayer2AppAvailable();
+            
+            if (connected) {
+                context.getSource().sendSuccess(() -> Component.literal(
+                    "§aPlayer2AI configured successfully!\n" +
+                    "§7AI Provider: player2ai\n" +
+                    "§7Connected to Player2 App at localhost:4315\n" +
+                    "§7You can now use AI deity conversations powered by Player2AI"
+                ), false);
+                return 1;
+            } else {
+                context.getSource().sendFailure(Component.literal(
+                    "§cPlayer2AI configured but connection failed!\n" +
+                    "§7AI Provider: player2ai (saved)\n" +
+                    "§7Make sure Player2 App is running and accessible at localhost:4315\n" +
+                    "§7The configuration has been saved and will work when Player2 App is available"
+                ));
+                return 0;
+            }
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cFailed to setup Player2AI: " + e.getMessage()));
             return 0;
         }
     }

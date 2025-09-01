@@ -41,12 +41,20 @@ public class Player2AIClient {
     private final boolean useLocalInstance;
     private final Map<String, String> characterCache = new HashMap<>();
     
+    /**
+     * Default constructor for local Player2 App connection
+     */
+    public Player2AIClient() {
+        this("local", 30); // Use "local" as placeholder and 30 second timeout
+    }
+    
     public Player2AIClient(String apiKey, int timeoutSeconds) {
         this.apiKey = apiKey;
         this.timeoutSeconds = timeoutSeconds;
         // Determine if using local instance (no API key or localhost URL)
         this.useLocalInstance = apiKey == null || apiKey.trim().isEmpty() || 
-            apiKey.contains("localhost") || apiKey.contains("127.0.0.1");
+            apiKey.contains("localhost") || apiKey.contains("127.0.0.1") || 
+            "local".equals(apiKey.trim().toLowerCase());
         
         if (useLocalInstance) {
             LOGGER.info("Player2AI client initialized for LOCAL instance (Player2AI desktop app)");
@@ -173,6 +181,26 @@ public class Player2AIClient {
             return results.toString();
         } catch (Exception e) {
             return "Diagnostic failed: " + e.getMessage();
+        }
+    }
+    
+    /**
+     * Test if Player2 App is available and responding
+     * @return true if Player2 App is responding, false otherwise
+     */
+    public static boolean isPlayer2AppAvailable() {
+        try {
+            URL testUrl = URI.create("http://127.0.0.1:4315/v1/health").toURL();
+            HttpURLConnection testConn = (HttpURLConnection) testUrl.openConnection();
+            testConn.setRequestMethod("GET");
+            testConn.setRequestProperty("player2-game-key", GAME_CLIENT_ID);
+            testConn.setConnectTimeout(3000);
+            testConn.setReadTimeout(3000);
+            
+            int responseCode = testConn.getResponseCode();
+            return responseCode == 200 || responseCode == 400 || responseCode == 422; // Any response means it's running
+        } catch (Exception e) {
+            return false; // Connection failed
         }
     }
     
