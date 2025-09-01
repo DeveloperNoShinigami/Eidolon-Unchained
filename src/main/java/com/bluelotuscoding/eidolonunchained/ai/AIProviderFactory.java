@@ -149,52 +149,13 @@ public class AIProviderFactory {
         
         int timeout = EidolonUnchainedConfig.COMMON.geminiTimeout.get(); // Reuse timeout setting
         
-        // Map common model names to OpenRouter format
-        String openRouterModel = mapToOpenRouterModel(model);
-        
-        OpenRouterClient client = new OpenRouterClient(apiKey, openRouterModel, timeout);
-        return new OpenRouterAIProvider(client);
-    }
-    
-    /**
-     * Map common model names to OpenRouter model identifiers
-     */
-    private static String mapToOpenRouterModel(String model) {
+        // Use the model directly from JSON configuration - no hardcoded mapping
         if (model == null || model.trim().isEmpty()) {
-            return "anthropic/claude-3.5-sonnet"; // Default to Claude 3.5 Sonnet
+            model = "huggingfaceh4/zephyr-7b-beta"; // Only default if no model specified
         }
         
-        // If it's already in OpenRouter format (contains '/'), use as-is
-        if (model.contains("/")) {
-            return model;
-        }
-        
-        // Map common names to OpenRouter identifiers
-        switch (model.toLowerCase()) {
-            case "claude":
-            case "claude-3.5":
-            case "claude-3.5-sonnet":
-                return "anthropic/claude-3.5-sonnet";
-            case "claude-3-haiku":
-                return "anthropic/claude-3-haiku";
-            case "gpt-4":
-            case "gpt-4o":
-                return "openai/gpt-4o";
-            case "gpt-4-turbo":
-                return "openai/gpt-4-turbo";
-            case "gpt-3.5":
-            case "gpt-3.5-turbo":
-                return "openai/gpt-3.5-turbo";
-            case "llama":
-            case "llama-3.1":
-            case "llama-3.1-8b":
-                return "meta-llama/llama-3.1-8b-instruct";
-            case "llama-3.1-70b":
-                return "meta-llama/llama-3.1-70b-instruct";
-            default:
-                LOGGER.warn("Unknown model '{}', defaulting to Claude 3.5 Sonnet", model);
-                return "anthropic/claude-3.5-sonnet";
-        }
+        OpenRouterClient client = new OpenRouterClient(apiKey, model, timeout);
+        return new OpenRouterAIProvider(client);
     }
 
     /**
