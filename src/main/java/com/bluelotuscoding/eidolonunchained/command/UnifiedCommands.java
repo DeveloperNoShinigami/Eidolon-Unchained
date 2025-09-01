@@ -1493,7 +1493,8 @@ public class UnifiedCommands {
      * 📊 DEBUG PLAYER REPUTATION
      * 
      * Shows detailed reputation information for a player with a specific deity.
-     * Usage: /eidolon-unchained debug reputation <player> <deity>
+     * Usage: /eidolon-unchained debug reputation <player> "deity_id"
+     * Example: /eidolon-unchained debug reputation Player123 "eidolonunchained:dark_deity"
      */
     private static int debugPlayerReputation(CommandContext<CommandSourceStack> context) {
         try {
@@ -1512,6 +1513,16 @@ public class UnifiedCommands {
             
             if (deity == null) {
                 context.getSource().sendFailure(Component.literal("§cDeity not found: " + deityId));
+                context.getSource().sendFailure(Component.literal("§7Tip: Use quotes for deity IDs with colons, e.g., \"eidolonunchained:dark_deity\""));
+                
+                // Show available deities
+                var availableDeities = com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getAllDeities();
+                if (!availableDeities.isEmpty()) {
+                    context.getSource().sendSuccess(() -> Component.literal("§7Available deities:"), false);
+                    availableDeities.keySet().forEach(id -> 
+                        context.getSource().sendSuccess(() -> Component.literal("§7- \"" + id + "\""), false)
+                    );
+                }
                 return 0;
             }
             
@@ -1524,10 +1535,52 @@ public class UnifiedCommands {
             context.getSource().sendSuccess(() -> Component.literal("§eReputation: §b" + String.format("%.2f", reputation)), false);
             context.getSource().sendSuccess(() -> Component.literal("§eProgression: §f" + progressionLevel), false);
             
+            // Show available progression stages for this deity
+            Map<String, Object> stagesMap = deity.getProgressionStages();
+            if (!stagesMap.isEmpty()) {
+                context.getSource().sendSuccess(() -> Component.literal("§6Available progression stages:"), false);
+                stagesMap.entrySet().stream()
+                    .sorted((a, b) -> {
+                        Object aData = a.getValue();
+                        Object bData = b.getValue();
+                        if (aData instanceof Map && bData instanceof Map) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> aMap = (Map<String, Object>) aData;
+                            @SuppressWarnings("unchecked") 
+                            Map<String, Object> bMap = (Map<String, Object>) bData;
+                            Object aRep = aMap.get("reputationRequired");
+                            Object bRep = bMap.get("reputationRequired");
+                            if (aRep instanceof Number && bRep instanceof Number) {
+                                return Double.compare(((Number) aRep).doubleValue(), ((Number) bRep).doubleValue());
+                            }
+                        }
+                        return 0;
+                    })
+                    .forEach(entry -> {
+                        String stageName = entry.getKey();
+                        Object stageData = entry.getValue();
+                        if (stageData instanceof Map) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> stageDataMap = (Map<String, Object>) stageData;
+                            Object repReq = stageDataMap.get("reputationRequired");
+                            if (repReq instanceof Number) {
+                                double required = ((Number) repReq).doubleValue();
+                                String status = reputation >= required ? "§a✓" : "§c✗";
+                                context.getSource().sendSuccess(() -> Component.literal(
+                                    String.format("§7- %s §f%s §7(requires %.0f reputation)", status, stageName, required)
+                                ), false);
+                            }
+                        }
+                    });
+            }
+            
             return 1;
             
         } catch (Exception e) {
             context.getSource().sendFailure(Component.literal("§cError debugging reputation: " + e.getMessage()));
+            if (e.getMessage().contains("Invalid resource location") || e.getMessage().contains("colon")) {
+                context.getSource().sendFailure(Component.literal("§7Tip: Use quotes for deity IDs with colons, e.g., \"eidolonunchained:dark_deity\""));
+            }
             return 0;
         }
     }
@@ -1594,7 +1647,8 @@ public class UnifiedCommands {
      * 🧹 CLEAR PLAYER REWARDS (For Testing)
      * 
      * Clears reward history for a player with a specific deity.
-     * Usage: /eidolon-unchained debug clear-rewards <player> <deity>
+     * Usage: /eidolon-unchained debug clear-rewards <player> "deity_id"
+     * Example: /eidolon-unchained debug clear-rewards Player123 "eidolonunchained:nature_deity"
      */
     private static int clearPlayerRewards(CommandContext<CommandSourceStack> context) {
         try {
