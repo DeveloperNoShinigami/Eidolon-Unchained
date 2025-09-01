@@ -213,6 +213,32 @@ public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
                     }
                 }
                 
+                // 🎁 PROCESS STAGE REWARDS (THIS WAS MISSING!)
+                if (stage.has("rewards")) {
+                    JsonArray rewards = stage.getAsJsonArray("rewards");
+                    for (JsonElement rewardElement : rewards) {
+                        if (!rewardElement.isJsonObject()) continue;
+                        
+                        JsonObject reward = rewardElement.getAsJsonObject();
+                        String type = reward.get("type").getAsString();
+                        String data = reward.get("data").getAsString();
+                        
+                        if ("item".equals(type)) {
+                            int count = reward.has("count") ? reward.get("count").getAsInt() : 1;
+                            deity.addStageReward(stageId, "item", data + ":" + count);
+                            LOGGER.debug("Added item reward for stage {}: {}x{}", stageId, count, data);
+                        } else if ("effect".equals(type)) {
+                            int duration = reward.has("duration") ? reward.get("duration").getAsInt() : 200;
+                            int amplifier = reward.has("amplifier") ? reward.get("amplifier").getAsInt() : 0;
+                            deity.addStageReward(stageId, "effect", data + ":" + duration + ":" + amplifier);
+                            LOGGER.debug("Added effect reward for stage {}: {} {}s level {}", stageId, data, duration/20, amplifier);
+                        } else if ("sign".equals(type)) {
+                            deity.addStageReward(stageId, "sign", data);
+                            LOGGER.debug("Added sign reward for stage {}: {}", stageId, data);
+                        }
+                    }
+                }
+                
                 deity.addProgressionStage(deityStage);
             }
         }

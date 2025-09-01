@@ -4,9 +4,12 @@ import elucent.eidolon.api.deity.Deity;
 import elucent.eidolon.capability.IReputation;
 import elucent.eidolon.registries.Signs;
 import elucent.eidolon.util.KnowledgeUtil;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -160,6 +163,9 @@ public class DatapackDeity extends Deity {
                         giveEffect(player, data, duration, amplifier);
                     }
                     break;
+                case "command":
+                    executeProgressionCommand(player, data, parts.length >= 3 ? parts[2] : "");
+                    break;
                 default:
                     LOGGER.warn("Unknown reward type: {}", type);
             }
@@ -222,6 +228,48 @@ public class DatapackDeity extends Deity {
                 player.addEffect(new MobEffectInstance(effect, duration, amplifier));
                 LOGGER.debug("Applied effect {} ({}:{}) to player {}", effectId, duration, amplifier, player.getName().getString());
             }
+        }
+    }
+    
+    /**
+     * Execute a command as a progression reward
+     * Supports command placeholders: {player}, {deity_name}, {stage}
+     */
+    private void executeProgressionCommand(Player player, String command, String extraParams) {
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            LOGGER.warn("Cannot execute progression command for non-server player");
+            return;
+        }
+        
+        try {
+            // Replace placeholders in the command
+            String processedCommand = command
+                .replace("{player}", player.getName().getString())
+                .replace("{deity_name}", this.displayName)
+                .replace("{deity_id}", this.id.toString())
+                .replace("{stage}", extraParams);
+            
+            // Get the server command manager
+            MinecraftServer server = serverPlayer.getServer();
+            if (server != null) {
+                CommandSourceStack commandSource = server.createCommandSourceStack()
+                    .withEntity(serverPlayer)
+                    .withLevel(serverPlayer.serverLevel())
+                    .withPosition(serverPlayer.position())
+                    .withPermission(2); // Admin permission level
+                
+                // Execute the command
+                Commands commandManager = server.getCommands();
+                int result = commandManager.performPrefixedCommand(commandSource, processedCommand);
+                
+                if (result > 0) {
+                    LOGGER.info("✅ Executed progression command for {}: {}", player.getName().getString(), processedCommand);
+                } else {
+                    LOGGER.warn("⚠️ Progression command returned 0: {}", processedCommand);
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("❌ Failed to execute progression command '{}' for player {}", command, player.getName().getString(), e);
         }
     }
     
