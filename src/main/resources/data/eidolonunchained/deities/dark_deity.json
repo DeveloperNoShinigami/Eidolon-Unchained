@@ -17,7 +17,9 @@
         "title": "Shadow Initiate",
         "description": "A new soul embraced by the shadows",
         "rewards": [
-          { "type": "item", "data": "eidolon:soul_shard", "count": 3 }
+          "command:give {player} eidolon:soul_shard 3",
+          "command:title {player} subtitle {\"text\":\"The shadows welcome you...\",\"color\":\"dark_purple\"}",
+          "command:playsound minecraft:ambient.soul_sand_valley.mood master {player} ~ ~ ~ 0.5 0.8"
         ]
       },
       {
@@ -27,8 +29,11 @@
         "title": "Dark Acolyte",
         "description": "Proven servant of the shadow realm",
         "rewards": [
-          { "type": "item", "data": "eidolon:death_essence", "count": 2 },
-          { "type": "item", "data": "eidolon:unholy_symbol", "count": 1 }
+          "command:give {player} eidolon:death_essence 2",
+          "command:give {player} eidolon:unholy_symbol 1",
+          "command:effect give {player} minecraft:night_vision 1200 0",
+          "command:title {player} title {\"text\":\"Dark Acolyte\",\"color\":\"dark_purple\"}",
+          "command:playsound minecraft:block.beacon.power_select master {player} ~ ~ ~ 0.7 0.6"
         ]
       },
       {
@@ -38,9 +43,14 @@
         "title": "Shadow Priest",
         "description": "Bearer of forbidden knowledge and dark mysteries",
         "rewards": [
-          { "type": "item", "data": "eidolon:warped_sprouts", "count": 5 },
-          { "type": "item", "data": "eidolon:zombie_heart", "count": 1 },
-          { "type": "item", "data": "eidolon:lesser_soul_gem", "count": 1 }
+          "command:give {player} eidolon:warped_sprouts 5",
+          "command:give {player} eidolon:zombie_heart 1",
+          "command:give {player} eidolon:lesser_soul_gem 1",
+          "command:effect give {player} minecraft:resistance 2400 0",
+          "command:effect give {player} minecraft:strength 1200 0",
+          "command:title {player} title {\"text\":\"Shadow Priest\",\"color\":\"dark_purple\",\"bold\":true}",
+          "command:title {player} subtitle {\"text\":\"Bearer of Forbidden Knowledge\",\"color\":\"gray\"}",
+          "command:playsound minecraft:block.beacon.activate master {player} ~ ~ ~ 1.0 0.8"
         ]
       },
       {
@@ -50,9 +60,16 @@
         "title": "Void Master",
         "description": "Master of the void between life and death",
         "rewards": [
-          { "type": "item", "data": "eidolon:greater_soul_gem", "count": 1 },
-          { "type": "item", "data": "eidolon:tattered_cloth", "count": 3 },
-          { "type": "item", "data": "eidolon:arcane_gold_ingot", "count": 2 }
+          "command:give {player} eidolon:greater_soul_gem 1",
+          "command:give {player} eidolon:tattered_cloth 3",
+          "command:give {player} eidolon:arcane_gold_ingot 2",
+          "command:effect give {player} minecraft:resistance 3600 1",
+          "command:effect give {player} minecraft:fire_resistance 3600 0",
+          "command:effect give {player} minecraft:water_breathing 3600 0",
+          "command:title {player} title {\"text\":\"Void Master\",\"color\":\"dark_purple\",\"bold\":true}",
+          "command:title {player} subtitle {\"text\":\"Master of Life and Death\",\"color\":\"red\"}",
+          "command:playsound minecraft:entity.wither.spawn master {player} ~ ~ ~ 0.5 1.2",
+          "command:tellraw @a {\"text\":\"The void acknowledges {player} as a Void Master!\",\"color\":\"dark_purple\"}"
         ]
       },
       {
@@ -62,9 +79,18 @@
         "title": "Shadow Champion",
         "description": "Ultimate champion of Nyxathel's dark dominion",
         "rewards": [
-          { "type": "item", "data": "eidolon:shadow_gem", "count": 1 },
-          { "type": "item", "data": "eidolon:death_essence", "count": 5 },
-          { "type": "item", "data": "eidolon:arcane_gold_ingot", "count": 3 }
+          "command:give {player} eidolon:shadow_gem 1",
+          "command:give {player} eidolon:death_essence 5",
+          "command:give {player} eidolon:arcane_gold_ingot 3",
+          "command:give {player} minecraft:enchanted_golden_apple 2",
+          "command:effect give {player} minecraft:resistance 7200 2",
+          "command:effect give {player} minecraft:strength 7200 1",
+          "command:effect give {player} minecraft:speed 7200 1",
+          "command:title {player} title {\"text\":\"SHADOW CHAMPION\",\"color\":\"dark_purple\",\"bold\":true,\"underlined\":true}",
+          "command:title {player} subtitle {\"text\":\"Ultimate Servant of {deity_name}\",\"color\":\"purple\"}",
+          "command:playsound minecraft:ui.toast.challenge_complete master {player} ~ ~ ~ 1.0 0.5",
+          "command:tellraw @a {\"text\":\"🌟 {player} has become the Shadow Champion of Nyxathel! 🌟\",\"color\":\"gold\",\"bold\":true}",
+          "command:advancement grant {player} only minecraft:adventure/hero_of_the_village"
         ]
       }
     ]

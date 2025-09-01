@@ -17,8 +17,11 @@
         "title": "Nature Initiate",
         "description": "A soul newly awakened to nature's call",
         "rewards": [
-          { "type": "item", "data": "minecraft:oak_sapling", "count": 4 },
-          { "type": "item", "data": "minecraft:bone_meal", "count": 2 }
+          "command:give {player} minecraft:oak_sapling 4",
+          "command:give {player} minecraft:bone_meal 8",
+          "command:effect give {player} minecraft:saturation 300 0",
+          "command:title {player} title {\"text\":\"Nature Initiate\",\"color\":\"green\"}",
+          "command:playsound minecraft:block.grass.break master {player} ~ ~ ~ 0.5 1.2"
         ]
       },
       {
@@ -28,8 +31,12 @@
         "title": "Nature Acolyte",
         "description": "Student of the natural mysteries",
         "rewards": [
-          { "type": "item", "data": "minecraft:bone_meal", "count": 8 },
-          { "type": "effect", "data": "minecraft:regeneration", "duration": 600, "amplifier": 1 }
+          "command:give {player} minecraft:bone_meal 16",
+          "command:give {player} eidolon:fungal_sprouts 3",
+          "command:effect give {player} minecraft:regeneration 600 1",
+          "command:effect give {player} minecraft:luck 1200 0",
+          "command:title {player} title {\"text\":\"Nature Acolyte\",\"color\":\"dark_green\"}",
+          "command:playsound minecraft:block.composter.ready master {player} ~ ~ ~ 0.7 1.0"
         ]
       },
       {
@@ -39,8 +46,15 @@
         "title": "Nature Priest",
         "description": "Guardian of the forest's sacred wisdom",
         "rewards": [
-          { "type": "item", "data": "minecraft:golden_apple", "count": 2 },
-          { "type": "item", "data": "eidolon:fungal_sprouts", "count": 3 }
+          "command:give {player} minecraft:golden_apple 2",
+          "command:give {player} eidolon:fungal_sprouts 5",
+          "command:give {player} minecraft:emerald 3",
+          "command:effect give {player} minecraft:regeneration 1800 2",
+          "command:effect give {player} minecraft:luck 2400 1",
+          "command:title {player} title {\"text\":\"Nature Priest\",\"color\":\"green\"}",
+          "command:title {player} subtitle {\"text\":\"Guardian of forest wisdom\",\"color\":\"dark_green\"}",
+          "command:playsound minecraft:entity.player.levelup master {player} ~ ~ ~ 1.0 1.0",
+          "command:say {player} has become a Nature Priest! The forest spirits celebrate their dedication."
         ]
       },
       {
@@ -50,8 +64,16 @@
         "title": "High Priest of Growth",
         "description": "Keeper of life's eternal cycle",
         "rewards": [
-          { "type": "item", "data": "minecraft:enchanted_golden_apple", "count": 1 },
-          { "type": "item", "data": "eidolon:arcane_gold_ingot", "count": 2 }
+          "command:give {player} minecraft:enchanted_golden_apple 1",
+          "command:give {player} eidolon:arcane_gold_ingot 3",
+          "command:give {player} eidolon:nature_staff 1",
+          "command:effect give {player} minecraft:regeneration 3600 3",
+          "command:effect give {player} minecraft:absorption 3600 2",
+          "command:effect give {player} minecraft:luck 3600 2",
+          "command:title {player} title {\"text\":\"High Priest of Growth\",\"color\":\"green\"}",
+          "command:title {player} subtitle {\"text\":\"Keeper of life's eternal cycle\",\"color\":\"gold\"}",
+          "command:playsound minecraft:block.beacon.power_select master {player} ~ ~ ~ 1.0 1.5",
+          "command:say The ancient forests whisper {player}'s name! They have become High Priest of Growth!"
         ]
       },
       {
@@ -61,9 +83,18 @@
         "title": "Champion of Verdania",
         "description": "Ultimate protector of all growing things",
         "rewards": [
-          { "type": "item", "data": "eidolon:enchanted_ash", "count": 3 },
-          { "type": "item", "data": "minecraft:enchanted_golden_apple", "count": 2 },
-          { "type": "item", "data": "eidolon:lesser_soul_gem", "count": 1 }
+          "command:give {player} eidolon:enchanted_ash 5",
+          "command:give {player} minecraft:enchanted_golden_apple 3",
+          "command:give {player} eidolon:greater_soul_gem 1",
+          "command:give {player} eidolon:verdant_crown 1",
+          "command:effect give {player} minecraft:regeneration 7200 4",
+          "command:effect give {player} minecraft:absorption 7200 3",
+          "command:effect give {player} minecraft:luck 7200 3",
+          "command:effect give {player} minecraft:hero_of_the_village 12000 3",
+          "command:title {player} title {\"text\":\"Champion of Verdania\",\"color\":\"green\",\"bold\":true}",
+          "command:title {player} subtitle {\"text\":\"Ultimate protector of all life\",\"color\":\"gold\"}",
+          "command:playsound minecraft:ui.toast.challenge_complete master @a ~ ~ ~ 2.0 0.8",
+          "command:say NATURE ITSELF REJOICES! {player} has ascended as Champion of Verdania! All life flourishes in their presence!"
         ]
       }
     ]
