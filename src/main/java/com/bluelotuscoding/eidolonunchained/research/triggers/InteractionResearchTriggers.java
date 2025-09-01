@@ -14,8 +14,11 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Handles block interaction research triggers loaded from JSON
@@ -23,6 +26,9 @@ import java.util.Map;
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class InteractionResearchTriggers {
     private static final Logger LOGGER = LogUtils.getLogger();
+    
+    // Track triggered research per player to prevent infinite loops
+    private static final Map<String, Set<String>> PLAYER_TRIGGERED_RESEARCH = new HashMap<>();
     
     @SubscribeEvent
     public static void onBlockInteraction(PlayerInteractEvent.RightClickBlock event) {
@@ -37,12 +43,27 @@ public class InteractionResearchTriggers {
         
         ResourceLocation blockType = ForgeRegistries.BLOCKS.getKey(event.getLevel().getBlockState(event.getPos()).getBlock());
         
+        String playerKey = player.getUUID().toString();
+        Set<String> triggeredResearch = PLAYER_TRIGGERED_RESEARCH.getOrDefault(playerKey, new HashSet<>());
+        
         // Get all interaction triggers from research files
         for (Map.Entry<String, List<ResearchTrigger>> entry : ResearchTriggerLoader.getTriggersForAllResearch().entrySet()) {
             String researchId = entry.getKey();
             
             for (ResearchTrigger trigger : entry.getValue()) {
                 if ("block_interaction".equals(trigger.getType()) && matchesInteractionTrigger(player, event, blockType, trigger)) {
+                    // Check max_found limit
+                    String trackingPrefix = researchId + ":";
+                    long currentCount = triggeredResearch.stream()
+                        .filter(key -> key.contains(trackingPrefix))
+                        .count();
+                    
+                    if (currentCount >= trigger.getMaxFound()) {
+                        LOGGER.debug("Player {} already triggered interaction research '{}' {} times (max: {})", 
+                            player.getName().getString(), researchId, currentCount, trigger.getMaxFound());
+                        continue; // Skip if already triggered enough times
+                    }
+                    
                     // Consume notetaking tool before creating research
                     if (!consumeNotetakingTool(player)) {
                         LOGGER.warn("Failed to consume notetaking tool for player {}, research discovery cancelled", 
@@ -70,8 +91,12 @@ public class InteractionResearchTriggers {
                                 player.drop(notes, false);
                             }
                             
-                            LOGGER.info("Gave research notes '{}' to player '{}' for interacting with '{}'", 
-                                researchId, player.getName().getString(), blockType);
+                            // Track this trigger - store just researchId:timestamp for proper filtering
+                            triggeredResearch.add(researchId + ":" + System.currentTimeMillis());
+                            PLAYER_TRIGGERED_RESEARCH.put(playerKey, triggeredResearch);
+                            
+                            LOGGER.info("Gave research notes '{}' to player '{}' for interacting with '{}' ({}/{} times)", 
+                                researchId, player.getName().getString(), blockType, currentCount + 1, trigger.getMaxFound());
                         } else {
                             LOGGER.warn("Research '{}' not found in Eidolon's research registry", researchId);
                         }

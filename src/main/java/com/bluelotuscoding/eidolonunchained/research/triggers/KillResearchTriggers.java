@@ -14,8 +14,11 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Handles kill-based research triggers loaded from JSON
@@ -23,6 +26,9 @@ import java.util.Map;
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class KillResearchTriggers {
     private static final Logger LOGGER = LogUtils.getLogger();
+    
+    // Track triggered research per player to prevent infinite loops
+    private static final Map<String, Set<String>> PLAYER_TRIGGERED_RESEARCH = new HashMap<>();
     
     @SubscribeEvent
     public static void onEntityKilled(LivingDeathEvent event) {
@@ -44,11 +50,26 @@ public class KillResearchTriggers {
         Map<String, List<ResearchTrigger>> allTriggers = ResearchTriggerLoader.getTriggersForAllResearch();
         LOGGER.debug("Checking {} research entries for kill triggers", allTriggers.size());
         
+        String playerKey = player.getUUID().toString();
+        Set<String> triggeredResearch = PLAYER_TRIGGERED_RESEARCH.getOrDefault(playerKey, new HashSet<>());
+        
         for (Map.Entry<String, List<ResearchTrigger>> entry : allTriggers.entrySet()) {
             String researchId = entry.getKey();
             
             for (ResearchTrigger trigger : entry.getValue()) {
                 if ("kill_entity".equals(trigger.getType()) && matchesKillTrigger(player, killedEntity, entityType, trigger)) {
+                    // Check max_found limit - fix the tracking key format
+                    String trackingPrefix = researchId + ":";
+                    long currentCount = triggeredResearch.stream()
+                        .filter(key -> key.contains(trackingPrefix))
+                        .count();
+                    
+                    if (currentCount >= trigger.getMaxFound()) {
+                        LOGGER.debug("Player {} already triggered kill research '{}' {} times (max: {})", 
+                            player.getName().getString(), researchId, currentCount, trigger.getMaxFound());
+                        continue; // Skip if already triggered enough times
+                    }
+                    
                     // Consume notetaking tool before creating research
                     if (!consumeNotetakingTool(player)) {
                         LOGGER.warn("Failed to consume notetaking tool for player {}, research discovery cancelled", 
@@ -76,8 +97,12 @@ public class KillResearchTriggers {
                                 player.drop(notes, false);
                             }
                             
-                            LOGGER.info("Gave research notes '{}' to player '{}' for killing '{}'", 
-                                researchId, player.getName().getString(), entityType);
+                            // Track this trigger - store just researchId:timestamp for proper filtering
+                            triggeredResearch.add(researchId + ":" + System.currentTimeMillis());
+                            PLAYER_TRIGGERED_RESEARCH.put(playerKey, triggeredResearch);
+                            
+                            LOGGER.info("Gave research notes '{}' to player '{}' for killing '{}' ({}/{} times)", 
+                                researchId, player.getName().getString(), entityType, currentCount + 1, trigger.getMaxFound());
                         } else {
                             LOGGER.warn("Research '{}' not found in Eidolon's research registry", researchId);
                         }

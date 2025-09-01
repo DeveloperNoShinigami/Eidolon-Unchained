@@ -74,9 +74,10 @@ public class LocationResearchTriggers {
             
             for (ResearchTrigger trigger : entry.getValue()) {
                 if (shouldCheckTrigger(trigger, player)) {
-                    // Check max_found limit
+                    // Check max_found limit - fix the tracking key format
+                    String trackingPrefix = researchId + ":";
                     long currentCount = triggeredResearch.stream()
-                        .filter(key -> key.startsWith(researchId + ":"))
+                        .filter(key -> key.contains(trackingPrefix))
                         .count();
                     
                     if (currentCount < trigger.getMaxFound()) {
@@ -84,8 +85,8 @@ public class LocationResearchTriggers {
                         if (consumeNotetakingTool(player)) {
                             giveResearchNote(player, researchId);
                             
-                            // Track this trigger
-                            triggeredResearch.add(triggerKey + ":" + System.currentTimeMillis());
+                            // Track this trigger - store just researchId:timestamp for proper filtering
+                            triggeredResearch.add(researchId + ":" + System.currentTimeMillis());
                             PLAYER_TRIGGERED_RESEARCH.put(playerKey, triggeredResearch);
                             
                             LOGGER.debug("Player {} triggered location research '{}' ({}/{} times)", 
