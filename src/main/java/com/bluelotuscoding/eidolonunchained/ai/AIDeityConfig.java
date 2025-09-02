@@ -78,6 +78,13 @@ public class AIDeityConfig {
         return behavior;
     }
     
+    /**
+     * Get all reputation behavior thresholds for external access
+     */
+    public Map<Integer, String> getReputationBehaviors() {
+        return new HashMap<>(reputationBehaviors);
+    }
+    
     // Research count-based behavior
     public void addResearchBehavior(int researchCount, String behavior) {
         researchBehaviors.put(researchCount, behavior);
