@@ -12,7 +12,6 @@ import com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
 import com.bluelotuscoding.eidolonunchained.events.RitualCompleteEvent;
 import com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient;
-import com.bluelotuscoding.eidolonunchained.integration.player2ai.ConfigurablePlayer2AIClient;
 import elucent.eidolon.capability.IReputation;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.Command;
@@ -185,16 +184,6 @@ public class UnifiedCommands {
                 .then(Commands.literal("auth")
                     .then(Commands.literal("auto")
                         .executes(UnifiedCommands::authenticatePlayer2AIAuto)))
-                .then(Commands.literal("mode")
-                    .then(Commands.literal("local")
-                        .executes(UnifiedCommands::setPlayer2AILocalMode))
-                    .then(Commands.literal("server")
-                        .then(Commands.argument("host", StringArgumentType.string())
-                            .executes(UnifiedCommands::setPlayer2AIServerMode)
-                            .then(Commands.argument("port", IntegerArgumentType.integer(1, 65535))
-                                .executes(UnifiedCommands::setPlayer2AIServerModeWithPort))))
-                    .then(Commands.literal("status")
-                        .executes(UnifiedCommands::getPlayer2AIMode)))
                 .then(Commands.literal("test")
                     .executes(UnifiedCommands::testPlayer2AIConnection))
                 .then(Commands.literal("debug-chat")
@@ -499,7 +488,6 @@ public class UnifiedCommands {
             EidolonUnchainedConfig.COMMON.aiProvider.save();
             
             // Test the connection immediately
-            ConfigurablePlayer2AIClient client = new ConfigurablePlayer2AIClient();
             boolean connected = Player2AIClient.isPlayer2AppAvailable();
             
             if (connected) {
@@ -2190,105 +2178,6 @@ public class UnifiedCommands {
         return 1;
     }
     
-    // Player2AI mode switching command implementations
-    private static int getPlayer2AIMode(CommandContext<CommandSourceStack> context) {
-        try {
-            String mode = EidolonUnchainedConfig.COMMON.player2aiConnectionMode.get();
-            String statusMessage = "Player2AI Mode: " + mode;
-            
-            if ("server".equals(mode)) {
-                String serverUrl = EidolonUnchainedConfig.COMMON.player2aiServerUrl.get();
-                int serverPort = EidolonUnchainedConfig.COMMON.player2aiServerPort.get();
-                statusMessage += " (Server: " + serverUrl + ":" + serverPort + ")";
-            }
-            
-            final String finalStatusMessage = statusMessage; // Make effectively final for lambda
-            context.getSource().sendSuccess(() -> Component.literal(finalStatusMessage), false);
-            return Command.SINGLE_SUCCESS;
-        } catch (Exception e) {
-            LOGGER.error("Error getting Player2AI mode", e);
-            context.getSource().sendFailure(Component.literal("Error getting Player2AI mode: " + e.getMessage()));
-            return 0;
-        }
-    }
-
-    private static int setPlayer2AILocalMode(CommandContext<CommandSourceStack> context) {
-        try {
-            EidolonUnchainedConfig.COMMON.player2aiConnectionMode.set("local");
-            EidolonUnchainedConfig.COMMON_SPEC.save();
-            
-            // Update any active configurable clients
-            ConfigurablePlayer2AIClient.updateGlobalConfiguration();
-            
-            context.getSource().sendSuccess(() -> Component.literal("Player2AI mode set to: local"), false);
-            return Command.SINGLE_SUCCESS;
-        } catch (Exception e) {
-            LOGGER.error("Error setting Player2AI local mode", e);
-            context.getSource().sendFailure(Component.literal("Error setting Player2AI local mode: " + e.getMessage()));
-            return 0;
-        }
-    }
-
-    private static int setPlayer2AIServerMode(CommandContext<CommandSourceStack> context) {
-        try {
-            String host = StringArgumentType.getString(context, "host");
-            int port = 4315; // Default port
-            
-            // Check if host contains port (fallback for backwards compatibility)
-            if (host.contains(":")) {
-                String[] parts = host.split(":");
-                host = parts[0];
-                if (parts.length > 1) {
-                    try {
-                        port = Integer.parseInt(parts[1]);
-                    } catch (NumberFormatException e) {
-                        context.getSource().sendFailure(Component.literal("Invalid port number: " + parts[1] + ". Use separate port argument instead."));
-                        return 0;
-                    }
-                }
-            }
-            
-            EidolonUnchainedConfig.COMMON.player2aiConnectionMode.set("server");
-            EidolonUnchainedConfig.COMMON.player2aiServerUrl.set(host);
-            EidolonUnchainedConfig.COMMON.player2aiServerPort.set(port);
-            EidolonUnchainedConfig.COMMON_SPEC.save();
-            
-            // Update any active configurable clients
-            ConfigurablePlayer2AIClient.updateGlobalConfiguration();
-            
-            final String finalHost = host; // Make effectively final for lambda
-            final int finalPort = port; // Make effectively final for lambda
-            context.getSource().sendSuccess(() -> Component.literal("Player2AI mode set to: server (" + finalHost + ":" + finalPort + ")"), false);
-            return Command.SINGLE_SUCCESS;
-        } catch (Exception e) {
-            LOGGER.error("Error setting Player2AI server mode", e);
-            context.getSource().sendFailure(Component.literal("Error setting Player2AI server mode: " + e.getMessage()));
-            return 0;
-        }
-    }
-
-    private static int setPlayer2AIServerModeWithPort(CommandContext<CommandSourceStack> context) {
-        try {
-            String host = StringArgumentType.getString(context, "host");
-            int port = IntegerArgumentType.getInteger(context, "port");
-            
-            EidolonUnchainedConfig.COMMON.player2aiConnectionMode.set("server");
-            EidolonUnchainedConfig.COMMON.player2aiServerUrl.set(host);
-            EidolonUnchainedConfig.COMMON.player2aiServerPort.set(port);
-            EidolonUnchainedConfig.COMMON_SPEC.save();
-            
-            // Update any active configurable clients
-            ConfigurablePlayer2AIClient.updateGlobalConfiguration();
-            
-            context.getSource().sendSuccess(() -> Component.literal("Player2AI mode set to: server (" + host + ":" + port + ")"), false);
-            return Command.SINGLE_SUCCESS;
-        } catch (Exception e) {
-            LOGGER.error("Error setting Player2AI server mode with port", e);
-            context.getSource().sendFailure(Component.literal("Error setting Player2AI server mode: " + e.getMessage()));
-            return 0;
-        }
-    }
-
     // Utility methods
     private static String maskApiKey(String key) {
         if (key == null || key.length() < 8) return "***";

@@ -44,12 +44,6 @@ public class EidolonUnchainedConfig {
         public final ForgeConfigSpec.BooleanValue enableAIDeities;
         public final ForgeConfigSpec.BooleanValue logAIInteractions;
         
-        // Player2AI Server Configuration
-        public final ForgeConfigSpec.ConfigValue<String> player2aiServerUrl;
-        public final ForgeConfigSpec.IntValue player2aiServerPort;
-        public final ForgeConfigSpec.BooleanValue enableSharedDeityPersonalities;
-        public final ForgeConfigSpec.ConfigValue<String> player2aiConnectionMode;
-        
         // Retry system configuration
         public final ForgeConfigSpec.BooleanValue enableApiRetry;
         public final ForgeConfigSpec.IntValue maxRetryAttempts;
@@ -184,23 +178,6 @@ public class EidolonUnchainedConfig {
             enableRelationshipTracking = builder
                 .comment("Enable Player2AI relationship tracking (AI learns player preferences)")
                 .define("enable_relationship_tracking", true);
-            
-            // Player2AI Server Configuration for Multiplayer
-            player2aiServerUrl = builder
-                .comment("Player2AI server URL (use 'localhost' for local desktop app, or server IP for shared instance)")
-                .define("player2ai_server_url", "localhost");
-                
-            player2aiServerPort = builder
-                .comment("Player2AI server port")
-                .defineInRange("player2ai_server_port", 4315, 1024, 65535);
-                
-            enableSharedDeityPersonalities = builder
-                .comment("Enable shared deity personalities across all players (requires server-hosted Player2AI)")
-                .define("enable_shared_deity_personalities", false);
-                
-            player2aiConnectionMode = builder
-                .comment("Connection mode: 'local' (each player runs own Player2AI), 'server' (shared Player2AI instance)")
-                .define("player2ai_connection_mode", "local");
             
             // OpenRouter Configuration
             openrouterApiKey = builder
