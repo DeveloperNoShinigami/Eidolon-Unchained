@@ -206,7 +206,7 @@ public class GeminiAPIClient {
         // Generation config - use correct field names for Gemini
         JsonObject generationConfig = new JsonObject();
         generationConfig.addProperty("temperature", genConfig.temperature);
-        generationConfig.addProperty("maxOutputTokens", Math.min(genConfig.max_output_tokens, 300));
+        generationConfig.addProperty("maxOutputTokens", genConfig.max_output_tokens);
         generationConfig.addProperty("topP", 0.8);
         generationConfig.addProperty("topK", 10);
         request.add("generationConfig", generationConfig);

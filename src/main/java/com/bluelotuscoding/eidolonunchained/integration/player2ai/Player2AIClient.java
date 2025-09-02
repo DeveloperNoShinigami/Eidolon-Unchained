@@ -2,6 +2,7 @@ package com.bluelotuscoding.eidolonunchained.integration.player2ai;
 
 import com.bluelotuscoding.eidolonunchained.ai.GenerationConfig;
 import com.bluelotuscoding.eidolonunchained.ai.SafetySettings;
+import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiAPIClient;
 import com.google.gson.*;
 import org.apache.logging.log4j.LogManager;
@@ -228,8 +229,8 @@ public class Player2AIClient {
         
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // Use OpenAI-compatible chat completions format like MCA
-                String response = sendChatCompletionRequest(prompt, personality, characterId, playerUUID);
+                // Use OpenAI-compatible chat completions format with deity AI configuration
+                String response = sendChatCompletionRequest(prompt, personality, characterId, playerUUID, genConfig);
                 
                 return new GeminiAPIClient.AIResponse(true, response, Collections.emptyList());
                 
@@ -251,7 +252,7 @@ public class Player2AIClient {
     /**
      * Send OpenAI-compatible chat completion request to Player2 App (like MCA does)
      */
-    private String sendChatCompletionRequest(String prompt, String personality, String characterId, String playerUUID) throws IOException {
+    private String sendChatCompletionRequest(String prompt, String personality, String characterId, String playerUUID, GenerationConfig genConfig) throws IOException {
         // Build OpenAI-compatible request
         JsonObject request = new JsonObject();
         request.addProperty("model", "player2");
@@ -281,9 +282,9 @@ public class Player2AIClient {
         
         request.add("messages", messages);
         
-        // Optional parameters
-        request.addProperty("max_tokens", 150);
-        request.addProperty("temperature", 0.8);
+        // Use AI deity configuration parameters
+        request.addProperty("max_tokens", genConfig.max_output_tokens);
+        request.addProperty("temperature", genConfig.temperature);
         
         // Send request to the local OpenAI-compatible endpoint
         String response = sendRequest(PLAYER2_LOCAL_API_BASE, "POST", request.toString());
@@ -348,10 +349,11 @@ public class Player2AIClient {
             "Players interact with you through sacred rituals and prayers. " +
             "Remember past conversations and build relationships over time.");
         
-        // Gaming-specific settings
+        // Gaming-specific settings - use reasonable defaults for character creation
+        // Note: Character creation happens separately from chat, so we use moderate defaults
         JsonObject settings = new JsonObject();
-        settings.addProperty("temperature", 0.8);
-        settings.addProperty("max_tokens", 200);
+        settings.addProperty("temperature", 0.7); // Moderate creativity for character setup
+        settings.addProperty("max_tokens", 500); // Reasonable default for character descriptions
         settings.addProperty("memory_enabled", true);
         settings.addProperty("relationship_tracking", true);
         

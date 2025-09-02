@@ -467,9 +467,15 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             JsonObject genConfig = apiSettings.getAsJsonObject("generation_config");
             if (genConfig.has("temperature")) {
                 config.temperature = genConfig.get("temperature").getAsFloat();
+                config.apiSettings.generationConfig.temperature = genConfig.get("temperature").getAsFloat();
             }
             if (genConfig.has("max_output_tokens")) {
                 config.maxOutputTokens = genConfig.get("max_output_tokens").getAsInt();
+                config.apiSettings.generationConfig.max_output_tokens = genConfig.get("max_output_tokens").getAsInt();
+            }
+            if (genConfig.has("maxOutputTokens")) {
+                config.maxOutputTokens = genConfig.get("maxOutputTokens").getAsInt();
+                config.apiSettings.generationConfig.max_output_tokens = genConfig.get("maxOutputTokens").getAsInt();
             }
         }
     }
