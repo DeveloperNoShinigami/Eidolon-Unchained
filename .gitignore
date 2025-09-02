@@ -1,5 +1,6 @@
 # Exclude unpacked Eidolon Repraised jar folder
 eidolon_repraised-1.20.1-0.3.8.15_unpacked_jar/
+
 # eclipse
 bin
 *.launch
@@ -25,3 +26,54 @@ run
 
 # Files from Forge MDK
 forge*changelog.txt
+
+# Additional build artifacts and generated files
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+!libs/*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+*.rar
+
+# Generated sources and resources
+src/generated/
+.apt_generated/
+.apt_generated_tests/
+
+# IDE and editor files
+.vscode/settings.json
+.vscode/launch.json
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+debug.log
+latest.log
+
+# Cache and temporary files
+.cache/
+tmp/
+temp/
+
+# Mod development artifacts
+*.mixins.json
+*.refmap.json
+
+# Don't ignore our specific mixins files if they're intentional
+!eidolon.mixins.json
+!eidolon.refmap.json
