@@ -225,9 +225,30 @@ public class MultiplayerMemoryManager {
 /eidolon-unchained player2ai mode local
 
 # Switch to server mode (all players share one Player2AI instance)
-/eidolon-unchained player2ai mode server 192.168.1.100:4315
+# Method 1: Host only (uses default port 4315)
+/eidolon-unchained player2ai mode server 192.168.1.100
 /eidolon-unchained player2ai mode server myserver.com
-/eidolon-unchained player2ai mode server localhost:4316
+/eidolon-unchained player2ai mode server localhost
+
+# Method 2: Host and custom port (separate arguments - no colon needed!)
+/eidolon-unchained player2ai mode server 192.168.1.100 4316
+/eidolon-unchained player2ai mode server myserver.com 8080
+/eidolon-unchained player2ai mode server localhost 4317
+```
+
+### ✅ FIXED: Colon Issue in Commands
+**Problem**: Minecraft commands don't handle `:` characters well  
+**Solution**: Separate host and port into different arguments
+
+**Old (Problematic)**:
+```bash
+/eidolon-unchained player2ai mode server 192.168.1.100:4315  # ❌ Colon doesn't work
+```
+
+**New (Working)**:
+```bash
+/eidolon-unchained player2ai mode server 192.168.1.100        # ✅ Uses default port 4315
+/eidolon-unchained player2ai mode server 192.168.1.100 4315  # ✅ Custom port as separate argument
 ```
 
 ### For Server Admins (Shared Instance):

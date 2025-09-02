@@ -18,6 +18,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
@@ -188,8 +189,10 @@ public class UnifiedCommands {
                     .then(Commands.literal("local")
                         .executes(UnifiedCommands::setPlayer2AILocalMode))
                     .then(Commands.literal("server")
-                        .then(Commands.argument("serverUrl", StringArgumentType.string())
-                            .executes(UnifiedCommands::setPlayer2AIServerMode)))
+                        .then(Commands.argument("host", StringArgumentType.string())
+                            .executes(UnifiedCommands::setPlayer2AIServerMode)
+                            .then(Commands.argument("port", IntegerArgumentType.integer(1, 65535))
+                                .executes(UnifiedCommands::setPlayer2AIServerModeWithPort))))
                     .then(Commands.literal("status")
                         .executes(UnifiedCommands::getPlayer2AIMode)))
                 .then(Commands.literal("test")
@@ -2228,20 +2231,18 @@ public class UnifiedCommands {
 
     private static int setPlayer2AIServerMode(CommandContext<CommandSourceStack> context) {
         try {
-            String serverUrl = StringArgumentType.getString(context, "server_url");
-            
-            // Parse URL and port if provided
-            String host = serverUrl;
+            String host = StringArgumentType.getString(context, "host");
             int port = 4315; // Default port
             
-            if (serverUrl.contains(":")) {
-                String[] parts = serverUrl.split(":");
+            // Check if host contains port (fallback for backwards compatibility)
+            if (host.contains(":")) {
+                String[] parts = host.split(":");
                 host = parts[0];
                 if (parts.length > 1) {
                     try {
                         port = Integer.parseInt(parts[1]);
                     } catch (NumberFormatException e) {
-                        context.getSource().sendFailure(Component.literal("Invalid port number: " + parts[1]));
+                        context.getSource().sendFailure(Component.literal("Invalid port number: " + parts[1] + ". Use separate port argument instead."));
                         return 0;
                     }
                 }
@@ -2261,6 +2262,28 @@ public class UnifiedCommands {
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
             LOGGER.error("Error setting Player2AI server mode", e);
+            context.getSource().sendFailure(Component.literal("Error setting Player2AI server mode: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int setPlayer2AIServerModeWithPort(CommandContext<CommandSourceStack> context) {
+        try {
+            String host = StringArgumentType.getString(context, "host");
+            int port = IntegerArgumentType.getInteger(context, "port");
+            
+            EidolonUnchainedConfig.COMMON.player2aiConnectionMode.set("server");
+            EidolonUnchainedConfig.COMMON.player2aiServerUrl.set(host);
+            EidolonUnchainedConfig.COMMON.player2aiServerPort.set(port);
+            EidolonUnchainedConfig.COMMON_SPEC.save();
+            
+            // Update any active configurable clients
+            ConfigurablePlayer2AIClient.updateGlobalConfiguration();
+            
+            context.getSource().sendSuccess(() -> Component.literal("Player2AI mode set to: server (" + host + ":" + port + ")"), false);
+            return Command.SINGLE_SUCCESS;
+        } catch (Exception e) {
+            LOGGER.error("Error setting Player2AI server mode with port", e);
             context.getSource().sendFailure(Component.literal("Error setting Player2AI server mode: " + e.getMessage()));
             return 0;
         }
