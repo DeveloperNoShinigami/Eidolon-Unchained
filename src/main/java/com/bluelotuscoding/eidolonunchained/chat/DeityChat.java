@@ -50,14 +50,14 @@ public class DeityChat {
         // Check if deity exists
         DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
         if (deity == null) {
-            player.sendSystemMessage(Component.literal("§cDeity not found: " + deityId));
+            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.not_found", deityId));
             return;
         }
         
         // Check AI configuration and patron allegiance rules
         AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deityId);
         if (aiConfig == null) {
-            player.sendSystemMessage(Component.literal("§e" + deity.getName() + " §cdoes not respond to mortal contact."));
+            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.no_mortal_contact", deity.getName()));
             return;
         }
         
@@ -97,12 +97,12 @@ public class DeityChat {
                     
                     switch (relationship) {
                         case NO_PATRON:
-                            player.sendSystemMessage(Component.literal("§c" + deity.getName() + " §7does not heed the prayers of the godless."));
-                            player.sendSystemMessage(Component.literal("§7Choose a patron deity to earn divine attention."));
+                            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.godless_rejected", deity.getName()));
+                            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.choose_patron"));
                             break;
                         case ENEMY:
-                            player.sendSystemMessage(Component.literal("§4" + deity.getName() + " §crecoils from your corrupted presence!"));
-                            player.sendSystemMessage(Component.literal("§7Your allegiance to enemies has sealed this path."));
+                            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.corrupted_presence", deity.getName()));
+                            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.enemy_allegiance"));
                             // Apply reputation penalty for daring to contact enemy
                             if (aiConfig.patronConfig.conversationRules.containsKey("enemy_restrictions")) {
                                 Map<String, Object> rules = (Map<String, Object>) aiConfig.patronConfig.conversationRules.get("enemy_restrictions");
@@ -119,14 +119,14 @@ public class DeityChat {
                             break;
                         case NEUTRAL:
                             if (aiConfig.patronConfig.requiresPatronStatus.equals("follower_only")) {
-                                player.sendSystemMessage(Component.literal("§e" + deity.getName() + " §7speaks only to their faithful servants."));
-                                player.sendSystemMessage(Component.literal("§7Prove your devotion to earn their attention."));
+                                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.faithful_only", deity.getName()));
+                                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.prove_devotion"));
                             }
                             break;
                     }
                 });
         } catch (Exception e) {
-            player.sendSystemMessage(Component.literal("§c" + deity.getName() + " §7is silent."));
+            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.is_silent", deity.getName()));
         }
     }
     
@@ -143,11 +143,11 @@ public class DeityChat {
                     
                     switch (relationship) {
                         case FOLLOWER:
-                            player.sendSystemMessage(Component.literal("§6A warm divine presence envelops you..."));
+                            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.divine_presence"));
                             if (title != null && !title.isEmpty()) {
-                                player.sendSystemMessage(Component.literal("§e" + deity.getName() + " §6recognizes their faithful " + title + "."));
+                                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.recognizes_faithful", deity.getName(), title));
                             } else {
-                                player.sendSystemMessage(Component.literal("§e" + deity.getName() + " §6welcomes their devoted servant."));
+                                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.recognizes_faithful", deity.getName(), "servant"));
                             }
                             break;
                         case ALLIED:
@@ -393,10 +393,12 @@ public class DeityChat {
                     
                     reputation.addReputation(player.getUUID(), deity.getId(), baseGain);
                     
+                    // Trigger immediate title update for reputation change
+                    com.bluelotuscoding.eidolonunchained.events.ReputationChangeHandler.forceUpdatePlayer(player);
+                    
                     // Notify player of reputation gain
-                    player.sendSystemMessage(Component.literal(
-                        "§e✨ " + deity.getDisplayName() + " §7acknowledges your devotion §e(+" + 
-                        String.format("%.1f", baseGain) + " reputation)"));
+                    player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.acknowledges_devotion", 
+                        deity.getDisplayName(), String.format("%.1f", baseGain)));
                 });
                 
             }).exceptionally(throwable -> {
@@ -406,22 +408,22 @@ public class DeityChat {
                 String errorMessage = throwable.getMessage();
                 if (errorMessage != null) {
                     if (errorMessage.toLowerCase().contains("quota") || errorMessage.toLowerCase().contains("limit")) {
-                        player.sendSystemMessage(Component.literal("§c" + deity.getName() + " §7is overwhelmed by divine energy..."));
-                        player.sendSystemMessage(Component.literal("§7(API quota exceeded - try again later)"));
-                        sendDeityResponse(player, deity.getName(), "I must conserve my divine energy for now...");
+                        player.sendSystemMessage(Component.translatable("eidolonunchained.error.quota_exceeded", deity.getName()));
+                        player.sendSystemMessage(Component.translatable("eidolonunchained.error.quota_exceeded_hint"));
+                        sendDeityResponse(player, deity.getName(), Component.translatable("eidolonunchained.ui.deity.energy_conserve").getString());
                     } else if (errorMessage.toLowerCase().contains("token")) {
-                        player.sendSystemMessage(Component.literal("§c" + deity.getName() + " §7speaks too much for mortal comprehension..."));
-                        player.sendSystemMessage(Component.literal("§7(Response too long - try shorter messages)"));
-                        sendDeityResponse(player, deity.getName(), "My words exceed mortal understanding...");
+                        player.sendSystemMessage(Component.translatable("eidolonunchained.error.response_too_long", deity.getName()));
+                        player.sendSystemMessage(Component.translatable("eidolonunchained.error.response_too_long_hint"));
+                        sendDeityResponse(player, deity.getName(), Component.translatable("eidolonunchained.ui.deity.words_exceed").getString());
                     } else if (errorMessage.toLowerCase().contains("timeout")) {
-                        player.sendSystemMessage(Component.literal("§c" + deity.getName() + " §7takes time to consider your words..."));
-                        player.sendSystemMessage(Component.literal("§7(API timeout - try again)"));
-                        sendDeityResponse(player, deity.getName(), "Give me a moment to ponder...");
+                        player.sendSystemMessage(Component.translatable("eidolonunchained.error.api_timeout", deity.getName()));
+                        player.sendSystemMessage(Component.translatable("eidolonunchained.error.api_timeout_hint"));
+                        sendDeityResponse(player, deity.getName(), Component.translatable("eidolonunchained.ui.deity.give_moment").getString());
                     } else {
-                        sendDeityResponse(player, "Divine Connection", "falters...");
+                        sendDeityResponse(player, "Divine Connection", Component.translatable("eidolonunchained.ui.deity.connection_falters").getString());
                     }
                 } else {
-                    sendDeityResponse(player, "Divine Connection", "falters...");
+                    sendDeityResponse(player, "Divine Connection", Component.translatable("eidolonunchained.ui.deity.connection_falters").getString());
                 }
                 return null;
             });

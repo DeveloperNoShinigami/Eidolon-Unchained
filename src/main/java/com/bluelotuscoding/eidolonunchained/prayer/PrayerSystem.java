@@ -262,6 +262,9 @@ public class PrayerSystem {
                         };
                         
                         reputation.addReputation(player.getUUID(), deity.getId(), prayerGain);
+                        
+                        // Trigger immediate title update for reputation change
+                        com.bluelotuscoding.eidolonunchained.events.ReputationChangeHandler.forceUpdatePlayer(player);
                     });
                     
                 } else {

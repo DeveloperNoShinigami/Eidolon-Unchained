@@ -12,7 +12,7 @@
     "stages": [
       {
         "id": "shadow_initiate",
-        "reputation": 15,
+        "reputation": 0,
         "major": false,
         "title": "Shadow Initiate",
         "description": "A new soul embraced by the shadows",

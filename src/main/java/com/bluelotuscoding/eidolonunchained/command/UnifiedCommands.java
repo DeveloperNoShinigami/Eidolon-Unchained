@@ -396,10 +396,10 @@ public class UnifiedCommands {
         try {
             // Reload configuration
             EidolonUnchainedConfig.COMMON_SPEC.setConfig(null);
-            context.getSource().sendSuccess(() -> Component.literal("§aConfiguration reloaded successfully"), false);
+            context.getSource().sendSuccess(() -> Component.translatable("eidolonunchained.command.config.reloaded"), false);
             return 1;
         } catch (Exception e) {
-            context.getSource().sendFailure(Component.literal("§cFailed to reload configuration: " + e.getMessage()));
+            context.getSource().sendFailure(Component.translatable("eidolonunchained.command.config.reload_failed", e.getMessage()));
             return 0;
         }
     }
@@ -446,16 +446,16 @@ public class UnifiedCommands {
         }
         
         if (valid) {
-            context.getSource().sendSuccess(() -> Component.literal("§aConfiguration is valid"), false);
+            context.getSource().sendSuccess(() -> Component.translatable("eidolonunchained.command.config.valid"), false);
         } else {
-            context.getSource().sendFailure(Component.literal("§cConfiguration issues found:\n" + issues.toString()));
+            context.getSource().sendFailure(Component.translatable("eidolonunchained.command.config.issues_found", issues.toString()));
         }
         
         return valid ? 1 : 0;
     }
     
     private static int resetConfig(CommandContext<CommandSourceStack> context) {
-        context.getSource().sendSuccess(() -> Component.literal("§eConfiguration reset to defaults"), false);
+        context.getSource().sendSuccess(() -> Component.translatable("eidolonunchained.command.config.reset"), false);
         return 1;
     }
     
@@ -466,10 +466,10 @@ public class UnifiedCommands {
         
         try {
             APIKeyManager.setAPIKey(provider, key);
-            context.getSource().sendSuccess(() -> Component.literal("§aAPI key set for provider: " + provider), false);
+            context.getSource().sendSuccess(() -> Component.translatable("eidolonunchained.command.api.key_set", provider), false);
             return 1;
         } catch (Exception e) {
-            context.getSource().sendFailure(Component.literal("§cFailed to set API key: " + e.getMessage()));
+            context.getSource().sendFailure(Component.translatable("eidolonunchained.command.api.key_set_failed", e.getMessage()));
             return 0;
         }
     }
@@ -518,11 +518,11 @@ public class UnifiedCommands {
         
         String apiKey = APIKeyManager.getAPIKey(provider);
         if (apiKey == null || apiKey.isEmpty()) {
-            context.getSource().sendFailure(Component.literal("§cNo API key configured for provider: " + provider));
+            context.getSource().sendFailure(Component.translatable("eidolonunchained.command.api.no_key", provider));
             return 0;
         }
         
-        context.getSource().sendSuccess(() -> Component.literal("§aAPI key is configured for provider: " + provider), false);
+        context.getSource().sendSuccess(() -> Component.translatable("eidolonunchained.command.api.key_configured", provider), false);
         return 1;
     }
     
@@ -574,17 +574,17 @@ public class UnifiedCommands {
     private static int reloadDeities(CommandContext<CommandSourceStack> context) {
         try {
             // Trigger deity reload
-            context.getSource().sendSuccess(() -> Component.literal("§aDeities reloaded successfully"), false);
+            context.getSource().sendSuccess(() -> Component.translatable("eidolonunchained.command.deity.reload_success"), false);
             return 1;
         } catch (Exception e) {
-            context.getSource().sendFailure(Component.literal("§cFailed to reload deities: " + e.getMessage()));
+            context.getSource().sendFailure(Component.translatable("eidolonunchained.command.deity.reload_failed", e.getMessage()));
             return 0;
         }
     }
     
     private static int showDeityStatus(CommandContext<CommandSourceStack> context) {
         String deityName = StringArgumentType.getString(context, "deity");
-        context.getSource().sendSuccess(() -> Component.literal("§eShowing status for deity: " + deityName), false);
+        context.getSource().sendSuccess(() -> Component.translatable("eidolonunchained.command.deity.status", deityName), false);
         return 1;
     }
     

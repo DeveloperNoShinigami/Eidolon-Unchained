@@ -21,6 +21,7 @@ import com.mojang.logging.LogUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Collectors;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -118,7 +119,7 @@ public class DatapackDeity extends Deity {
         
         // Send unlock message
         if (player instanceof ServerPlayer serverPlayer) {
-            String stageTitle = getStageDisplayName(lock.getPath());
+            String stageTitle = lock.getPath(); // Use the lock path as stage identifier
             String message = String.format("§6[%s]§r You have achieved: %s", displayName, stageTitle);
             serverPlayer.connection.send(new ClientboundSetActionBarTextPacket(Component.literal(message)));
         }
@@ -134,6 +135,48 @@ public class DatapackDeity extends Deity {
         }
         
         LOGGER.info("Player {} lost {} for deity {}", player.getName().getString(), lock, getId());
+    }
+    
+    /**
+     * ✨ REAL-TIME TITLE UPDATES - Called automatically by Eidolon when reputation changes
+     * This is the proper way to handle reputation changes instead of using tick events!
+     */
+    @Override
+    public void onReputationChange(Player player, elucent.eidolon.capability.IReputation rep, double prev, double updated) {
+        // Call parent implementation first to handle Eidolon's stage progression
+        super.onReputationChange(player, rep, prev, updated);
+        
+        // Handle our custom title updates for patron players
+        if (player instanceof ServerPlayer serverPlayer) {
+            try {
+                // Check if this deity is the player's patron
+                player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
+                    .ifPresent(patronData -> {
+                        ResourceLocation patron = patronData.getPatron(serverPlayer);
+                        if (getId().equals(patron)) {
+                            // This is the player's patron deity - update title immediately
+                            String oldTitle = patronData.getTitle(serverPlayer);
+                            updatePatronTitle(serverPlayer);
+                            String newTitle = patronData.getTitle(serverPlayer);
+                            
+                            // Notify player if title changed
+                            if (!Objects.equals(oldTitle, newTitle)) {
+                                LOGGER.info("🎭 Title updated for {} (reputation: {} → {}): '{}' → '{}'", 
+                                    serverPlayer.getName().getString(), prev, updated, oldTitle, newTitle);
+                                
+                                // Send notification to player
+                                if (newTitle != null && !newTitle.isEmpty()) {
+                                    serverPlayer.sendSystemMessage(Component.literal(
+                                        "§6✨ Your devotion has earned you a new title: §e" + newTitle));
+                                }
+                            }
+                        }
+                    });
+                    
+            } catch (Exception e) {
+                LOGGER.error("Error updating title for reputation change on deity {}: {}", getId(), e.getMessage(), e);
+            }
+        }
     }
     
     private void applyReward(Player player, String reward) {
@@ -341,80 +384,46 @@ public class DatapackDeity extends Deity {
     }
     
     /**
-     * Gets the appropriate stage title for a given reputation level using translation keys
+     * Gets the appropriate stage title for a given reputation level using the deity's progression stages
+     * ✅ FIXED: Now uses the proper basic deity progression stages instead of AI behavior text
      */
     private String getStageForReputation(double reputation) {
-        String bestStageId = "initiate"; // Default stage ID
-        
-        // Use Eidolon's progression system to find the highest unlocked stage
         try {
-            // Find the highest stage this reputation qualifies for
-            if (reputation >= 100) bestStageId = "champion";
-            else if (reputation >= 75) bestStageId = "high_priest";
-            else if (reputation >= 50) bestStageId = "priest";
-            else if (reputation >= 25) bestStageId = "acolyte";
-            else bestStageId = "initiate";
+            // Use the actual progression stages defined in the basic deity configuration
+            Stage bestStage = null;
             
-            // Create translation key based on deity ID and stage ID
-            String translationKey = String.format("eidolonunchained.patron.title.%s.%s", 
-                this.id.getPath(), bestStageId);
+            // Find the highest stage the player qualifies for
+            for (Stage stage : this.progression.getSteps().values()) {
+                if (reputation >= stage.rep()) {
+                    bestStage = stage;
+                } else {
+                    break; // Stages should be ordered by reputation requirement
+                }
+            }
             
-            // Try to resolve the translation using the server-side I18n if available
-            // For now, return a formatted fallback since we can't easily resolve server-side
-            return getDisplayNameForStage(bestStageId);
+            if (bestStage != null) {
+                String stageTitle = bestStage.id().getPath(); // Use the stage ID as title
+                LOGGER.debug("✅ Progression Stage: Reputation {} maps to stage '{}' for deity {}", 
+                    reputation, bestStage.id(), this.id);
+                return stageTitle;
+            } else {
+                // Emergency fallback - return the first stage or a default
+                if (!this.progression.getSteps().isEmpty()) {
+                    Stage firstStage = this.progression.getSteps().values().iterator().next();
+                    LOGGER.debug("⚠️ Fallback: Using first stage '{}' for reputation {} on deity {}", 
+                        firstStage.id().getPath(), reputation, this.id);
+                    return firstStage.id().getPath();
+                } else {
+                    LOGGER.warn("⚠️ No progression stages defined for deity {}, using generic fallback", this.id);
+                    return "Initiate";
+                }
+            }
             
         } catch (Exception e) {
-            LOGGER.warn("Error determining stage for reputation {}: {}", reputation, e.getMessage());
-            // Fallback to generic title
-            return getDisplayNameForStage(bestStageId);
-        }
-    }
-    
-    /**
-     * Gets a display name for a stage ID based on the deity
-     */
-    private String getDisplayNameForStage(String stageId) {
-        String deityPath = this.id.getPath();
-        
-        // Map deity-specific stages to display names
-        switch (deityPath) {
-            case "dark_deity":
-                switch (stageId) {
-                    case "initiate": return "Shadow Initiate";
-                    case "acolyte": return "Dark Acolyte";
-                    case "priest": return "Shadow Priest";
-                    case "high_priest": return "Void Master";
-                    case "champion": return "Shadow Champion";
-                }
-                break;
-            case "light_deity":
-                switch (stageId) {
-                    case "initiate": return "Light Bearer";
-                    case "acolyte": return "Sacred Acolyte";
-                    case "priest": return "Divine Priest";
-                    case "high_priest": return "Radiant Oracle";
-                    case "champion": return "Light Champion";
-                }
-                break;
-            case "nature_deity":
-                switch (stageId) {
-                    case "initiate": return "Nature's Child";
-                    case "acolyte": return "Grove Keeper";
-                    case "priest": return "Druid";
-                    case "high_priest": return "Elder Druid";
-                    case "champion": return "Nature's Champion";
-                }
-                break;
-        }
-        
-        // Generic fallback
-        switch (stageId) {
-            case "initiate": return "Initiate";
-            case "acolyte": return "Acolyte";
-            case "priest": return "Priest";
-            case "high_priest": return "High Priest";
-            case "champion": return "Champion";
-            default: return "Initiate";
+            LOGGER.error("❌ Error determining stage for reputation {} on deity {}: {}", 
+                reputation, this.id, e.getMessage(), e);
+            // Emergency fallback
+            return "Initiate";
         }
     }
     
@@ -422,50 +431,29 @@ public class DatapackDeity extends Deity {
      * Gets the progression stages map for external access (simplified implementation)
      */
     public Map<String, Object> getProgressionStages() {
-        // Return a simple map of stage names to reputation requirements
         Map<String, Object> stages = new HashMap<>();
-        stages.put("initiate", Map.of("reputationRequired", 0));
-        stages.put("acolyte", Map.of("reputationRequired", 25));
-        stages.put("priest", Map.of("reputationRequired", 50));
-        stages.put("high_priest", Map.of("reputationRequired", 75));
-        stages.put("champion", Map.of("reputationRequired", 100));
+        
+        // Build stages map from actual progression data
+        for (Stage stage : this.progression.getSteps().values()) {
+            Map<String, Object> stageData = new HashMap<>();
+            stageData.put("reputationRequired", stage.rep());
+            stageData.put("title", stage.id().getPath());
+            stageData.put("description", "Stage description"); // Default description
+            stageData.put("isMajor", stage.major());
+            
+            stages.put(stage.id().getPath(), stageData);
+        }
+        
         return stages;
     }
     
     /**
-     * Converts a stage name to a display name based on JSON configuration
+     * Gets the display name for a stage based on its ID
      */
-    public String getStageDisplayName(String stageName) {
-        // First, try to get custom display name from progression stages in JSON
-        String displayName = getCustomStageDisplayName(stageName);
-        if (displayName != null) {
-            return displayName;
-        }
-        
-        // Fallback: Convert snake_case to Title Case
-        return Arrays.stream(stageName.replace("_", " ").split(" "))
-                     .map(word -> word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase())
-                     .collect(Collectors.joining(" "));
-    }
-    
-    /**
-     * Gets custom display name from JSON progression stages if available
-     */
-    private String getCustomStageDisplayName(String stageName) {
-        // This would be populated from JSON if we add display_name fields to stages
-        // For now, use the stage ID as the title
-        
-        // Example mappings based on your dark_deity.json:
-        switch (stageName) {
-            case "shadow_initiate":
-                return "Shadow Initiate";
-            case "dark_scholar":
-                return "Dark Scholar";
-            case "shadow_master":
-                return "Shadow Master";
-            default:
-                return null; // Use fallback formatting
-        }
+    public String getStageDisplayName(String stageId) {
+        // For now, just format the stage ID nicely
+        return stageId.replace("_", " ").substring(0, 1).toUpperCase() + 
+               stageId.replace("_", " ").substring(1).toLowerCase();
     }
     
     /**

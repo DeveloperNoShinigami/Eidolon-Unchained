@@ -58,7 +58,7 @@
       },
       {
         "id": "light_high_priest",
-        "reputation": 100,
+        "reputation": 75,
         "major": true,
         "title": "High Priest of Light",
         "description": "Elevated servant of the divine radiance",
@@ -77,7 +77,7 @@
       },
       {
         "id": "light_champion",
-        "reputation": 200,
+        "reputation": 100,
         "major": true,
         "title": "Champion of Light",
         "description": "Ultimate warrior of divine radiance",

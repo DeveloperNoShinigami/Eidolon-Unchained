@@ -22,12 +22,12 @@ public class EnhancedCommandExtractor {
     
     // Patterns for natural language command detection
     private static final Pattern GIVE_PATTERN = Pattern.compile(
-        "\\b(?:give|grant|bestow)\\s+(?:(?:you|player|{player})\\s+)?([\\w:]+)(?:\\s+(\\d+))?", 
+        "\\b(?:give|grant|bestow)\\s+(?:(?:you|player|\\{player\\})\\s+)?([\\w:]+)(?:\\s+(\\d+))?", 
         Pattern.CASE_INSENSITIVE
     );
     
     private static final Pattern EFFECT_PATTERN = Pattern.compile(
-        "\\b(?:effect|blessing|curse|apply)\\s+(?:give\\s+)?(?:(?:you|player|{player})\\s+)?([\\w:]+)(?:\\s+(\\d+))?(?:\\s+(\\d+))?", 
+        "\\b(?:effect|blessing|curse|apply)\\s+(?:give\\s+)?(?:(?:you|player|\\{player\\})\\s+)?([\\w:]+)(?:\\s+(\\d+))?(?:\\s+(\\d+))?", 
         Pattern.CASE_INSENSITIVE
     );
     
