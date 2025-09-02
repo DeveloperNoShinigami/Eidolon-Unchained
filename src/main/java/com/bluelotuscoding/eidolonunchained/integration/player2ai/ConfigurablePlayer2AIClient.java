@@ -41,7 +41,7 @@ import java.util.concurrent.Executors;
  * - Shared deity characters with individual player memory tracking
  * - Consistent deity personalities across all players
  */
-public class ConfigurablePlayer2AIClient {
+public class ConfigurablePlayer2AIClient extends Player2AIClient {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String GAME_CLIENT_ID = "eidolon-unchained";
     private static final Executor EXECUTOR = Executors.newCachedThreadPool();
@@ -56,6 +56,7 @@ public class ConfigurablePlayer2AIClient {
     }
     
     public ConfigurablePlayer2AIClient(int timeoutSeconds) {
+        super(timeoutSeconds); // Call parent constructor
         this.timeoutSeconds = timeoutSeconds;
         updateConfiguration();
     }
@@ -120,6 +121,44 @@ public class ConfigurablePlayer2AIClient {
                 String playerKey = getServerSpecificPlayerKey(player);
                 String response = sendChatCompletionRequest(prompt, personality, characterId, playerKey);
                 
+                return new GeminiAPIClient.AIResponse(true, response, Collections.emptyList());
+                
+            } catch (Exception e) {
+                LOGGER.error("Player2AI request failed (mode: {})", currentMode, e);
+                
+                String errorMessage = "The deity's voice echoes from beyond the veil...";
+                if (LOGGER.isDebugEnabled() || e.getMessage().contains("Connection refused")) {
+                    if ("server".equals(currentMode)) {
+                        errorMessage = "Server Player2AI Error: " + e.getMessage() + 
+                            " (Check if Player2AI is running on server: " + currentApiBase + ")";
+                    } else {
+                        errorMessage = "Local Player2AI Error: " + e.getMessage() + 
+                            " (Check if Player2AI desktop app is running)";
+                    }
+                }
+                
+                return new GeminiAPIClient.AIResponse(false, errorMessage, Collections.emptyList());
+            }
+        }, EXECUTOR);
+    }
+    
+    /**
+     * Override parent method to provide compatibility with AIProviderFactory
+     * This method bridges the parent's string-based API with our server-aware implementation
+     */
+    @Override
+    public CompletableFuture<GeminiAPIClient.AIResponse> generateResponse(
+            String prompt, 
+            String personality,
+            String characterId,
+            String playerUUID,
+            GenerationConfig genConfig,
+            SafetySettings safetySettings) {
+        
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                // Use our configurable implementation but with string-based player key
+                String response = sendChatCompletionRequest(prompt, personality, characterId, playerUUID);
                 return new GeminiAPIClient.AIResponse(true, response, Collections.emptyList());
                 
             } catch (Exception e) {

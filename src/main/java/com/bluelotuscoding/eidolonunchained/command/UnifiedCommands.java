@@ -499,7 +499,7 @@ public class UnifiedCommands {
             EidolonUnchainedConfig.COMMON.aiProvider.save();
             
             // Test the connection immediately
-            Player2AIClient client = new Player2AIClient();
+            ConfigurablePlayer2AIClient client = new ConfigurablePlayer2AIClient();
             boolean connected = Player2AIClient.isPlayer2AppAvailable();
             
             if (connected) {

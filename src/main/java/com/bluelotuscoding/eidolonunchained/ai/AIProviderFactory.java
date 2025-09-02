@@ -5,6 +5,7 @@ import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiAPIClient;
 import com.bluelotuscoding.eidolonunchained.integration.openrouter.OpenRouterClient;
 import com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient;
+import com.bluelotuscoding.eidolonunchained.integration.player2ai.ConfigurablePlayer2AIClient;
 import com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2HealthSignal;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -106,10 +107,10 @@ public class AIProviderFactory {
             return new DummyAIProvider();
         }
         
-        int timeout = EidolonUnchainedConfig.COMMON.geminiTimeout.get(); // Reuse timeout setting
-        
-        Player2AIClient client = new Player2AIClient(timeout); // Always use local connection
-        LOGGER.info("Creating Player2AI provider for local Player2 App connection");
+        // Use ConfigurablePlayer2AIClient which respects server/local mode settings
+        ConfigurablePlayer2AIClient client = new ConfigurablePlayer2AIClient();
+        String mode = EidolonUnchainedConfig.COMMON.player2aiConnectionMode.get();
+        LOGGER.info("Creating Player2AI provider for {} mode", mode);
         
         // Start health signal as required by Player2AI jam submission rules
         Player2HealthSignal.startHealthSignal();
