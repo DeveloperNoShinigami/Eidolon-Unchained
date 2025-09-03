@@ -33,12 +33,13 @@
 ### 📖 Reference Materials
 - **[14 - JSON Field Reference](14-JSON-REFERENCE.md)** - Complete field documentation
 - **[15 - Language Keys](15-LANGUAGE-KEYS.md)** - Standardized localization system
-- **[16 - API Reference](16-API-REFERENCE.md)** - Developer API documentation
+- **[16 - Language System](16-LANGUAGE-SYSTEM.md)** - Translation system documentation
 
 ### 🛠️ Development
-- **[17 - Debugging Guide](17-DEBUGGING.md)** - Troubleshooting and testing
-- **[18 - Extension Guide](18-EXTENSIONS.md)** - Creating addon mods
-- **[19 - Future Roadmap](19-ROADMAP.md)** - Planned features and improvements
+- **[17 - API Reference](17-API-REFERENCE.md)** - Developer API documentation
+- **[18 - Debugging Guide](18-DEBUGGING.md)** - Troubleshooting and testing
+- **[19 - Extension Guide](19-EXTENSIONS.md)** - Creating addon mods
+- **[20 - Future Roadmap](20-ROADMAP.md)** - Planned features and improvements
 
 ---
 
