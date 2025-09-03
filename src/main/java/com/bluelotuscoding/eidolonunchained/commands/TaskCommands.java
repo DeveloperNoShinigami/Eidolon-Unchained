@@ -100,8 +100,8 @@ public class TaskCommands {
             // Assign the task
             PlayerContextTracker.assignTask(targetPlayer, taskId, taskTemplate.description, deityId, taskTemplate.reputationReward);
             
-            targetPlayer.sendSystemMessage(Component.literal("§6[Divine Task] §e" + taskTemplate.description));
-            targetPlayer.sendSystemMessage(Component.literal("§7Reward: §6" + taskTemplate.reputationReward + " reputation points"));
+            targetPlayer.sendSystemMessage(Component.translatable("eidolonunchained.task.assigned", taskTemplate.description));
+            targetPlayer.sendSystemMessage(Component.translatable("eidolonunchained.task.reward", taskTemplate.reputationReward));
             
             context.getSource().sendSuccess(() -> Component.literal("Assigned task '" + taskId + "' to " + targetPlayer.getName().getString()), true);
             
@@ -139,8 +139,8 @@ public class TaskCommands {
             // Assign the task
             PlayerContextTracker.assignTask(targetPlayer, taskId, taskTemplate.description, foundDeityId, taskTemplate.reputationReward);
             
-            targetPlayer.sendSystemMessage(Component.literal("§6[Divine Task] §e" + taskTemplate.description));
-            targetPlayer.sendSystemMessage(Component.literal("§7Reward: §6" + taskTemplate.reputationReward + " reputation points"));
+            targetPlayer.sendSystemMessage(Component.translatable("eidolonunchained.task.assigned", taskTemplate.description));
+            targetPlayer.sendSystemMessage(Component.translatable("eidolonunchained.task.reward", taskTemplate.reputationReward));
             
             return 1;
         } catch (Exception e) {
@@ -173,7 +173,7 @@ public class TaskCommands {
             
             if (canComplete) {
                 PlayerContextTracker.completeTask(player, taskId);
-                player.sendSystemMessage(Component.literal("§7Gained §6" + task.reputationReward + " reputation points§7!"));
+                player.sendSystemMessage(Component.translatable("eidolonunchained.task.completed_reputation", task.reputationReward));
                 
                 // Execute task rewards
                 executeTaskRewards(player, taskId);
@@ -196,11 +196,11 @@ public class TaskCommands {
             PlayerContextTracker.EnhancedPlayerContext playerContext = PlayerContextTracker.getContext(player.getUUID());
             
             if (playerContext == null || playerContext.activeTasks.isEmpty()) {
-                player.sendSystemMessage(Component.literal("§6No active tasks"));
+                player.sendSystemMessage(Component.translatable("eidolonunchained.task.no_active"));
                 return 1;
             }
             
-            player.sendSystemMessage(Component.literal("§6=== Active Divine Tasks ==="));
+            player.sendSystemMessage(Component.translatable("eidolonunchained.task.header"));
             for (PlayerContextTracker.PlayerTask task : playerContext.activeTasks.values()) {
                 player.sendSystemMessage(Component.literal("§e" + task.description));
                 player.sendSystemMessage(Component.literal("  §7Reward: §6" + task.reputationReward + " reputation points"));
@@ -257,7 +257,7 @@ public class TaskCommands {
                 return 0;
             }
             
-            player.sendSystemMessage(Component.literal("§6=== Divine Reputation ==="));
+            player.sendSystemMessage(Component.translatable("eidolonunchained.task.reputation_header"));
             
             // Check datapack deities
             for (com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity : com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getAllDeities().values()) {

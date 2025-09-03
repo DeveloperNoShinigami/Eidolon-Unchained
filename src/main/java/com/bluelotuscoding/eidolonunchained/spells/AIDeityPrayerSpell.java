@@ -70,7 +70,7 @@ public class AIDeityPrayerSpell extends PrayerSpell {
         // Check if the AI deity system can handle this prayer
         DatapackDeity aiDeity = DatapackDeityManager.getDeity(aiDeityId);
         if (aiDeity == null) {
-            player.sendSystemMessage(Component.literal("§cUnknown deity: " + aiDeityId));
+            player.sendSystemMessage(Component.translatable("eidolonunchained.spell.deity_unknown", aiDeityId));
             return;
         }
         
@@ -85,18 +85,18 @@ public class AIDeityPrayerSpell extends PrayerSpell {
         // Verify effigy and altar setup (respects Eidolon's mechanics)
         var effigy = getEffigy(world, pos);
         if (effigy == null) {
-            player.sendSystemMessage(Component.literal("§cNo effigy found nearby"));
+            player.sendSystemMessage(Component.translatable("eidolonunchained.spell.no_effigy"));
             return;
         }
         
         if (!effigy.ready()) {
-            player.sendSystemMessage(Component.literal("§cThe effigy is not ready for prayer"));
+            player.sendSystemMessage(Component.translatable("eidolonunchained.spell.effigy_not_ready"));
             return;
         }
         
         // Check reputation requirements
         if (!reputationCheck(world, player, getBaseRep())) {
-            player.sendSystemMessage(Component.literal("§cYou lack sufficient devotion to " + aiDeity.getDisplayName()));
+            player.sendSystemMessage(Component.translatable("eidolonunchained.spell.insufficient_devotion", aiDeity.getDisplayName()));
             return;
         }
         
@@ -106,7 +106,7 @@ public class AIDeityPrayerSpell extends PrayerSpell {
         // Start AI conversation instead of standard prayer effects
         DeityChat.startConversation(serverPlayer, aiDeityId);
         
-        player.sendSystemMessage(Component.literal("§6" + aiDeity.getDisplayName() + " §eis listening..."));
+        player.sendSystemMessage(Component.translatable("eidolonunchained.spell.deity_listening", aiDeity.getDisplayName()));
     }
     
     public ResourceLocation getAIDeityId() {

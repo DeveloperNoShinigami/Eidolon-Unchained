@@ -246,14 +246,14 @@ public class DeityChat {
             // Get deity and AI config
             DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
             if (deity == null) {
-                player.sendSystemMessage(Component.literal("§cDeity not found."));
+                player.sendSystemMessage(Component.translatable("eidolonunchained.chat.deity_not_found"));
                 endConversation(player);
                 return;
             }
             
             AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deityId);
             if (aiConfig == null) {
-                player.sendSystemMessage(Component.literal("§cAI configuration not found for this deity."));
+                player.sendSystemMessage(Component.translatable("eidolonunchained.chat.ai_config_not_found"));
                 endConversation(player);
                 return;
             }
@@ -288,7 +288,7 @@ public class DeityChat {
                 } else {
                     LOGGER.error("No {} API key configured. Please set up API key using /eidolon-unchained api set {} YOUR_KEY", deityProvider, deityProvider);
                     player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.api_key_required"));
-                    player.sendSystemMessage(Component.literal("§7(Set API key: /eidolon-unchained api set " + deityProvider + " YOUR_KEY)"));
+                    player.sendSystemMessage(Component.translatable("eidolonunchained.chat.api_key_instruction", deityProvider));
                     endConversation(player);
                     return;
                 }
@@ -300,7 +300,7 @@ public class DeityChat {
             
             if (!provider.isAvailable()) {
                 LOGGER.error("AI provider {} is not available", provider.getProviderName());
-                player.sendSystemMessage(Component.literal("§cAI provider not available: " + provider.getProviderName()));
+                player.sendSystemMessage(Component.translatable("eidolonunchained.chat.provider_not_available", provider.getProviderName()));
                 endConversation(player);
                 return;
             }
@@ -431,7 +431,7 @@ public class DeityChat {
         } catch (Exception e) {
             LOGGER.error("Error processing deity conversation for player {} with deity {}: {}", 
                 player.getName().getString(), deityId, e.getMessage(), e);
-            player.sendSystemMessage(Component.literal("§cThe divine connection falters..."));
+            player.sendSystemMessage(Component.translatable("eidolonunchained.chat.connection_falters"));
             endConversation(player);
         }
     }

@@ -821,7 +821,7 @@ public class UnifiedCommands {
         context.getSource().sendSuccess(() -> 
             Component.literal("§7Available models: gemini-1.5-flash, gemini-1.5-pro"), false);
         context.getSource().sendSuccess(() -> 
-            Component.literal("§7Use /eidolon-unchained api set-model <model> to change"), false);
+            Component.translatable("eidolonunchained.command.model_change_instruction"), false);
         
         return 1;
     }
