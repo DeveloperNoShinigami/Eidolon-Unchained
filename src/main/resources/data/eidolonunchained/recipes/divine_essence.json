@@ -1,0 +1,30 @@
+{
+  "type": "eidolon:crucible",
+  "steps": [
+    {
+      "items": [
+        { "item": "eidolon:soul_shard", "count": 3 },
+        { "tag": "forge:dusts/glowstone" }
+      ]
+    },
+    {
+      "stirs": 2,
+      "items": [
+        { "item": "minecraft:gold_ingot", "count": 2 },
+        { "item": "eidolon:magic_ink" }
+      ]
+    },
+    {
+      "stirs": 1
+    },
+    {
+      "items": [
+        { "item": "minecraft:nether_star" }
+      ]
+    }
+  ],
+  "result": {
+    "item": "eidolon:arcane_gold_ingot",
+    "count": 3
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "target_chapter": "deity_rituals",
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolonunchained.codex.entry.crucible_example.title"
+    },
+    {
+      "type": "text", 
+      "text": "eidolonunchained.codex.entry.crucible_example.intro"
+    },
+    {
+      "type": "crucible",
+      "recipe": "eidolonunchained:enhanced_shadow_gem"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.crucible_example.shadow_explanation"
+    },
+    {
+      "type": "crucible",
+      "recipe": "eidolonunchained:nature_soul_gem"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.crucible_example.nature_explanation"
+    }
+  ]
+}

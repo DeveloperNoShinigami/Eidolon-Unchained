@@ -361,9 +361,34 @@ public class EidolonCodexIntegration {
 
     /**
      * Attempts to find an existing custom chapter by ResourceLocation
-     * This searches through all categories to find a chapter that matches the given ID
+     * First checks our CodexDataManager for chapter definitions, then searches Eidolon's system
      */
     private static Chapter findExistingCustomChapter(ResourceLocation chapterId) {
+        // First, check if we have a chapter definition in our system
+        CodexDataManager.ChapterDefinition chapterDef = CodexDataManager.getCustomChapter(chapterId);
+        if (chapterDef != null) {
+            LOGGER.info("Found custom chapter definition for '{}', checking if already registered in Eidolon system", chapterId);
+            
+            // Check if this chapter has already been registered with Eidolon
+            String titleString = chapterDef.getTitle().getString(); // Convert Component to String
+            Chapter existingChapter = findChapterInEidolonSystem(chapterId, titleString);
+            if (existingChapter != null) {
+                LOGGER.info("Found existing chapter '{}' already registered in Eidolon system", chapterId);
+                return existingChapter;
+            } else {
+                LOGGER.info("Chapter definition exists but not yet registered - will create new chapter");
+                return null; // Will trigger chapter creation
+            }
+        }
+        
+        // Fallback: search Eidolon's system directly for any matching chapters
+        return findChapterInEidolonSystem(chapterId, null);
+    }
+    
+    /**
+     * Searches Eidolon's category system for a chapter matching the given ID
+     */
+    private static Chapter findChapterInEidolonSystem(ResourceLocation chapterId, String expectedTitle) {
         try {
             // Access Eidolon's category system via reflection
             Class<?> codexClass = Class.forName("elucent.eidolon.codex.Codex");
@@ -391,15 +416,20 @@ public class EidolonCodexIntegration {
                     String chapterTitle = (String) titleField.get(chapter);
                     
                     // Check if this chapter matches our target
-                    // Compare both the path and potential title matches
                     if (chapterTitle != null) {
+                        // If we have an expected title, check for exact match first
+                        if (expectedTitle != null && chapterTitle.equals(expectedTitle)) {
+                            LOGGER.info("Found existing chapter with exact title match: '{}'", chapterTitle);
+                            return chapter;
+                        }
+                        
                         // Check if the chapter title corresponds to our chapter ID
                         String expectedTitleKey = chapterId.getNamespace() + ".codex.chapter." + chapterId.getPath();
                         if (chapterTitle.equals(expectedTitleKey) || 
                             chapterTitle.equals(chapterId.getPath()) ||
                             chapterTitle.toLowerCase().replace(" ", "_").equals(chapterId.getPath())) {
                             
-                            LOGGER.info("Found existing custom chapter '{}' with title '{}' for ResourceLocation {}", 
+                            LOGGER.info("Found existing chapter '{}' with title '{}' for ResourceLocation {}", 
                                       chapterTitle, chapterTitle, chapterId);
                             return chapter;
                         }
@@ -407,10 +437,10 @@ public class EidolonCodexIntegration {
                 }
             }
             
-            LOGGER.debug("No existing custom chapter found for ResourceLocation {}", chapterId);
+            LOGGER.debug("No existing chapter found in Eidolon system for ResourceLocation {}", chapterId);
             return null;
         } catch (Exception e) {
-            LOGGER.warn("Failed to search for custom chapter '{}': {}", chapterId, e.getMessage());
+            LOGGER.warn("Failed to search for chapter '{}' in Eidolon system: {}", chapterId, e.getMessage());
             return null;
         }
     }

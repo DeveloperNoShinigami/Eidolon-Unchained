@@ -11,8 +11,8 @@
     },
     {
       "type": "ritual",
-      "title": "eidolonunchained.codex.page.nature_patronage_ritual",
-      "ritual": "eidolonunchained:nature_patronage"
+      "text": "eidolonunchained.codex.page.nature_patronage_ritual",
+      "ritual": "eidolonunchained:nature_patronage_ritual"
     },
     {
       "type": "text",

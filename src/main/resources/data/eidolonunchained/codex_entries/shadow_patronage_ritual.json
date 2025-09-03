@@ -11,8 +11,8 @@
     },
     {
       "type": "ritual",
-      "title": "eidolonunchained.codex.page.shadow_patronage_ritual",
-      "ritual": "eidolonunchained:shadow_patronage"
+      "text": "eidolonunchained.codex.page.shadow_patronage_ritual",
+      "ritual": "eidolonunchained:shadow_patronage_ritual"
     },
     {
       "type": "text",

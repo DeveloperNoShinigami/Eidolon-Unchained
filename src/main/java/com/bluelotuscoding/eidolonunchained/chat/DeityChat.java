@@ -324,27 +324,23 @@ public class DeityChat {
                 String rawResponse = aiResponse.dialogue;
                 
                 // 🔥 ENHANCED COMMAND EXTRACTION AND EXECUTION
-                // Use the new enhanced command extractor to detect natural language commands
+                // Use the enhanced command extractor to detect and execute natural language commands
                 List<String> extractedCommands = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
                     .extractAndConvertCommands(rawResponse, player);
                 
-                // Process AI response for commands and clean message (legacy system)
-                var processedResponse = com.bluelotuscoding.eidolonunchained.integration.ai.AIResponseProcessor.processAIResponse(
-                    rawResponse, player, deity.getName(), "unknown", 
-                    aiConfig.prayer_configs.get("conversation"));
-                
-                // Combine commands from both systems
+                int commandsExecuted = 0;
                 if (!extractedCommands.isEmpty()) {
                     // Execute enhanced extracted commands
-                    int commandsExecuted = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
+                    commandsExecuted = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
                         .executeCommands(extractedCommands, player);
                     
                     LOGGER.info("🔥 Enhanced AI extraction executed {} commands for {}: {}", 
                         commandsExecuted, player.getName().getString(), extractedCommands);
                 }
                 
-                // Use cleaned message for display
-                String cleanedResponse = processedResponse.cleanedMessage;
+                // Clean response for display (remove command patterns but keep the conversational parts)
+                String cleanedResponse = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
+                    .cleanResponseForDisplay(rawResponse);
                 
                 // Add response to history (using cleaned version)
                 history.add("Deity: " + cleanedResponse);
@@ -352,15 +348,8 @@ public class DeityChat {
                 // Add to persistent history
                 ConversationHistoryManager.get().addMessage(player.getUUID(), deityId, deity.getName(), cleanedResponse);
                 
-                // Log command execution if any from legacy system
-                if (processedResponse.hasCommands()) {
-                    LOGGER.info("🤖 Legacy AI {} executed {} commands for {}: {}", 
-                        deity.getName(), processedResponse.getCommandCount(), 
-                        player.getName().getString(), processedResponse.extractedCommands);
-                }
-                
-                // Check for auto-judgment and additional commands (legacy system)
-                if (aiConfig.prayer_configs.containsKey("conversation")) {
+                // Check for auto-judgment and additional commands only if no commands were already executed
+                if (commandsExecuted == 0 && aiConfig.prayer_configs.containsKey("conversation")) {
                     PrayerAIConfig prayerConfig = aiConfig.prayer_configs.get("conversation");
                     if (prayerConfig.auto_judge_commands) {
                         List<String> commands = getJudgedCommands(player, deity, prayerConfig);

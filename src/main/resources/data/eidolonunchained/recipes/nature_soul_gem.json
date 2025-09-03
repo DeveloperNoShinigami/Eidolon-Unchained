@@ -1,0 +1,22 @@
+{
+  "type": "eidolon:crucible",
+  "steps": [
+    {
+      "items": [
+        { "item": "eidolon:soul_shard" },
+        { "tag": "minecraft:flowers" },
+        { "item": "minecraft:bone_meal" }
+      ]
+    },
+    {
+      "items": [
+        { "tag": "forge:ingots/gold" },
+        { "item": "eidolon:magic_ink" }
+      ]
+    }
+  ],
+  "result": {
+    "item": "eidolon:lesser_soul_gem",
+    "count": 2
+  }
+}

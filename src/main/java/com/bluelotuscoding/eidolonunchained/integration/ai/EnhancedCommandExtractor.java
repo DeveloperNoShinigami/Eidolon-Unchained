@@ -22,17 +22,17 @@ public class EnhancedCommandExtractor {
     
     // Patterns for natural language command detection
     private static final Pattern GIVE_PATTERN = Pattern.compile(
-        "\\b(?:give|grant|bestow)\\s+(?:(?:you|player|\\{player\\})\\s+)?([\\w:]+)(?:\\s+(\\d+))?", 
+        "\\b(?:give|grant|bestow)\\s+(?:(?:you|player|\\{player\\})\\s+)?([\\w:_-]+)(?:\\s+(\\d+))?", 
         Pattern.CASE_INSENSITIVE
     );
     
     private static final Pattern EFFECT_PATTERN = Pattern.compile(
-        "\\b(?:effect|blessing|curse|apply)\\s+(?:give\\s+)?(?:(?:you|player|\\{player\\})\\s+)?([\\w:]+)(?:\\s+(\\d+))?(?:\\s+(\\d+))?", 
+        "\\b(?:effect|blessing|curse|apply)\\s+(?:give\\s+)?(?:(?:you|player|\\{player\\})\\s+)?([\\w:_-]+)(?:\\s+(\\d+))?(?:\\s+(\\d+))?", 
         Pattern.CASE_INSENSITIVE
     );
     
     private static final Pattern EXPLICIT_COMMAND_PATTERN = Pattern.compile(
-        "/(\\w+)\\s+([^\\n]+)", 
+        "/(\\w+)\\s+([^\\n\\]]+)", 
         Pattern.CASE_INSENSITIVE
     );
     
@@ -43,16 +43,22 @@ public class EnhancedCommandExtractor {
         List<String> commands = new ArrayList<>();
         
         try {
+            // Clean the AI response first
+            String cleanResponse = cleanAIResponse(aiResponse);
+            
             // 1. Look for explicit command patterns first
-            Matcher explicitMatcher = EXPLICIT_COMMAND_PATTERN.matcher(aiResponse);
+            Matcher explicitMatcher = EXPLICIT_COMMAND_PATTERN.matcher(cleanResponse);
             while (explicitMatcher.find()) {
                 String command = explicitMatcher.group(0);
-                commands.add(command);
-                LOGGER.debug("Found explicit command: {}", command);
+                String cleanCommand = cleanAndValidateCommand(command, player);
+                if (cleanCommand != null) {
+                    commands.add(cleanCommand);
+                    LOGGER.debug("Found explicit command: {}", cleanCommand);
+                }
             }
             
             // 2. Look for give/grant patterns
-            Matcher giveMatcher = GIVE_PATTERN.matcher(aiResponse);
+            Matcher giveMatcher = GIVE_PATTERN.matcher(cleanResponse);
             while (giveMatcher.find()) {
                 String item = giveMatcher.group(1);
                 String amount = giveMatcher.group(2);
@@ -60,7 +66,7 @@ public class EnhancedCommandExtractor {
                 // Validate and normalize item ID
                 String normalizedItem = normalizeItemId(item);
                 if (normalizedItem != null) {
-                    String command = String.format("give %s %s %s", 
+                    String command = String.format("/give %s %s %s", 
                         player.getName().getString(),
                         normalizedItem,
                         amount != null ? amount : "1"
@@ -71,7 +77,7 @@ public class EnhancedCommandExtractor {
             }
             
             // 3. Look for effect patterns
-            Matcher effectMatcher = EFFECT_PATTERN.matcher(aiResponse);
+            Matcher effectMatcher = EFFECT_PATTERN.matcher(cleanResponse);
             while (effectMatcher.find()) {
                 String effect = effectMatcher.group(1);
                 String duration = effectMatcher.group(2);
@@ -80,7 +86,7 @@ public class EnhancedCommandExtractor {
                 // Validate and normalize effect ID
                 String normalizedEffect = normalizeEffectId(effect);
                 if (normalizedEffect != null) {
-                    String command = String.format("effect give %s %s %s %s", 
+                    String command = String.format("/effect give %s %s %s %s", 
                         player.getName().getString(),
                         normalizedEffect,
                         duration != null ? duration : "300",
@@ -92,13 +98,56 @@ public class EnhancedCommandExtractor {
             }
             
             // 4. Look for common deity actions and convert to commands
-            commands.addAll(extractDeityActions(aiResponse, player));
+            commands.addAll(extractDeityActions(cleanResponse, player));
             
         } catch (Exception e) {
             LOGGER.error("Error extracting commands from AI response: {}", e.getMessage());
         }
         
         return commands;
+    }
+    
+    /**
+     * Clean AI response text for better parsing
+     */
+    private static String cleanAIResponse(String response) {
+        if (response == null) return "";
+        
+        // Remove markdown formatting
+        String cleaned = response.replaceAll("\\*\\*([^*]+)\\*\\*", "$1"); // Bold
+        cleaned = cleaned.replaceAll("\\*([^*]+)\\*", "$1"); // Italic
+        cleaned = cleaned.replaceAll("`([^`]+)`", "$1"); // Code
+        
+        // Remove extra whitespace
+        cleaned = cleaned.replaceAll("\\s+", " ").trim();
+        
+        return cleaned;
+    }
+    
+    /**
+     * Clean and validate a command string
+     */
+    private static String cleanAndValidateCommand(String command, ServerPlayer player) {
+        if (command == null || command.trim().isEmpty()) return null;
+        
+        // Remove extra brackets and clean up
+        String cleaned = command.replaceAll("\\]\\s*$", ""); // Remove trailing brackets
+        cleaned = cleaned.replaceAll("\\s+", " ").trim(); // Normalize whitespace
+        
+        // Replace placeholders
+        cleaned = cleaned.replace("{player}", player.getName().getString());
+        cleaned = cleaned.replace("@p", player.getName().getString());
+        
+        // Ensure command starts with /
+        if (!cleaned.startsWith("/")) {
+            cleaned = "/" + cleaned;
+        }
+        
+        // Basic validation - ensure it's a reasonable command
+        if (cleaned.length() > 200) return null; // Too long
+        if (cleaned.contains("..") || cleaned.contains("//")) return null; // Suspicious patterns
+        
+        return cleaned;
     }
     
     /**
@@ -227,6 +276,32 @@ public class EnhancedCommandExtractor {
     }
     
     /**
+     * Clean response for display by removing command patterns but keeping conversational content
+     */
+    public static String cleanResponseForDisplay(String response) {
+        if (response == null) return "";
+        
+        String cleaned = response;
+        
+        // Remove explicit command patterns
+        cleaned = EXPLICIT_COMMAND_PATTERN.matcher(cleaned).replaceAll("");
+        
+        // Remove give patterns that were converted to commands
+        cleaned = GIVE_PATTERN.matcher(cleaned).replaceAll("");
+        
+        // Remove effect patterns that were converted to commands
+        cleaned = EFFECT_PATTERN.matcher(cleaned).replaceAll("");
+        
+        // Clean up markdown and extra whitespace
+        cleaned = cleanAIResponse(cleaned);
+        
+        // Remove empty lines and normalize spacing
+        cleaned = cleaned.replaceAll("\\n\\s*\\n", "\n").trim();
+        
+        return cleaned;
+    }
+    
+    /**
      * Execute commands with enhanced error handling and feedback
      */
     public static int executeCommands(List<String> commands, ServerPlayer player) {
@@ -247,17 +322,24 @@ public class EnhancedCommandExtractor {
         int successCount = 0;
         for (String command : commands) {
             try {
-                // Ensure command doesn't start with /
-                String cleanCommand = command.startsWith("/") ? command.substring(1) : command;
+                // Clean and validate the command before execution
+                String cleanCommand = cleanAndValidateCommand(command, player);
+                if (cleanCommand == null) {
+                    LOGGER.warn("Skipping invalid command: {}", command);
+                    continue;
+                }
                 
-                LOGGER.info("Executing deity command for {}: /{}", player.getName().getString(), cleanCommand);
-                int result = server.getCommands().performPrefixedCommand(commandSource, cleanCommand);
+                // Remove leading slash for execution
+                String execCommand = cleanCommand.startsWith("/") ? cleanCommand.substring(1) : cleanCommand;
+                
+                LOGGER.info("Executing deity command for {}: {}", player.getName().getString(), cleanCommand);
+                int result = server.getCommands().performPrefixedCommand(commandSource, execCommand);
                 
                 if (result > 0) {
                     successCount++;
-                    LOGGER.debug("Command executed successfully: /{}", cleanCommand);
+                    LOGGER.debug("Command executed successfully: {}", cleanCommand);
                 } else {
-                    LOGGER.warn("Command returned 0 result: /{}", cleanCommand);
+                    LOGGER.warn("Command returned 0 result: {}", cleanCommand);
                 }
                 
             } catch (Exception e) {

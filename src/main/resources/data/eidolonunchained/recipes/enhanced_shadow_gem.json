@@ -1,0 +1,22 @@
+{
+  "type": "eidolon:crucible",
+  "steps": [
+    {
+      "items": [
+        { "item": "eidolon:soul_shard" },
+        { "item": "eidolon:soul_shard" },
+        { "tag": "forge:dusts/redstone" }
+      ]
+    },
+    {
+      "items": [
+        { "item": "minecraft:diamond" },
+        { "item": "eidolon:death_essence" }
+      ]
+    }
+  ],
+  "result": {
+    "item": "eidolon:shadow_gem",
+    "count": 1
+  }
+}

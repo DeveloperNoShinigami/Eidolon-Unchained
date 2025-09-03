@@ -1,0 +1,21 @@
+{
+  "target_chapter": "deity_rituals",
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolonunchained.codex.entry.enhanced_shadow_gems.title"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.enhanced_shadow_gems.intro"
+    },
+    {
+      "type": "crucible",
+      "recipe": "eidolonunchained:enhanced_shadow_gem_command"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.enhanced_shadow_gems.warning"
+    }
+  ]
+}

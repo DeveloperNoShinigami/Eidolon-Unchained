@@ -10,6 +10,7 @@ import com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager;
 import com.bluelotuscoding.eidolonunchained.integration.ModIntegration;
 import com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection;
 import com.bluelotuscoding.eidolonunchained.integration.AIDeityIntegration;
+import com.bluelotuscoding.eidolonunchained.registries.EidolonUnchainedRecipes;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.CreativeModeTab;
@@ -59,6 +60,10 @@ public class EidolonUnchained
         ITEMS.register(modEventBus);
         // Register the Deferred Register to the mod event bus so tabs get registered
         CREATIVE_MODE_TABS.register(modEventBus);
+        
+        // Register custom recipes
+        EidolonUnchainedRecipes.RECIPE_SERIALIZERS.register(modEventBus);
+        EidolonUnchainedRecipes.RECIPE_TYPES.register(modEventBus);
 
         // Register our unified configuration
         EidolonUnchainedConfig.register();
