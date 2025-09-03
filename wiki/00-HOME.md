@@ -39,7 +39,8 @@
 - **[17 - API Reference](17-API-REFERENCE.md)** - Developer API documentation
 - **[18 - Debugging Guide](18-DEBUGGING.md)** - Troubleshooting and testing
 - **[19 - Extension Guide](19-EXTENSIONS.md)** - Creating addon mods
-- **[20 - Future Roadmap](20-ROADMAP.md)** - Planned features and improvements
+- **[20 - Free AI Models](20-FREE-AI-MODELS.md)** - Complete list of free AI providers and setup
+- **[21 - Future Roadmap](21-ROADMAP.md)** - Planned features and improvements
 
 ---
 
