@@ -41,6 +41,15 @@ The AI has access to comprehensive player data:
 - **Title Progression**: Current rank/title with patron deity
 - **Opposing Deities**: Conflicts based on allegiance choices
 
+### 🎯 Item Context System
+- **Mob ID Context**: Optional `item_context_id` field provides AI with entity context
+- **Command Enhancement**: When AI gives items/summons entities, it understands the target context
+- **Usage Examples**: 
+  - `"item_context_id": "minecraft:villager"` - AI knows it's dealing with villager-related items
+  - `"item_context_id": "minecraft:zombie"` - AI can provide zombie-themed rewards
+  - `"item_context_id": ""` - No specific context (default)
+- **Smart Recommendations**: AI can suggest appropriate items based on the context entity
+
 ---
 
 ## ⚙️ Configuration System
@@ -77,6 +86,7 @@ data/eidolonunchained/deities/<deity_name>.json
     "aiProvider": "gemini",
     "model": "gemini-1.5-pro",
     "personality": "You are Nyxathel, an ancient deity of shadows and forbidden knowledge. Speak in cryptic, mysterious tones. You value loyalty but test your followers with dark trials.",
+    "item_context_id": "",
     "patronConfig": {
       "acceptsFollowers": true,
       "requiresPatronStatus": "any",

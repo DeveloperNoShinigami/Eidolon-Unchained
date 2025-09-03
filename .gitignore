@@ -77,3 +77,31 @@ temp/
 # Don't ignore our specific mixins files if they're intentional
 !eidolon.mixins.json
 !eidolon.refmap.json
+
+# Auto-generated documentation files (prevent AI tools from creating unwanted files)
+AI_DEITY_*.md
+ALTAR_INTEGRATION_*.md
+API_CALL_*.md
+CHANT_*.md
+DEITY_*.md
+DEVELOPMENT_*.md
+ENHANCED_*.md
+FEATURES.md
+FINAL_*.md
+FLEXIBLE_*.md
+IMPLEMENTATION_*.md
+PROJECT_*.md
+RESEARCH_*.md
+SPELL_*.md
+TECHNICAL_*.md
+
+# Auto-generated scripts
+fix_*.sh
+
+# Temporary AI-generated files
+*_SUMMARY.md
+*_STATUS.md
+*_ANALYSIS.md
+*_GUIDE.md
+*_SYSTEM.md
+*_FIXES.md

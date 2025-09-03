@@ -130,7 +130,7 @@ public class EffectiveAIConfig {
         
         // Cooldown
         int effectiveCooldown = getCooldown(deityId, prayerType, jsonConfig);
-        int jsonCooldown = jsonConfig != null ? jsonConfig.cooldownMinutes : 30;
+        int jsonCooldown = jsonConfig != null ? jsonConfig.cooldown_minutes : 30;
         summary.append("Cooldown: ").append(effectiveCooldown).append(" minutes ");
         if (hasServerOverrides && effectiveCooldown != jsonCooldown) {
             summary.append("(Server Override - JSON: ").append(jsonCooldown).append(")");
@@ -141,7 +141,7 @@ public class EffectiveAIConfig {
         
         // Max Commands
         int effectiveMaxCommands = getMaxCommands(deityId, prayerType, jsonConfig);
-        int jsonMaxCommands = jsonConfig != null ? jsonConfig.maxCommands : 3;
+        int jsonMaxCommands = jsonConfig != null ? jsonConfig.max_commands : 3;
         summary.append("Max Commands: ").append(effectiveMaxCommands).append(" ");
         if (hasServerOverrides && effectiveMaxCommands != jsonMaxCommands) {
             summary.append("(Server Override - JSON: ").append(jsonMaxCommands).append(")");
@@ -152,7 +152,7 @@ public class EffectiveAIConfig {
         
         // Reputation Required
         int effectiveRepRequired = getReputationRequired(deityId, prayerType, jsonConfig);
-        int jsonRepRequired = jsonConfig != null ? jsonConfig.reputationRequired : 0;
+        int jsonRepRequired = jsonConfig != null ? jsonConfig.reputation_required : 0;
         summary.append("Reputation Required: ").append(effectiveRepRequired).append(" ");
         if (hasServerOverrides && effectiveRepRequired != jsonRepRequired) {
             summary.append("(Server Override - JSON: ").append(jsonRepRequired).append(")");
@@ -163,7 +163,7 @@ public class EffectiveAIConfig {
         
         // Auto Judge Commands
         boolean effectiveAutoJudge = getAutoJudgeCommands(deityId, prayerType, jsonConfig);
-        boolean jsonAutoJudge = jsonConfig != null ? jsonConfig.autoJudgeCommands : false;
+        boolean jsonAutoJudge = jsonConfig != null ? jsonConfig.auto_judge_commands : false;
         summary.append("Auto Judge Commands: ").append(effectiveAutoJudge).append(" ");
         if (hasServerOverrides && effectiveAutoJudge != jsonAutoJudge) {
             summary.append("(Server Override - JSON: ").append(jsonAutoJudge).append(")");

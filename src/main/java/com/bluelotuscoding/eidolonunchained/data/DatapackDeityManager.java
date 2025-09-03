@@ -306,8 +306,8 @@ public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
             AIDeityConfig config = GSON.fromJson(aiConfig, AIDeityConfig.class);
             
             // Ensure the deity ID matches
-            if (config.deityId == null) {
-                config.deityId = deityId;
+            if (config.deity_id == null) {
+                config.deity_id = deityId;
             }
             
             // Register with AIDeityManager for unified access

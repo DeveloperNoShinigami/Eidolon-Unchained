@@ -390,7 +390,7 @@ public class PlayerContextTracker {
             
             // Find task template
             for (com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig config : com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance().getAllConfigs()) {
-                for (com.bluelotuscoding.eidolonunchained.ai.TaskSystemConfig.TaskTemplate template : config.taskConfig.availableTasks) {
+                for (com.bluelotuscoding.eidolonunchained.ai.TaskSystemConfig.TaskTemplate template : config.task_config.availableTasks) {
                     if (template.taskId.equals(taskId)) {
                         // Check if this ritual completes the task
                         for (String requirement : template.requirements) {
@@ -413,21 +413,21 @@ public class PlayerContextTracker {
         if (completed) {
             // Find the task to get deity and reputation reward
             for (com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig config : com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance().getAllConfigs()) {
-                for (com.bluelotuscoding.eidolonunchained.ai.TaskSystemConfig.TaskTemplate template : config.taskConfig.availableTasks) {
+                for (com.bluelotuscoding.eidolonunchained.ai.TaskSystemConfig.TaskTemplate template : config.task_config.availableTasks) {
                     if (template.taskId.equals(taskId)) {
                         // Award reputation using Eidolon's system
                         try {
                             player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE).ifPresent(rep -> {
-                                rep.addReputation(player, config.deityId, template.reputationReward);
+                                rep.addReputation(player, config.deity_id, template.reputationReward);
                             });
                         } catch (Exception e) {
                             // Fallback to datapack deity system
                             com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = 
-                                com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(config.deityId);
+                                com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(config.deity_id);
                             if (deity != null) {
                                 // Use reputation capability instead since DatapackDeity doesn't have addReputation method
                                 player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE).ifPresent(rep -> {
-                                    rep.addReputation(player, config.deityId, template.reputationReward);
+                                    rep.addReputation(player, config.deity_id, template.reputationReward);
                                 });
                             }
                         }

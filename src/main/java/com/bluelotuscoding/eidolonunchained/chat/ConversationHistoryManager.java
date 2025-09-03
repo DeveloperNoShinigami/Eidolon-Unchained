@@ -284,8 +284,8 @@ public class ConversationHistoryManager extends SavedData {
         }
         
         // Fall back to JSON value (preset)
-        if (jsonConfig != null && jsonConfig.cooldownMinutes > 0) {
-            return jsonConfig.cooldownMinutes;
+        if (jsonConfig != null && jsonConfig.cooldown_minutes > 0) {
+            return jsonConfig.cooldown_minutes;
         }
         
         // System default
@@ -303,8 +303,8 @@ public class ConversationHistoryManager extends SavedData {
         
         if (serverConfig != null && serverConfig.containsKey("maxCommands")) {
             effectiveMax = (Integer) serverConfig.get("maxCommands");
-        } else if (jsonConfig != null && jsonConfig.maxCommands > 0) {
-            effectiveMax = jsonConfig.maxCommands; // Use JSON preset
+        } else if (jsonConfig != null && jsonConfig.max_commands > 0) {
+            effectiveMax = jsonConfig.max_commands; // Use JSON preset
         }
         
         // Apply global limit if set (acts as ceiling)
@@ -329,7 +329,7 @@ public class ConversationHistoryManager extends SavedData {
         
         // Fall back to JSON value (preset)
         if (jsonConfig != null) {
-            return jsonConfig.reputationRequired;
+            return jsonConfig.reputation_required;
         }
         
         // System default
@@ -349,7 +349,7 @@ public class ConversationHistoryManager extends SavedData {
         
         // Fall back to JSON value (preset)
         if (jsonConfig != null) {
-            return jsonConfig.autoJudgeCommands;
+            return jsonConfig.auto_judge_commands;
         }
         
         // System default

@@ -104,21 +104,21 @@ public class DeityChat {
                             player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.corrupted_presence", deity.getName()));
                             player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.enemy_allegiance"));
                             // Apply reputation penalty for daring to contact enemy
-                            if (aiConfig.patronConfig.conversationRules.containsKey("enemy_restrictions")) {
-                                Map<String, Object> rules = (Map<String, Object>) aiConfig.patronConfig.conversationRules.get("enemy_restrictions");
+                            if (aiConfig.patron_config.conversationRules.containsKey("enemy_restrictions")) {
+                                Map<String, Object> rules = (Map<String, Object>) aiConfig.patron_config.conversationRules.get("enemy_restrictions");
                                 if (rules.containsKey("reputation_penalty_on_contact")) {
                                     int penalty = (Integer) rules.get("reputation_penalty_on_contact");
                                     // Apply penalty through Eidolon's reputation system
                                     player.level().getCapability(elucent.eidolon.capability.IReputation.INSTANCE)
                                         .ifPresent(reputation -> {
-                                            double currentRep = reputation.getReputation(player, aiConfig.deityId);
-                                            reputation.setReputation(player, aiConfig.deityId, currentRep + penalty);
+                                            double currentRep = reputation.getReputation(player, aiConfig.deity_id);
+                                            reputation.setReputation(player, aiConfig.deity_id, currentRep + penalty);
                                         });
                                 }
                             }
                             break;
                         case NEUTRAL:
-                            if (aiConfig.patronConfig.requiresPatronStatus.equals("follower_only")) {
+                            if (aiConfig.patron_config.requiresPatronStatus.equals("follower_only")) {
                                 player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.faithful_only", deity.getName()));
                                 player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.prove_devotion"));
                             }
@@ -272,7 +272,7 @@ public class DeityChat {
             String personality = aiConfig.buildDynamicPersonalityWithPatron(new PlayerContext(player, deity), player);
             
             // Generate AI response using deity-specific provider configuration
-            String deityProvider = aiConfig.aiProvider != null ? aiConfig.aiProvider : EidolonUnchainedConfig.COMMON.aiProvider.get();
+            String deityProvider = aiConfig.ai_provider != null ? aiConfig.ai_provider : EidolonUnchainedConfig.COMMON.aiProvider.get();
             String apiKey = APIKeyManager.getAPIKey(deityProvider);
             
             // If deity-specific provider doesn't have API key, fall back to global provider
@@ -313,8 +313,8 @@ public class DeityChat {
                 conversationPrompt, 
                 personality,
                 context,
-                aiConfig.apiSettings.generationConfig, 
-                aiConfig.apiSettings.safetySettings
+                aiConfig.api_settings.generationConfig, 
+                aiConfig.api_settings.safetySettings
             ).thenAccept(aiResponse -> {
                 if (aiResponse == null) {
                     player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.no_response"));
@@ -331,7 +331,7 @@ public class DeityChat {
                 // Process AI response for commands and clean message (legacy system)
                 var processedResponse = com.bluelotuscoding.eidolonunchained.integration.ai.AIResponseProcessor.processAIResponse(
                     rawResponse, player, deity.getName(), "unknown", 
-                    aiConfig.prayerConfigs.get("conversation"));
+                    aiConfig.prayer_configs.get("conversation"));
                 
                 // Combine commands from both systems
                 if (!extractedCommands.isEmpty()) {
@@ -360,9 +360,9 @@ public class DeityChat {
                 }
                 
                 // Check for auto-judgment and additional commands (legacy system)
-                if (aiConfig.prayerConfigs.containsKey("conversation")) {
-                    PrayerAIConfig prayerConfig = aiConfig.prayerConfigs.get("conversation");
-                    if (prayerConfig.autoJudgeCommands) {
+                if (aiConfig.prayer_configs.containsKey("conversation")) {
+                    PrayerAIConfig prayerConfig = aiConfig.prayer_configs.get("conversation");
+                    if (prayerConfig.auto_judge_commands) {
                         List<String> commands = getJudgedCommands(player, deity, prayerConfig);
                         if (!commands.isEmpty()) {
                             // Log AI decision for debugging
@@ -459,8 +459,8 @@ public class DeityChat {
             }
             
             // Add progression stage context from AI config
-            if (aiConfig.patronConfig.followerPersonalityModifiers.containsKey(progressionLevel)) {
-                prompt.append(aiConfig.patronConfig.followerPersonalityModifiers.get(progressionLevel)).append(" ");
+            if (aiConfig.patron_config.followerPersonalityModifiers.containsKey(progressionLevel)) {
+                prompt.append(aiConfig.patron_config.followerPersonalityModifiers.get(progressionLevel)).append(" ");
             }
         }
         
@@ -471,23 +471,27 @@ public class DeityChat {
         prompt.append("\n\n=== MINECRAFT WORLD KNOWLEDGE ===\n");
         prompt.append(buildMinecraftRegistryContext(player));
         
-        // Add detailed player context using GeminiAPIClient's context builder
+        // Add detailed player context using Universal AI Context Builder (for ALL providers)
         try {
-            String playerContext = GeminiAPIClient.buildEnhancedPlayerContext(player, null);
-            prompt.append("\n\nPlayer Current State:\n").append(playerContext);
+            String playerContext = com.bluelotuscoding.eidolonunchained.ai.UniversalAIContextBuilder
+                .buildCompleteContext(player, aiConfig, null);
+            prompt.append("\n\nPlayer Current State & World Knowledge:\n").append(playerContext);
         } catch (Exception e) {
-            LOGGER.warn("Failed to build player context: {}", e.getMessage());
+            LOGGER.warn("Failed to build universal context: {}", e.getMessage());
+            // Fallback to basic context
+            prompt.append("\nPlayer: ").append(player.getName().getString());
+            prompt.append("\nHealth: ").append(player.getHealth()).append("/").append(player.getMaxHealth());
         }
         
         // Add AI deity configuration-based command guidelines
-        if (aiConfig != null && aiConfig.prayerConfigs.containsKey("conversation")) {
-            PrayerAIConfig prayerConfig = aiConfig.prayerConfigs.get("conversation");
+        if (aiConfig != null && aiConfig.prayer_configs.containsKey("conversation")) {
+            PrayerAIConfig prayerConfig = aiConfig.prayer_configs.get("conversation");
             prompt.append("\n\n=== YOUR DIVINE POWERS ===\n");
-            prompt.append("Available commands: ").append(String.join(", ", prayerConfig.allowedCommands)).append("\n");
-            prompt.append("Max commands per response: ").append(prayerConfig.maxCommands).append("\n");
-            if (!prayerConfig.referenceCommands.isEmpty()) {
+            prompt.append("Available commands: ").append(String.join(", ", prayerConfig.allowed_commands)).append("\n");
+            prompt.append("Max commands per response: ").append(prayerConfig.max_commands).append("\n");
+            if (!prayerConfig.reference_commands.isEmpty()) {
                 prompt.append("Example commands you can use:\n");
-                for (String cmd : prayerConfig.referenceCommands) {
+                for (String cmd : prayerConfig.reference_commands) {
                     prompt.append("- ").append(cmd).append("\n");
                 }
             }
@@ -590,10 +594,10 @@ public class DeityChat {
         List<String> commands = new ArrayList<>();
         
         // Check if player meets basic blessing threshold
-        if (reputation >= prayerConfig.judgmentConfig.blessingThreshold) {
-            commands.addAll(prayerConfig.judgmentConfig.blessingCommands);
-        } else if (reputation <= prayerConfig.judgmentConfig.curseThreshold) {
-            commands.addAll(prayerConfig.judgmentConfig.curseCommands);
+        if (reputation >= prayerConfig.judgment_config.blessingThreshold) {
+            commands.addAll(prayerConfig.judgment_config.blessingCommands);
+        } else if (reputation <= prayerConfig.judgment_config.curseThreshold) {
+            commands.addAll(prayerConfig.judgment_config.curseCommands);
         } else {
             // Even neutral players might get basic help if in dire need
             float healthPercentage = (player.getHealth() / player.getMaxHealth()) * 100;
@@ -605,9 +609,9 @@ public class DeityChat {
             } else if (foodLevel <= 6 && reputation >= 5) {
                 // Basic food for hungry players with minimal reputation
                 commands.add("give {player} minecraft:bread 2");
-            } else if (reputation >= prayerConfig.judgmentConfig.blessingThreshold / 2) {
+            } else if (reputation >= prayerConfig.judgment_config.blessingThreshold / 2) {
                 // Neutral commands for moderate reputation
-                commands.addAll(prayerConfig.judgmentConfig.neutralCommands);
+                commands.addAll(prayerConfig.judgment_config.neutralCommands);
             }
         }
         
@@ -957,9 +961,9 @@ public class DeityChat {
                         highestThreshold = entry.getKey();
                         
                         // Extract appropriate progression title from AI config
-                        if (aiConfig.patronConfig != null && aiConfig.patronConfig.followerPersonalityModifiers != null) {
+                        if (aiConfig.patron_config != null && aiConfig.patron_config.followerPersonalityModifiers != null) {
                             // Use AI config follower titles if available
-                            for (String title : aiConfig.patronConfig.followerPersonalityModifiers.keySet()) {
+                            for (String title : aiConfig.patron_config.followerPersonalityModifiers.keySet()) {
                                 if (!title.equals("default")) {
                                     // Map reputation thresholds to AI config titles
                                     if (entry.getKey() >= 100) progressionTitle = "Shadow Champion"; // Dark deity example

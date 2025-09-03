@@ -154,8 +154,8 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
         
         // Parse AI configuration
         AIDeityConfig config = new AIDeityConfig();
-        config.deityId = deityId;
-        config.aiProvider = json.get("ai_provider").getAsString();
+        config.deity_id = deityId;
+        config.ai_provider = json.get("ai_provider").getAsString();
         config.model = json.get("model").getAsString();
         config.personality = json.get("personality").getAsString();
         
@@ -214,8 +214,8 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 
                 // Parse and store AI configuration
                 AIDeityConfig config = new AIDeityConfig();
-                config.deityId = deityId;
-                config.aiProvider = json.get("ai_provider").getAsString();
+                config.deity_id = deityId;
+                config.ai_provider = json.get("ai_provider").getAsString();
                 // Model field is optional - some providers like Player2AI don't need it
                 config.model = json.has("model") ? json.get("model").getAsString() : null;
                 config.personality = json.get("personality").getAsString();
@@ -340,46 +340,46 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             PrayerAIConfig prayer = new PrayerAIConfig();
             prayer.type = prayerType;
             
-            // Base prompt is optional, use default if not present
+            // All fields must be provided in JSON - no defaults
             if (prayerConfig.has("base_prompt")) {
                 prayer.base_prompt = prayerConfig.get("base_prompt").getAsString();
-                prayer.basePrompt = prayer.base_prompt; // Keep both for compatibility
             } else {
-                // Use a sensible default based on prayer type
-                prayer.base_prompt = generateDefaultPrompt(prayerType);
-                prayer.basePrompt = prayer.base_prompt; // Keep both for compatibility
+                throw new IllegalArgumentException("Prayer config " + prayerType + " missing required field: base_prompt");
             }
             
             if (prayerConfig.has("max_commands")) {
-                prayer.maxCommands = prayerConfig.get("max_commands").getAsInt();
-                prayer.max_commands = prayer.maxCommands; // Keep both for compatibility
+                prayer.max_commands = prayerConfig.get("max_commands").getAsInt();
+            } else {
+                throw new IllegalArgumentException("Prayer config " + prayerType + " missing required field: max_commands");
             }
             
             if (prayerConfig.has("cooldown_minutes")) {
-                prayer.cooldownMinutes = prayerConfig.get("cooldown_minutes").getAsInt();
+                prayer.cooldown_minutes = prayerConfig.get("cooldown_minutes").getAsInt();
+            } else {
+                throw new IllegalArgumentException("Prayer config " + prayerType + " missing required field: cooldown_minutes");
             }
             
             if (prayerConfig.has("reputation_required")) {
-                prayer.reputationRequired = prayerConfig.get("reputation_required").getAsInt();
+                prayer.reputation_required = prayerConfig.get("reputation_required").getAsInt();
+            } else {
+                throw new IllegalArgumentException("Prayer config " + prayerType + " missing required field: reputation_required");
             }
             
             if (prayerConfig.has("allowed_commands")) {
                 JsonArray commands = prayerConfig.getAsJsonArray("allowed_commands");
-                prayer.allowedCommands.clear(); // Clear defaults
-                prayer.allowed_commands.clear(); // Clear defaults
+                prayer.allowed_commands.clear();
                 for (JsonElement cmd : commands) {
-                    prayer.allowedCommands.add(cmd.getAsString());
-                    prayer.allowed_commands.add(cmd.getAsString()); // Keep both for compatibility
+                    prayer.allowed_commands.add(cmd.getAsString());
                 }
+            } else {
+                throw new IllegalArgumentException("Prayer config " + prayerType + " missing required field: allowed_commands");
             }
             
-            // Load additional prompts for extra developer guidance
+                        // Load additional prompts for AI behavior guidance
             if (prayerConfig.has("additional_prompts")) {
                 JsonArray prompts = prayerConfig.getAsJsonArray("additional_prompts");
-                prayer.additionalPrompts.clear();
                 prayer.additional_prompts.clear();
                 for (JsonElement prompt : prompts) {
-                    prayer.additionalPrompts.add(prompt.getAsString());
                     prayer.additional_prompts.add(prompt.getAsString());
                 }
             }
@@ -387,20 +387,18 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             // Load reference commands for AI templates
             if (prayerConfig.has("reference_commands")) {
                 JsonArray refCmds = prayerConfig.getAsJsonArray("reference_commands");
-                prayer.referenceCommands.clear(); // Clear defaults
-                prayer.reference_commands.clear(); // Clear defaults
+                prayer.reference_commands.clear();
                 for (JsonElement cmd : refCmds) {
-                    prayer.referenceCommands.add(cmd.getAsString());
                     prayer.reference_commands.add(cmd.getAsString());
                 }
             }
             
             if (prayerConfig.has("auto_judge_commands")) {
-                prayer.autoJudgeCommands = prayerConfig.get("auto_judge_commands").getAsBoolean();
+                prayer.auto_judge_commands = prayerConfig.get("auto_judge_commands").getAsBoolean();
             }
             
             if (prayerConfig.has("judgment_config")) {
-                loadJudgmentConfig(prayer.judgmentConfig, prayerConfig.getAsJsonObject("judgment_config"));
+                loadJudgmentConfig(prayer.judgment_config, prayerConfig.getAsJsonObject("judgment_config"));
             }
             
             config.addPrayerConfig(prayer);
@@ -443,15 +441,15 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
     
     private void loadAPISettings(AIDeityConfig config, JsonObject apiSettings) {
         if (apiSettings.has("api_key_env")) {
-            config.apiKeyEnv = apiSettings.get("api_key_env").getAsString();
+            config.api_key_env = apiSettings.get("api_key_env").getAsString();
         }
         
         if (apiSettings.has("model")) {
-            config.apiSettings.model = apiSettings.get("model").getAsString();
+            config.api_settings.model = apiSettings.get("model").getAsString();
         }
         
         if (apiSettings.has("timeout_seconds")) {
-            config.timeoutSeconds = apiSettings.get("timeout_seconds").getAsInt();
+            config.timeout_seconds = apiSettings.get("timeout_seconds").getAsInt();
         }
         
         if (apiSettings.has("safety_settings")) {
@@ -467,15 +465,15 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             JsonObject genConfig = apiSettings.getAsJsonObject("generation_config");
             if (genConfig.has("temperature")) {
                 config.temperature = genConfig.get("temperature").getAsFloat();
-                config.apiSettings.generationConfig.temperature = genConfig.get("temperature").getAsFloat();
+                config.api_settings.generationConfig.temperature = genConfig.get("temperature").getAsFloat();
             }
             if (genConfig.has("max_output_tokens")) {
-                config.maxOutputTokens = genConfig.get("max_output_tokens").getAsInt();
-                config.apiSettings.generationConfig.max_output_tokens = genConfig.get("max_output_tokens").getAsInt();
+                config.max_output_tokens = genConfig.get("max_output_tokens").getAsInt();
+                config.api_settings.generationConfig.max_output_tokens = genConfig.get("max_output_tokens").getAsInt();
             }
             if (genConfig.has("maxOutputTokens")) {
-                config.maxOutputTokens = genConfig.get("maxOutputTokens").getAsInt();
-                config.apiSettings.generationConfig.max_output_tokens = genConfig.get("maxOutputTokens").getAsInt();
+                config.max_output_tokens = genConfig.get("maxOutputTokens").getAsInt();
+                config.api_settings.generationConfig.max_output_tokens = genConfig.get("maxOutputTokens").getAsInt();
             }
         }
     }
@@ -528,7 +526,7 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
         }
         
         // Ensure deity ID is set correctly
-        config.deityId = deityId;
+        config.deity_id = deityId;
         
         // Store the configuration
         aiConfigs.put(deityId, config);

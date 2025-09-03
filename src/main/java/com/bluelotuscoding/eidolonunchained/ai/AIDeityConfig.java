@@ -8,67 +8,65 @@ import java.util.*;
 
 /**
  * Complete AI configuration for a deity.
- * Contains all behavioral rules, API settings, prayer configurations, and patron allegiance rules.
+ * All values must be provided via JSON or commands - no defaults.
  */
 public class AIDeityConfig {
-    // Basic AI settings - set automatically by DatapackDeityManager
-    public ResourceLocation deityId;
-    public String aiProvider = "gemini";
-    public String model = "gemini-1.5-pro";
-    public String personality = "You are a mystical deity in Minecraft.";
+    // Basic AI settings - must be set by JSON loading or commands
+    public ResourceLocation deity_id;
+    public String ai_provider; // No default - must come from JSON/command
+    public String model; // No default - must come from JSON/command  
+    public String personality; // No default - must come from JSON/command
     
     // Patron allegiance configuration
-    public PatronConfig patronConfig = new PatronConfig();
+    public PatronConfig patron_config = new PatronConfig();
     
-    // API configuration
-    public String apiKeyEnv = "GEMINI_API_KEY";
-    public int timeoutSeconds = 30;
-    public float temperature = 0.7f;
-    public int maxOutputTokens = 1000;
+    // API configuration - no defaults, must be configured
+    public String api_key_env; // No default - must come from JSON/command
+    public int timeout_seconds; // No default - must come from JSON/command
+    public float temperature; // No default - must come from JSON/command
+    public int max_output_tokens; // No default - must come from JSON/command
+    public String item_context_id; // Mob ID context for AI item commands - must come from JSON/command
     
-    // Safety settings for Gemini
-    private final Map<String, String> safetySettings = new HashMap<>();
+    // Safety settings for Gemini - must be configured via JSON
+    private final Map<String, String> safety_settings = new HashMap<>();
     
-    // Behavioral rules based on player progression
-    private final Map<Integer, String> reputationBehaviors = new TreeMap<>();
-    private final Map<Integer, String> researchBehaviors = new TreeMap<>();
-    private final Map<String, String> personalityShifts = new HashMap<>();
-    private final Map<String, String> timeBehaviors = new HashMap<>();
-    private final Map<String, String> biomeBehaviors = new HashMap<>();
+    // Behavioral rules based on player progression - populated from JSON only
+    private final Map<Integer, String> reputation_behaviors = new TreeMap<>();
+    private final Map<Integer, String> research_behaviors = new TreeMap<>();
+    private final Map<String, String> personality_shifts = new HashMap<>();
+    private final Map<String, String> time_behaviors = new HashMap<>();
+    private final Map<String, String> biome_behaviors = new HashMap<>();
     
-    // Enhanced behavior rules
-    private final Map<String, String> blessingBehaviors = new HashMap<>();
-    private final Map<String, String> curseBehaviors = new HashMap<>(); 
-    private final Map<String, String> giftBehaviors = new HashMap<>();
+    // Enhanced behavior rules - populated from JSON only
+    private final Map<String, String> blessing_behaviors = new HashMap<>();
+    private final Map<String, String> curse_behaviors = new HashMap<>(); 
+    private final Map<String, String> gift_behaviors = new HashMap<>();
     
-    // Prayer configurations
-    public final Map<String, PrayerAIConfig> prayerConfigs = new HashMap<>();
+    // Prayer configurations - populated from JSON only
+    public final Map<String, PrayerAIConfig> prayer_configs = new HashMap<>();
     
-    // Task system configuration
-    public TaskSystemConfig taskConfig = new TaskSystemConfig();
+    // Task system configuration - must be configured via JSON
+    public TaskSystemConfig task_config = new TaskSystemConfig();
     
-    // API settings
-    public APISettings apiSettings = new APISettings();
+    // API settings - must be configured via JSON
+    public APISettings api_settings = new APISettings();
     
-    // Ritual integration configuration for patron selection
+    // Ritual integration configuration for patron selection - populated from JSON only
     public Map<String, Object> ritual_integration = new HashMap<>();
     
     public AIDeityConfig() {
-        // Default safety settings
-        safetySettings.put("harassment", "BLOCK_MEDIUM_AND_ABOVE");
-        safetySettings.put("hate_speech", "BLOCK_MEDIUM_AND_ABOVE");
-        safetySettings.put("sexually_explicit", "BLOCK_MEDIUM_AND_ABOVE");
-        safetySettings.put("dangerous_content", "BLOCK_MEDIUM_AND_ABOVE");
+        // No defaults - safety settings must come from JSON configuration
+        // Initialize empty collections to prevent null pointer exceptions
     }
     
     // Reputation-based behavior
     public void addReputationBehavior(int threshold, String behavior) {
-        reputationBehaviors.put(threshold, behavior);
+        reputation_behaviors.put(threshold, behavior);
     }
     
     public String getReputationBehavior(double reputation) {
         String behavior = null;
-        for (Map.Entry<Integer, String> entry : reputationBehaviors.entrySet()) {
+        for (Map.Entry<Integer, String> entry : reputation_behaviors.entrySet()) {
             if (reputation >= entry.getKey()) {
                 behavior = entry.getValue();
             } else {
@@ -82,17 +80,17 @@ public class AIDeityConfig {
      * Get all reputation behavior thresholds for external access
      */
     public Map<Integer, String> getReputationBehaviors() {
-        return new HashMap<>(reputationBehaviors);
+        return new HashMap<>(reputation_behaviors);
     }
     
     // Research count-based behavior
     public void addResearchBehavior(int researchCount, String behavior) {
-        researchBehaviors.put(researchCount, behavior);
+        research_behaviors.put(researchCount, behavior);
     }
     
     public String getResearchBehavior(int researchCount) {
         String behavior = null;
-        for (Map.Entry<Integer, String> entry : researchBehaviors.entrySet()) {
+        for (Map.Entry<Integer, String> entry : research_behaviors.entrySet()) {
             if (researchCount >= entry.getKey()) {
                 behavior = entry.getValue();
             } else {
@@ -104,78 +102,78 @@ public class AIDeityConfig {
     
     // Conditional personality shifts
     public void addPersonalityShift(String condition, String personality) {
-        personalityShifts.put(condition, personality);
+        personality_shifts.put(condition, personality);
     }
     
     public String getPersonalityShift(String condition) {
-        return personalityShifts.get(condition);
+        return personality_shifts.get(condition);
     }
     
     // Time-based behaviors
     public void addTimeBehavior(String timeCondition, String behavior) {
-        timeBehaviors.put(timeCondition, behavior);
+        time_behaviors.put(timeCondition, behavior);
     }
     
     public String getTimeBehavior(String timeCondition) {
-        return timeBehaviors.get(timeCondition);
+        return time_behaviors.get(timeCondition);
     }
     
     // Biome-specific behaviors
     public void addBiomeBehavior(String biome, String behavior) {
-        biomeBehaviors.put(biome, behavior);
+        biome_behaviors.put(biome, behavior);
     }
     
     public String getBiomeBehavior(String biome) {
-        return biomeBehaviors.get(biome);
+        return biome_behaviors.get(biome);
     }
     
     // Blessing behaviors
     public void addBlessingBehavior(String condition, String behavior) {
-        blessingBehaviors.put(condition, behavior);
+        blessing_behaviors.put(condition, behavior);
     }
     
     public String getBlessingBehavior(String condition) {
-        return blessingBehaviors.get(condition);
+        return blessing_behaviors.get(condition);
     }
     
     // Curse behaviors  
     public void addCurseBehavior(String condition, String behavior) {
-        curseBehaviors.put(condition, behavior);
+        curse_behaviors.put(condition, behavior);
     }
     
     public String getCurseBehavior(String condition) {
-        return curseBehaviors.get(condition);
+        return curse_behaviors.get(condition);
     }
     
     // Gift behaviors
     public void addGiftBehavior(String condition, String behavior) {
-        giftBehaviors.put(condition, behavior);
+        gift_behaviors.put(condition, behavior);
     }
     
     public String getGiftBehavior(String condition) {
-        return giftBehaviors.get(condition);
+        return gift_behaviors.get(condition);
     }
     
     // Safety settings
     public void addSafetySetting(String category, String threshold) {
-        safetySettings.put(category, threshold);
+        safety_settings.put(category, threshold);
     }
     
     public Map<String, String> getSafetySettings() {
-        return new HashMap<>(safetySettings);
+        return new HashMap<>(safety_settings);
     }
     
     // Prayer configurations
     public void addPrayerConfig(PrayerAIConfig config) {
-        prayerConfigs.put(config.type, config);
+        prayer_configs.put(config.type, config);
     }
     
     public PrayerAIConfig getPrayerConfig(String prayerType) {
-        return prayerConfigs.get(prayerType);
+        return prayer_configs.get(prayerType);
     }
     
     public Set<String> getPrayerTypes() {
-        return prayerConfigs.keySet();
+        return prayer_configs.keySet();
     }
     
     /**
@@ -281,15 +279,15 @@ public class AIDeityConfig {
             return PatronRelationship.NO_PATRON;
         }
         
-        if (playerPatron.equals(this.deityId)) {
+        if (playerPatron.equals(this.deity_id)) {
             return PatronRelationship.FOLLOWER;
         }
         
-        if (patronConfig.opposingDeities.contains(playerPatron.toString())) {
+        if (patron_config.opposingDeities.contains(playerPatron.toString())) {
             return PatronRelationship.ENEMY;
         }
         
-        if (patronConfig.alliedDeities.contains(playerPatron.toString())) {
+        if (patron_config.alliedDeities.contains(playerPatron.toString())) {
             return PatronRelationship.ALLIED;
         }
         
@@ -302,16 +300,16 @@ public class AIDeityConfig {
     private String getPatronPersonalityModifier(PatronRelationship relationship, String playerTitle) {
         switch (relationship) {
             case FOLLOWER:
-                return patronConfig.followerPersonalityModifiers.getOrDefault(
-                    playerTitle, patronConfig.followerPersonalityModifiers.get("default"));
+                return patron_config.followerPersonalityModifiers.getOrDefault(
+                    playerTitle, patron_config.followerPersonalityModifiers.get("default"));
             case ENEMY:
-                return patronConfig.enemyPersonalityModifier;
+                return patron_config.enemyPersonalityModifier;
             case NEUTRAL:
-                return patronConfig.neutralPersonalityModifier;
+                return patron_config.neutralPersonalityModifier;
             case NO_PATRON:
-                return patronConfig.noPatronPersonalityModifier;
+                return patron_config.noPatronPersonalityModifier;
             case ALLIED:
-                return patronConfig.alliedPersonalityModifier;
+                return patron_config.alliedPersonalityModifier;
             default:
                 return null;
         }
@@ -321,7 +319,7 @@ public class AIDeityConfig {
      * Check if this deity can respond to the player based on patron rules
      */
     public boolean canRespondToPlayer(ServerPlayer player) {
-        if (!patronConfig.acceptsFollowers) {
+        if (!patron_config.acceptsFollowers) {
             return false;
         }
         
@@ -331,7 +329,7 @@ public class AIDeityConfig {
                     ResourceLocation playerPatron = patronData.getPatron(player);
                     PatronRelationship relationship = determinePatronRelationship(playerPatron);
                     
-                    switch (patronConfig.requiresPatronStatus) {
+                    switch (patron_config.requiresPatronStatus) {
                         case "follower_only":
                             return relationship == PatronRelationship.FOLLOWER;
                         case "no_enemies":

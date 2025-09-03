@@ -501,43 +501,28 @@ public class GeminiAPIClient {
     
     /**
      * Build enhanced context with real-time world data and universal AI guidance
+     * Uses the universal context builder to ensure consistency across all AI providers
      */
     public static String buildEnhancedPlayerContext(ServerPlayer player, PrayerAIConfig prayerConfig) {
-        StringBuilder context = new StringBuilder();
-        
-        // Start with comprehensive world analysis instead of basic context
-        context.append(com.bluelotuscoding.eidolonunchained.integration.world.AdvancedWorldAnalyzer.buildComprehensiveWorldContext(player));
-        
-        // Add universal AI behavior guidance
-        context.append("\n=== AI BEHAVIOR GUIDANCE ===\n");
-        context.append(com.bluelotuscoding.eidolonunchained.ai.UniversalAIPrompts.UNIVERSAL_BASE_PROMPT);
-        context.append("\n");
-        context.append(com.bluelotuscoding.eidolonunchained.ai.UniversalAIPrompts.COMMAND_GUIDANCE);
-        
-        // Add command markup instructions
-        context.append("\n=== COMMAND EXECUTION SYSTEM ===\n");
-        context.append(com.bluelotuscoding.eidolonunchained.integration.ai.AIResponseProcessor.getCommandMarkupGuide());
-        
-        // Add prayer-specific configuration if available
-        if (prayerConfig != null) {
-            context.append("\n=== PRAYER CONFIGURATION ===\n");
-            if (!prayerConfig.referenceCommands.isEmpty()) {
-                context.append("Available Reference Commands:\n");
-                for (String refCmd : prayerConfig.referenceCommands) {
-                    context.append("- ").append(refCmd).append("\n");
-                }
-                context.append("Remember: NEVER show these commands to players. Use them silently with immersive messages.\n");
-            }
+        try {
+            // Create a basic AI config for context building if none provided
+            AIDeityConfig contextConfig = new AIDeityConfig();
             
-            if (!prayerConfig.additionalPrompts.isEmpty()) {
-                context.append("\nAdditional Guidance:\n");
-                for (String prompt : prayerConfig.additionalPrompts) {
-                    context.append(prompt).append("\n");
-                }
-            }
+            // Use the universal context builder for consistency across all providers
+            return com.bluelotuscoding.eidolonunchained.ai.UniversalAIContextBuilder
+                .buildProviderSpecificContext(player, contextConfig, prayerConfig, "gemini");
+                
+        } catch (Exception e) {
+            LOGGER.error("Failed to build universal context for Gemini, using fallback: {}", e.getMessage());
+            
+            // Fallback to basic context
+            StringBuilder fallback = new StringBuilder();
+            fallback.append("=== BASIC CONTEXT ===\n");
+            fallback.append("Player: ").append(player.getName().getString()).append("\n");
+            fallback.append("Health: ").append(player.getHealth()).append("/").append(player.getMaxHealth()).append("\n");
+            fallback.append("You are a deity. Respond helpfully and stay in character.\n");
+            return fallback.toString();
         }
-        
-        return context.toString();
     }
     
     private static String getPlayerHealthAnalysis(ServerPlayer player) {

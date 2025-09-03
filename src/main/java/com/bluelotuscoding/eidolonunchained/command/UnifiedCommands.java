@@ -16,6 +16,7 @@ import elucent.eidolon.capability.IReputation;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.bluelotuscoding.eidolonunchained.util.CommandStringUtils;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -150,7 +151,7 @@ public class UnifiedCommands {
                         .executes(UnifiedCommands::setupPlayer2AI))
                     .then(Commands.argument("provider", StringArgumentType.string())
                         .suggests(API_PROVIDER_SUGGESTIONS)
-                        .then(Commands.argument("key", StringArgumentType.string())
+                        .then(Commands.argument("key", StringArgumentType.greedyString())
                             .executes(UnifiedCommands::setApiKey))))
                 .then(Commands.literal("set-model")
                     .then(Commands.argument("model", StringArgumentType.string())
@@ -461,8 +462,26 @@ public class UnifiedCommands {
     
     // API key management commands
     private static int setApiKey(CommandContext<CommandSourceStack> context) {
-        String provider = StringArgumentType.getString(context, "provider");
-        String key = StringArgumentType.getString(context, "key");
+        String provider = CommandStringUtils.safeTrim(StringArgumentType.getString(context, "provider"));
+        String key = CommandStringUtils.safeTrim(StringArgumentType.getString(context, "key"));
+        
+        // Validate provider name
+        if (provider == null || provider.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cProvider name cannot be empty"));
+            return 0;
+        }
+        
+        // Validate API key format
+        if (key == null || key.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cAPI key cannot be empty"));
+            return 0;
+        }
+        
+        if (!CommandStringUtils.isValidApiKey(key)) {
+            context.getSource().sendFailure(Component.literal(
+                CommandStringUtils.createValidationError("API key", key, "alphanumeric with -_.+=/$, minimum 8 characters")));
+            return 0;
+        }
         
         try {
             APIKeyManager.setAPIKey(provider, key);
@@ -514,7 +533,14 @@ public class UnifiedCommands {
     }
     
     private static int testApiKey(CommandContext<CommandSourceStack> context) {
-        String provider = StringArgumentType.getString(context, "provider");
+        String rawProvider = StringArgumentType.getString(context, "provider");
+        String provider = CommandStringUtils.safeTrim(rawProvider);
+        
+        // Validate provider name
+        if (provider == null || provider.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cProvider name cannot be empty"));
+            return 0;
+        }
         
         String apiKey = APIKeyManager.getAPIKey(provider);
         if (apiKey == null || apiKey.isEmpty()) {
@@ -544,7 +570,14 @@ public class UnifiedCommands {
     }
     
     private static int removeApiKey(CommandContext<CommandSourceStack> context) {
-        String provider = StringArgumentType.getString(context, "provider");
+        String rawProvider = StringArgumentType.getString(context, "provider");
+        String provider = CommandStringUtils.safeTrim(rawProvider);
+        
+        // Validate provider name
+        if (provider == null || provider.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cProvider name cannot be empty"));
+            return 0;
+        }
         
         try {
             APIKeyManager.removeAPIKey(provider);
@@ -583,7 +616,14 @@ public class UnifiedCommands {
     }
     
     private static int showDeityStatus(CommandContext<CommandSourceStack> context) {
-        String deityName = StringArgumentType.getString(context, "deity");
+        String rawDeityName = StringArgumentType.getString(context, "deity");
+        String deityName = CommandStringUtils.safeTrim(rawDeityName);
+        
+        // Validate deity name
+        if (deityName == null || deityName.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cDeity name cannot be empty"));
+            return 0;
+        }
         context.getSource().sendSuccess(() -> Component.translatable("eidolonunchained.command.deity.status", deityName), false);
         return 1;
     }
@@ -627,7 +667,14 @@ public class UnifiedCommands {
     }
     
     private static int testChant(CommandContext<CommandSourceStack> context) {
-        String chantName = StringArgumentType.getString(context, "chant");
+        String rawChantName = StringArgumentType.getString(context, "chant");
+        String chantName = CommandStringUtils.safeTrim(rawChantName);
+        
+        // Validate chant name
+        if (chantName == null || chantName.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cChant name cannot be empty"));
+            return 0;
+        }
         context.getSource().sendSuccess(() -> Component.literal("§eTesting chant: " + chantName), false);
         return 1;
     }
@@ -643,7 +690,14 @@ public class UnifiedCommands {
     }
     
     private static int clearPrayerCooldown(CommandContext<CommandSourceStack> context) {
-        String playerName = StringArgumentType.getString(context, "player");
+        String rawPlayerName = StringArgumentType.getString(context, "player");
+        String playerName = CommandStringUtils.safeTrim(rawPlayerName);
+        
+        // Validate player name
+        if (playerName == null || playerName.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cPlayer name cannot be empty"));
+            return 0;
+        }
         context.getSource().sendSuccess(() -> Component.literal("§aPrayer cooldown cleared for player: " + playerName), false);
         return 1;
     }
@@ -774,7 +828,14 @@ public class UnifiedCommands {
     
     // Research command implementations
     private static int clearPlayerResearch(CommandContext<CommandSourceStack> context) {
-        String playerName = StringArgumentType.getString(context, "player");
+        String rawPlayerName = StringArgumentType.getString(context, "player");
+        String playerName = CommandStringUtils.safeTrim(rawPlayerName);
+        
+        // Validate player name
+        if (playerName == null || playerName.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cPlayer name cannot be empty"));
+            return 0;
+        }
         
         try {
             ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
@@ -900,8 +961,22 @@ public class UnifiedCommands {
      * Show command execution history for debugging
      */
     private static int showCommandHistory(CommandContext<CommandSourceStack> context) {
-        String playerName = StringArgumentType.getString(context, "player");
-        String deityId = StringArgumentType.getString(context, "deity");
+        String rawPlayerName = StringArgumentType.getString(context, "player");
+        String playerName = CommandStringUtils.safeTrim(rawPlayerName);
+        
+        // Validate player name
+        if (playerName == null || playerName.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cPlayer name cannot be empty"));
+            return 0;
+        }
+        String rawDeityId = StringArgumentType.getString(context, "deity");
+        String deityId = CommandStringUtils.safeTrim(rawDeityId);
+        
+        // Validate deity ID
+        if (deityId == null || deityId.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
+            return 0;
+        }
         
         try {
             // Find player by name
@@ -959,8 +1034,22 @@ public class UnifiedCommands {
      * Generate command execution report for analysis
      */
     private static int generateCommandReport(CommandContext<CommandSourceStack> context) {
-        String playerName = StringArgumentType.getString(context, "player");
-        String deityId = StringArgumentType.getString(context, "deity");
+        String rawPlayerName = StringArgumentType.getString(context, "player");
+        String playerName = CommandStringUtils.safeTrim(rawPlayerName);
+        
+        // Validate player name
+        if (playerName == null || playerName.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cPlayer name cannot be empty"));
+            return 0;
+        }
+        String rawDeityId = StringArgumentType.getString(context, "deity");
+        String deityId = CommandStringUtils.safeTrim(rawDeityId);
+        
+        // Validate deity ID
+        if (deityId == null || deityId.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
+            return 0;
+        }
         
         try {
             // Find player by name
@@ -984,8 +1073,22 @@ public class UnifiedCommands {
     
     private static int debugPersonality(CommandContext<CommandSourceStack> context) {
         try {
-            String playerName = StringArgumentType.getString(context, "player");
-            String deityId = StringArgumentType.getString(context, "deity");
+            String rawPlayerName = StringArgumentType.getString(context, "player");
+        String playerName = CommandStringUtils.safeTrim(rawPlayerName);
+        
+        // Validate player name
+        if (playerName == null || playerName.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cPlayer name cannot be empty"));
+            return 0;
+        }
+            String rawDeityId = StringArgumentType.getString(context, "deity");
+        String deityId = CommandStringUtils.safeTrim(rawDeityId);
+        
+        // Validate deity ID
+        if (deityId == null || deityId.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
+            return 0;
+        }
             
             ServerPlayer targetPlayer = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
             if (targetPlayer == null) {
@@ -1379,7 +1482,14 @@ public class UnifiedCommands {
      */
     private static int debugPlayerProgression(CommandContext<CommandSourceStack> context) {
         try {
-            String playerName = StringArgumentType.getString(context, "player");
+            String rawPlayerName = StringArgumentType.getString(context, "player");
+        String playerName = CommandStringUtils.safeTrim(rawPlayerName);
+        
+        // Validate player name
+        if (playerName == null || playerName.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cPlayer name cannot be empty"));
+            return 0;
+        }
             ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
             
             if (player == null) {
@@ -1439,7 +1549,14 @@ public class UnifiedCommands {
      */
     private static int forceProgressionCheck(CommandContext<CommandSourceStack> context) {
         try {
-            String playerName = StringArgumentType.getString(context, "player");
+            String rawPlayerName = StringArgumentType.getString(context, "player");
+        String playerName = CommandStringUtils.safeTrim(rawPlayerName);
+        
+        // Validate player name
+        if (playerName == null || playerName.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cPlayer name cannot be empty"));
+            return 0;
+        }
             ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
             
             if (player == null) {
@@ -1469,11 +1586,20 @@ public class UnifiedCommands {
      */
     private static int testDeityCommand(CommandContext<CommandSourceStack> context) {
         try {
-            String command = StringArgumentType.getString(context, "command");
+            String rawCommand = StringArgumentType.getString(context, "command");
+            String command = CommandStringUtils.cleanCommandText(rawCommand);
             ServerPlayer executor = context.getSource().getPlayerOrException();
             
+            // Validate command input
+            if (command == null || command.isEmpty()) {
+                context.getSource().sendFailure(Component.literal("§cCommand cannot be empty"));
+                return 0;
+            }
+            
+            // Display what we're testing (safely formatted for chat)
+            String displayCommand = CommandStringUtils.safeChatDisplay(command);
             context.getSource().sendSuccess(() -> Component.literal(
-                "§6Testing deity command: §f" + command), false);
+                "§6Testing deity command: §f" + displayCommand), false);
             
             // Execute the command as a deity would
             net.minecraft.commands.CommandSourceStack deitySource = context.getSource().getServer()
@@ -1483,8 +1609,7 @@ public class UnifiedCommands {
                 .withPosition(executor.position())
                 .withPermission(2);
             
-            String cleanCommand = command.startsWith("/") ? command.substring(1) : command;
-            int result = context.getSource().getServer().getCommands().performPrefixedCommand(deitySource, cleanCommand);
+            int result = context.getSource().getServer().getCommands().performPrefixedCommand(deitySource, command);
             
             context.getSource().sendSuccess(() -> Component.literal(
                 "§7Command result: " + (result > 0 ? "§aSuccess (" + result + ")" : "§cFailed (" + result + ")")), false);
@@ -1492,7 +1617,8 @@ public class UnifiedCommands {
             return 1;
             
         } catch (Exception e) {
-            context.getSource().sendFailure(Component.literal("§cError testing command: " + e.getMessage()));
+            String safeError = CommandStringUtils.safeChatDisplay(e.getMessage());
+            context.getSource().sendFailure(Component.literal("§cError testing command: " + safeError));
             return 0;
         }
     }
@@ -1506,8 +1632,22 @@ public class UnifiedCommands {
      */
     private static int debugPlayerReputation(CommandContext<CommandSourceStack> context) {
         try {
-            String playerName = StringArgumentType.getString(context, "player");
-            String deityId = StringArgumentType.getString(context, "deity");
+            String rawPlayerName = StringArgumentType.getString(context, "player");
+        String playerName = CommandStringUtils.safeTrim(rawPlayerName);
+        
+        // Validate player name
+        if (playerName == null || playerName.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cPlayer name cannot be empty"));
+            return 0;
+        }
+            String rawDeityId = StringArgumentType.getString(context, "deity");
+        String deityId = CommandStringUtils.safeTrim(rawDeityId);
+        
+        // Validate deity ID
+        if (deityId == null || deityId.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
+            return 0;
+        }
             
             ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
             if (player == null) {
@@ -1660,8 +1800,22 @@ public class UnifiedCommands {
      */
     private static int clearPlayerRewards(CommandContext<CommandSourceStack> context) {
         try {
-            String playerName = StringArgumentType.getString(context, "player");
-            String deityId = StringArgumentType.getString(context, "deity");
+            String rawPlayerName = StringArgumentType.getString(context, "player");
+        String playerName = CommandStringUtils.safeTrim(rawPlayerName);
+        
+        // Validate player name
+        if (playerName == null || playerName.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cPlayer name cannot be empty"));
+            return 0;
+        }
+            String rawDeityId = StringArgumentType.getString(context, "deity");
+        String deityId = CommandStringUtils.safeTrim(rawDeityId);
+        
+        // Validate deity ID
+        if (deityId == null || deityId.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
+            return 0;
+        }
             
             ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
             if (player == null) {
@@ -1890,7 +2044,14 @@ public class UnifiedCommands {
         CommandSourceStack source = context.getSource();
         
         try {
-            String deityId = StringArgumentType.getString(context, "deity");
+            String rawDeityId = StringArgumentType.getString(context, "deity");
+        String deityId = CommandStringUtils.safeTrim(rawDeityId);
+        
+        // Validate deity ID
+        if (deityId == null || deityId.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
+            return 0;
+        }
             Player player = source.getPlayerOrException();
             
             // Get the deity
@@ -1933,7 +2094,14 @@ public class UnifiedCommands {
         CommandSourceStack source = context.getSource();
         
         try {
-            String deityId = StringArgumentType.getString(context, "deity");
+            String rawDeityId = StringArgumentType.getString(context, "deity");
+        String deityId = CommandStringUtils.safeTrim(rawDeityId);
+        
+        // Validate deity ID
+        if (deityId == null || deityId.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
+            return 0;
+        }
             Player player = source.getPlayerOrException();
             
             if (!"player2ai".equals(EidolonUnchainedConfig.COMMON.aiProvider.get())) {
@@ -1971,7 +2139,14 @@ public class UnifiedCommands {
         CommandSourceStack source = context.getSource();
         
         try {
-            String deityId = StringArgumentType.getString(context, "deity");
+            String rawDeityId = StringArgumentType.getString(context, "deity");
+        String deityId = CommandStringUtils.safeTrim(rawDeityId);
+        
+        // Validate deity ID
+        if (deityId == null || deityId.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
+            return 0;
+        }
             Player player = source.getPlayerOrException();
             
             if (!"player2ai".equals(EidolonUnchainedConfig.COMMON.aiProvider.get())) {
@@ -2021,7 +2196,14 @@ public class UnifiedCommands {
         CommandSourceStack source = context.getSource();
         
         try {
-            String deityId = StringArgumentType.getString(context, "deity");
+            String rawDeityId = StringArgumentType.getString(context, "deity");
+        String deityId = CommandStringUtils.safeTrim(rawDeityId);
+        
+        // Validate deity ID
+        if (deityId == null || deityId.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
+            return 0;
+        }
             
             if (!"player2ai".equals(EidolonUnchainedConfig.COMMON.aiProvider.get())) {
                 source.sendFailure(Component.literal("§cPlayer2AI is not the current AI provider"));
@@ -2142,10 +2324,19 @@ public class UnifiedCommands {
     
     private static int testPlayer2AIChat(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
-        String message = StringArgumentType.getString(context, "message");
+        String rawMessage = StringArgumentType.getString(context, "message");
+        String message = CommandStringUtils.safeTrim(rawMessage);
+        
+        // Validate message input
+        if (message == null || message.isEmpty()) {
+            source.sendFailure(Component.literal("§cMessage cannot be empty"));
+            return 0;
+        }
         
         try {
-            source.sendSuccess(() -> Component.literal("§6Testing Player2AI chat with message: §f" + message), false);
+            // Display what we're testing (safely formatted for chat)
+            String displayMessage = CommandStringUtils.safeChatDisplay(message);
+            source.sendSuccess(() -> Component.literal("§6Testing Player2AI chat with message: §f" + displayMessage), false);
             
             // Create a test Player2AI client
             com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient client = 
@@ -2159,20 +2350,24 @@ public class UnifiedCommands {
             client.generateResponse(message, testPersonality, testCharacterId, playerUUID, null, null)
                 .thenAccept(response -> {
                     if (response.success) {
-                        source.sendSuccess(() -> Component.literal("§a✓ Player2AI Response: §f" + response.dialogue), false);
+                        String safeResponse = CommandStringUtils.safeChatDisplay(response.dialogue);
+                        source.sendSuccess(() -> Component.literal("§a✓ Player2AI Response: §f" + safeResponse), false);
                     } else {
-                        source.sendFailure(Component.literal("§cPlayer2AI Error: " + response.dialogue));
+                        String safeError = CommandStringUtils.safeChatDisplay(response.dialogue);
+                        source.sendFailure(Component.literal("§cPlayer2AI Error: " + safeError));
                     }
                 })
                 .exceptionally(error -> {
-                    source.sendFailure(Component.literal("§cPlayer2AI Exception: " + error.getMessage()));
+                    String safeError = CommandStringUtils.safeChatDisplay(error.getMessage());
+                    source.sendFailure(Component.literal("§cPlayer2AI Exception: " + safeError));
                     return null;
                 });
                 
             source.sendSuccess(() -> Component.literal("§7Request sent, waiting for response..."), false);
 
         } catch (Exception e) {
-            source.sendFailure(Component.literal("§cDebug test failed: " + e.getMessage()));
+            String safeError = CommandStringUtils.safeChatDisplay(e.getMessage());
+            source.sendFailure(Component.literal("§cDebug test failed: " + safeError));
         }
         
         return 1;

@@ -132,7 +132,7 @@ public class AIConfigValidator {
         
         details.put("ai_configs_count", configs.size());
         // details.put("ai_configs", configs.keySet());
-        details.put("ai_configs", configs.stream().map(c -> c.deityId).collect(java.util.stream.Collectors.toSet()));
+        details.put("ai_configs", configs.stream().map(c -> c.deity_id).collect(java.util.stream.Collectors.toSet()));
         
         if (configs.isEmpty()) {
             errors.add("❌ No AI configurations loaded. Check ai_deities/*.json files.");
@@ -142,7 +142,7 @@ public class AIConfigValidator {
         // for (Map.Entry<ResourceLocation, AIDeityConfig> entry : configs.entrySet()) {
         for (AIDeityConfig config : configs) {
             // ResourceLocation deityId = entry.getKey();
-            ResourceLocation deityId = config.deityId;
+            ResourceLocation deityId = config.deity_id;
             // AIDeityConfig config = entry.getValue();
             
             validateSingleAIConfig(deityId, config, errors, warnings, details);
@@ -158,30 +158,31 @@ public class AIConfigValidator {
             errors.add("❌ " + deityId + ": Missing personality configuration");
         }
         
-        if (config.apiSettings == null) {
-            errors.add("❌ " + deityId + ": Missing API settings");
+        if (config.api_settings == null) {
+            errors.add("❌ " + prefix + "API settings are missing");
             return;
         }
         
-        // Check generation config
-        if (config.apiSettings.generationConfig == null) {
-            errors.add("❌ " + deityId + ": Missing generation config");
+        if (config.api_settings.generationConfig == null) {
+            errors.add("❌ " + prefix + "API generation config is missing");
         } else {
-            if (config.apiSettings.generationConfig.max_output_tokens > 500) {
-                warnings.add("⚠️ " + deityId + ": High token limit (" + 
-                    config.apiSettings.generationConfig.max_output_tokens + ") may cause issues");
+            if (config.api_settings.generationConfig.max_output_tokens > 500) {
+                warnings.add("⚠️ " + prefix + "High token limit (" + 
+                    config.api_settings.generationConfig.max_output_tokens + ") may cause issues");
             }
-            details.put(prefix + "max_tokens", config.apiSettings.generationConfig.max_output_tokens);
+            details.put(prefix + "max_tokens", config.api_settings.generationConfig.max_output_tokens);
         }
         
-        // Check prayer configs
-        if (config.prayerConfigs == null || config.prayerConfigs.isEmpty()) {
-            warnings.add("⚠️ " + deityId + ": No prayer configurations defined");
+        // Validate prayer configurations
+        if (config.prayer_configs == null || config.prayer_configs.isEmpty()) {
+            errors.add("❌ " + prefix + "No prayer configurations found");
         } else {
-            details.put(prefix + "prayer_configs_count", config.prayerConfigs.size());
+            details.put(prefix + "prayer_configs_count", config.prayer_configs.size());
             
-            for (Map.Entry<String, PrayerAIConfig> prayerEntry : config.prayerConfigs.entrySet()) {
-                validatePrayerConfig(deityId, prayerEntry.getKey(), prayerEntry.getValue(), errors, warnings);
+            for (Map.Entry<String, PrayerAIConfig> prayerEntry : config.prayer_configs.entrySet()) {
+                String prayerType = prayerEntry.getKey();
+                PrayerAIConfig prayerConfig = prayerEntry.getValue();
+                validatePrayerConfig(deityId, prayerType, prayerConfig, errors, warnings);
             }
         }
     }
@@ -190,25 +191,25 @@ public class AIConfigValidator {
                                            List<String> errors, List<String> warnings) {
         String configName = deityId + ":" + prayerType;
         
-        if (prayerConfig.basePrompt == null || prayerConfig.basePrompt.trim().isEmpty()) {
+        if (prayerConfig.base_prompt == null || prayerConfig.base_prompt.trim().isEmpty()) {
             errors.add("❌ " + configName + ": Missing base prompt");
         }
         
-        if (prayerConfig.autoJudgeCommands) {
-            if (prayerConfig.judgmentConfig == null) {
+        if (prayerConfig.auto_judge_commands) {
+            if (prayerConfig.judgment_config == null) {
                 errors.add("❌ " + configName + ": Auto-judge enabled but no judgment config");
             } else {
-                if (prayerConfig.judgmentConfig.blessingCommands == null || prayerConfig.judgmentConfig.blessingCommands.isEmpty()) {
+                if (prayerConfig.judgment_config.blessingCommands == null || prayerConfig.judgment_config.blessingCommands.isEmpty()) {
                     warnings.add("⚠️ " + configName + ": No blessing commands defined");
                 }
-                if (prayerConfig.judgmentConfig.curseCommands == null || prayerConfig.judgmentConfig.curseCommands.isEmpty()) {
+                if (prayerConfig.judgment_config.curseCommands == null || prayerConfig.judgment_config.curseCommands.isEmpty()) {
                     warnings.add("⚠️ " + configName + ": No curse commands defined");
                 }
             }
         }
         
-        if (prayerConfig.allowedCommands != null && !prayerConfig.allowedCommands.isEmpty()) {
-            for (String command : prayerConfig.allowedCommands) {
+        if (prayerConfig.allowed_commands != null && !prayerConfig.allowed_commands.isEmpty()) {
+            for (String command : prayerConfig.allowed_commands) {
                 if (!isValidCommand(command)) {
                     warnings.add("⚠️ " + configName + ": Potentially unsafe command: " + command);
                 }
@@ -228,7 +229,7 @@ public class AIConfigValidator {
         int linkedCount = 0;
         for (ResourceLocation deityId : deities) {
             // if (configs.containsKey(deityId)) {
-            if (configs.stream().anyMatch(c -> c.deityId.equals(deityId))) {
+            if (configs.stream().anyMatch(c -> c.deity_id.equals(deityId))) {
                 linkedCount++;
             } else {
                 warnings.add("⚠️ Deity " + deityId + " has no AI configuration");
@@ -261,12 +262,12 @@ public class AIConfigValidator {
         // for (Map.Entry<ResourceLocation, AIDeityConfig> entry : configs.entrySet()) {
         for (AIDeityConfig config : configs) {
             // AIDeityConfig config = entry.getValue();
-            if (config.apiSettings != null && config.apiSettings.generationConfig != null) {
-                int tokens = config.apiSettings.generationConfig.max_output_tokens;
+            if (config.api_settings != null && config.api_settings.generationConfig != null) {
+                int tokens = config.api_settings.generationConfig.max_output_tokens;
                 if (tokens > 400) {
                     highTokenCount++;
                     // warnings.add("⚠️ " + entry.getKey() + ": High token limit (" + tokens + ") may cause API errors");
-                    warnings.add("⚠️ " + config.deityId + ": High token limit (" + tokens + ") may cause API errors");
+                    warnings.add("⚠️ " + config.deity_id + ": High token limit (" + tokens + ") may cause API errors");
                 }
             }
         }

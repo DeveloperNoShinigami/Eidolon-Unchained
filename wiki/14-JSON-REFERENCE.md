@@ -178,6 +178,17 @@ This guide documents **every field** available in Eidolon Unchained JSON configu
 - **Default**: Provider-specific default
 - **Usage**: Environment variable name for API key (advanced use)
 
+#### `item_context_id` (String) - **OPTIONAL**
+```json
+{
+  "item_context_id": ""
+}
+```
+- **Default**: Empty string
+- **Usage**: Mob ID context for AI when running item commands
+- **Examples**: `"minecraft:villager"`, `"minecraft:zombie"`, `""` (blank for no context)
+- **Note**: Provides AI with entity context for give/summon commands
+
 ---
 
 ## 👑 Patron System (`patronConfig` object)

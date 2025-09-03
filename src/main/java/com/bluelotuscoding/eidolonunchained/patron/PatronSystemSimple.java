@@ -43,7 +43,7 @@ public class PatronSystemSimple {
             
             // Get AI configuration for patron requirements
             AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deityId);
-            if (aiConfig == null || aiConfig.patronConfig == null) {
+            if (aiConfig == null || aiConfig.patron_config == null) {
                 sendError(player, "Deity does not accept patrons");
                 return false;
             }

@@ -457,23 +457,30 @@ public class DatapackDeity extends Deity {
     }
     
     /**
-     * Get player's magical progression level (for AI context)
+     * Get player's magical progression level using JSON data only
      */
     public String getProgressionLevel(Player player) {
         double reputation = getPlayerReputation(player);
         int researchCount = getResearchCount(player);
         
-        if (reputation >= 75 && researchCount >= 15) {
-            return "master";
-        } else if (reputation >= 50 && researchCount >= 10) {
-            return "advanced";
-        } else if (reputation >= 25 && researchCount >= 5) {
-            return "intermediate";
-        } else if (reputation >= 10 || researchCount >= 2) {
-            return "novice";
-        } else {
-            return "beginner";
+        // Use JSON-loaded progression stages to determine level
+        // Find the highest stage the player qualifies for
+        String bestStageId = null;
+        int highestQualifyingRep = -1;
+        
+        for (Stage stage : getProgression().getSteps().values()) {
+            if (reputation >= stage.rep() && stage.rep() > highestQualifyingRep) {
+                highestQualifyingRep = stage.rep();
+                bestStageId = stage.id().getPath();
+            }
         }
+        
+        // Convert stage ID to progression level terminology if needed
+        if (bestStageId != null) {
+            return bestStageId.toLowerCase();
+        }
+        
+        return "unknown";
     }
     
     // =====================================
@@ -507,23 +514,42 @@ public class DatapackDeity extends Deity {
      * Get current progression stage name based on reputation
      */
     public String getCurrentProgressionStage(double reputation) {
-        // This would need to parse the JSON progression data
-        // For now, return a simple mapping based on reputation thresholds
-        if (reputation >= 100) return "Champion";
-        if (reputation >= 75) return "High Priest";
-        if (reputation >= 50) return "Priest";
-        if (reputation >= 25) return "Acolyte";
-        return "Initiate";
+        // Use JSON-loaded progression data only - no hardcoded fallbacks
+        // Find the highest stage the player qualifies for based on reputation
+        String bestStageId = null;
+        int highestQualifyingRep = -1;
+        
+        for (Stage stage : getProgression().getSteps().values()) {
+            if (reputation >= stage.rep() && stage.rep() > highestQualifyingRep) {
+                highestQualifyingRep = stage.rep();
+                bestStageId = stage.id().getPath();
+            }
+        }
+        
+        return bestStageId != null ? bestStageId : "unknown";
     }
     
     /**
-     * Get information about the next progression stage
+     * Get information about the next progression stage using JSON data only
      */
     public String getNextProgressionInfo(double reputation) {
-        if (reputation >= 100) return "Maximum stage reached";
-        if (reputation >= 75) return String.format("Champion at 100 reputation (%.1f needed)", 100 - reputation);
-        if (reputation >= 50) return String.format("High Priest at 75 reputation (%.1f needed)", 75 - reputation);
-        if (reputation >= 25) return String.format("Priest at 50 reputation (%.1f needed)", 50 - reputation);
-        return String.format("Acolyte at 25 reputation (%.1f needed)", 25 - reputation);
+        // Find next stage from JSON progression data
+        Stage nextStage = null;
+        int lowestHigherRep = Integer.MAX_VALUE;
+        
+        for (Stage stage : getProgression().getSteps().values()) {
+            if (stage.rep() > reputation && stage.rep() < lowestHigherRep) {
+                lowestHigherRep = stage.rep();
+                nextStage = stage;
+            }
+        }
+        
+        if (nextStage != null) {
+            double needed = nextStage.rep() - reputation;
+            return String.format("%s at %d reputation (%.1f needed)", 
+                nextStage.id().getPath(), nextStage.rep(), needed);
+        }
+        
+        return "Maximum stage reached";
     }
 }

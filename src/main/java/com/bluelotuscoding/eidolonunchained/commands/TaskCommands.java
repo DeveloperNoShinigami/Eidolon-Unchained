@@ -78,7 +78,7 @@ public class TaskCommands {
             
             // Find the task template
             TaskSystemConfig.TaskTemplate taskTemplate = null;
-            for (TaskSystemConfig.TaskTemplate template : config.taskConfig.availableTasks) {
+            for (TaskSystemConfig.TaskTemplate template : config.task_config.availableTasks) {
                 if (template.taskId.equals(taskId)) {
                     taskTemplate = template;
                     break;
@@ -122,10 +122,10 @@ public class TaskCommands {
             ResourceLocation foundDeityId = null;
             
             for (AIDeityConfig config : AIDeityManager.getInstance().getAllConfigs()) {
-                for (TaskSystemConfig.TaskTemplate template : config.taskConfig.availableTasks) {
+                for (TaskSystemConfig.TaskTemplate template : config.task_config.availableTasks) {
                     if (template.taskId.equals(taskId)) {
                         taskTemplate = template;
-                        foundDeityId = config.deityId;
+                        foundDeityId = config.deity_id;
                         break;
                     }
                 }
@@ -295,7 +295,7 @@ public class TaskCommands {
     // Helper methods
     private static List<String> getTaskRequirements(String taskId) {
         for (AIDeityConfig config : AIDeityManager.getInstance().getAllConfigs()) {
-            for (TaskSystemConfig.TaskTemplate template : config.taskConfig.availableTasks) {
+            for (TaskSystemConfig.TaskTemplate template : config.task_config.availableTasks) {
                 if (template.taskId.equals(taskId)) {
                     return template.requirements;
                 }
@@ -339,7 +339,7 @@ public class TaskCommands {
     
     private static void executeTaskRewards(ServerPlayer player, String taskId) {
         for (AIDeityConfig config : AIDeityManager.getInstance().getAllConfigs()) {
-            for (TaskSystemConfig.TaskTemplate template : config.taskConfig.availableTasks) {
+            for (TaskSystemConfig.TaskTemplate template : config.task_config.availableTasks) {
                 if (template.taskId.equals(taskId)) {
                     for (String command : template.rewardCommands) {
                         String processedCommand = command.replace("{player}", player.getName().getString());

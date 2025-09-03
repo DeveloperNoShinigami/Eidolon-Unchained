@@ -168,10 +168,10 @@ public class AIResponseProcessor {
             PrayerAIConfig prayerConfig) {
         
         // Validate command limits if prayer config exists
-        if (prayerConfig != null && commands.size() > prayerConfig.maxCommands) {
+        if (prayerConfig != null && commands.size() > prayerConfig.max_commands) {
             LOGGER.warn("AI {} tried to execute {} commands, but limit is {}. Truncating.", 
-                deityName, commands.size(), prayerConfig.maxCommands);
-            commands = commands.subList(0, prayerConfig.maxCommands);
+                deityName, commands.size(), prayerConfig.max_commands);
+            commands = commands.subList(0, prayerConfig.max_commands);
         }
         
         // Filter out unsafe commands

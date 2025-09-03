@@ -120,21 +120,21 @@ public class PrayerSystem {
                             player.sendSystemMessage(Component.literal("§4" + deity.getDisplayName() + " §crejects your corrupt prayers with disgust!"));
                             
                             // Check for auto-punish prayer attempts
-                            if (aiConfig.patronConfig.conversationRules.containsKey("enemy_restrictions")) {
-                                Map<String, Object> rules = (Map<String, Object>) aiConfig.patronConfig.conversationRules.get("enemy_restrictions");
+                            if (aiConfig.patron_config.conversationRules.containsKey("enemy_restrictions")) {
+                                Map<String, Object> rules = (Map<String, Object>) aiConfig.patron_config.conversationRules.get("enemy_restrictions");
                                 if (rules.containsKey("reputation_penalty_on_contact")) {
                                     int penalty = (Integer) rules.get("reputation_penalty_on_contact");
                                     player.level().getCapability(elucent.eidolon.capability.IReputation.INSTANCE)
                                         .ifPresent(reputation -> {
-                                            double currentRep = reputation.getReputation(player, aiConfig.deityId);
-                                            reputation.setReputation(player, aiConfig.deityId, currentRep + penalty);
+                                            double currentRep = reputation.getReputation(player, aiConfig.deity_id);
+                                            reputation.setReputation(player, aiConfig.deity_id, currentRep + penalty);
                                             player.sendSystemMessage(Component.literal("§4Your boldness angers " + deity.getDisplayName() + "! (§c" + penalty + " reputation§4)"));
                                         });
                                 }
                             }
                             break;
                         case NEUTRAL:
-                            if (aiConfig.patronConfig.requiresPatronStatus.equals("follower_only")) {
+                            if (aiConfig.patron_config.requiresPatronStatus.equals("follower_only")) {
                                 player.sendSystemMessage(Component.literal("§e" + deity.getDisplayName() + " §7only hears the prayers of their faithful servants."));
                                 player.sendSystemMessage(Component.literal("§7Become their devoted follower to gain their ear."));
                             }
@@ -174,7 +174,7 @@ public class PrayerSystem {
         }
         
         // Get prayer configuration
-        PrayerAIConfig prayerConfig = aiConfig.prayerConfigs.get(prayerType);
+        PrayerAIConfig prayerConfig = aiConfig.prayer_configs.get(prayerType);
         if (prayerConfig == null) {
             player.sendSystemMessage(Component.literal("§e" + deity.getDisplayName() + " §cdoes not understand that type of prayer."));
             return;
@@ -182,21 +182,21 @@ public class PrayerSystem {
         
         // Check reputation requirement
         int playerReputation = (int) Math.round(deity.getPlayerReputation(player));
-        if (playerReputation < prayerConfig.reputationRequired) {
-            player.sendSystemMessage(Component.literal("§eYou need at least §6" + prayerConfig.reputationRequired + " reputation §ewith §6" + deity.getDisplayName() + "§e."));
+        if (playerReputation < prayerConfig.reputation_required) {
+            player.sendSystemMessage(Component.literal("§eYou need at least §6" + prayerConfig.reputation_required + " reputation §ewith §6" + deity.getDisplayName() + "§e."));
             return;
         }
         
         // Check cooldown
         String cooldownKey = deityId.toString() + ":" + prayerType;
-        if (isOnCooldown(player.getUUID(), cooldownKey, prayerConfig.cooldownMinutes)) {
-            long remainingMinutes = getCooldownRemaining(player.getUUID(), cooldownKey, prayerConfig.cooldownMinutes);
+        if (isOnCooldown(player.getUUID(), cooldownKey, prayerConfig.cooldown_minutes)) {
+            long remainingMinutes = getCooldownRemaining(player.getUUID(), cooldownKey, prayerConfig.cooldown_minutes);
             player.sendSystemMessage(Component.literal("§eYou must wait §6" + remainingMinutes + " more minutes §ebefore praying to §6" + deity.getDisplayName() + " §eagain."));
             return;
         }
         
         // Build context and prompt
-        String prompt = buildPrompt(player, deity, prayerConfig, args);
+        String prompt = buildPrompt(player, deity, aiConfig, prayerConfig, args);
         
         // Create player context for dynamic personality
         PlayerContext playerContext = new PlayerContext(player, deity);
@@ -232,14 +232,14 @@ public class PrayerSystem {
         // Get API client
         GeminiAPIClient client = new GeminiAPIClient(
             apiKey,
-            aiConfig.apiSettings.getModel(),
-            aiConfig.apiSettings.timeoutSeconds
+            aiConfig.api_settings.getModel(),
+            aiConfig.api_settings.timeoutSeconds
         );
         
         // Generate response asynchronously
         sendDeityMessage(player, "Communing with " + deity.getDisplayName() + "...", null, true);
         
-        client.generateResponse(prompt, personality, aiConfig.apiSettings.generationConfig, aiConfig.apiSettings.safetySettings)
+        client.generateResponse(prompt, personality, aiConfig.api_settings.generationConfig, aiConfig.api_settings.safetySettings)
             .thenAccept(response -> {
                 if (response.success) {
                     // Send deity response to player with prominent display
@@ -296,7 +296,7 @@ public class PrayerSystem {
             });
     }
     
-    private static String buildPrompt(ServerPlayer player, DatapackDeity deity, PrayerAIConfig prayerConfig, String... args) {
+    private static String buildPrompt(ServerPlayer player, DatapackDeity deity, AIDeityConfig aiConfig, PrayerAIConfig prayerConfig, String... args) {
         String basePrompt = prayerConfig.base_prompt;
         
         // Get enhanced context
@@ -318,8 +318,15 @@ public class PrayerSystem {
         basePrompt = basePrompt.replace("{progression_level}", progressionLevel);
         basePrompt = basePrompt.replace("{progression_title}", progressionTitle);
         
-        // Add context
-        String context = GeminiAPIClient.buildEnhancedPlayerContext(player, prayerConfig);
+        // Add context using Universal AI Context Builder (for ALL providers)
+        String context;
+        try {
+            context = com.bluelotuscoding.eidolonunchained.ai.UniversalAIContextBuilder
+                .buildCompleteContext(player, aiConfig, prayerConfig);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to build universal context, using fallback: {}", e.getMessage());
+            context = "Player: " + player.getName().getString() + "\nHealth: " + player.getHealth() + "/" + player.getMaxHealth();
+        }
         basePrompt = basePrompt.replace("{location}", extractFromContext(context, "Location"));
         basePrompt = basePrompt.replace("{biome}", extractFromContext(context, "Biome"));
         basePrompt = basePrompt.replace("{time}", extractFromContext(context, "Time"));
@@ -342,13 +349,13 @@ public class PrayerSystem {
         // Add task system guidance if enabled
         com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig config = 
             com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance().getAIConfig(deity.getId());
-        if (config != null && config.taskConfig.enabled) {
+        if (config != null && config.task_config.enabled) {
             basePrompt += "\nTask Assignment: You can assign tasks to worthy players using: Command: /eidolon:assign_task " + player.getName().getString() + " <task_id>";
         }
         
         // Add command constraints
-        basePrompt += "\n\nIMPORTANT: You may use up to " + prayerConfig.maxCommands + " commands. ";
-        basePrompt += "Allowed commands: " + String.join(", ", prayerConfig.allowedCommands) + ". ";
+        basePrompt += "\n\nIMPORTANT: You may use up to " + prayerConfig.max_commands + " commands. ";
+        basePrompt += "Allowed commands: " + String.join(", ", prayerConfig.allowed_commands) + ". ";
         basePrompt += "Format commands as: Command: /command arguments";
         
         return basePrompt;
@@ -413,15 +420,12 @@ public class PrayerSystem {
     /**
      * 🔄 FALLBACK PROGRESSION LEVELS
      * 
-     * Used when JSON progression stages are not available.
-     * These are the old hardcoded levels for compatibility.
+     * REMOVED: No fallback needed - all progression must come from JSON
      */
     private static String getFallbackProgressionLevel(double reputation) {
-        if (reputation >= 75) return "master";
-        if (reputation >= 50) return "advanced";
-        if (reputation >= 25) return "intermediate";
-        if (reputation >= 10) return "novice";
-        return "beginner";
+        // No fallback - throw error to indicate missing JSON configuration
+        throw new IllegalStateException("Progression level requested but no JSON configuration available. " +
+            "Please configure deity progression in JSON datapack.");
     }
     
     /**
@@ -492,11 +496,9 @@ public class PrayerSystem {
      * Used when JSON progression stages are not available.
      */
     private static String getFallbackProgressionTitle(double reputation) {
-        if (reputation >= 75) return "Master";
-        if (reputation >= 50) return "Priest";
-        if (reputation >= 25) return "Acolyte";
-        if (reputation >= 10) return "Novice";
-        return "Initiate";
+        // No fallback - throw error to indicate missing JSON configuration
+        throw new IllegalStateException("Progression title requested but no JSON configuration available. " +
+            "Please configure deity progression titles in JSON datapack.");
     }
     
     private static String extractFromContext(String context, String key) {
