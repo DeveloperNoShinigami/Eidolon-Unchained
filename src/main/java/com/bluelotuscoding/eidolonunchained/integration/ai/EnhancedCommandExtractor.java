@@ -36,9 +36,9 @@ public class EnhancedCommandExtractor {
         Pattern.CASE_INSENSITIVE
     );
     
-    // Pattern for [ACTION:gift item] format used by AI responses
+    // Pattern for [ACTION:give item] format used by AI responses
     private static final Pattern ACTION_PATTERN = Pattern.compile(
-        "\\[ACTION:(?:gift|give)\\s+([\\w:_-]+)(?:\\s+(\\d+))?\\]",
+        "\\[ACTION:(?:give|grant|bestow)\\s+([\\w:_-]+)(?:\\s+(\\d+))?\\]",
         Pattern.CASE_INSENSITIVE
     );
     
