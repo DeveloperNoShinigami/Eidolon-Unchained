@@ -85,7 +85,8 @@ public class CrucibleCommandRecipe extends CrucibleRecipe {
     
     @Override
     public @NotNull RecipeType<?> getType() {
-        return EidolonUnchainedRecipes.CRUCIBLE_COMMAND_TYPE.get();
+        // Return the standard crucible type so the Codex recognizes it
+        return EidolonRecipes.CRUCIBLE_TYPE.get();
     }
     
     /**
@@ -172,9 +173,18 @@ public class CrucibleCommandRecipe extends CrucibleRecipe {
         // Helper methods to parse crucible recipe format
         private List<Step> parseSteps(JsonObject json) {
             List<Step> steps = new ArrayList<>();
-            JsonArray stepsArray = json.getAsJsonArray("steps");
+            LOGGER.info("  🔍 Parsing steps from JSON...");
             
-            for (JsonElement stepElement : stepsArray) {
+            if (!json.has("steps")) {
+                LOGGER.error("  ❌ No 'steps' array found in JSON!");
+                return steps;
+            }
+            
+            JsonArray stepsArray = json.getAsJsonArray("steps");
+            LOGGER.info("  📊 Found {} steps in JSON", stepsArray.size());
+            
+            for (int i = 0; i < stepsArray.size(); i++) {
+                JsonElement stepElement = stepsArray.get(i);
                 JsonObject stepObject = stepElement.getAsJsonObject();
                 
                 int stirs = stepObject.has("stirs") ? stepObject.get("stirs").getAsInt() : 0;
@@ -182,24 +192,51 @@ public class CrucibleCommandRecipe extends CrucibleRecipe {
                 
                 if (stepObject.has("items")) {
                     JsonArray itemsArray = stepObject.getAsJsonArray("items");
+                    LOGGER.info("    Step {}: {} stirs, {} items", i+1, stirs, itemsArray.size());
                     for (JsonElement itemElement : itemsArray) {
                         ingredients.add(Ingredient.fromJson(itemElement));
                     }
+                } else {
+                    LOGGER.info("    Step {}: {} stirs, no items", i+1, stirs);
                 }
                 
                 steps.add(new Step(stirs, ingredients));
             }
             
+            LOGGER.info("  ✅ Successfully parsed {} steps", steps.size());
             return steps;
         }
         
         private ItemStack parseResult(JsonObject json) {
+            LOGGER.info("  🎯 Parsing result from JSON...");
+            
+            if (!json.has("result")) {
+                LOGGER.error("  ❌ No 'result' object found in JSON!");
+                return ItemStack.EMPTY;
+            }
+            
             JsonObject resultObject = json.getAsJsonObject("result");
+            
+            if (!resultObject.has("item")) {
+                LOGGER.error("  ❌ No 'item' field found in result object!");
+                return ItemStack.EMPTY;
+            }
+            
             String itemName = resultObject.get("item").getAsString();
             int count = resultObject.has("count") ? resultObject.get("count").getAsInt() : 1;
             
-            return new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(
+            LOGGER.info("  🏆 Result: {} x{}", itemName, count);
+            
+            ItemStack result = new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(
                 new ResourceLocation(itemName)), count);
+                
+            if (result.isEmpty()) {
+                LOGGER.error("  ❌ Failed to create ItemStack for item: {}", itemName);
+            } else {
+                LOGGER.info("  ✅ Successfully created result ItemStack: {}", result.getDisplayName().getString());
+            }
+            
+            return result;
         }
     }
 }

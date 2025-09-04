@@ -453,8 +453,18 @@ public class DeityChat {
             }
         }
         
-        prompt.append("This player holds the rank of '").append(progressionLevel)
+        prompt.append("This player currently holds the rank of '").append(progressionLevel)
               .append("' with you (reputation: ").append((int)reputation).append("). ");
+        
+        // Check if the rank has recently changed (within conversation history)
+        String fullHistory = ConversationHistoryManager.getPlayerFullContext(player, deityId);
+        if (fullHistory.contains("Title updated") || fullHistory.contains("rank.*changed")) {
+            prompt.append("IMPORTANT: This player's rank or title has recently changed - acknowledge their progression! ");
+        }
+        
+        // Add achievement context instruction
+        prompt.append("Use player achievements as BACKGROUND CONTEXT only - don't mention them unless directly relevant. ");
+        prompt.append("Focus on the present conversation, not past accomplishments. ");
         
         // 🌍 ADD COMPREHENSIVE WORLD REGISTRY INFORMATION
         prompt.append("\n\n=== MINECRAFT WORLD KNOWLEDGE ===\n");
@@ -472,17 +482,16 @@ public class DeityChat {
             prompt.append("\nHealth: ").append(player.getHealth()).append("/").append(player.getMaxHealth());
         }
         
-        // Add AI deity configuration-based command guidelines
+        // Add AI deity configuration-based command guidelines (SUBTLE)
         if (aiConfig != null && aiConfig.prayer_configs.containsKey("conversation")) {
             PrayerAIConfig prayerConfig = aiConfig.prayer_configs.get("conversation");
-            prompt.append("\n\n=== YOUR DIVINE POWERS ===\n");
-            prompt.append("Available commands: ").append(String.join(", ", prayerConfig.allowed_commands)).append("\n");
-            prompt.append("Max commands per response: ").append(prayerConfig.max_commands).append("\n");
-            if (!prayerConfig.reference_commands.isEmpty()) {
-                prompt.append("Example commands you can use:\n");
-                for (String cmd : prayerConfig.reference_commands) {
-                    prompt.append("- ").append(cmd).append("\n");
-                }
+            // SUBTLE: Don't explicitly list commands, just provide context
+            prompt.append("\n\n=== CONVERSATION CONTEXT ===\n");
+            prompt.append("Focus on meaningful conversation. Use divine powers sparingly and only when truly needed.\n");
+            prompt.append("Your powers should feel natural and contextual, not excessive or forced.\n");
+            // Let the JSON config control the actual limits, don't override
+            if (prayerConfig.max_commands > 0) {
+                prompt.append("You may use up to ").append(prayerConfig.max_commands).append(" divine actions if needed.\n");
             }
         }
         

@@ -84,6 +84,7 @@ public class DatapackDeity extends Deity {
     public void onReputationUnlock(Player player, ResourceLocation lock) {
         UUID playerId = player.getUUID();
         String lockString = lock.toString();
+        String stageName = lock.getPath(); // Extract just the stage name from ResourceLocation
         
         // 🎯 CHECK IF REWARDS ALREADY GIVEN - Prevents duplicate rewards!
         Set<String> playerRewards = playerRewardHistory.computeIfAbsent(playerId, k -> new HashSet<>());
@@ -94,19 +95,25 @@ public class DatapackDeity extends Deity {
             
             // Still send unlock message for feedback
             if (player instanceof ServerPlayer serverPlayer) {
-                String stageTitle = getStageDisplayName(lock.getPath());
+                String stageTitle = getStageDisplayName(stageName);
                 String message = String.format("§6[%s]§r You maintain your rank: %s", displayName, stageTitle);
                 serverPlayer.connection.send(new ClientboundSetActionBarTextPacket(Component.literal(message)));
             }
             return;
         }
         
-        // Apply datapack-defined rewards (only if not already given)
-        List<String> rewards = stageRewards.get(lockString);
+        // 🎁 LOOK FOR REWARDS - Try both full ResourceLocation and just stage name
+        List<String> rewards = stageRewards.get(lockString); // Try full ResourceLocation first
+        if (rewards == null || rewards.isEmpty()) {
+            rewards = stageRewards.get(stageName); // Fallback to just stage name
+            LOGGER.debug("🔍 Checking rewards for stage name: {} (found: {})", stageName, rewards != null);
+        } else {
+            LOGGER.debug("🔍 Found rewards using full ResourceLocation: {}", lockString);
+        }
         
         if (rewards != null && !rewards.isEmpty()) {
-            LOGGER.info("🎁 Granting {} rewards to {} for unlocking {}", 
-                rewards.size(), player.getName().getString(), lockString);
+            LOGGER.info("🎁 Granting {} rewards to {} for unlocking {} (stage: {})", 
+                rewards.size(), player.getName().getString(), lockString, stageName);
             
             for (String reward : rewards) {
                 applyReward(player, reward);
@@ -117,6 +124,9 @@ public class DatapackDeity extends Deity {
             
             LOGGER.info("✅ Rewards granted and tracked for player {} stage {}", 
                 player.getName().getString(), lockString);
+        } else {
+            LOGGER.warn("⚠️ No rewards defined for stage {} (tried keys: '{}' and '{}')", 
+                stageName, lockString, stageName);
         }
         
         // Update patron title if this is their patron deity
@@ -126,7 +136,7 @@ public class DatapackDeity extends Deity {
         
         // Send unlock message
         if (player instanceof ServerPlayer serverPlayer) {
-            String stageTitle = lock.getPath(); // Use the lock path as stage identifier
+            String stageTitle = getStageDisplayName(stageName); // Use proper stage display name
             String message = String.format("§6[%s]§r You have achieved: %s", displayName, stageTitle);
             serverPlayer.connection.send(new ClientboundSetActionBarTextPacket(Component.literal(message)));
         }
