@@ -184,6 +184,13 @@ public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
                 int reputation = stage.get("reputation").getAsInt();
                 boolean major = stage.has("major") ? stage.get("major").getAsBoolean() : false;
                 
+                // Extract and store stage title from JSON
+                if (stage.has("title")) {
+                    String title = stage.get("title").getAsString();
+                    deity.setStageTitle(stageId, title);
+                    LOGGER.debug("Set title for stage {}: '{}'", stageId, title);
+                }
+                
                 ResourceLocation stageRL = ResourceLocation.tryParse(stageId);
                 if (stageRL == null) {
                     LOGGER.warn("Invalid stage ID: {}", stageId);

@@ -41,6 +41,9 @@ public class DatapackDeity extends Deity {
     // 🎯 REWARD TRACKING SYSTEM - Prevents duplicate rewards
     private final Map<UUID, Set<String>> playerRewardHistory = new HashMap<>();
     
+    // 🎭 STAGE TITLE MAPPING - Maps stage IDs to their display titles from JSON
+    private final Map<String, String> stageTitles = new HashMap<>();
+    
     public DatapackDeity(ResourceLocation id, String name, String description, int red, int green, int blue) {
         super(id, red, green, blue);
         this.displayName = name;
@@ -71,6 +74,10 @@ public class DatapackDeity extends Deity {
     
     public void addPrayerType(String prayerType) {
         this.prayerTypes.add(prayerType);
+    }
+    
+    public void setStageTitle(String stageId, String title) {
+        this.stageTitles.put(stageId, title);
     }
     
     @Override
@@ -437,7 +444,15 @@ public class DatapackDeity extends Deity {
         for (Stage stage : this.progression.getSteps().values()) {
             Map<String, Object> stageData = new HashMap<>();
             stageData.put("reputationRequired", stage.rep());
-            stageData.put("title", stage.id().getPath());
+            
+            // Use stored title from JSON, fall back to stage ID if not found
+            String title = stageTitles.get(stage.id().getPath());
+            if (title == null) {
+                title = stage.id().getPath(); // Fallback to stage ID
+                LOGGER.warn("No title found for stage {}, using ID as title", stage.id().getPath());
+            }
+            stageData.put("title", title);
+            
             stageData.put("description", "Stage description"); // Default description
             stageData.put("isMajor", stage.major());
             
