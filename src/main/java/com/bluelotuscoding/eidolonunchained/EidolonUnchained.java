@@ -64,6 +64,7 @@ public class EidolonUnchained
         // Register custom recipes
         EidolonUnchainedRecipes.RECIPE_SERIALIZERS.register(modEventBus);
         EidolonUnchainedRecipes.RECIPE_TYPES.register(modEventBus);
+        EidolonUnchainedRecipes.init(); // Initialize logging
 
         // Register our unified configuration
         EidolonUnchainedConfig.register();

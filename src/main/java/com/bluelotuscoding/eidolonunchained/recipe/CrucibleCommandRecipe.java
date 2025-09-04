@@ -95,6 +95,8 @@ public class CrucibleCommandRecipe extends CrucibleRecipe {
         
         @Override
         public @NotNull CrucibleCommandRecipe fromJson(@NotNull ResourceLocation recipeId, @NotNull JsonObject json) {
+            LOGGER.info("🔧 Loading CrucibleCommandRecipe: {}", recipeId);
+            
             // Parse normal crucible recipe parts
             List<Step> steps = parseSteps(json);
             ItemStack result = parseResult(json);
@@ -106,7 +108,13 @@ public class CrucibleCommandRecipe extends CrucibleRecipe {
                 for (JsonElement element : commandsArray) {
                     commands.add(element.getAsString());
                 }
+                LOGGER.info("  📜 Found {} commands: {}", commands.size(), commands);
+            } else {
+                LOGGER.warn("  ⚠️ No commands found in recipe {}", recipeId);
             }
+            
+            LOGGER.info("  ✅ Successfully created CrucibleCommandRecipe with {} steps, result: {}", 
+                steps.size(), result.getItem().getDescriptionId());
             
             return new CrucibleCommandRecipe(recipeId, steps, result, commands);
         }
