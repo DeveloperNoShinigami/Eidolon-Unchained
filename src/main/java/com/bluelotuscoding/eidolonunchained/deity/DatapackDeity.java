@@ -302,12 +302,20 @@ public class DatapackDeity extends Deity {
         }
         
         try {
-            // Replace placeholders in the command
+            // Replace placeholders in the command intelligently
             String processedCommand = command
-                .replace("{player}", player.getName().getString())
                 .replace("{deity_name}", this.displayName)
                 .replace("{deity_id}", this.id.toString())
                 .replace("{stage}", extraParams);
+            
+            // Handle {player} replacement based on context
+            if (command.startsWith("tellraw") || command.startsWith("say ") || command.startsWith("broadcast")) {
+                // For messaging commands, keep player name in message text
+                processedCommand = processedCommand.replace("{player}", player.getName().getString());
+            } else {
+                // For regular game commands (give, effect, title), use @s selector
+                processedCommand = processedCommand.replace("{player}", "@s");
+            }
             
             // Get the server command manager
             MinecraftServer server = serverPlayer.getServer();

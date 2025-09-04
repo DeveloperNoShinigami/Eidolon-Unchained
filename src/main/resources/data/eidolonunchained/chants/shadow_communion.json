@@ -16,18 +16,6 @@
   "requirements": [],
   "effects": [
     {
-      "type": "apply_effect",
-      "effect": "minecraft:night_vision",
-      "duration": 600,
-      "amplifier": 0
-    },
-    {
-      "type": "apply_effect",
-      "effect": "minecraft:strength",
-      "duration": 400,
-      "amplifier": 0
-    },
-    {
       "type": "run_command",
       "command": "particle minecraft:soul_fire_flame ~ ~1 ~ 0.5 0.5 0.5 0.1 20"
     },

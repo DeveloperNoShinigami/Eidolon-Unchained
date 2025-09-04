@@ -482,17 +482,34 @@ public class DeityChat {
             prompt.append("\nHealth: ").append(player.getHealth()).append("/").append(player.getMaxHealth());
         }
         
-        // Add AI deity configuration-based command guidelines (SUBTLE)
+        // Add AI deity configuration-based command guidelines (CONTEXTUAL)
         if (aiConfig != null && aiConfig.prayer_configs.containsKey("conversation")) {
             PrayerAIConfig prayerConfig = aiConfig.prayer_configs.get("conversation");
-            // SUBTLE: Don't explicitly list commands, just provide context
-            prompt.append("\n\n=== CONVERSATION CONTEXT ===\n");
-            prompt.append("Focus on meaningful conversation. Use divine powers sparingly and only when truly needed.\n");
-            prompt.append("Your powers should feel natural and contextual, not excessive or forced.\n");
-            // Let the JSON config control the actual limits, don't override
-            if (prayerConfig.max_commands > 0) {
-                prompt.append("You may use up to ").append(prayerConfig.max_commands).append(" divine actions if needed.\n");
+            
+            prompt.append("\n\n=== DIVINE INTERVENTION GUIDELINES ===\n");
+            prompt.append("You have the power to use divine commands, but use them wisely:\n");
+            prompt.append("- For simple greetings, questions, or casual conversation: Use NO commands\n");
+            prompt.append("- For direct requests for help or significant moments: Use 1 command maximum\n");
+            prompt.append("- Complex requests requiring multiple actions: Still limit to 1 primary command\n");
+            prompt.append("- Focus on meaningful dialogue first, divine intervention second\n");
+            
+            // Add item knowledge context
+            if (prayerConfig.additional_prompts != null && !prayerConfig.additional_prompts.isEmpty()) {
+                prompt.append("\n=== WORLD KNOWLEDGE ===\n");
+                for (String additionalPrompt : prayerConfig.additional_prompts) {
+                    prompt.append("- ").append(additionalPrompt).append("\n");
+                }
             }
+            
+            // Add example commands for reference
+            if (prayerConfig.reference_commands != null && !prayerConfig.reference_commands.isEmpty()) {
+                prompt.append("\n=== COMMAND EXAMPLES (use sparingly) ===\n");
+                for (String refCommand : prayerConfig.reference_commands) {
+                    prompt.append("- ").append(refCommand).append("\n");
+                }
+            }
+            
+            prompt.append("\nRemember: The goal is immersive conversation, not showcasing divine power.\n");
         }
         
         // Add FULL conversation history for complete context
@@ -538,18 +555,20 @@ public class DeityChat {
         
         // Key Minecraft item categories for AI reference
         context.append("\nKEY ITEM CATEGORIES:\n");
-        context.append("- Basic Items: minecraft:iron_ingot, minecraft:gold_ingot, minecraft:diamond, minecraft:emerald\n");
+        context.append("- Basic Materials: minecraft:iron_ingot, minecraft:gold_ingot, minecraft:diamond, minecraft:emerald\n");
         context.append("- Food: minecraft:bread, minecraft:cooked_beef, minecraft:golden_apple, minecraft:enchanted_golden_apple\n");
         context.append("- Tools: minecraft:iron_sword, minecraft:diamond_pickaxe, minecraft:bow, minecraft:crossbow\n");
-        context.append("- Blocks: minecraft:stone, minecraft:oak_log, minecraft:iron_ore, minecraft:diamond_ore\n");
+        context.append("- Building: minecraft:stone, minecraft:oak_log, minecraft:iron_ore, minecraft:diamond_ore\n");
         context.append("- Potions: minecraft:potion, minecraft:healing_potion, minecraft:strength_potion\n");
         
-        // Eidolon-specific items if mod is loaded
-        context.append("\nEIDOLON ITEMS (if available):\n");
-        context.append("- eidolon:soul_shard, eidolon:death_essence, eidolon:shadow_gem\n");
-        context.append("- eidolon:arcane_gold_ingot, eidolon:pewter_ingot, eidolon:silver_ingot\n");
-        context.append("- eidolon:wicked_weave, eidolon:wraith_heart, eidolon:tattered_cloth\n");
-        context.append("- eidolon:research_notes, eidolon:codex, eidolon:holy_symbol\n");
+        // Eidolon-specific items with proper IDs
+        context.append("\nEIDOLON MAGICAL ITEMS:\n");
+        context.append("- Soul Magic: eidolon:soul_shard, eidolon:lesser_soul_gem, eidolon:greater_soul_gem\n");
+        context.append("- Dark Magic: eidolon:death_essence, eidolon:zombie_heart, eidolon:wraith_heart, eidolon:shadow_gem\n");
+        context.append("- Arcane Materials: eidolon:arcane_gold_ingot, eidolon:pewter_ingot, eidolon:silver_ingot\n");
+        context.append("- Ritual Components: eidolon:wicked_weave, eidolon:tattered_cloth, eidolon:sulfur, eidolon:ender_calx\n");
+        context.append("- Holy Items: eidolon:holy_symbol, eidolon:unholy_symbol, eidolon:gold_inlay, eidolon:pewter_inlay\n");
+        context.append("- Research: eidolon:research_notes, eidolon:codex, eidolon:parchment, eidolon:quill\n");
         
         // Available dimensions
         context.append("\nDIMENSIONS:\n");
@@ -563,9 +582,16 @@ public class DeityChat {
         
         // Effects available for blessings/curses
         context.append("\nAVAILABLE EFFECTS:\n");
-        context.append("- Blessings: minecraft:strength, minecraft:speed, minecraft:regeneration, minecraft:resistance\n");
+        context.append("- Beneficial: minecraft:strength, minecraft:speed, minecraft:regeneration, minecraft:resistance\n");
         context.append("- Utility: minecraft:night_vision, minecraft:water_breathing, minecraft:fire_resistance\n");
-        context.append("- Curses: minecraft:weakness, minecraft:slowness, minecraft:poison, minecraft:wither\n");
+        context.append("- Negative: minecraft:weakness, minecraft:slowness, minecraft:poison, minecraft:wither\n");
+        
+        // Command format reminders
+        context.append("\nCOMMAND FORMAT EXAMPLES:\n");
+        context.append("- Give Item: give {player} eidolon:zombie_heart 1\n");
+        context.append("- Apply Effect: effect give {player} minecraft:regeneration 300 1\n");
+        context.append("- Set Title: title {player} subtitle {\"text\":\"Your message\",\"color\":\"purple\"}\n");
+        context.append("- Play Sound: playsound minecraft:block.beacon.activate master {player} ~ ~ ~ 1.0 1.0\n");
         
         return context.toString();
     }
@@ -937,107 +963,147 @@ public class DeityChat {
     }
     
     /**
-     * 🎯 DYNAMIC PROGRESSION LEVEL HELPER - USES AI DEITY CONFIGURATIONS
+     * 🎯 DYNAMIC PROGRESSION LEVEL HELPER - USES ACTUAL DEITY PROGRESSION STAGES
      * 
-     * Gets the player's current progression level based on AI deity configurations.
-     * This ensures the AI recognizes the player's actual rank from the JSON configs.
+     * Gets the player's current progression level from deity JSON progression stages.
+     * This ensures the AI recognizes the player's actual rank from the deity JSON configs.
      */
     private static String getDynamicProgressionLevel(DatapackDeity deity, ServerPlayer player) {
         double reputation = deity.getPlayerReputation(player);
         
         try {
-            // 🔥 PRIORITY: Use AI deity config reputation thresholds if available
-            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deity.getId());
-            if (aiConfig != null && !aiConfig.getReputationBehaviors().isEmpty()) {
-                // Find the highest threshold the player qualifies for
-                String progressionTitle = "Newcomer";
-                int highestThreshold = -1;
+            // 🔥 PRIMARY: Use actual deity progression stages from JSON
+            Map<String, Object> progressionData = deity.getProgressionStages();
+            if (progressionData != null && !progressionData.isEmpty()) {
+                String bestTitle = "Newcomer";
+                double highestQualifyingReputation = -1;
                 
-                // Check AI config reputation thresholds
-                for (Map.Entry<Integer, String> entry : aiConfig.getReputationBehaviors().entrySet()) {
-                    if (reputation >= entry.getKey() && entry.getKey() > highestThreshold) {
-                        highestThreshold = entry.getKey();
+                // Check all progression stages to find the highest one the player qualifies for
+                for (Map.Entry<String, Object> entry : progressionData.entrySet()) {
+                    String stageName = entry.getKey();
+                    
+                    try {
+                        // Handle progression data structure
+                        Object stageValue = entry.getValue();
+                        Map<String, Object> stageData = null;
                         
-                        // Extract appropriate progression title from AI config
-                        if (aiConfig.patron_config != null && aiConfig.patron_config.followerPersonalityModifiers != null) {
-                            // Use AI config follower titles if available
-                            for (String title : aiConfig.patron_config.followerPersonalityModifiers.keySet()) {
-                                if (!title.equals("default")) {
-                                    // Map reputation thresholds to AI config titles
-                                    if (entry.getKey() >= 100) progressionTitle = "Shadow Champion"; // Dark deity example
-                                    else if (entry.getKey() >= 75) progressionTitle = "Void Master";
-                                    else if (entry.getKey() >= 50) progressionTitle = "Shadow Priest";
-                                    else if (entry.getKey() >= 25) progressionTitle = "Dark Acolyte";
-                                    else if (entry.getKey() >= 0) progressionTitle = "Shadow Initiate";
-                                    break;
+                        if (stageValue instanceof Map) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> mapValue = (Map<String, Object>) stageValue;
+                            stageData = mapValue;
+                        } else if (stageValue instanceof List) {
+                            // Handle stages array format
+                            @SuppressWarnings("unchecked")
+                            List<Map<String, Object>> stagesList = (List<Map<String, Object>>) stageValue;
+                            for (Map<String, Object> stage : stagesList) {
+                                Object repObj = stage.get("reputation");
+                                if (repObj instanceof Number) {
+                                    double requiredRep = ((Number) repObj).doubleValue();
+                                    if (reputation >= requiredRep && requiredRep > highestQualifyingReputation) {
+                                        highestQualifyingReputation = requiredRep;
+                                        Object titleObj = stage.get("title");
+                                        if (titleObj instanceof String) {
+                                            bestTitle = (String) titleObj;
+                                        }
+                                    }
                                 }
                             }
-                        } else {
-                            // Fallback to generic titles based on threshold
-                            if (entry.getKey() >= 100) progressionTitle = "Champion";
-                            else if (entry.getKey() >= 75) progressionTitle = "Master";
-                            else if (entry.getKey() >= 50) progressionTitle = "Priest";
-                            else if (entry.getKey() >= 25) progressionTitle = "Acolyte";
-                            else if (entry.getKey() >= 0) progressionTitle = "Initiate";
+                            continue;
                         }
+                        
+                        if (stageData != null) {
+                            // Look for reputation requirement
+                            Object repObj = stageData.get("reputation");
+                            if (repObj == null) repObj = stageData.get("reputation_required");
+                            
+                            if (repObj instanceof Number) {
+                                double requiredRep = ((Number) repObj).doubleValue();
+                                
+                                // Check if player qualifies for this stage
+                                if (reputation >= requiredRep && requiredRep > highestQualifyingReputation) {
+                                    highestQualifyingReputation = requiredRep;
+                                    
+                                    // Use the title from the stage data, or format the stage name
+                                    Object titleObj = stageData.get("title");
+                                    if (titleObj instanceof String) {
+                                        bestTitle = (String) titleObj;
+                                    } else {
+                                        // Convert stage ID to title format
+                                        bestTitle = formatStageNameToTitle(stageName);
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        LOGGER.warn("Error processing progression stage {}: {}", stageName, e.getMessage());
                     }
                 }
                 
-                LOGGER.debug("🤖 AI Config progression for {}/{}: {} ({}rep, threshold={})", 
+                LOGGER.debug("🏆 Actual Progression Level for {}/{}: {} ({}rep, qualifying={})", 
+                    player.getName().getString(), deity.getName(), bestTitle, (int)reputation, (int)highestQualifyingReputation);
+                
+                return bestTitle;
+            }
+            
+            // FALLBACK: Try AI config reputation behaviors if deity stages aren't available
+            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deity.getId());
+            if (aiConfig != null && !aiConfig.getReputationBehaviors().isEmpty()) {
+                String progressionTitle = "Newcomer";
+                int highestThreshold = -1;
+                
+                for (Map.Entry<Integer, String> entry : aiConfig.getReputationBehaviors().entrySet()) {
+                    if (reputation >= entry.getKey() && entry.getKey() > highestThreshold) {
+                        highestThreshold = entry.getKey();
+                        progressionTitle = "Follower (Level " + entry.getKey() + ")"; // Use level-based title
+                    }
+                }
+                
+                LOGGER.debug("🤖 AI Config fallback progression for {}/{}: {} ({}rep, threshold={})", 
                     player.getName().getString(), deity.getName(), progressionTitle, (int)reputation, highestThreshold);
                 
                 return progressionTitle;
             }
             
-            // Secondary: Try deity's progression stages from JSON
-            Map<String, Object> stagesMap = deity.getProgressionStages();
-            if (!stagesMap.isEmpty()) {
-                String bestStage = "initiate";
-                double highestQualifyingReputation = -1;
-                
-                for (Map.Entry<String, Object> stageEntry : stagesMap.entrySet()) {
-                    String stageName = stageEntry.getKey();
-                    Object stageData = stageEntry.getValue();
-                    
-                    if (!(stageData instanceof Map)) continue;
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> stageDataMap = (Map<String, Object>) stageData;
-                    
-                    Object repReqObj = stageDataMap.get("reputationRequired");
-                    if (!(repReqObj instanceof Number)) continue;
-                    
-                    double requiredReputation = ((Number) repReqObj).doubleValue();
-                    
-                    if (reputation >= requiredReputation && requiredReputation > highestQualifyingReputation) {
-                        bestStage = stageName;
-                        highestQualifyingReputation = requiredReputation;
-                    }
-                }
-                
-                LOGGER.debug("🎭 JSON progression for {}/{}: {} ({}rep)", 
-                    player.getName().getString(), deity.getName(), bestStage, (int)reputation);
-                
-                return bestStage;
-            }
-            
-            // Final fallback to hardcoded levels
-            LOGGER.debug("🔍 No AI config or JSON stages for deity {}, using fallback", deity.getId());
-            if (reputation >= 75) return "master";
-            if (reputation >= 50) return "advanced"; 
-            if (reputation >= 25) return "intermediate";
-            if (reputation >= 10) return "novice";
-            return "beginner";
+            // LAST RESORT: Generic progression stages based on reputation
+            LOGGER.debug("🔍 No progression data for deity {}, using generic levels", deity.getId());
+            if (reputation >= 100) return "Champion";
+            else if (reputation >= 75) return "Master";
+            else if (reputation >= 50) return "Priest";
+            else if (reputation >= 25) return "Acolyte";
+            else if (reputation >= 0) return "Initiate";
+            else return "Outcast";
             
         } catch (Exception e) {
             LOGGER.error("🚨 Error determining progression level for {}/{}, using fallback: {}", 
                 player.getName().getString(), deity.getName(), e.getMessage());
             
             // Emergency fallback
-            if (reputation >= 75) return "master";
-            if (reputation >= 50) return "advanced";
-            if (reputation >= 25) return "intermediate";
-            if (reputation >= 10) return "novice";
-            return "beginner";
+            if (reputation >= 75) return "Master";
+            if (reputation >= 50) return "Priest";
+            if (reputation >= 25) return "Acolyte";
+            if (reputation >= 10) return "Initiate";
+            return "Newcomer";
         }
+    }
+    
+    /**
+     * Converts stage names like "shadow_initiate" to proper titles like "Shadow Initiate"
+     */
+    private static String formatStageNameToTitle(String stageName) {
+        if (stageName == null || stageName.isEmpty()) return "Newcomer";
+        
+        // Convert underscores to spaces and capitalize each word
+        String[] words = stageName.replace("_", " ").split(" ");
+        StringBuilder titleBuilder = new StringBuilder();
+        
+        for (String word : words) {
+            if (word.length() > 0) {
+                titleBuilder.append(Character.toUpperCase(word.charAt(0)))
+                   .append(word.substring(1).toLowerCase())
+                   .append(" ");
+            }
+        }
+        
+        return titleBuilder.toString().trim();
     }
 }
