@@ -25,7 +25,7 @@ public class AIDeityConfig {
     public int timeout_seconds; // No default - must come from JSON/command
     public float temperature; // No default - must come from JSON/command
     public int max_output_tokens; // No default - must come from JSON/command
-    public String item_context_id; // Mob ID context for AI item commands - must come from JSON/command
+    public List<String> mod_context_ids = new ArrayList<>(); // 🔥 NEW: Mod namespaces for dynamic registry context
     
     // Safety settings for Gemini - must be configured via JSON
     private final Map<String, String> safety_settings = new HashMap<>();

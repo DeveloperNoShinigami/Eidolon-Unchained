@@ -2,13 +2,19 @@ package com.bluelotuscoding.eidolonunchained.integration.ai;
 
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -16,6 +22,7 @@ import java.util.regex.Pattern;
 /**
  * Enhanced AI command extractor that can parse natural language commands
  * and convert them to proper Minecraft commands for execution.
+ * 🔥 DYNAMIC REGISTRY-BASED - NO HARDCODING!
  */
 public class EnhancedCommandExtractor {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -44,8 +51,9 @@ public class EnhancedCommandExtractor {
     
     /**
      * Extract and convert AI natural language to executable commands
+     * 🔥 NOW WITH DYNAMIC REGISTRY CONTEXT
      */
-    public static List<String> extractAndConvertCommands(String aiResponse, ServerPlayer player) {
+    public static List<String> extractAndConvertCommands(String aiResponse, ServerPlayer player, List<String> modContextIds) {
         List<String> commands = new ArrayList<>();
         
         try {
@@ -58,8 +66,8 @@ public class EnhancedCommandExtractor {
                 String item = actionMatcher.group(1);
                 String amount = actionMatcher.group(2);
                 
-                // Validate and normalize item ID
-                String normalizedItem = normalizeItemId(item);
+                // 🔥 Use dynamic registry lookup
+                String normalizedItem = normalizeItemId(item, modContextIds);
                 if (normalizedItem != null) {
                     String command = String.format("/give %s %s %s", 
                         player.getName().getString(),
@@ -88,8 +96,8 @@ public class EnhancedCommandExtractor {
                 String item = giveMatcher.group(1);
                 String amount = giveMatcher.group(2);
                 
-                // Validate and normalize item ID
-                String normalizedItem = normalizeItemId(item);
+                // 🔥 Use dynamic registry lookup
+                String normalizedItem = normalizeItemId(item, modContextIds);
                 if (normalizedItem != null) {
                     String command = String.format("/give %s %s %s", 
                         player.getName().getString(),
@@ -108,8 +116,8 @@ public class EnhancedCommandExtractor {
                 String duration = effectMatcher.group(2);
                 String amplifier = effectMatcher.group(3);
                 
-                // Validate and normalize effect ID
-                String normalizedEffect = normalizeEffectId(effect);
+                // 🔥 Use dynamic registry lookup
+                String normalizedEffect = normalizeEffectId(effect, modContextIds);
                 if (normalizedEffect != null) {
                     String command = String.format("/effect give %s %s %s %s", 
                         player.getName().getString(),
@@ -123,13 +131,20 @@ public class EnhancedCommandExtractor {
             }
             
             // 5. Look for common deity actions and convert to commands
-            commands.addAll(extractDeityActions(cleanResponse, player));
+            commands.addAll(extractDeityActions(cleanResponse, player, modContextIds));
             
         } catch (Exception e) {
             LOGGER.error("Error extracting commands from AI response: {}", e.getMessage());
         }
         
         return commands;
+    }
+    
+    /**
+     * Overload for backward compatibility
+     */
+    public static List<String> extractAndConvertCommands(String aiResponse, ServerPlayer player) {
+        return extractAndConvertCommands(aiResponse, player, Arrays.asList("minecraft", "eidolon", "eidolonunchained"));
     }
     
     /**
@@ -177,127 +192,258 @@ public class EnhancedCommandExtractor {
     
     /**
      * Extract common deity actions and convert to commands
+     * Backward compatibility version
      */
     private static List<String> extractDeityActions(String response, ServerPlayer player) {
+        return extractDeityActions(response, player, Arrays.asList("minecraft", "eidolon", "eidolonunchained"));
+    }
+    
+    /**
+     * Extract common deity actions and convert to commands
+     * 🔥 Now uses dynamic registry context instead of hardcoded effects
+     */
+    private static List<String> extractDeityActions(String response, ServerPlayer player, List<String> modContextIds) {
         List<String> commands = new ArrayList<>();
         String lowerResponse = response.toLowerCase();
         String playerName = player.getName().getString();
         
-        // Healing actions
+        // Healing actions - use dynamic effect lookup
         if (lowerResponse.contains("heal") || lowerResponse.contains("restore health")) {
-            commands.add(String.format("effect give %s minecraft:regeneration 300 1", playerName));
+            String regenEffect = normalizeEffectId("regeneration", modContextIds);
+            if (regenEffect != null) {
+                commands.add(String.format("effect give %s %s 300 1", playerName, regenEffect));
+            }
         }
         
         // Blessing actions
         if (lowerResponse.contains("bless") && lowerResponse.contains("strength")) {
-            commands.add(String.format("effect give %s minecraft:strength 600 1", playerName));
+            String strengthEffect = normalizeEffectId("strength", modContextIds);
+            if (strengthEffect != null) {
+                commands.add(String.format("effect give %s %s 600 1", playerName, strengthEffect));
+            }
         }
         
         // Protection actions
         if (lowerResponse.contains("protect") || lowerResponse.contains("shield")) {
-            commands.add(String.format("effect give %s minecraft:resistance 600 1", playerName));
+            String resistanceEffect = normalizeEffectId("resistance", modContextIds);
+            if (resistanceEffect != null) {
+                commands.add(String.format("effect give %s %s 600 1", playerName, resistanceEffect));
+            }
         }
         
         // Night vision for shadow deities
         if (lowerResponse.contains("shadow sight") || lowerResponse.contains("dark vision")) {
-            commands.add(String.format("effect give %s minecraft:night_vision 1200 0", playerName));
+            String nightVisionEffect = normalizeEffectId("night_vision", modContextIds);
+            if (nightVisionEffect != null) {
+                commands.add(String.format("effect give %s %s 1200 0", playerName, nightVisionEffect));
+            }
         }
         
         // Speed blessings
         if (lowerResponse.contains("swift") || lowerResponse.contains("speed")) {
-            commands.add(String.format("effect give %s minecraft:speed 600 1", playerName));
+            String speedEffect = normalizeEffectId("speed", modContextIds);
+            if (speedEffect != null) {
+                commands.add(String.format("effect give %s %s 600 1", playerName, speedEffect));
+            }
         }
         
-        // Gift of sustenance
+        // Gift of sustenance - use dynamic item lookup
         if (lowerResponse.contains("food") || lowerResponse.contains("nourish")) {
-            commands.add(String.format("give %s minecraft:golden_apple 2", playerName));
+            String goldenApple = normalizeItemId("golden_apple", modContextIds);
+            if (goldenApple != null) {
+                commands.add(String.format("give %s %s 2", playerName, goldenApple));
+            }
         }
         
         // Curse actions
         if (lowerResponse.contains("curse") || lowerResponse.contains("punish")) {
-            commands.add(String.format("effect give %s minecraft:weakness 300 1", playerName));
+            String weaknessEffect = normalizeEffectId("weakness", modContextIds);
+            if (weaknessEffect != null) {
+                commands.add(String.format("effect give %s %s 300 1", playerName, weaknessEffect));
+            }
         }
         
         return commands;
     }
     
     /**
-     * Normalize item IDs to proper Minecraft format
+     * 🔥 DYNAMIC ITEM ID NORMALIZATION - Uses actual registries!
+     * Backward compatibility version that uses default mods
      */
     private static String normalizeItemId(String item) {
-        if (item == null || item.trim().isEmpty()) return null;
-        
-        item = item.toLowerCase().trim();
-        
-        // Already properly formatted
-        if (item.contains(":")) {
-            return item;
-        }
-        
-        // Common item mappings
-        switch (item) {
-            case "soul_shard": case "soul shard": return "eidolon:soul_shard";
-            case "death_essence": case "death essence": return "eidolon:death_essence";
-            case "shadow_gem": case "shadow gem": return "eidolon:shadow_gem";
-            case "arcane_gold": case "arcane gold": return "eidolon:arcane_gold_ingot";
-            case "wicked_weave": case "wicked weave": return "eidolon:wicked_weave";
-            case "holy_symbol": case "holy symbol": return "eidolon:holy_symbol";
-            case "research_notes": case "research notes": return "eidolon:research_notes";
-            case "codex": return "eidolon:codex";
-            
-            // Standard Minecraft items
-            case "diamond": return "minecraft:diamond";
-            case "gold": case "gold_ingot": return "minecraft:gold_ingot";
-            case "iron": case "iron_ingot": return "minecraft:iron_ingot";
-            case "emerald": return "minecraft:emerald";
-            case "bread": return "minecraft:bread";
-            case "golden_apple": case "golden apple": return "minecraft:golden_apple";
-            case "enchanted_golden_apple": return "minecraft:enchanted_golden_apple";
-            
-            default:
-                // Try adding minecraft namespace
-                return "minecraft:" + item;
-        }
+        return normalizeItemId(item, Arrays.asList("minecraft", "eidolon", "eidolonunchained"));
     }
     
     /**
-     * Normalize effect IDs to proper Minecraft format
+     * 🔥 DYNAMIC ITEM ID NORMALIZATION - Uses actual registries!
+     * Full version with mod context control
+     */
+    private static String normalizeItemId(String item, List<String> modContextIds) {
+        if (item == null || item.trim().isEmpty()) return null;
+        
+        item = item.toLowerCase().trim().replace(" ", "_");
+        
+        // Already properly formatted with namespace
+        if (item.contains(":")) {
+            ResourceLocation itemId = ResourceLocation.tryParse(item);
+            if (itemId != null && BuiltInRegistries.ITEM.containsKey(itemId)) {
+                return item;
+            }
+            return null; // Invalid namespaced item
+        }
+        
+        // 🔥 DYNAMIC REGISTRY SEARCH - Use context mods first, then fallback
+        List<String> searchMods = modContextIds != null ? new ArrayList<>(modContextIds) : 
+            Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+        
+        // Try exact matches in context mods first
+        for (String namespace : searchMods) {
+            ResourceLocation testId = new ResourceLocation(namespace, item);
+            if (BuiltInRegistries.ITEM.containsKey(testId)) {
+                LOGGER.info("🔥 Found exact item match in {} registry: {} -> {}", namespace, item, testId);
+                return testId.toString();
+            }
+        }
+        
+        // 🔥 USE REGISTRY CONTEXT PROVIDER for fuzzy matching
+        List<ResourceLocation> matches = RegistryContextProvider.findMatchingItems(item, searchMods);
+        if (!matches.isEmpty()) {
+            ResourceLocation bestMatch = matches.get(0); // First is best match
+            LOGGER.info("🔥 Found fuzzy item match: {} -> {}", item, bestMatch);
+            return bestMatch.toString();
+        }
+        
+        // 🔥 BLOCK REGISTRY SEARCH - Maybe they meant a block
+        for (String namespace : searchMods) {
+            ResourceLocation testId = new ResourceLocation(namespace, item);
+            if (BuiltInRegistries.BLOCK.containsKey(testId)) {
+                LOGGER.info("🔥 Found block in {} registry: {} -> {}", namespace, item, testId);
+                return testId.toString(); // Blocks can be given as items
+            }
+        }
+        
+        LOGGER.warn("🔥 Could not find item '{}' in any registry from mods {}. Available items: {}", 
+            item, searchMods, BuiltInRegistries.ITEM.keySet().size());
+        return null; // Don't guess - return null if not found
+    }
+    
+    /**
+     * 🔥 DYNAMIC EFFECT ID NORMALIZATION - Uses actual registries!
+     * Backward compatibility version
      */
     private static String normalizeEffectId(String effect) {
+        return normalizeEffectId(effect, Arrays.asList("minecraft", "eidolon", "eidolonunchained"));
+    }
+    
+    /**
+     * 🔥 DYNAMIC EFFECT ID NORMALIZATION - Uses actual registries!
+     * Full version with mod context control
+     */
+    private static String normalizeEffectId(String effect, List<String> modContextIds) {
         if (effect == null || effect.trim().isEmpty()) return null;
         
-        effect = effect.toLowerCase().trim();
+        effect = effect.toLowerCase().trim().replace(" ", "_");
         
-        // Already properly formatted
+        // Already properly formatted with namespace
         if (effect.contains(":")) {
-            return effect;
+            ResourceLocation effectId = ResourceLocation.tryParse(effect);
+            if (effectId != null && BuiltInRegistries.MOB_EFFECT.containsKey(effectId)) {
+                return effect;
+            }
+            return null; // Invalid namespaced effect
         }
         
-        // Common effect mappings
-        switch (effect) {
-            case "strength": case "strong": return "minecraft:strength";
-            case "speed": case "swift": case "swiftness": return "minecraft:speed";
-            case "regeneration": case "regen": case "healing": return "minecraft:regeneration";
-            case "resistance": case "protection": return "minecraft:resistance";
-            case "night_vision": case "nightvision": case "dark_vision": return "minecraft:night_vision";
-            case "water_breathing": case "waterbreathing": return "minecraft:water_breathing";
-            case "fire_resistance": case "fireresistance": return "minecraft:fire_resistance";
-            case "invisibility": case "invisible": return "minecraft:invisibility";
-            
-            // Negative effects
-            case "weakness": case "weak": return "minecraft:weakness";
-            case "slowness": case "slow": return "minecraft:slowness";
-            case "poison": case "poisoned": return "minecraft:poison";
-            case "wither": case "withering": return "minecraft:wither";
-            case "blindness": case "blind": return "minecraft:blindness";
-            case "nausea": case "nauseated": return "minecraft:nausea";
-            case "hunger": case "hungry": return "minecraft:hunger";
-            case "mining_fatigue": case "fatigue": return "minecraft:mining_fatigue";
-            
-            default:
-                // Try adding minecraft namespace
-                return "minecraft:" + effect;
+        // 🔥 DYNAMIC REGISTRY SEARCH - Use context mods first
+        List<String> searchMods = modContextIds != null ? new ArrayList<>(modContextIds) : 
+            Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+        
+        // Try exact matches in context mods first
+        for (String namespace : searchMods) {
+            ResourceLocation testId = new ResourceLocation(namespace, effect);
+            if (BuiltInRegistries.MOB_EFFECT.containsKey(testId)) {
+                LOGGER.info("🔥 Found exact effect match in {} registry: {} -> {}", namespace, effect, testId);
+                return testId.toString();
+            }
         }
+        
+        // 🔥 USE REGISTRY CONTEXT PROVIDER for fuzzy matching
+        List<ResourceLocation> matches = RegistryContextProvider.findMatchingEffects(effect, searchMods);
+        if (!matches.isEmpty()) {
+            ResourceLocation bestMatch = matches.get(0); // First is best match
+            LOGGER.info("🔥 Found fuzzy effect match: {} -> {}", effect, bestMatch);
+            return bestMatch.toString();
+        }
+        
+        LOGGER.warn("🔥 Could not find effect '{}' in any registry from mods {}. Available effects: {}", 
+            effect, searchMods, BuiltInRegistries.MOB_EFFECT.keySet().size());
+        return null; // Don't guess - return null if not found
+    }
+        
+        // Already properly formatted with namespace
+        if (effect.contains(":")) {
+            ResourceLocation effectId = ResourceLocation.tryParse(effect);
+            if (effectId != null && BuiltInRegistries.MOB_EFFECT.containsKey(effectId)) {
+                return effect;
+            }
+            return null; // Invalid namespaced effect
+        }
+        
+        // 🔥 DYNAMIC REGISTRY SEARCH - Check ALL registered effects from ALL mods
+        String[] namespaces = {"minecraft", "eidolon", "eidolonunchained", "forge"};
+        
+        for (String namespace : namespaces) {
+            ResourceLocation testId = new ResourceLocation(namespace, effect);
+            if (BuiltInRegistries.MOB_EFFECT.containsKey(testId)) {
+                LOGGER.info("🔥 Found effect in {} registry: {} -> {}", namespace, effect, testId);
+                return testId.toString();
+            }
+        }
+        
+        // 🔥 FUZZY SEARCH - Look for partial matches in ALL effect registries
+        for (ResourceLocation registeredEffect : BuiltInRegistries.MOB_EFFECT.keySet()) {
+            String path = registeredEffect.getPath();
+            // Check if registered effect contains our search term
+            if (path.contains(effect) || effect.contains(path)) {
+                LOGGER.info("🔥 Found fuzzy effect match: {} -> {}", effect, registeredEffect);
+                return registeredEffect.toString();
+            }
+        }
+        
+        LOGGER.warn("🔥 Could not find effect '{}' in any registry. Available effects: {}", 
+            effect, BuiltInRegistries.MOB_EFFECT.keySet().size());
+        return null; // Don't guess - return null if not found
+    }
+    
+    /**
+     * Generic method to find ResourceLocation in any registry
+     * This can be used for biomes, entities, enchantments, etc.
+     */
+    private static String findInRegistry(String name, String registryType) {
+        if (name == null || name.trim().isEmpty()) return null;
+        
+        name = name.toLowerCase().trim().replace(" ", "_");
+        
+        // Already properly formatted with namespace
+        if (name.contains(":")) {
+            ResourceLocation resourceId = ResourceLocation.tryParse(name);
+            if (resourceId != null) {
+                return name; // Assume valid if properly formatted
+            }
+            return null;
+        }
+        
+        // Try common namespaces
+        String[] namespaces = {"minecraft", "eidolon", "eidolonunchained", "forge"};
+        
+        for (String namespace : namespaces) {
+            ResourceLocation testId = new ResourceLocation(namespace, name);
+            // Note: We can't easily check all registries generically,
+            // but this method can be expanded for specific registry types
+            LOGGER.info("🔥 Checking {} registry for: {} -> {}", registryType, name, testId);
+        }
+        
+        // Default to minecraft namespace as last resort
+        return "minecraft:" + name;
     }
     
     /**
