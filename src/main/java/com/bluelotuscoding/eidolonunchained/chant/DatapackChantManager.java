@@ -138,6 +138,10 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
                 // Create spell for this chant
                 DatapackChantSpell spell = new DatapackChantSpell(chant.getId(), chant, signs);
                 
+                // CRITICAL FIX: Set the sign sequence after construction
+                // This is required because StaticSpell constructor doesn't initialize signs
+                spell.setSigns(new elucent.eidolon.api.spells.SignSequence(signs));
+                
                 // Register the spell with Eidolon's spell system
                 elucent.eidolon.registries.Spells.registerWithFallback(spell);
                 
@@ -341,6 +345,11 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
         
         // Create a spell instance for this chant
         Sign[] signs = INSTANCE.convertToSigns(chant.getSignSequence());
-        return new DatapackChantSpell(chantName, chant, signs);
+        DatapackChantSpell spell = new DatapackChantSpell(chantName, chant, signs);
+        
+        // CRITICAL FIX: Set the sign sequence after construction
+        spell.setSigns(new elucent.eidolon.api.spells.SignSequence(signs));
+        
+        return spell;
     }
 }
