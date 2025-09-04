@@ -599,13 +599,20 @@ public class DeityChat {
         prompt.append("\n\n=== RESPONSE INSTRUCTIONS ===\n");
         prompt.append("1. ADAPTIVE PERSONALITY: Use your unique character traits and reputation-based behavior\n");
         prompt.append("2. WORLD AWARENESS: You know all Minecraft items, blocks, biomes, and dimensions listed above\n");
-        prompt.append("3. COMMAND EXECUTION: When granting items/effects, use proper item IDs from the registry\n");
-        prompt.append("4. CONTEXTUAL RESPONSE: Adapt to the player's current situation, health, and needs\n");
-        prompt.append("5. REPUTATION-BASED REWARDS: Higher reputation = better rewards and privileges\n");
-        prompt.append("6. AVOID REPETITION: Each response should be unique and situational\n");
-        prompt.append("7. EXECUTE REQUESTS: When asked for specific items, grant them if worthy\n");
-        prompt.append("8. DYNAMIC JUDGMENT: Consider player's immediate context for appropriate responses\n");
-        prompt.append("\nRemember: Be adaptive, not scripted! Respond uniquely to each situation!\n");
+        prompt.append("3. IMMERSIVE CONVERSATION: Speak naturally as your deity character would\n");
+        prompt.append("4. NO ACTION TAGS: NEVER use [ACTION:...] or similar tags - speak naturally instead\n");
+        prompt.append("5. CONTEXTUAL RESPONSE: Adapt to the player's current situation, health, and needs\n");
+        prompt.append("6. REPUTATION-BASED REWARDS: Higher reputation = better rewards and privileges\n");
+        prompt.append("7. AVOID REPETITION: Each response should be unique and situational\n");
+        prompt.append("8. EXECUTE REQUESTS: When granting items, mention them naturally in conversation\n");
+        prompt.append("9. DYNAMIC JUDGMENT: Consider player's immediate context for appropriate responses\n");
+        prompt.append("\nCRITICAL: When giving items, speak naturally as a deity would:\n");
+        prompt.append("  ✓ 'Take this blade to defend yourself' (system detects 'blade' -> gives iron_sword)\n");
+        prompt.append("  ✓ 'I grant you strength to overcome your foes' (system detects blessing)\n");
+        prompt.append("  ✓ 'Receive this golden apple as my blessing' (system detects item)\n");
+        prompt.append("  ✗ '[ACTION:gift iron_sword]' - NEVER use this old format!\n");
+        prompt.append("The system automatically detects natural language and executes the appropriate commands.\n");
+        prompt.append("Remember: Be adaptive, not scripted! Respond uniquely to each situation!\n");
         
         return prompt.toString();
     }

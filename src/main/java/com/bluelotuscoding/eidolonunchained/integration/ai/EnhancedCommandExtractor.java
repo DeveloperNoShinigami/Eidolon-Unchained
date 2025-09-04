@@ -45,7 +45,7 @@ public class EnhancedCommandExtractor {
     
     // Pattern for [ACTION:give item] format used by AI responses
     private static final Pattern ACTION_PATTERN = Pattern.compile(
-        "\\[ACTION:(?:give|grant|bestow)\\s+([\\w:_-]+)(?:\\s+(\\d+))?\\]",
+        "\\[ACTION:(?:give|grant|bestow|gift)\\s+([\\w:_-]+)(?:\\s+(\\d+))?\\]",
         Pattern.CASE_INSENSITIVE
     );
     
@@ -207,59 +207,58 @@ public class EnhancedCommandExtractor {
         String lowerResponse = response.toLowerCase();
         String playerName = player.getName().getString();
         
-        // Healing actions - use dynamic effect lookup
-        if (lowerResponse.contains("heal") || lowerResponse.contains("restore health")) {
-            String regenEffect = normalizeEffectId("regeneration", modContextIds);
-            if (regenEffect != null) {
-                commands.add(String.format("effect give %s %s 300 1", playerName, regenEffect));
+        // 🔥 DYNAMIC NATURAL LANGUAGE PATTERNS - NO HARDCODING!
+        
+        // Pattern: "Take this [item]" / "I grant you [item]" / "Receive this [item]"
+        Pattern naturalGiftPattern = Pattern.compile(
+            "\\b(?:take|receive|accept|i (?:grant|give|bestow)|here is)\\s+(?:this\\s+|a\\s+)?([\\w\\s:_-]+?)(?:\\s*[,.]|$)",
+            Pattern.CASE_INSENSITIVE
+        );
+        
+        Matcher naturalGiftMatcher = naturalGiftPattern.matcher(response);
+        while (naturalGiftMatcher.find()) {
+            String itemText = naturalGiftMatcher.group(1).trim();
+            // 🔥 USE DYNAMIC REGISTRY MATCHING - Let the registry find the best match
+            String itemId = normalizeItemId(itemText.replace(" ", "_"), modContextIds);
+            if (itemId != null) {
+                commands.add(String.format("give %s %s 1", playerName, itemId));
+                LOGGER.info("🔥 Extracted natural gift: '{}' -> {}", naturalGiftMatcher.group(0), itemId);
             }
         }
         
-        // Blessing actions
-        if (lowerResponse.contains("bless") && lowerResponse.contains("strength")) {
-            String strengthEffect = normalizeEffectId("strength", modContextIds);
-            if (strengthEffect != null) {
-                commands.add(String.format("effect give %s %s 600 1", playerName, strengthEffect));
+        // 🔥 DYNAMIC ITEM DETECTION - Find ANY mentioned item using fuzzy registry matching
+        Pattern itemMentionPattern = Pattern.compile("\\b([a-z_]+(?:_[a-z_]+)*)\\b", Pattern.CASE_INSENSITIVE);
+        Matcher itemMentionMatcher = itemMentionPattern.matcher(lowerResponse);
+        while (itemMentionMatcher.find()) {
+            String potentialItem = itemMentionMatcher.group(1);
+            // Skip common words that aren't items
+            if (isCommonWord(potentialItem)) continue;
+            
+            String itemId = normalizeItemId(potentialItem, modContextIds);
+            if (itemId != null) {
+                commands.add(String.format("give %s %s 1", playerName, itemId));
+                LOGGER.info("🔥 Detected item mention: '{}' -> {}", potentialItem, itemId);
+                break; // Only give one item per response to avoid spam
             }
         }
         
-        // Protection actions
-        if (lowerResponse.contains("protect") || lowerResponse.contains("shield")) {
-            String resistanceEffect = normalizeEffectId("resistance", modContextIds);
-            if (resistanceEffect != null) {
-                commands.add(String.format("effect give %s %s 600 1", playerName, resistanceEffect));
-            }
-        }
-        
-        // Night vision for shadow deities
-        if (lowerResponse.contains("shadow sight") || lowerResponse.contains("dark vision")) {
-            String nightVisionEffect = normalizeEffectId("night_vision", modContextIds);
-            if (nightVisionEffect != null) {
-                commands.add(String.format("effect give %s %s 1200 0", playerName, nightVisionEffect));
-            }
-        }
-        
-        // Speed blessings
-        if (lowerResponse.contains("swift") || lowerResponse.contains("speed")) {
-            String speedEffect = normalizeEffectId("speed", modContextIds);
-            if (speedEffect != null) {
-                commands.add(String.format("effect give %s %s 600 1", playerName, speedEffect));
-            }
-        }
-        
-        // Gift of sustenance - use dynamic item lookup
-        if (lowerResponse.contains("food") || lowerResponse.contains("nourish")) {
-            String goldenApple = normalizeItemId("golden_apple", modContextIds);
-            if (goldenApple != null) {
-                commands.add(String.format("give %s %s 2", playerName, goldenApple));
-            }
-        }
-        
-        // Curse actions
-        if (lowerResponse.contains("curse") || lowerResponse.contains("punish")) {
-            String weaknessEffect = normalizeEffectId("weakness", modContextIds);
-            if (weaknessEffect != null) {
-                commands.add(String.format("effect give %s %s 300 1", playerName, weaknessEffect));
+        // 🔥 DYNAMIC EFFECT DETECTION - Find ANY mentioned effect using fuzzy registry matching
+        Pattern effectMentionPattern = Pattern.compile("\\b([a-z_]+(?:_[a-z_]+)*)\\b", Pattern.CASE_INSENSITIVE);
+        Matcher effectMentionMatcher = effectMentionPattern.matcher(lowerResponse);
+        while (effectMentionMatcher.find()) {
+            String potentialEffect = effectMentionMatcher.group(1);
+            // Skip common words that aren't effects
+            if (isCommonWord(potentialEffect)) continue;
+            
+            String effectId = normalizeEffectId(potentialEffect, modContextIds);
+            if (effectId != null) {
+                // Determine duration and amplifier based on context
+                int duration = lowerResponse.contains("brief") ? 300 : 600;
+                int amplifier = lowerResponse.contains("strong") || lowerResponse.contains("powerful") ? 2 : 1;
+                
+                commands.add(String.format("effect give %s %s %d %d", playerName, effectId, duration, amplifier));
+                LOGGER.info("🔥 Detected effect mention: '{}' -> {}", potentialEffect, effectId);
+                break; // Only apply one effect per response to avoid spam
             }
         }
         
@@ -444,6 +443,38 @@ public class EnhancedCommandExtractor {
         cleaned = cleaned.replaceAll("\\n\\s*\\n", "\n").trim();
         
         return cleaned;
+    }
+    
+    /**
+     * Check if a word is too common to be an item/effect name
+     * Prevents false positives in dynamic registry matching
+     */
+    private static boolean isCommonWord(String word) {
+        if (word == null || word.length() < 3) return true;
+        
+        // Common English words that shouldn't be interpreted as items/effects
+        String[] commonWords = {
+            "the", "and", "you", "are", "for", "not", "but", "can", "has", "had", 
+            "this", "that", "with", "will", "your", "from", "they", "have", "been",
+            "take", "give", "make", "come", "know", "time", "work", "look", "get",
+            "way", "see", "him", "two", "may", "say", "she", "use", "her", "each",
+            "which", "their", "said", "how", "out", "many", "them", "these", "so",
+            "some", "what", "would", "make", "like", "into", "than", "find", "was",
+            "more", "very", "when", "where", "much", "before", "right", "too", "any",
+            "same", "tell", "boy", "follow", "came", "want", "show", "also", "around",
+            "form", "three", "small", "set", "put", "end", "why", "turn", "ask",
+            "went", "men", "read", "need", "land", "different", "home", "move", "try",
+            "kind", "hand", "picture", "again", "change", "off", "play", "spell",
+            "air", "away", "animal", "house", "point", "page", "letter", "mother",
+            "answer", "found", "study", "still", "learn", "should", "america", "world"
+        };
+        
+        String lowerWord = word.toLowerCase();
+        for (String common : commonWords) {
+            if (common.equals(lowerWord)) return true;
+        }
+        
+        return false;
     }
     
     /**
