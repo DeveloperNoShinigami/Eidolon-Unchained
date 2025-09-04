@@ -1,0 +1,1937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eidolon Unchained - Unified Datapack Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f23 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(90deg, rgba(26,26,46,0.95) 0%, rgba(15,15,35,0.95) 100%);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid #4a148c;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(138, 43, 226, 0.3);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #8a2be2, #4a148c);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(138, 43, 226, 0.4);
+        }
+
+        .title {
+            color: #ffa500;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .subtitle {
+            color: #9e9e9e;
+            font-size: 0.9rem;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, #7c4dff, #651fff);
+            color: white;
+            box-shadow: 0 4px 12px rgba(124, 77, 255, 0.3);
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 77, 255, 0.5);
+        }
+
+        .btn-import {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+        }
+
+        /* AI Deity specific styles */
+        .threshold-row, .research-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            gap: 8px;
+        }
+
+        .thresholds-container, .research-container {
+            background: rgba(0,0,0,0.1);
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .prayer-config-section {
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: rgba(0,0,0,0.2);
+        }
+
+        .config-header {
+            font-weight: bold;
+            color: #4a9eff;
+            margin-bottom: 1rem;
+            font-size: 1.1em;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #444;
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 80px);
+        }
+
+        .sidebar {
+            width: 300px;
+            background: rgba(20,20,35,0.9);
+            border-right: 1px solid #333;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-title {
+            color: #ffa500;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+            padding: 1rem 1rem 0.5rem;
+            background: rgba(255, 165, 0, 0.1);
+            border-bottom: 2px solid #ffa500;
+        }
+
+        .system-nav {
+            padding: 0 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .nav-btn {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+
+        .nav-btn:hover:not(.disabled) {
+            background: rgba(138, 43, 226, 0.2);
+            transform: translateX(4px);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(90deg, rgba(138, 43, 226, 0.3), transparent);
+            border-left: 3px solid #8a2be2;
+            color: #ffa500;
+            font-weight: 600;
+        }
+
+        .nav-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            color: #666;
+        }
+
+        .content-list {
+            flex: 1;
+            padding: 0 1rem 1rem;
+        }
+
+        .list-title {
+            color: #ffa500;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: rgba(255, 165, 0, 0.1);
+            border-left: 3px solid #ffa500;
+        }
+
+        .item-list {
+            list-style: none;
+            margin-bottom: 1rem;
+        }
+
+        .item {
+            margin: 0.5rem 0;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .item:hover {
+            background: rgba(138, 43, 226, 0.2);
+            transform: translateX(4px);
+        }
+
+        .item.selected {
+            background: linear-gradient(90deg, rgba(138, 43, 226, 0.3), transparent);
+            border-left: 3px solid #8a2be2;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: #ffa500;
+        }
+
+        .item-id {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        .add-item-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px dashed #4caf50;
+            color: #4caf50;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .add-item-btn:hover {
+            background: rgba(76, 175, 80, 0.3);
+            border-style: solid;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(15,15,35,0.8);
+        }
+
+        .content-header {
+            background: rgba(26,26,46,0.9);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content-title {
+            color: #ffa500;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .content-body {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .form-section {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            color: #ffa500;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #444;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            flex: 1;
+        }
+
+        .form-label {
+            display: block;
+            color: #9e9e9e;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(26, 26, 46, 0.95);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #8a2be2;
+            background: rgba(138, 43, 226, 0.05);
+            box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.1);
+        }
+
+        .form-select option {
+            background: rgba(26, 26, 46, 0.95);
+            color: #e0e0e0;
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+        }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-checkbox input {
+            width: auto;
+        }
+
+        .field-help {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.25rem;
+            font-style: italic;
+        }
+
+        .stages-container {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stage-editor {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #555;
+        }
+
+        .stage-badge {
+            background: rgba(138, 43, 226, 0.2);
+            color: #8a2be2;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .remove-btn {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+            border: 1px solid #f44336;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+
+        .remove-btn:hover {
+            background: rgba(244, 67, 54, 0.4);
+        }
+
+        .rewards-container {
+            background: rgba(76, 175, 80, 0.05);
+            border: 1px dashed rgba(76, 175, 80, 0.3);
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .reward-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .reward-item input {
+            flex: 1;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.85rem;
+        }
+
+        .add-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px dashed #4caf50;
+            color: #4caf50;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .add-btn:hover {
+            background: rgba(76, 175, 80, 0.3);
+            border-style: solid;
+        }
+
+        .welcome-screen {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #9e9e9e;
+        }
+
+        .welcome-screen h2 {
+            color: #ffa500;
+            margin-bottom: 1rem;
+            font-size: 2rem;
+        }
+
+        .welcome-screen p {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .json-preview {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            color: #e0e0e0;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.3);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(138, 43, 226, 0.5);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo-section">
+            <div class="logo">🏛️</div>
+            <div>
+                <div class="title">Eidolon Unchained</div>
+                <div class="subtitle">Unified Datapack Builder</div>
+            </div>
+        </div>
+        <div class="header-buttons">
+            <button class="btn btn-export" onclick="exportAll()">📦 Export All</button>
+            <button class="btn btn-import" onclick="importData()">📤 Import</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-title">Systems</div>
+            <nav class="system-nav">
+                <button class="nav-btn active" onclick="switchSystem('deities')" id="nav-deities">
+                    🏛️ Deities
+                </button>
+                <button class="nav-btn" onclick="switchSystem('ai-deities')" id="nav-ai-deities">
+                    🤖 AI Deities
+                </button>
+                <button class="nav-btn disabled" onclick="switchSystem('chants')" id="nav-chants">
+                    📜 Chants <span style="font-size: 0.7em;">(Soon)</span>
+                </button>
+                <button class="nav-btn disabled" onclick="switchSystem('codex')" id="nav-codex">
+                    📚 Codex <span style="font-size: 0.7em;">(Soon)</span>
+                </button>
+                <button class="nav-btn disabled" onclick="switchSystem('research')" id="nav-research">
+                    🔬 Research <span style="font-size: 0.7em;">(Soon)</span>
+                </button>
+            </nav>
+            
+            <div class="content-list">
+                <div class="list-title" id="listTitle">Deities</div>
+                <ul class="item-list" id="itemList"></ul>
+                <button class="add-item-btn" onclick="addNewItem()" id="addBtn">+ Add New Deity</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="content-header">
+                <div class="content-title" id="contentTitle">Select a deity to edit</div>
+                <button class="btn btn-export" onclick="showJSON()" id="jsonBtn" style="display: none;">View JSON</button>
+            </div>
+            <div class="content-body" id="contentBody">
+                <div class="welcome-screen">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">🏛️</div>
+                    <h2>Create Custom Deities</h2>
+                    <p>Build comprehensive deity definitions with progression systems, colors, and prayer types.</p>
+                    <p>Click "Add New Deity" to get started!</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        const state = {
+            currentSystem: 'deities',
+            currentItem: null,
+            data: {
+                deities: [],
+                aiDeities: []
+            }
+        };
+
+        function init() {
+            switchSystem('deities');
+        }
+
+        function switchSystem(system) {
+            // Update nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`nav-${system}`).classList.add('active');
+            
+            // Check if system is enabled
+            if (document.getElementById(`nav-${system}`).classList.contains('disabled')) {
+                return;
+            }
+            
+            state.currentSystem = system;
+            state.currentItem = null;
+            
+            updateUI();
+            renderItemList();
+            showWelcomeScreen();
+        }
+
+        function updateUI() {
+            const listTitle = document.getElementById('listTitle');
+            const addBtn = document.getElementById('addBtn');
+            
+            switch (state.currentSystem) {
+                case 'deities':
+                    listTitle.textContent = 'Deities';
+                    addBtn.textContent = '+ Add New Deity';
+                    break;
+                case 'ai-deities':
+                    listTitle.textContent = 'AI Deities';
+                    addBtn.textContent = '+ Add New AI Deity';
+                    break;
+            }
+        }
+
+        function renderItemList() {
+            const list = document.getElementById('itemList');
+            const currentData = getCurrentData();
+            
+            if (currentData.length === 0) {
+                list.innerHTML = '<li style="color: #666; padding: 1rem; font-style: italic; text-align: center;">No items yet</li>';
+                return;
+            }
+
+            list.innerHTML = currentData.map((item, index) => `
+                <li class="item ${state.currentItem === index ? 'selected' : ''}" 
+                    onclick="selectItem(${index})">
+                    <div class="item-name">${getItemDisplayName(item)}</div>
+                    <div class="item-id">${getItemId(item)}</div>
+                </li>
+            `).join('');
+        }
+
+        function getCurrentData() {
+            switch (state.currentSystem) {
+                case 'deities': return state.data.deities;
+                case 'ai-deities': return state.data.aiDeities;
+                default: return [];
+            }
+        }
+
+        function getItemDisplayName(item) {
+            switch (state.currentSystem) {
+                case 'deities':
+                    return item.name || 'Unnamed Deity';
+                case 'ai-deities':
+                    if (item.deity) {
+                        const parts = item.deity.split(':');
+                        return parts[1] ? parts[1].replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + ' (AI)' : 'AI Deity';
+                    }
+                    return 'Unnamed AI Deity';
+                default:
+                    return 'Unknown Item';
+            }
+        }
+
+        function getItemId(item) {
+            switch (state.currentSystem) {
+                case 'deities':
+                    return item.id || 'No ID set';
+                case 'ai-deities':
+                    return item.deity || 'No deity reference';
+                default:
+                    return 'Unknown';
+            }
+        }
+
+        function selectItem(index) {
+            state.currentItem = index;
+            renderItemList();
+            
+            const currentData = getCurrentData();
+            const item = currentData[index];
+            
+            switch (state.currentSystem) {
+                case 'deities':
+                    showDeityEditor(item);
+                    break;
+                case 'ai-deities':
+                    showAIDeityEditor(item);
+                    break;
+            }
+        }
+
+        function addNewItem() {
+            const currentData = getCurrentData();
+            let newItem;
+            
+            switch (state.currentSystem) {
+                case 'deities':
+                    newItem = createNewDeity();
+                    break;
+                case 'ai-deities':
+                    newItem = createNewAIDeity();
+                    break;
+                default:
+                    return;
+            }
+            
+            currentData.push(newItem);
+            const newIndex = currentData.length - 1;
+            selectItem(newIndex);
+        }
+
+        function createNewDeity() {
+            const deityCount = state.data.deities.length + 1;
+            return {
+                id: `eidolonunchained:custom_deity_${deityCount}`,
+                name: `Custom Deity ${deityCount}`,
+                description: `A powerful deity with dominion over mystical forces. This deity guides those who seek knowledge and balance in the arcane arts.`,
+                colors: {
+                    red: 138,
+                    green: 43,
+                    blue: 226
+                },
+                progression: {
+                    max_reputation: 200,
+                    stages: [
+                        {
+                            id: "initiate",
+                            reputation: 0,
+                            major: false,
+                            title: "Initiate",
+                            description: "A newcomer who has just begun their journey with this deity.",
+                            rewards: [
+                                "command:tell {player} Welcome, young initiate. Your journey begins now.",
+                                "command:give {player} minecraft:book 1"
+                            ]
+                        },
+                        {
+                            id: "devotee",
+                            reputation: 50,
+                            major: true,
+                            title: "Devotee",
+                            description: "A faithful follower who has proven their dedication through consistent prayer and service.",
+                            rewards: [
+                                "command:tell {player} Your devotion has been noticed. Accept this blessing.",
+                                "command:give {player} minecraft:enchanted_book 1",
+                                "command:effect give {player} minecraft:regeneration 300 1"
+                            ]
+                        },
+                        {
+                            id: "champion",
+                            reputation: 150,
+                            major: true,
+                            title: "Champion",
+                            description: "A mighty champion who serves as the deity's representative in the mortal realm.",
+                            rewards: [
+                                "command:tell {player} Rise, my champion. You now bear my divine favor.",
+                                "command:give {player} minecraft:diamond 3",
+                                "command:give {player} minecraft:golden_apple 2",
+                                "command:effect give {player} minecraft:strength 600 2"
+                            ]
+                        }
+                    ]
+                },
+                prayer_types: ["conversation", "blessing", "guidance"]
+            };
+        }
+
+        function createNewAIDeity() {
+            const aiDeityCount = state.data.aiDeities.length + 1;
+            // Try to reference an existing deity if available
+            const availableDeity = state.data.deities.length > 0 ? 
+                state.data.deities[0].id : 
+                `eidolonunchained:custom_deity_${aiDeityCount}`;
+                
+            return {
+                deity: availableDeity,
+                ai_provider: "player2ai",
+                model: "gemini-1.5-flash",
+                item_context_id: "",
+                personality: `You are a wise and ancient deity who guides mortals through their spiritual journey. You speak with the authority of ages and the warmth of a caring teacher. Your followers seek your guidance in understanding the deeper mysteries of existence.`,
+                
+                behavior_rules: {
+                    reputation_thresholds: {
+                        "0": "You observe this newcomer with cautious interest.",
+                        "25": "You acknowledge their growing dedication with approval.",
+                        "50": "You speak to them as a trusted follower who has proven their worth.",
+                        "75": "You honor them as a devoted servant who truly understands your ways.",
+                        "100": "You address them as your chosen champion, keeper of your sacred trust."
+                    },
+                    research_requirements: {
+                        "0": "You share basic knowledge and simple wisdom.",
+                        "5": "You reveal deeper secrets and advanced teachings.",
+                        "10": "You grant understanding of complex mysteries and ancient arts.",
+                        "15": "You bestow the most sacred knowledge and ultimate truths."
+                    },
+                    curses: {
+                        "disrespectful": "Those who show disrespect face your displeasure through weakness and misfortune.",
+                        "destructive": "Those who destroy what you protect suffer from your righteous anger.",
+                        "betrayer": "Those who betray your trust are marked with lasting consequences."
+                    },
+                    blessings: {
+                        "faithful": "You bless those who remain true to your teachings with strength and wisdom.",
+                        "protector": "Those who defend your sacred places receive enhanced abilities.",
+                        "seeker": "Genuine seekers of truth earn your favor through clarity and insight."
+                    },
+                    gifts: {
+                        "major_service": "Exceptional acts of devotion earn rare artifacts and powerful boons.",
+                        "ritual_completion": "Successful completion of sacred rituals brings special rewards.",
+                        "milestone_achievement": "Reaching important milestones grants unique gifts and recognition."
+                    },
+                    dynamic_responses: {
+                        time_of_day: {
+                            "day": "The light of day brings clarity and strength to your teachings.",
+                            "night": "In the quiet darkness, deeper mysteries can be contemplated and understood."
+                        },
+                        biome: {
+                            "minecraft:forest": "These ancient woods resonate with your power and wisdom.",
+                            "minecraft:plains": "The open spaces here allow for clear thought and contemplation.",
+                            "minecraft:mountains": "The towering peaks reflect the heights of spiritual achievement."
+                        }
+                    }
+                },
+                
+                prayer_configs: {
+                    conversation: {
+                        base_prompt: `A seeker approaches your sacred presence. They are {player}, known to you as {progression_title} with {reputation} reputation earned through faithful service. Speak to them with wisdom appropriate to their understanding and guide them on their spiritual path. Use 1-2 commands with careful discretion based on their progression:
+
+- Initiate (0-24 rep): Grant 1 simple blessing or basic guidance
+- Acolyte (25-49 rep): Provide 1-2 modest blessings and deeper wisdom  
+- Priest (50-74 rep): Bestow 2 significant blessings and advanced teachings
+- High Priest (75-99 rep): Grant powerful spiritual gifts with 2 commands
+- Champion (100 rep): Your greatest blessings - 2 commands with ultimate power
+
+Speak with divine authority and compassion.`,
+                        additional_prompts: [
+                            "You are a divine being - speak with wisdom beyond mortal understanding.",
+                            "Your followers seek spiritual growth - guide them toward enlightenment and purpose.",
+                            "Consider the player's spiritual development and offer appropriate guidance.",
+                            "Use sacred items and effects when granting blessings - favor wisdom, protection, and growth."
+                        ],
+                        reference_commands: [
+                            "give {player} minecraft:book 1",
+                            "give {player} minecraft:bread 8",
+                            "effect give {player} minecraft:regeneration 300 1",
+                            "give {player} minecraft:golden_apple 2",
+                            "effect give {player} minecraft:strength 600 1",
+                            "give {player} minecraft:enchanted_golden_apple 1",
+                            "effect give {player} minecraft:absorption 600 2",
+                            "give {player} minecraft:totem_of_undying 1"
+                        ],
+                        reputation_required: 0,
+                        cooldown_minutes: 5,
+                        max_commands: 2,
+                        allowed_commands: ["give", "effect", "tellraw"]
+                    },
+                    blessing: {
+                        base_prompt: `Your faithful {progression_title} {player} seeks your divine blessing. With {reputation} reputation earned through devoted service, they deserve your aid. Grant them power appropriate to their spiritual standing:
+
+- Initiate: 1 basic blessing like regeneration (3 minutes)
+- Acolyte: 1 moderate blessing with useful effects (5 minutes)
+- Priest: 1-2 strong blessings with enhanced power (8 minutes)
+- High Priest: 2 powerful blessings with extended duration (10 minutes)
+- Champion: 2 ultimate divine blessings with maximum potency
+
+Use exactly 1-2 commands based on their tier. Speak with divine benevolence.`,
+                        additional_prompts: [
+                            "Focus on blessings that enhance their spiritual and physical capabilities.",
+                            "Consider their current needs and challenges when granting divine favor.",
+                            "Your power should strengthen them for the trials ahead."
+                        ],
+                        reference_commands: [
+                            "effect give {player} minecraft:regeneration 300 1",
+                            "effect give {player} minecraft:strength 600 1",
+                            "effect give {player} minecraft:speed 300 1",
+                            "effect give {player} minecraft:resistance 600 1",
+                            "effect give {player} minecraft:absorption 300 2",
+                            "effect give {player} minecraft:fire_resistance 1200 0"
+                        ],
+                        reputation_required: 10,
+                        cooldown_minutes: 8,
+                        max_commands: 2,
+                        allowed_commands: ["effect"]
+                    },
+                    guidance: {
+                        base_prompt: `Your devoted {progression_title} {player} seeks wisdom and guidance. Their {reputation} reputation shows their commitment to your teachings. Share your divine wisdom and optionally provide aid:
+
+- Priest: Deep wisdom, 1 helpful item if truly seeking knowledge
+- High Priest: Sacred mysteries, 1-2 rewards for advanced followers
+- Champion: Ultimate truths, 2 legendary gifts for your champion
+
+Use 0-2 commands total. Focus on wisdom over material rewards unless they show deep understanding.`,
+                        additional_prompts: [
+                            "Share divine wisdom that helps them understand their spiritual journey.",
+                            "Your guidance should illuminate the path ahead and resolve their doubts.",
+                            "Provide counsel on how to grow spiritually and serve the greater good.",
+                            "Reward those who truly seek knowledge with items that aid their quest."
+                        ],
+                        reference_commands: [
+                            "give {player} minecraft:enchanted_book 1",
+                            "give {player} minecraft:emerald 4",
+                            "give {player} minecraft:compass 1",
+                            "give {player} minecraft:map 1",
+                            "tellraw {player} \"The path ahead requires both courage and wisdom...\"",
+                            "give {player} minecraft:diamond 3"
+                        ],
+                        reputation_required: 30,
+                        cooldown_minutes: 15,
+                        max_commands: 2,
+                        allowed_commands: ["tellraw", "give"]
+                    }
+                },
+                
+                task_config: {
+                    enabled: true,
+                    max_active_tasks: 3,
+                    task_assignment_behavior: {
+                        auto_assign_probability: 0.3,
+                        min_reputation_for_auto_assign: 5,
+                        conversation_triggers: [
+                            "first_conversation",
+                            "reputation_milestone", 
+                            "completed_previous_task"
+                        ],
+                        cooldown_between_assignments_hours: 24
+                    },
+                    available_tasks: [
+                        {
+                            task_id: "basic_devotion",
+                            display_name: "Prove Your Devotion",
+                            description: "Complete basic tasks to show your commitment",
+                            progression_tier: "novice",
+                            ai_assignment_context: {
+                                trigger_conditions: {
+                                    min_reputation: 0,
+                                    max_reputation: 30,
+                                    prayer_types: ["conversation"],
+                                    completed_tasks: [],
+                                    unlocked_progressions: []
+                                },
+                                assignment_prompt: "Young seeker, prove your devotion by completing this sacred task. Your dedication will earn you {reputation_reward} favor.",
+                                completion_phrases: [
+                                    "Your devotion has been noted and appreciated.",
+                                    "You have taken the first step on the path of enlightenment.",
+                                    "Your commitment shows promise for greater things to come."
+                                ]
+                            },
+                            requirements: [
+                                {
+                                    type: "collect_items",
+                                    items: [
+                                        {
+                                            item: "minecraft:wheat",
+                                            count: 10,
+                                            display_name: "Sacred Offering"
+                                        }
+                                    ]
+                                }
+                            ],
+                            rewards: {
+                                reputation: 5,
+                                commands: [
+                                    "give {player} minecraft:bread 8",
+                                    "tellraw {player} {\"text\":\"✦ Your offering has been accepted with gratitude\",\"color\":\"gold\"}"
+                                ],
+                                progression_unlock: "basic_complete"
+                            },
+                            cooldown_hours: 24,
+                            repeatable: false
+                        }
+                    ]
+                }
+            };
+        }
+
+        function showDeityEditor(deity) {
+            const title = document.getElementById('contentTitle');
+            const body = document.getElementById('contentBody');
+            const jsonBtn = document.getElementById('jsonBtn');
+
+            title.textContent = deity.name || 'Unnamed Deity';
+            jsonBtn.style.display = 'block';
+
+            body.innerHTML = `
+                <div class="form-section">
+                    <div class="section-title">Basic Information</div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Deity ID</label>
+                            <input type="text" class="form-input" value="${deity.id || ''}" 
+                                   onchange="updateItem('id', this.value)"
+                                   placeholder="eidolonunchained:nature_deity">
+                            <div class="field-help">Full ResourceLocation identifier - Examples: eidolonunchained:nature_deity, eidolonunchained:shadow_lord, eidolonunchained:flame_guardian</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Display Name</label>
+                            <input type="text" class="form-input" value="${deity.name || ''}" 
+                                   onchange="updateItem('name', this.value)"
+                                   placeholder="Verdania, Guardian of Nature">
+                            <div class="field-help">Display name with titles - Examples: "Umbra, Lord of Shadows", "Pyros the Eternal Flame", "Aquatica, Mistress of the Depths"</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-textarea" onchange="updateItem('description', this.value)"
+                                  placeholder="Ancient protector of forests and growing things, Verdania watches over all who seek harmony with nature. Those who honor the balance of life and death earn her favor, while those who destroy without purpose face her wrath.">${deity.description || ''}</textarea>
+                        <div class="field-help">Rich lore describing the deity's domain, personality, and what they value in followers</div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">Appearance</div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Red (0-255)</label>
+                            <input type="number" class="form-input" value="${deity.colors?.red || 74}" 
+                                   min="0" max="255" onchange="updateColor('red', parseInt(this.value))">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Green (0-255)</label>
+                            <input type="number" class="form-input" value="${deity.colors?.green || 124}" 
+                                   min="0" max="255" onchange="updateColor('green', parseInt(this.value))">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Blue (0-255)</label>
+                            <input type="number" class="form-input" value="${deity.colors?.blue || 89}" 
+                                   min="0" max="255" onchange="updateColor('blue', parseInt(this.value))">
+                        </div>
+                    </div>
+                    
+                    <div class="field-help">RGB color values used for UI theming and visual effects. Examples: Nature (74,124,89), Shadow (75,0,130), Fire (255,69,0), Water (30,144,255)</div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">Prayer Types</div>
+                    
+                    <div class="form-row">
+                        ${generatePrayerTypeCheckboxes(deity.prayer_types || [])}
+                    </div>
+                    
+                    <div class="field-help">Available prayer categories: Conversation (chat with deity), Blessing (buffs/items), Guidance (hints/advice), Protection (defensive effects), Knowledge (research/secrets), Balance (remove curses), Growth (enhance abilities), Healing (restore health/status)</div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">Progression System</div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Maximum Reputation</label>
+                        <input type="number" class="form-input" value="${deity.progression?.max_reputation || 100}" 
+                               onchange="updateProgression('max_reputation', parseInt(this.value))">
+                        <div class="field-help">Highest reputation value players can achieve</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Progression Stages</label>
+                        <div class="stages-container">
+                            <div id="stagesContainer">${generateStagesEditor(deity.progression?.stages || [])}</div>
+                            <button class="add-btn" onclick="addProgressionStage()">+ Add Stage</button>
+                        </div>
+                        <div class="field-help">Define reputation milestones with rewards and titles. Start with small stages (0, 25, 50) and increase gaps for higher tiers (100, 200, 500)</div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">Actions</div>
+                    <div class="form-row">
+                        <button class="btn btn-export" onclick="showJSON()">View JSON</button>
+                        <button class="remove-btn" onclick="deleteItem()" style="padding: 0.75rem 1.5rem;">Delete Deity</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showAIDeityEditor(aiDeity) {
+            const title = document.getElementById('contentTitle');
+            const body = document.getElementById('contentBody');
+            const jsonBtn = document.getElementById('jsonBtn');
+
+            title.textContent = getItemDisplayName(aiDeity);
+            jsonBtn.style.display = 'block';
+
+            body.innerHTML = `
+                <div class="form-section">
+                    <div class="section-title">Basic Configuration</div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Deity Reference</label>
+                            <select class="form-select" onchange="updateItem('deity', this.value)">
+                                <option value="">Select a deity...</option>
+                                ${state.data.deities.map(deity => `
+                                    <option value="${deity.id}" ${aiDeity.deity === deity.id ? 'selected' : ''}>${deity.name || deity.id}</option>
+                                `).join('')}
+                            </select>
+                            <div class="field-help">Must reference an existing basic deity. Create deities first in the Deities tab.</div>
+                        </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">AI Provider</label>
+                            <select class="form-select" onchange="updateItem('ai_provider', this.value)">
+                                <option value="player2ai" ${aiDeity.ai_provider === 'player2ai' ? 'selected' : ''}>Player2AI</option>
+                                <option value="openai" ${aiDeity.ai_provider === 'openai' ? 'selected' : ''}>OpenAI</option>
+                                <option value="anthropic" ${aiDeity.ai_provider === 'anthropic' ? 'selected' : ''}>Anthropic</option>
+                                <option value="google" ${aiDeity.ai_provider === 'google' ? 'selected' : ''}>Google</option>
+                            </select>
+                            <div class="field-help">AI service provider for conversation generation</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Model</label>
+                            <input type="text" class="form-input" value="${aiDeity.model || ''}" 
+                                   onchange="updateItem('model', this.value)"
+                                   placeholder="gemini-1.5-flash">
+                            <div class="field-help">Specific AI model to use (e.g., gemini-1.5-flash, gpt-4, claude-3)</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Item Context ID (optional)</label>
+                            <input type="text" class="form-input" value="${aiDeity.item_context_id || ''}" 
+                                   onchange="updateItem('item_context_id', this.value)"
+                                   placeholder="Special item for context">
+                            <div class="field-help">Optional item to provide additional context to the AI</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">Personality</div>
+                    <div class="form-group">
+                        <label class="form-label">Base Personality</label>
+                        <textarea class="form-textarea" onchange="updateItem('personality', this.value)" rows="4"
+                                  placeholder="Describe the deity's core personality and speaking style...">${aiDeity.personality || ''}</textarea>
+                        <div class="field-help">Core personality that defines how this deity speaks and behaves across all interactions</div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">Behavior Rules</div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Reputation Thresholds</label>
+                        <div class="thresholds-container">
+                            ${generateReputationThresholds(aiDeity.behavior_rules?.reputation_thresholds || {})}
+                            <button class="add-btn" onclick="addReputationThreshold()">+ Add Threshold</button>
+                        </div>
+                        <div class="field-help">How the deity responds at different reputation levels (e.g., "0": "Observes cautiously", "50": "Speaks warmly")</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Research Requirements</label>
+                        <div class="research-container">
+                            ${generateResearchRequirements(aiDeity.behavior_rules?.research_requirements || {})}
+                            <button class="add-btn" onclick="addResearchRequirement()">+ Add Research Level</button>
+                        </div>
+                        <div class="field-help">Knowledge sharing based on research progression (e.g., "5": "Reveals deeper secrets", "10": "Grants ancient wisdom")</div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">Prayer Configurations</div>
+                    ${generateAIPrayerConfigsEditor(aiDeity.prayer_configs || {})}
+                    <div class="field-help">Configure AI prompts and behavior for different prayer types</div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">Task System</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <div class="form-checkbox">
+                                <input type="checkbox" ${aiDeity.task_config?.enabled ? 'checked' : ''}
+                                       onchange="updateTaskConfig('enabled', this.checked)">
+                                <label>Enable Task System</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Max Active Tasks</label>
+                            <input type="number" class="form-input" value="${aiDeity.task_config?.max_active_tasks || 3}" 
+                                   min="1" max="10" onchange="updateTaskConfig('max_active_tasks', parseInt(this.value))">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Auto-assign Probability</label>
+                            <input type="number" class="form-input" value="${aiDeity.task_config?.task_assignment_behavior?.auto_assign_probability || 0.3}" 
+                                   min="0" max="1" step="0.1" onchange="updateTaskAssignmentBehavior('auto_assign_probability', parseFloat(this.value))">
+                            <div class="field-help">Chance (0.0-1.0) that AI will automatically assign tasks during conversations</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">Actions</div>
+                    <div class="form-row">
+                        <button class="btn btn-export" onclick="showJSON()">View JSON</button>
+                        <button class="remove-btn" onclick="deleteItem()" style="padding: 0.75rem 1.5rem;">Delete AI Deity</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generatePrayerTypeCheckboxes(prayerTypes) {
+            const availableTypes = ['conversation', 'blessing', 'guidance', 'protection', 'knowledge', 'balance', 'growth', 'healing'];
+            
+            return availableTypes.map(type => `
+                <div class="form-group">
+                    <div class="form-checkbox">
+                        <input type="checkbox" id="prayer_${type}" ${prayerTypes.includes(type) ? 'checked' : ''}
+                               onchange="updatePrayerType('${type}', this.checked)">
+                        <label for="prayer_${type}">${type.charAt(0).toUpperCase() + type.slice(1)}</label>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateStagesEditor(stages) {
+            if (stages.length === 0) {
+                return '<div style="color: #666; text-align: center; padding: 2rem; font-style: italic;">No stages defined yet</div>';
+            }
+
+            return stages.map((stage, index) => `
+                <div class="stage-editor">
+                    <div class="stage-header">
+                        <div class="stage-badge">${stage.title || `Stage ${index + 1}`}</div>
+                        <button class="remove-btn" onclick="removeStage(${index})">Remove Stage</button>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Stage ID</label>
+                            <input type="text" class="form-input" value="${stage.id || ''}" 
+                                   onchange="updateStage(${index}, 'id', this.value)"
+                                   placeholder="novice_initiate">
+                            <div class="field-help">Unique identifier: novice_initiate, adept_scholar, master_champion</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Reputation Required</label>
+                            <input type="number" class="form-input" value="${stage.reputation || 0}" 
+                                   onchange="updateStage(${index}, 'reputation', parseInt(this.value))">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Title</label>
+                            <input type="text" class="form-input" value="${stage.title || ''}" 
+                                   onchange="updateStage(${index}, 'title', this.value)"
+                                   placeholder="Faithful Devotee">
+                            <div class="field-help">Player-visible title: "Nature Initiate", "Shadow Adept", "Flame Master"</div>
+                        </div>
+                        <div class="form-group">
+                            <div class="form-checkbox">
+                                <input type="checkbox" ${stage.major ? 'checked' : ''}
+                                       onchange="updateStage(${index}, 'major', this.checked)">
+                                <label>Major Stage (important milestone)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-textarea" onchange="updateStage(${index}, 'description', this.value)"
+                                  placeholder="Your dedication has been noticed by the deity. You have proven yourself worthy of greater knowledge and power.">${stage.description || ''}</textarea>
+                        <div class="field-help">Lore text explaining what this stage represents and what the player has accomplished</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Rewards</label>
+                        <div class="rewards-container">
+                            ${generateRewardsEditor(stage.rewards || [], index)}
+                            <button class="add-btn" onclick="addReward(${index})">+ Add Reward</button>
+                        </div>
+                        <div class="field-help">Commands executed when player reaches this stage. Examples: "command:give {player} minecraft:diamond 3", "command:effect give {player} minecraft:strength 300 1", "command:tell {player} You have been blessed!"</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateRewardsEditor(rewards, stageIndex) {
+            if (rewards.length === 0) {
+                return '<div style="color: #666; text-align: center; padding: 1rem; font-style: italic;">No rewards yet</div>';
+            }
+
+            return rewards.map((reward, rewardIndex) => `
+                <div class="reward-item">
+                    <input type="text" class="form-input" value="${reward}" 
+                           onchange="updateReward(${stageIndex}, ${rewardIndex}, this.value)"
+                           placeholder="command:give {player} minecraft:enchanted_golden_apple 1">
+                    <button class="remove-btn" onclick="removeReward(${stageIndex}, ${rewardIndex})">×</button>
+                </div>
+            `).join('');
+        }
+
+        // Update functions - unified for both systems
+        function updateItem(field, value) {
+            if (state.currentItem === null) return;
+            const currentData = getCurrentData();
+            currentData[state.currentItem][field] = value;
+            renderItemList();
+        }
+
+        function updateColor(component, value) {
+            if (state.currentItem === null || state.currentSystem !== 'deities') return;
+            const deity = state.data.deities[state.currentItem];
+            if (!deity.colors) deity.colors = {};
+            deity.colors[component] = value;
+        }
+
+        function updateProgression(field, value) {
+            if (state.currentItem === null || state.currentSystem !== 'deities') return;
+            const deity = state.data.deities[state.currentItem];
+            if (!deity.progression) deity.progression = {};
+            deity.progression[field] = value;
+        }
+
+        function updateGlobalConfig(field, value) {
+            if (state.currentItem === null || state.currentSystem !== 'ai-deities') return;
+            const aiDeity = state.data.aiDeities[state.currentItem];
+            if (!aiDeity.global_config) aiDeity.global_config = {};
+            aiDeity.global_config[field] = value;
+        }
+
+        function updatePrayerType(type, checked) {
+            if (state.currentItem === null || state.currentSystem !== 'deities') return;
+            const deity = state.data.deities[state.currentItem];
+            if (!deity.prayer_types) deity.prayer_types = [];
+            
+            if (checked && !deity.prayer_types.includes(type)) {
+                deity.prayer_types.push(type);
+            } else if (!checked) {
+                deity.prayer_types = deity.prayer_types.filter(t => t !== type);
+            }
+        }
+
+        function deleteItem() {
+            if (state.currentItem === null) return;
+            if (confirm('Are you sure you want to delete this item?')) {
+                const currentData = getCurrentData();
+                currentData.splice(state.currentItem, 1);
+                state.currentItem = null;
+                renderItemList();
+                showWelcomeScreen();
+            }
+        }
+
+        function showWelcomeScreen() {
+            const title = document.getElementById('contentTitle');
+            const body = document.getElementById('contentBody');
+            const jsonBtn = document.getElementById('jsonBtn');
+
+            title.textContent = `Select ${state.currentSystem === 'ai-deities' ? 'an AI deity' : 'a deity'} to edit`;
+            jsonBtn.style.display = 'none';
+
+            let icon, systemName, description;
+            switch (state.currentSystem) {
+                case 'deities':
+                    icon = '🏛️';
+                    systemName = 'Custom Deities';
+                    description = 'Build comprehensive deity definitions with progression systems, colors, and prayer types.';
+                    break;
+                case 'ai-deities':
+                    icon = '🤖';
+                    systemName = 'AI-Powered Deities';
+                    description = 'Build intelligent deity personalities that can chat with players using Google Gemini AI.';
+                    break;
+                default:
+                    icon = '⚡';
+                    systemName = 'System';
+                    description = 'Select a system from the sidebar to get started.';
+            }
+
+            body.innerHTML = `
+                <div class="welcome-screen">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">${icon}</div>
+                    <h2>Create ${systemName}</h2>
+                    <p>${description}</p>
+                    <p>Click "Add New ${state.currentSystem === 'ai-deities' ? 'AI Deity' : 'Deity'}" to get started!</p>
+                </div>
+            `;
+        }
+
+        function showJSON() {
+            if (state.currentItem === null) return;
+            const currentData = getCurrentData();
+            const item = currentData[state.currentItem];
+            
+            const body = document.getElementById('contentBody');
+            body.innerHTML = `
+                <div class="form-section">
+                    <div class="section-title">JSON Output</div>
+                    <div class="json-preview">${JSON.stringify(item, null, 2)}</div>
+                    <button class="btn btn-export" onclick="selectItem(state.currentItem)" 
+                            style="margin-top: 1rem;">← Back to Editor</button>
+                </div>
+            `;
+        }
+
+        // AI Deity specific functions
+        function generatePersonalitiesEditor(personalities) {
+            const stages = Object.keys(personalities);
+            if (stages.length === 0) {
+                return '<div style="color: #666; text-align: center; padding: 2rem; font-style: italic;">No personalities defined yet</div>';
+            }
+
+            return stages.map(stage => `
+                <div class="personality-stage">
+                    <div class="stage-header">
+                        <div class="stage-badge">${stage}</div>
+                        <button class="remove-btn" onclick="removePersonality('${stage}')">Remove</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">System Prompt</label>
+                        <textarea class="form-textarea" onchange="updatePersonality('${stage}', 'system_prompt', this.value)"
+                                  placeholder="You are a deity speaking to a ${stage}...">${personalities[stage].system_prompt || ''}</textarea>
+                        <div class="field-help">Core personality instructions for the AI at this progression stage</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Allowed Commands</label>
+                        <div class="commands-container">
+                            ${generateCommandsEditor(personalities[stage].allowed_commands || [], stage)}
+                            <button class="add-btn" onclick="addCommand('${stage}')">+ Add Command</button>
+                        </div>
+                        <div class="field-help">Commands this personality can execute: tell, give, effect, summon, teleport</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Conversation Starters</label>
+                        <div class="commands-container">
+                            ${generateStartersEditor(personalities[stage].conversation_starters || [], stage)}
+                            <button class="add-btn" onclick="addStarter('${stage}')">+ Add Starter</button>
+                        </div>
+                        <div class="field-help">Random greeting messages when players initiate conversation</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateCommandsEditor(commands, stage) {
+            if (commands.length === 0) {
+                return '<div style="color: #666; text-align: center; padding: 1rem; font-style: italic;">No commands yet</div>';
+            }
+
+            return commands.map((command, index) => `
+                <div class="command-item">
+                    <input type="text" class="form-input" value="${command}" 
+                           onchange="updateCommand('${stage}', ${index}, this.value)"
+                           placeholder="give">
+                    <button class="remove-btn" onclick="removeCommand('${stage}', ${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function generateStartersEditor(starters, stage) {
+            if (starters.length === 0) {
+                return '<div style="color: #666; text-align: center; padding: 1rem; font-style: italic;">No starters yet</div>';
+            }
+
+            return starters.map((starter, index) => `
+                <div class="command-item">
+                    <input type="text" class="form-input" value="${starter}" 
+                           onchange="updateStarter('${stage}', ${index}, this.value)"
+                           placeholder="Welcome, young seeker...">
+                    <button class="remove-btn" onclick="removeStarter('${stage}', ${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function generateReputationThresholds(thresholds) {
+            return Object.entries(thresholds).map(([rep, text], index) => `
+                <div class="threshold-row">
+                    <input type="number" class="form-input" value="${rep}" placeholder="Rep" style="width: 100px;" 
+                           onchange="updateReputationThreshold(${index}, 'rep', parseInt(this.value))">
+                    <input type="text" class="form-input" value="${text}" placeholder="Response text..." style="flex: 1; margin-left: 8px;" 
+                           onchange="updateReputationThreshold(${index}, 'text', this.value)">
+                    <button class="remove-btn" onclick="removeReputationThreshold(${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function generateResearchRequirements(requirements) {
+            return Object.entries(requirements).map(([level, text], index) => `
+                <div class="research-row">
+                    <input type="number" class="form-input" value="${level}" placeholder="Level" style="width: 100px;" 
+                           onchange="updateResearchRequirement(${index}, 'level', parseInt(this.value))">
+                    <input type="text" class="form-input" value="${text}" placeholder="Knowledge description..." style="flex: 1; margin-left: 8px;" 
+                           onchange="updateResearchRequirement(${index}, 'text', this.value)">
+                    <button class="remove-btn" onclick="removeResearchRequirement(${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function generateAIPrayerConfigsEditor(prayerConfigs) {
+            const defaultTypes = ['conversation', 'blessing', 'guidance'];
+            
+            return defaultTypes.map(type => {
+                const config = prayerConfigs[type] || {
+                    base_prompt: '',
+                    reputation_required: 0,
+                    cooldown_minutes: 5,
+                    max_commands: 2,
+                    allowed_commands: ['give', 'effect', 'tellraw']
+                };
+                
+                return `
+                    <div class="prayer-config-section">
+                        <div class="config-header">${type.charAt(0).toUpperCase() + type.slice(1)} Prayer</div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Base Prompt</label>
+                            <textarea class="form-textarea" rows="4" onchange="updatePrayerConfig('${type}', 'base_prompt', this.value)"
+                                      placeholder="AI prompt template for this prayer type...">${config.base_prompt}</textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Reputation Required</label>
+                                <input type="number" class="form-input" value="${config.reputation_required}" 
+                                       onchange="updatePrayerConfig('${type}', 'reputation_required', parseInt(this.value))">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Cooldown (minutes)</label>
+                                <input type="number" class="form-input" value="${config.cooldown_minutes}" 
+                                       onchange="updatePrayerConfig('${type}', 'cooldown_minutes', parseInt(this.value))">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Max Commands</label>
+                                <input type="number" class="form-input" value="${config.max_commands}" min="0" max="5"
+                                       onchange="updatePrayerConfig('${type}', 'max_commands', parseInt(this.value))">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Allowed Commands</label>
+                                <input type="text" class="form-input" value="${config.allowed_commands.join(', ')}" 
+                                       onchange="updatePrayerConfig('${type}', 'allowed_commands', this.value.split(',').map(s => s.trim()))"
+                                       placeholder="give, effect, tellraw">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Helper functions for updating AI deity data
+        window.updateReputationThreshold = function(index, field, value) {
+            const aiDeity = state.currentItem;
+            const entries = Object.entries(aiDeity.behavior_rules.reputation_thresholds);
+            if (entries[index]) {
+                const oldKey = entries[index][0];
+                const oldValue = entries[index][1];
+                delete aiDeity.behavior_rules.reputation_thresholds[oldKey];
+                
+                if (field === 'rep') {
+                    aiDeity.behavior_rules.reputation_thresholds[value] = oldValue;
+                } else {
+                    aiDeity.behavior_rules.reputation_thresholds[oldKey] = value;
+                }
+                saveToHistory();
+                showAIDeityEditor(aiDeity);
+            }
+        };
+
+        window.updateResearchRequirement = function(index, field, value) {
+            const aiDeity = state.currentItem;
+            const entries = Object.entries(aiDeity.behavior_rules.research_requirements);
+            if (entries[index]) {
+                const oldKey = entries[index][0];
+                const oldValue = entries[index][1];
+                delete aiDeity.behavior_rules.research_requirements[oldKey];
+                
+                if (field === 'level') {
+                    aiDeity.behavior_rules.research_requirements[value] = oldValue;
+                } else {
+                    aiDeity.behavior_rules.research_requirements[oldKey] = value;
+                }
+                saveToHistory();
+                showAIDeityEditor(aiDeity);
+            }
+        };
+
+        window.updatePrayerConfig = function(type, field, value) {
+            const aiDeity = state.currentItem;
+            if (!aiDeity.prayer_configs[type]) {
+                aiDeity.prayer_configs[type] = {};
+            }
+            aiDeity.prayer_configs[type][field] = value;
+            saveToHistory();
+        };
+
+        window.updateTaskConfig = function(field, value) {
+            const aiDeity = state.currentItem;
+            if (!aiDeity.task_config) {
+                aiDeity.task_config = {};
+            }
+            aiDeity.task_config[field] = value;
+            saveToHistory();
+        };
+
+        window.updateTaskAssignmentBehavior = function(field, value) {
+            const aiDeity = state.currentItem;
+            if (!aiDeity.task_config.task_assignment_behavior) {
+                aiDeity.task_config.task_assignment_behavior = {};
+            }
+            aiDeity.task_config.task_assignment_behavior[field] = value;
+            saveToHistory();
+        };
+
+        window.addReputationThreshold = function() {
+            const aiDeity = state.currentItem;
+            if (!aiDeity.behavior_rules.reputation_thresholds) {
+                aiDeity.behavior_rules.reputation_thresholds = {};
+            }
+            aiDeity.behavior_rules.reputation_thresholds['0'] = 'New threshold response';
+            saveToHistory();
+            showAIDeityEditor(aiDeity);
+        };
+
+        window.addResearchRequirement = function() {
+            const aiDeity = state.currentItem;
+            if (!aiDeity.behavior_rules.research_requirements) {
+                aiDeity.behavior_rules.research_requirements = {};
+            }
+            aiDeity.behavior_rules.research_requirements['0'] = 'New research knowledge';
+            saveToHistory();
+            showAIDeityEditor(aiDeity);
+        };
+
+        window.removeReputationThreshold = function(index) {
+            const aiDeity = state.currentItem;
+            const entries = Object.entries(aiDeity.behavior_rules.reputation_thresholds);
+            if (entries[index]) {
+                delete aiDeity.behavior_rules.reputation_thresholds[entries[index][0]];
+                saveToHistory();
+                showAIDeityEditor(aiDeity);
+            }
+        };
+
+        window.removeResearchRequirement = function(index) {
+            const aiDeity = state.currentItem;
+            const entries = Object.entries(aiDeity.behavior_rules.research_requirements);
+            if (entries[index]) {
+                delete aiDeity.behavior_rules.research_requirements[entries[index][0]];
+                saveToHistory();
+                showAIDeityEditor(aiDeity);
+            }
+        };
+
+        function generatePrayerConfigsEditor(prayerConfigs) {
+            const prayerTypes = ['conversation', 'blessing', 'guidance', 'protection', 'knowledge'];
+            
+            return prayerTypes.map(type => {
+                const config = prayerConfigs[type] || {};
+                return `
+                    <div class="personality-stage">
+                        <div class="stage-header">
+                            <div class="stage-badge">${type}</div>
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" ${config.enabled ? 'checked' : ''}
+                                       onchange="updatePrayerConfig('${type}', 'enabled', this.checked)">
+                                Enabled
+                            </label>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Cooldown (seconds)</label>
+                                <input type="number" class="form-input" value="${config.cooldown_seconds || 60}" 
+                                       onchange="updatePrayerConfig('${type}', 'cooldown_seconds', parseInt(this.value))">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Reputation Cost</label>
+                                <input type="number" class="form-input" value="${config.reputation_cost || 0}" 
+                                       onchange="updatePrayerConfig('${type}', 'reputation_cost', parseInt(this.value))">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Prompt Template</label>
+                            <textarea class="form-textarea" onchange="updatePrayerConfig('${type}', 'prompt_template', this.value)"
+                                      placeholder="Player {player_name} seeks ${type}...">${config.prompt_template || ''}</textarea>
+                            <div class="field-help">Template with placeholders: {player_name}, {reputation}, {stage}, {message}, {time}, {biome}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addPersonality() {
+            if (state.currentItem === null || state.currentSystem !== 'ai-deities') return;
+            const stageName = prompt('Enter stage name (e.g., "initiate", "devotee", "champion"):');
+            if (!stageName) return;
+            
+            const aiDeity = state.data.aiDeities[state.currentItem];
+            if (!aiDeity.personalities) aiDeity.personalities = {};
+            
+            aiDeity.personalities[stageName] = {
+                system_prompt: `You are a deity speaking to a ${stageName}. Adjust your tone and capabilities accordingly.`,
+                allowed_commands: ["tell"],
+                command_restrictions: {},
+                conversation_starters: [`Greetings, ${stageName}. How may I assist you?`]
+            };
+            
+            showAIDeityEditor(aiDeity);
+        }
+
+        function removePersonality(stage) {
+            if (state.currentItem === null || state.currentSystem !== 'ai-deities') return;
+            const aiDeity = state.data.aiDeities[state.currentItem];
+            delete aiDeity.personalities[stage];
+            showAIDeityEditor(aiDeity);
+        }
+
+        function updatePersonality(stage, field, value) {
+            if (state.currentItem === null || state.currentSystem !== 'ai-deities') return;
+            const aiDeity = state.data.aiDeities[state.currentItem];
+            aiDeity.personalities[stage][field] = value;
+        }
+
+        function addCommand(stage) {
+            if (state.currentItem === null || state.currentSystem !== 'ai-deities') return;
+            const aiDeity = state.data.aiDeities[state.currentItem];
+            if (!aiDeity.personalities[stage].allowed_commands) {
+                aiDeity.personalities[stage].allowed_commands = [];
+            }
+            aiDeity.personalities[stage].allowed_commands.push('tell');
+            showAIDeityEditor(aiDeity);
+        }
+
+        function removeCommand(stage, index) {
+            if (state.currentItem === null || state.currentSystem !== 'ai-deities') return;
+            const aiDeity = state.data.aiDeities[state.currentItem];
+            aiDeity.personalities[stage].allowed_commands.splice(index, 1);
+            showAIDeityEditor(aiDeity);
+        }
+
+        function updateCommand(stage, index, value) {
+            if (state.currentItem === null || state.currentSystem !== 'ai-deities') return;
+            const aiDeity = state.data.aiDeities[state.currentItem];
+            aiDeity.personalities[stage].allowed_commands[index] = value;
+        }
+
+        function addStarter(stage) {
+            if (state.currentItem === null || state.currentSystem !== 'ai-deities') return;
+            const aiDeity = state.data.aiDeities[state.currentItem];
+            if (!aiDeity.personalities[stage].conversation_starters) {
+                aiDeity.personalities[stage].conversation_starters = [];
+            }
+            aiDeity.personalities[stage].conversation_starters.push('Welcome, seeker.');
+            showAIDeityEditor(aiDeity);
+        }
+
+        function removeStarter(stage, index) {
+            if (state.currentItem === null || state.currentSystem !== 'ai-deities') return;
+            const aiDeity = state.data.aiDeities[state.currentItem];
+            aiDeity.personalities[stage].conversation_starters.splice(index, 1);
+            showAIDeityEditor(aiDeity);
+        }
+
+        function updateStarter(stage, index, value) {
+            if (state.currentItem === null || state.currentSystem !== 'ai-deities') return;
+            const aiDeity = state.data.aiDeities[state.currentItem];
+            aiDeity.personalities[stage].conversation_starters[index] = value;
+        }
+
+        function updatePrayerConfig(type, field, value) {
+            if (state.currentItem === null || state.currentSystem !== 'ai-deities') return;
+            const aiDeity = state.data.aiDeities[state.currentItem];
+            if (!aiDeity.prayer_configs) aiDeity.prayer_configs = {};
+            if (!aiDeity.prayer_configs[type]) aiDeity.prayer_configs[type] = {};
+            aiDeity.prayer_configs[type][field] = value;
+        }
+
+        function addProgressionStage() {
+            if (state.currentItem === null || state.currentSystem !== 'deities') return;
+            const deity = state.data.deities[state.currentItem];
+            if (!deity.progression) deity.progression = {};
+            if (!deity.progression.stages) deity.progression.stages = [];
+            
+            const stageCount = deity.progression.stages.length + 1;
+            const stageNames = ['initiate', 'devotee', 'adept', 'scholar', 'champion', 'master', 'ascended'];
+            const stageTitles = ['Initiate', 'Devotee', 'Adept', 'Scholar', 'Champion', 'Master', 'Ascended'];
+            
+            const stageId = stageNames[Math.min(stageCount - 1, stageNames.length - 1)] || `stage_${stageCount}`;
+            const stageTitle = stageTitles[Math.min(stageCount - 1, stageTitles.length - 1)] || `Stage ${stageCount}`;
+            const reputation = stageCount === 1 ? 0 : (stageCount - 1) * 25;
+            
+            deity.progression.stages.push({
+                id: stageId,
+                reputation: reputation,
+                major: stageCount % 2 === 0,
+                title: stageTitle,
+                description: `A ${stageTitle.toLowerCase()} has proven their dedication and earned the deity's recognition through faithful service.`,
+                rewards: [
+                    `command:tell {player} Congratulations! You have become a ${stageTitle}.`,
+                    `command:give {player} minecraft:experience_bottle ${Math.min(stageCount * 2, 10)}`
+                ]
+            });
+            
+            showDeityEditor(deity);
+        }
+
+        function removeStage(index) {
+            if (state.currentItem === null || state.currentSystem !== 'deities') return;
+            const deity = state.data.deities[state.currentItem];
+            deity.progression.stages.splice(index, 1);
+            showDeityEditor(deity);
+        }
+
+        function updateStage(stageIndex, field, value) {
+            if (state.currentItem === null || state.currentSystem !== 'deities') return;
+            const deity = state.data.deities[state.currentItem];
+            deity.progression.stages[stageIndex][field] = value;
+        }
+
+        function addReward(stageIndex) {
+            if (state.currentItem === null || state.currentSystem !== 'deities') return;
+            const deity = state.data.deities[state.currentItem];
+            if (!deity.progression.stages[stageIndex].rewards) {
+                deity.progression.stages[stageIndex].rewards = [];
+            }
+            
+            const exampleRewards = [
+                'command:give {player} minecraft:diamond 1',
+                'command:effect give {player} minecraft:regeneration 300 1',
+                'command:tell {player} The deity smiles upon you!',
+                'command:give {player} minecraft:enchanted_book 1',
+                'command:effect give {player} minecraft:strength 600 2',
+                'command:give {player} minecraft:golden_apple 2'
+            ];
+            
+            const randomReward = exampleRewards[Math.floor(Math.random() * exampleRewards.length)];
+            deity.progression.stages[stageIndex].rewards.push(randomReward);
+            showDeityEditor(deity);
+        }
+
+        function removeReward(stageIndex, rewardIndex) {
+            if (state.currentItem === null || state.currentSystem !== 'deities') return;
+            const deity = state.data.deities[state.currentItem];
+            deity.progression.stages[stageIndex].rewards.splice(rewardIndex, 1);
+            showDeityEditor(deity);
+        }
+
+        function updateReward(stageIndex, rewardIndex, value) {
+            if (state.currentItem === null || state.currentSystem !== 'deities') return;
+            const deity = state.data.deities[state.currentItem];
+            deity.progression.stages[stageIndex].rewards[rewardIndex] = value;
+        }
+
+        function exportAll() {
+            if (state.data.deities.length === 0 && state.data.aiDeities.length === 0) {
+                alert('No data to export!');
+                return;
+            }
+
+            const zip = new JSZip();
+            const dataFolder = zip.folder('data');
+            const namespaceFolder = dataFolder.folder('eidolonunchained');
+
+            // Export deities
+            if (state.data.deities.length > 0) {
+                const deitiesFolder = namespaceFolder.folder('deities');
+                state.data.deities.forEach((deity, index) => {
+                    const filename = deity.id ? deity.id.split(':')[1] || `deity_${index}` : `deity_${index}`;
+                    deitiesFolder.file(`${filename}.json`, JSON.stringify(deity, null, 2));
+                });
+            }
+
+            // Export AI deities
+            if (state.data.aiDeities.length > 0) {
+                const aiDeitiesFolder = namespaceFolder.folder('ai_deities');
+                state.data.aiDeities.forEach((aiDeity, index) => {
+                    const deityRef = aiDeity.deity || `unknown_deity_${index}`;
+                    const filename = deityRef.includes(':') ? deityRef.split(':')[1] : deityRef;
+                    aiDeitiesFolder.file(`${filename}.json`, JSON.stringify(aiDeity, null, 2));
+                });
+            }
+
+            // Add pack.mcmeta
+            const packMeta = {
+                pack: {
+                    pack_format: 15,
+                    description: "Eidolon Unchained Complete Datapack"
+                }
+            };
+            zip.file('pack.mcmeta', JSON.stringify(packMeta, null, 2));
+
+            zip.generateAsync({ type: 'blob' }).then(content => {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = 'eidolon_unchained_datapack.zip';
+                link.click();
+            });
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            
+                            // Detect data type and import accordingly
+                            if (data.deity && data.api_provider) {
+                                // AI Deity
+                                state.data.aiDeities.push(data);
+                                switchSystem('ai-deities');
+                            } else if (data.progression && data.colors) {
+                                // Basic Deity
+                                state.data.deities.push(data);
+                                switchSystem('deities');
+                            } else if (Array.isArray(data)) {
+                                // Array of items
+                                alert('Please import individual JSON files, not arrays.');
+                                return;
+                            } else {
+                                alert('Unrecognized JSON format');
+                                return;
+                            }
+                            
+                            state.currentItem = null;
+                            renderItemList();
+                            showWelcomeScreen();
+                        } catch (error) {
+                            alert('Invalid JSON file');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
