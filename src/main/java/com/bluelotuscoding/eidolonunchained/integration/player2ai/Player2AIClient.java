@@ -282,9 +282,16 @@ public class Player2AIClient {
         
         request.add("messages", messages);
         
-        // Use AI deity configuration parameters
-        request.addProperty("max_tokens", genConfig.max_output_tokens);
-        request.addProperty("temperature", genConfig.temperature);
+        // Use AI deity configuration parameters with safe defaults
+        if (genConfig != null) {
+            request.addProperty("max_tokens", genConfig.max_output_tokens);
+            request.addProperty("temperature", genConfig.temperature);
+        } else {
+            // Safe defaults if no generation config provided
+            request.addProperty("max_tokens", 500);
+            request.addProperty("temperature", 0.8);
+            LOGGER.warn("No generation config provided to Player2AI, using defaults");
+        }
         
         // Send request to the local OpenAI-compatible endpoint
         String response = sendRequest(PLAYER2_LOCAL_API_BASE, "POST", request.toString());

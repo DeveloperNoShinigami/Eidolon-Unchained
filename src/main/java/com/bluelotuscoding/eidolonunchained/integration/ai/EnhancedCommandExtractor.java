@@ -36,6 +36,12 @@ public class EnhancedCommandExtractor {
         Pattern.CASE_INSENSITIVE
     );
     
+    // Pattern for [ACTION:gift item] format used by AI responses
+    private static final Pattern ACTION_PATTERN = Pattern.compile(
+        "\\[ACTION:(?:gift|give)\\s+([\\w:_-]+)(?:\\s+(\\d+))?\\]",
+        Pattern.CASE_INSENSITIVE
+    );
+    
     /**
      * Extract and convert AI natural language to executable commands
      */
@@ -46,7 +52,26 @@ public class EnhancedCommandExtractor {
             // Clean the AI response first
             String cleanResponse = cleanAIResponse(aiResponse);
             
-            // 1. Look for explicit command patterns first
+            // 1. Look for [ACTION:...] patterns first (highest priority)
+            Matcher actionMatcher = ACTION_PATTERN.matcher(cleanResponse);
+            while (actionMatcher.find()) {
+                String item = actionMatcher.group(1);
+                String amount = actionMatcher.group(2);
+                
+                // Validate and normalize item ID
+                String normalizedItem = normalizeItemId(item);
+                if (normalizedItem != null) {
+                    String command = String.format("/give %s %s %s", 
+                        player.getName().getString(),
+                        normalizedItem,
+                        amount != null ? amount : "1"
+                    );
+                    commands.add(command);
+                    LOGGER.info("🔥 Extracted ACTION command: {} -> {}", actionMatcher.group(0), command);
+                }
+            }
+            
+            // 2. Look for explicit command patterns
             Matcher explicitMatcher = EXPLICIT_COMMAND_PATTERN.matcher(cleanResponse);
             while (explicitMatcher.find()) {
                 String command = explicitMatcher.group(0);
@@ -57,7 +82,7 @@ public class EnhancedCommandExtractor {
                 }
             }
             
-            // 2. Look for give/grant patterns
+            // 3. Look for give/grant patterns
             Matcher giveMatcher = GIVE_PATTERN.matcher(cleanResponse);
             while (giveMatcher.find()) {
                 String item = giveMatcher.group(1);
@@ -76,7 +101,7 @@ public class EnhancedCommandExtractor {
                 }
             }
             
-            // 3. Look for effect patterns
+            // 4. Look for effect patterns
             Matcher effectMatcher = EFFECT_PATTERN.matcher(cleanResponse);
             while (effectMatcher.find()) {
                 String effect = effectMatcher.group(1);
@@ -97,7 +122,7 @@ public class EnhancedCommandExtractor {
                 }
             }
             
-            // 4. Look for common deity actions and convert to commands
+            // 5. Look for common deity actions and convert to commands
             commands.addAll(extractDeityActions(cleanResponse, player));
             
         } catch (Exception e) {
@@ -283,6 +308,9 @@ public class EnhancedCommandExtractor {
         
         String cleaned = response;
         
+        // Remove [ACTION:...] patterns first
+        cleaned = ACTION_PATTERN.matcher(cleaned).replaceAll("");
+        
         // Remove explicit command patterns
         cleaned = EXPLICIT_COMMAND_PATTERN.matcher(cleaned).replaceAll("");
         
@@ -291,6 +319,9 @@ public class EnhancedCommandExtractor {
         
         // Remove effect patterns that were converted to commands
         cleaned = EFFECT_PATTERN.matcher(cleaned).replaceAll("");
+        
+        // Log what we're cleaning for debugging
+        LOGGER.debug("🔥 Cleaning AI response for display - removed command patterns");
         
         // Clean up markdown and extra whitespace
         cleaned = cleanAIResponse(cleaned);
