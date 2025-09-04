@@ -157,6 +157,313 @@
     }
   },
   
+  "task_config": {
+    "enabled": true,
+    "max_active_tasks": 3,
+    "task_assignment_behavior": {
+      "auto_assign_probability": 0.35,
+      "min_reputation_for_auto_assign": 5,
+      "conversation_triggers": [
+        "first_conversation",
+        "reputation_milestone",
+        "completed_previous_task",
+        "growth_prayer",
+        "communion_prayer"
+      ],
+      "cooldown_between_assignments_hours": 18
+    },
+    
+    "available_tasks": [
+      {
+        "task_id": "nature_gather_herbs",
+        "display_name": "Gather Sacred Herbs",
+        "description": "Collect mystical herbs to restore the sacred grove",
+        "progression_tier": "novice",
+        "ai_assignment_context": {
+          "trigger_conditions": {
+            "min_reputation": 0,
+            "max_reputation": 30,
+            "required_biomes": ["minecraft:forest", "minecraft:flower_forest", "minecraft:plains"],
+            "prayer_types": ["conversation", "growth"],
+            "completed_tasks": [],
+            "unlocked_progressions": []
+          },
+          "assignment_prompt": "Young seeker, the sacred grove needs healing. The ancient herbs have withered and need replenishment. Will you gather {item_count} sacred herbs to restore nature's balance? Your dedication will earn you {reputation_reward} favor with the forest spirits.",
+          "completion_phrases": [
+            "Your gathering has restored life to the sacred places. The grove pulses with renewed vitality.",
+            "The forest spirits sing of your dedication to nature's needs. You are becoming one with the green world.",
+            "Your harvest will nourish the growing things for seasons to come. The trees whisper your name in gratitude."
+          ]
+        },
+        "requirements": [
+          {
+            "type": "collect_items",
+            "items": [
+              {
+                "item": "minecraft:wheat",
+                "count": 16,
+                "display_name": "Sacred Herbs"
+              },
+              {
+                "item": "minecraft:carrot",
+                "count": 8,
+                "display_name": "Root of Vitality"
+              }
+            ]
+          }
+        ],
+        "rewards": {
+          "reputation": 8,
+          "commands": [
+            "give {player} eidolon:lesser_soul_gem 1",
+            "give {player} minecraft:bone_meal 16",
+            "tellraw {player} {\"text\":\"✦ Nature's blessing flows through you - the power of growth is yours\",\"color\":\"green\"}"
+          ],
+          "progression_unlock": "nature_basic_complete"
+        },
+        "cooldown_hours": 24,
+        "repeatable": false
+      },
+      
+      {
+        "task_id": "nature_plant_grove",
+        "display_name": "Plant the Sacred Grove",
+        "description": "Create a new grove to expand nature's domain",
+        "progression_tier": "acolyte", 
+        "ai_assignment_context": {
+          "trigger_conditions": {
+            "min_reputation": 15,
+            "max_reputation": 50,
+            "required_biomes": ["minecraft:forest", "minecraft:plains"],
+            "prayer_types": ["growth", "conversation"],
+            "completed_tasks": ["nature_gather_herbs"],
+            "unlocked_progressions": ["nature_basic_complete"]
+          },
+          "assignment_prompt": "Your understanding grows, devoted one. Now you must learn to nurture life itself. Plant {item_count} sacred saplings to create a new grove where life can flourish. This act of creation will grant you {reputation_reward} deeper favor.",
+          "completion_phrases": [
+            "Your grove will grow tall and strong, a testament to your growing wisdom.",
+            "The saplings carry your blessing - they will become mighty guardians of the forest.",
+            "You have learned the first lesson of creation. The earth itself recognizes your touch."
+          ]
+        },
+        "requirements": [
+          {
+            "type": "place_blocks",
+            "blocks": [
+              {
+                "block": "minecraft:oak_sapling",
+                "count": 8,
+                "area_requirement": "8x8",
+                "display_name": "Sacred Grove Saplings"
+              }
+            ]
+          },
+          {
+            "type": "wait_time",
+            "duration_minutes": 10,
+            "description": "Wait for the grove spirits to bless your work"
+          }
+        ],
+        "rewards": {
+          "reputation": 12,
+          "commands": [
+            "give {player} minecraft:golden_apple 2",
+            "effect give {player} minecraft:regeneration 300 1",
+            "give {player} eidolon:soul_shard 2",
+            "tellraw {player} {\"text\":\"✦ The Grove Guardian's blessing awakens within you\",\"color\":\"dark_green\"}"
+          ],
+          "progression_unlock": "nature_grove_tender"
+        },
+        "cooldown_hours": 48,
+        "repeatable": false
+      },
+      
+      {
+        "task_id": "nature_ritual_mastery",
+        "display_name": "Master the Ritual of Growth",
+        "description": "Prove your understanding of nature's deeper mysteries through sacred ritual",
+        "progression_tier": "priest",
+        "ai_assignment_context": {
+          "trigger_conditions": {
+            "min_reputation": 30,
+            "max_reputation": 70,
+            "prayer_types": ["communion", "growth"],
+            "completed_tasks": ["nature_plant_grove"],
+            "unlocked_progressions": ["nature_grove_tender"],
+            "required_research": ["eidolonunchained:nature_basics"]
+          },
+          "assignment_prompt": "The time has come for deeper mysteries, faithful guardian. Perform the ancient Ritual of Growth to prove your mastery over life's forces. This sacred act will grant you {reputation_reward} profound favor and unlock the path to greater power.",
+          "completion_phrases": [
+            "Your ritual resonates through every root and branch - you have touched the source of all growth.",
+            "The ancient powers recognize your mastery. You are no longer merely a student of nature.",
+            "The ritual circle glows with your success. You have earned the right to deeper knowledge."
+          ]
+        },
+        "requirements": [
+          {
+            "type": "complete_ritual",
+            "rituals": [
+              {
+                "ritual_id": "eidolonunchained:nature_patronage_ritual",
+                "count": 1,
+                "success_required": true
+              }
+            ]
+          }
+        ],
+        "rewards": {
+          "reputation": 18,
+          "commands": [
+            "give {player} minecraft:enchanted_book 1",
+            "give {player} eidolon:arcane_gold_ingot 2",
+            "effect give {player} minecraft:absorption 600 2",
+            "tellraw {player} {\"text\":\"✦ Ancient knowledge flows into your soul - the ritual arts are yours\",\"color\":\"gold\"}"
+          ],
+          "progression_unlock": "nature_ritual_master"
+        },
+        "cooldown_hours": 72,
+        "repeatable": false
+      },
+      
+      {
+        "task_id": "nature_crucible_essence",
+        "display_name": "Brew the Essence of Life",
+        "description": "Create a divine elixir using the sacred crucible arts",
+        "progression_tier": "high_priest",
+        "ai_assignment_context": {
+          "trigger_conditions": {
+            "min_reputation": 50,
+            "max_reputation": 999,
+            "prayer_types": ["communion"],
+            "completed_tasks": ["nature_ritual_mastery"],
+            "unlocked_progressions": ["nature_ritual_master"],
+            "required_research": ["eidolonunchained:advanced_alchemy"]
+          },
+          "assignment_prompt": "You have proven worthy of the highest arts, my chosen one. Use the sacred crucible to brew the Essence of Life itself. This ultimate test of your alchemical mastery will grant you {reputation_reward} supreme favor.",
+          "completion_phrases": [
+            "Your crucible sings with divine power - you have mastered the ultimate transformation.",
+            "The Essence of Life pulses in your hands. You have achieved what few ever dream of.",
+            "The very forces of creation bow to your will. You are truly my champion."
+          ]
+        },
+        "requirements": [
+          {
+            "type": "complete_crucible_recipe",
+            "recipes": [
+              {
+                "recipe_id": "eidolonunchained:nature_soul_gem",
+                "count": 1,
+                "success_required": true
+              }
+            ]
+          }
+        ],
+        "rewards": {
+          "reputation": 25,
+          "commands": [
+            "give {player} minecraft:totem_of_undying 1",
+            "give {player} minecraft:enchanted_golden_apple 2",
+            "effect give {player} minecraft:absorption 1800 3",
+            "tellraw {player} {\"text\":\"✦ You are blessed with the ultimate power of life itself\",\"color\":\"dark_green\"}"
+          ],
+          "progression_unlock": "nature_champion"
+        },
+        "cooldown_hours": 168,
+        "repeatable": true
+      },
+      
+      {
+        "task_id": "nature_explore_realms",
+        "display_name": "Journey to Sacred Lands",
+        "description": "Visit the sacred biomes to commune with nature spirits",
+        "progression_tier": "wanderer",
+        "ai_assignment_context": {
+          "trigger_conditions": {
+            "min_reputation": 10,
+            "max_reputation": 40,
+            "prayer_types": ["conversation"],
+            "completed_tasks": [],
+            "unlocked_progressions": []
+          },
+          "assignment_prompt": "The spirits of distant lands call to you, wanderer. Journey to the sacred biomes where different aspects of nature dwell. Visit {biome_count} sacred realms to receive their diverse blessings and earn {reputation_reward} favor.",
+          "completion_phrases": [
+            "Your pilgrimage has connected you to the spirits of many lands.",
+            "The diverse voices of nature now speak through you with new wisdom.",
+            "Your journey has opened new paths of natural understanding."
+          ]
+        },
+        "requirements": [
+          {
+            "type": "visit_biomes",
+            "biomes": [
+              {
+                "biome": "minecraft:forest",
+                "duration_seconds": 120,
+                "display_name": "Ancient Woodlands"
+              },
+              {
+                "biome": "minecraft:jungle", 
+                "duration_seconds": 120,
+                "display_name": "Primal Jungles"
+              },
+              {
+                "biome": "minecraft:flower_forest",
+                "duration_seconds": 120,
+                "display_name": "Blooming Paradise"
+              }
+            ]
+          }
+        ],
+        "rewards": {
+          "reputation": 10,
+          "commands": [
+            "give {player} minecraft:emerald 4",
+            "effect give {player} minecraft:speed 800 1",
+            "give {player} minecraft:compass 1"
+          ],
+          "progression_unlock": "nature_wanderer"
+        },
+        "cooldown_hours": 36,
+        "repeatable": true
+      }
+    ],
+    
+    "progression_chains": {
+      "nature_main_path": [
+        "nature_gather_herbs",
+        "nature_plant_grove", 
+        "nature_ritual_mastery",
+        "nature_crucible_essence"
+      ],
+      "nature_exploration_path": [
+        "nature_explore_realms"
+      ],
+      "nature_mastery_unlocks": {
+        "nature_basic_complete": ["nature_plant_grove"],
+        "nature_grove_tender": ["nature_ritual_mastery"],
+        "nature_ritual_master": ["nature_crucible_essence"],
+        "nature_wanderer": ["nature_plant_grove"],
+        "nature_champion": []
+      }
+    },
+    
+    "ai_integration": {
+      "task_suggestion_prompts": {
+        "no_active_tasks": "This follower shows dedication to nature but lacks direction. Consider offering them a task that matches their reputation level ({reputation}) and their understanding of the natural world.",
+        "task_available": "A sacred duty awaits this faithful one: {task_description}. Present this opportunity naturally, speaking of how it will deepen their connection to nature.",
+        "task_completion": "Acknowledge their completion of '{completed_task}' with the joy of a proud teacher. Their growth brings life to the world. Consider offering the next step in their natural progression if they have proven ready.",
+        "progression_milestone": "This devoted soul has reached a new level of understanding. Their progression from {old_tier} to {new_tier} deserves recognition and new challenges."
+      },
+      "context_integration": {
+        "include_active_tasks_in_context": true,
+        "include_completed_tasks_count": true,
+        "include_available_task_hints": true,
+        "task_context_format": "Nature Tasks - Active: {active_tasks} | Completed: {completed_count} sacred duties | Ready for: {available_tasks}",
+        "progression_context_format": "Natural Progression: {current_tier} | Unlocked Paths: {unlocked_progressions}"
+      }
+    }
+  },
+  
   "api_settings": {
     "temperature": 0.75,
     "max_tokens": 200,

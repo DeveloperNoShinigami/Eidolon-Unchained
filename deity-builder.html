@@ -124,6 +124,80 @@
             border-bottom: 1px solid #444;
         }
 
+        /* Task Editor Styles */
+        .tasks-container {
+            background: rgba(0,0,0,0.1);
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .task-editor {
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: rgba(0,0,0,0.3);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #555;
+        }
+
+        .task-badge {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .no-tasks, .no-requirements, .no-commands {
+            color: #666;
+            font-style: italic;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .requirement-row, .command-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            gap: 8px;
+        }
+
+        .requirements-container, .commands-container {
+            background: rgba(0,0,0,0.1);
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .ai-context-container {
+            background: rgba(138, 43, 226, 0.05);
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .ai-context-section h6 {
+            color: #8a2be2;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
         .container {
             display: flex;
             height: calc(100vh - 80px);
@@ -1180,6 +1254,15 @@ Use 0-2 commands total. Focus on wisdom over material rewards unless they show d
                             <div class="field-help">Chance (0.0-1.0) that AI will automatically assign tasks during conversations</div>
                         </div>
                     </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Available Tasks</label>
+                        <div class="tasks-container">
+                            ${generateTasksEditor(aiDeity.task_config?.available_tasks || [])}
+                            <button class="add-btn" onclick="addTask()">+ Add Task</button>
+                        </div>
+                        <div class="field-help">Define tasks that this deity can assign to players through AI conversations</div>
+                    </div>
                 </div>
 
                 <div class="form-section">
@@ -1536,6 +1619,307 @@ Use 0-2 commands total. Focus on wisdom over material rewards unless they show d
                 `;
             }).join('');
         }
+
+        function generateTasksEditor(tasks) {
+            if (!tasks || tasks.length === 0) {
+                return '<div class="no-tasks">No tasks defined yet. Click "Add Task" to create the first task.</div>';
+            }
+            
+            return tasks.map((task, index) => `
+                <div class="task-editor">
+                    <div class="task-header">
+                        <div class="task-badge">${task.display_name || task.task_id || `Task ${index + 1}`}</div>
+                        <button class="remove-btn" onclick="removeTask(${index})">Remove Task</button>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Task ID</label>
+                            <input type="text" class="form-input" value="${task.task_id || ''}" 
+                                   onchange="updateTask(${index}, 'task_id', this.value)"
+                                   placeholder="nature_gather_herbs">
+                            <div class="field-help">Unique identifier for this task</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Display Name</label>
+                            <input type="text" class="form-input" value="${task.display_name || ''}" 
+                                   onchange="updateTask(${index}, 'display_name', this.value)"
+                                   placeholder="Gather Sacred Herbs">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Progression Tier</label>
+                            <select class="form-select" onchange="updateTask(${index}, 'progression_tier', this.value)">
+                                <option value="novice" ${task.progression_tier === 'novice' ? 'selected' : ''}>Novice</option>
+                                <option value="acolyte" ${task.progression_tier === 'acolyte' ? 'selected' : ''}>Acolyte</option>
+                                <option value="priest" ${task.progression_tier === 'priest' ? 'selected' : ''}>Priest</option>
+                                <option value="high_priest" ${task.progression_tier === 'high_priest' ? 'selected' : ''}>High Priest</option>
+                                <option value="champion" ${task.progression_tier === 'champion' ? 'selected' : ''}>Champion</option>
+                                <option value="wanderer" ${task.progression_tier === 'wanderer' ? 'selected' : ''}>Wanderer</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Reputation Reward</label>
+                            <input type="number" class="form-input" value="${task.reputation_reward || 5}" 
+                                   onchange="updateTaskRewards(${index}, 'reputation', parseInt(this.value))">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-textarea" rows="2" onchange="updateTask(${index}, 'description', this.value)"
+                                  placeholder="Detailed description of what the player must do...">${task.description || ''}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Requirements</label>
+                        <div class="requirements-container">
+                            ${generateRequirementsEditor(task.requirements || [], index)}
+                            <button class="add-btn" onclick="addRequirement(${index})">+ Add Requirement</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Reward Commands</label>
+                        <div class="commands-container">
+                            ${generateCommandsEditor(task.rewards?.commands || [], index)}
+                            <button class="add-btn" onclick="addRewardCommand(${index})">+ Add Command</button>
+                        </div>
+                        <div class="field-help">Commands executed when task is completed. Use {player} for player name.</div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Cooldown Hours</label>
+                            <input type="number" class="form-input" value="${task.cooldown_hours || 24}" 
+                                   onchange="updateTask(${index}, 'cooldown_hours', parseInt(this.value))">
+                        </div>
+                        <div class="form-group">
+                            <div class="form-checkbox">
+                                <input type="checkbox" ${task.repeatable ? 'checked' : ''}
+                                       onchange="updateTask(${index}, 'repeatable', this.checked)">
+                                <label>Repeatable Task</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">AI Assignment Context</label>
+                        <div class="ai-context-container">
+                            ${generateAIContextEditor(task.ai_assignment_context || {}, index)}
+                        </div>
+                        <div class="field-help">Configure when and how the AI should assign this task</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateRequirementsEditor(requirements, taskIndex) {
+            if (!requirements || requirements.length === 0) {
+                return '<div class="no-requirements">No requirements yet</div>';
+            }
+            
+            return requirements.map((req, reqIndex) => `
+                <div class="requirement-row">
+                    <select class="form-select" style="width: 150px;" onchange="updateRequirement(${taskIndex}, ${reqIndex}, 'type', this.value)">
+                        <option value="collect_items" ${req.type === 'collect_items' ? 'selected' : ''}>Collect Items</option>
+                        <option value="place_blocks" ${req.type === 'place_blocks' ? 'selected' : ''}>Place Blocks</option>
+                        <option value="visit_biomes" ${req.type === 'visit_biomes' ? 'selected' : ''}>Visit Biomes</option>
+                        <option value="complete_ritual" ${req.type === 'complete_ritual' ? 'selected' : ''}>Complete Ritual</option>
+                        <option value="wait_time" ${req.type === 'wait_time' ? 'selected' : ''}>Wait Time</option>
+                        <option value="kill_entities" ${req.type === 'kill_entities' ? 'selected' : ''}>Kill Entities</option>
+                    </select>
+                    <input type="text" class="form-input" style="flex: 1; margin-left: 8px;" 
+                           value="${JSON.stringify(req)}" readonly 
+                           placeholder="Requirement details (auto-generated)">
+                    <button class="remove-btn" onclick="removeRequirement(${taskIndex}, ${reqIndex})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function generateCommandsEditor(commands, taskIndex) {
+            if (!commands || commands.length === 0) {
+                return '<div class="no-commands">No reward commands yet</div>';
+            }
+            
+            return commands.map((cmd, cmdIndex) => `
+                <div class="command-row">
+                    <input type="text" class="form-input" value="${cmd}" 
+                           onchange="updateRewardCommand(${taskIndex}, ${cmdIndex}, this.value)"
+                           placeholder="give {player} minecraft:diamond 1">
+                    <button class="remove-btn" onclick="removeRewardCommand(${taskIndex}, ${cmdIndex})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function generateAIContextEditor(context, taskIndex) {
+            const triggerConditions = context.trigger_conditions || {};
+            const assignmentPrompt = context.assignment_prompt || '';
+            
+            return `
+                <div class="ai-context-section">
+                    <h6>Trigger Conditions</h6>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Min Reputation</label>
+                            <input type="number" class="form-input" value="${triggerConditions.min_reputation || 0}" 
+                                   onchange="updateAIContext(${taskIndex}, 'trigger_conditions.min_reputation', parseInt(this.value))">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Max Reputation</label>
+                            <input type="number" class="form-input" value="${triggerConditions.max_reputation || 999}" 
+                                   onchange="updateAIContext(${taskIndex}, 'trigger_conditions.max_reputation', parseInt(this.value))">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Assignment Prompt</label>
+                        <textarea class="form-textarea" rows="3" onchange="updateAIContext(${taskIndex}, 'assignment_prompt', this.value)"
+                                  placeholder="How the AI should present this task to the player...">${assignmentPrompt}</textarea>
+                        <div class="field-help">Use placeholders: {player}, {reputation_reward}, {item_count}, etc.</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Helper functions for updating tasks
+        window.updateTask = function(taskIndex, field, value) {
+            const aiDeity = state.currentItem;
+            if (!aiDeity.task_config.available_tasks[taskIndex]) return;
+            
+            aiDeity.task_config.available_tasks[taskIndex][field] = value;
+            saveToHistory();
+        };
+
+        window.updateTaskRewards = function(taskIndex, field, value) {
+            const aiDeity = state.currentItem;
+            const task = aiDeity.task_config.available_tasks[taskIndex];
+            if (!task) return;
+            
+            if (!task.rewards) task.rewards = {};
+            task.rewards[field] = value;
+            saveToHistory();
+        };
+
+        window.updateRequirement = function(taskIndex, reqIndex, field, value) {
+            const aiDeity = state.currentItem;
+            const req = aiDeity.task_config.available_tasks[taskIndex].requirements[reqIndex];
+            if (!req) return;
+            
+            req[field] = value;
+            saveToHistory();
+            showAIDeityEditor(aiDeity); // Refresh to show changes
+        };
+
+        window.updateRewardCommand = function(taskIndex, cmdIndex, value) {
+            const aiDeity = state.currentItem;
+            const task = aiDeity.task_config.available_tasks[taskIndex];
+            if (!task.rewards) task.rewards = {};
+            if (!task.rewards.commands) task.rewards.commands = [];
+            
+            task.rewards.commands[cmdIndex] = value;
+            saveToHistory();
+        };
+
+        window.updateAIContext = function(taskIndex, field, value) {
+            const aiDeity = state.currentItem;
+            const task = aiDeity.task_config.available_tasks[taskIndex];
+            if (!task.ai_assignment_context) task.ai_assignment_context = {};
+            
+            // Handle nested field paths like 'trigger_conditions.min_reputation'
+            const fieldParts = field.split('.');
+            let obj = task.ai_assignment_context;
+            for (let i = 0; i < fieldParts.length - 1; i++) {
+                if (!obj[fieldParts[i]]) obj[fieldParts[i]] = {};
+                obj = obj[fieldParts[i]];
+            }
+            obj[fieldParts[fieldParts.length - 1]] = value;
+            
+            saveToHistory();
+        };
+
+        window.addTask = function() {
+            const aiDeity = state.currentItem;
+            if (!aiDeity.task_config) aiDeity.task_config = {};
+            if (!aiDeity.task_config.available_tasks) aiDeity.task_config.available_tasks = [];
+            
+            const newTask = {
+                task_id: `task_${Date.now()}`,
+                display_name: "New Task",
+                description: "Task description here",
+                progression_tier: "novice",
+                requirements: [],
+                rewards: {
+                    reputation: 5,
+                    commands: []
+                },
+                cooldown_hours: 24,
+                repeatable: false,
+                ai_assignment_context: {
+                    trigger_conditions: {
+                        min_reputation: 0,
+                        max_reputation: 999
+                    },
+                    assignment_prompt: "A task awaits you, faithful one."
+                }
+            };
+            
+            aiDeity.task_config.available_tasks.push(newTask);
+            saveToHistory();
+            showAIDeityEditor(aiDeity);
+        };
+
+        window.removeTask = function(taskIndex) {
+            const aiDeity = state.currentItem;
+            aiDeity.task_config.available_tasks.splice(taskIndex, 1);
+            saveToHistory();
+            showAIDeityEditor(aiDeity);
+        };
+
+        window.addRequirement = function(taskIndex) {
+            const aiDeity = state.currentItem;
+            const task = aiDeity.task_config.available_tasks[taskIndex];
+            if (!task.requirements) task.requirements = [];
+            
+            task.requirements.push({
+                type: "collect_items",
+                items: [{
+                    item: "minecraft:dirt",
+                    count: 1,
+                    display_name: "Basic Material"
+                }]
+            });
+            
+            saveToHistory();
+            showAIDeityEditor(aiDeity);
+        };
+
+        window.removeRequirement = function(taskIndex, reqIndex) {
+            const aiDeity = state.currentItem;
+            aiDeity.task_config.available_tasks[taskIndex].requirements.splice(reqIndex, 1);
+            saveToHistory();
+            showAIDeityEditor(aiDeity);
+        };
+
+        window.addRewardCommand = function(taskIndex) {
+            const aiDeity = state.currentItem;
+            const task = aiDeity.task_config.available_tasks[taskIndex];
+            if (!task.rewards) task.rewards = {};
+            if (!task.rewards.commands) task.rewards.commands = [];
+            
+            task.rewards.commands.push("give {player} minecraft:diamond 1");
+            saveToHistory();
+            showAIDeityEditor(aiDeity);
+        };
+
+        window.removeRewardCommand = function(taskIndex, cmdIndex) {
+            const aiDeity = state.currentItem;
+            aiDeity.task_config.available_tasks[taskIndex].rewards.commands.splice(cmdIndex, 1);
+            saveToHistory();
+            showAIDeityEditor(aiDeity);
+        };
 
         // Helper functions for updating AI deity data
         window.updateReputationThreshold = function(index, field, value) {

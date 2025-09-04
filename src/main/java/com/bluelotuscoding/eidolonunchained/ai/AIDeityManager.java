@@ -235,6 +235,11 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                     loadAPISettings(config, json.getAsJsonObject("api_settings"));
                 }
                 
+                // Parse task configuration
+                if (json.has("task_config")) {
+                    loadTaskConfig(config, json.getAsJsonObject("task_config"));
+                }
+
                 // Store the configuration
                 aiConfigs.put(deityId, config);
                 linked++;
@@ -478,6 +483,81 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
         }
     }
     
+    private void loadTaskConfig(AIDeityConfig config, JsonObject taskConfig) {
+        // Clear hardcoded tasks - everything should come from JSON
+        config.task_config.availableTasks.clear();
+        
+        if (taskConfig.has("enabled")) {
+            config.task_config.enabled = taskConfig.get("enabled").getAsBoolean();
+        }
+        
+        if (taskConfig.has("max_active_tasks")) {
+            config.task_config.maxActiveTasks = taskConfig.get("max_active_tasks").getAsInt();
+        }
+        
+        if (taskConfig.has("available_tasks")) {
+            JsonArray tasks = taskConfig.getAsJsonArray("available_tasks");
+            for (JsonElement taskElement : tasks) {
+                JsonObject taskJson = taskElement.getAsJsonObject();
+                TaskSystemConfig.TaskTemplate task = new TaskSystemConfig.TaskTemplate();
+                
+                // Basic task fields
+                if (taskJson.has("task_id")) {
+                    task.taskId = taskJson.get("task_id").getAsString();
+                }
+                if (taskJson.has("display_name")) {
+                    task.displayName = taskJson.get("display_name").getAsString();
+                }
+                if (taskJson.has("description")) {
+                    task.description = taskJson.get("description").getAsString();
+                }
+                if (taskJson.has("progression_tier")) {
+                    task.progressionTier = taskJson.get("progression_tier").getAsString();
+                }
+                
+                // Requirements - convert JSON to simple string format for now
+                if (taskJson.has("requirements")) {
+                    JsonArray requirements = taskJson.getAsJsonArray("requirements");
+                    for (JsonElement req : requirements) {
+                        JsonObject reqObj = req.getAsJsonObject();
+                        String reqType = reqObj.get("type").getAsString();
+                        // Convert complex requirements to simple string format
+                        task.requirements.add(reqType + ":" + reqObj.toString());
+                    }
+                }
+                
+                // Rewards
+                if (taskJson.has("rewards")) {
+                    JsonObject rewards = taskJson.getAsJsonObject("rewards");
+                    if (rewards.has("reputation")) {
+                        task.reputationReward = rewards.get("reputation").getAsInt();
+                    }
+                    if (rewards.has("commands")) {
+                        JsonArray commands = rewards.getAsJsonArray("commands");
+                        for (JsonElement cmd : commands) {
+                            task.rewardCommands.add(cmd.getAsString());
+                        }
+                    }
+                }
+                
+                // Timing and repetition
+                if (taskJson.has("cooldown_hours")) {
+                    task.cooldownHours = taskJson.get("cooldown_hours").getAsLong();
+                }
+                if (taskJson.has("repeatable")) {
+                    task.repeatable = taskJson.get("repeatable").getAsBoolean();
+                }
+                
+                // AI assignment context (store as JSON string for complex handling)
+                if (taskJson.has("ai_assignment_context")) {
+                    task.aiAssignmentContext = taskJson.getAsJsonObject("ai_assignment_context").toString();
+                }
+                
+                config.task_config.availableTasks.add(task);
+            }
+        }
+    }
+
     /**
      * Get AI configuration for a specific deity
      */

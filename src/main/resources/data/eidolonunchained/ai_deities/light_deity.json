@@ -156,6 +156,319 @@
     }
   },
   
+  "task_config": {
+    "enabled": true,
+    "max_active_tasks": 3,
+    "task_assignment_behavior": {
+      "auto_assign_probability": 0.4,
+      "min_reputation_for_auto_assign": 3,
+      "conversation_triggers": [
+        "first_conversation",
+        "reputation_milestone", 
+        "completed_previous_task",
+        "healing_prayer",
+        "protection_prayer"
+      ],
+      "cooldown_between_assignments_hours": 20
+    },
+    
+    "available_tasks": [
+      {
+        "task_id": "light_purify_darkness",
+        "display_name": "Purify the Corrupted",
+        "description": "Cleanse areas tainted by darkness using your inner light",
+        "progression_tier": "initiate",
+        "ai_assignment_context": {
+          "trigger_conditions": {
+            "min_reputation": 0,
+            "max_reputation": 25,
+            "required_time": ["day"],
+            "prayer_types": ["conversation", "healing"],
+            "completed_tasks": [],
+            "unlocked_progressions": []
+          },
+          "assignment_prompt": "Young seeker of light, darkness spreads where evil has taken root. Take these {item_count} sacred torches and place them in dark places to drive away the corruption. Your act of purification will earn you {reputation_reward} divine favor.",
+          "completion_phrases": [
+            "Your light pierces the darkness - the corruption flees before your radiant courage.",
+            "Each torch you place becomes a beacon of hope in a world that needs healing.",
+            "The sacred flames you've kindled will burn away evil and protect the innocent."
+          ]
+        },
+        "requirements": [
+          {
+            "type": "place_blocks",
+            "blocks": [
+              {
+                "block": "minecraft:torch",
+                "count": 16,
+                "area_requirement": "16x16",
+                "light_level_below": 7,
+                "display_name": "Sacred Light Beacons"
+              }
+            ]
+          }
+        ],
+        "rewards": {
+          "reputation": 6,
+          "commands": [
+            "give {player} minecraft:golden_apple 1",
+            "effect give {player} minecraft:glowing 600 0",
+            "give {player} minecraft:torch 32",
+            "tellraw {player} {\"text\":\"✦ The sacred light flows through you - darkness cannot hide from your presence\",\"color\":\"yellow\"}"
+          ],
+          "progression_unlock": "light_beacon_keeper"
+        },
+        "cooldown_hours": 20,
+        "repeatable": false
+      },
+      
+      {
+        "task_id": "light_heal_wounded",
+        "display_name": "Heal the Suffering",
+        "description": "Use your divine powers to heal creatures in need",
+        "progression_tier": "acolyte",
+        "ai_assignment_context": {
+          "trigger_conditions": {
+            "min_reputation": 15,
+            "max_reputation": 45,
+            "prayer_types": ["healing", "conversation"],
+            "completed_tasks": ["light_purify_darkness"],
+            "unlocked_progressions": ["light_beacon_keeper"]
+          },
+          "assignment_prompt": "Devoted healer, suffering creatures call out for your compassion. Find {creature_count} wounded beings and restore them with your divine gift. This act of mercy will grant you {reputation_reward} blessed favor.",
+          "completion_phrases": [
+            "Your healing touch brings peace to those who suffer - you embody divine compassion.",
+            "Each life you restore strengthens the light in this world.",
+            "Your mercy shines like a beacon to all who witness your sacred work."
+          ]
+        },
+        "requirements": [
+          {
+            "type": "heal_entities",
+            "entities": [
+              {
+                "entity_type": "any_damaged",
+                "count": 5,
+                "healing_amount": 10,
+                "display_name": "Wounded Creatures"
+              }
+            ]
+          },
+          {
+            "type": "use_items",
+            "items": [
+              {
+                "item": "minecraft:golden_apple",
+                "count": 3,
+                "display_name": "Divine Healing Gifts"
+              }
+            ]
+          }
+        ],
+        "rewards": {
+          "reputation": 12,
+          "commands": [
+            "give {player} eidolon:lesser_soul_gem 2",
+            "effect give {player} minecraft:regeneration 600 2",
+            "give {player} minecraft:enchanted_golden_apple 1",
+            "tellraw {player} {\"text\":\"✦ The divine gift of healing flows stronger through your blessed hands\",\"color\":\"gold\"}"
+          ],
+          "progression_unlock": "light_divine_healer"
+        },
+        "cooldown_hours": 36,
+        "repeatable": false
+      },
+      
+      {
+        "task_id": "light_sacred_ritual",
+        "display_name": "Perform the Rite of Radiance",
+        "description": "Conduct the sacred ritual to prove your devotion to the light",
+        "progression_tier": "priest",
+        "ai_assignment_context": {
+          "trigger_conditions": {
+            "min_reputation": 35,
+            "max_reputation": 70,
+            "required_time": ["day"],
+            "prayer_types": ["protection", "communion"],
+            "completed_tasks": ["light_heal_wounded"],
+            "unlocked_progressions": ["light_divine_healer"],
+            "required_research": ["eidolonunchained:light_mysteries"]
+          },
+          "assignment_prompt": "Faithful priest, the time has come to prove your mastery of the sacred arts. Perform the ancient Rite of Radiance to demonstrate your unity with divine light. This holy act will bless you with {reputation_reward} supreme favor.",
+          "completion_phrases": [
+            "The ritual circle blazes with divine radiance - you have touched the source of all light.",
+            "Your devotion has opened a direct channel to the divine. You are truly blessed.",
+            "The sacred flames recognize your worthiness. You have earned the title of Light-Bearer."
+          ]
+        },
+        "requirements": [
+          {
+            "type": "complete_ritual",
+            "rituals": [
+              {
+                "ritual_id": "eidolonunchained:light_patronage_ritual",
+                "count": 1,
+                "success_required": true,
+                "time_requirement": "day"
+              }
+            ]
+          }
+        ],
+        "rewards": {
+          "reputation": 20,
+          "commands": [
+            "give {player} minecraft:enchanted_book 1",
+            "give {player} eidolon:arcane_gold_ingot 3",
+            "effect give {player} minecraft:absorption 900 3",
+            "effect give {player} minecraft:glowing 1800 0",
+            "tellraw {player} {\"text\":\"✦ You are blessed as a true Light-Bearer - divine radiance courses through your soul\",\"color\":\"gold\"}"
+          ],
+          "progression_unlock": "light_bearer"
+        },
+        "cooldown_hours": 84,
+        "repeatable": false
+      },
+      
+      {
+        "task_id": "light_divine_crucible",
+        "display_name": "Forge Divine Radiance",
+        "description": "Create blessed items using the sacred crucible of light",
+        "progression_tier": "high_priest",
+        "ai_assignment_context": {
+          "trigger_conditions": {
+            "min_reputation": 60,
+            "max_reputation": 999,
+            "required_time": ["day"],
+            "prayer_types": ["communion"],
+            "completed_tasks": ["light_sacred_ritual"],
+            "unlocked_progressions": ["light_bearer"],
+            "required_research": ["eidolonunchained:divine_alchemy"]
+          },
+          "assignment_prompt": "My chosen champion, you have proven worthy of the highest mysteries. Use the sacred crucible to forge items blessed with divine radiance. This ultimate test will grant you {reputation_reward} celestial favor.",
+          "completion_phrases": [
+            "Your crucible glows with divine fire - you have mastered the art of holy creation.",
+            "The blessed items you've forged will serve as beacons of hope for generations.",
+            "You have achieved the pinnacle of divine craftsmanship. Your skill honors the light itself."
+          ]
+        },
+        "requirements": [
+          {
+            "type": "complete_crucible_recipe",
+            "recipes": [
+              {
+                "recipe_id": "eidolonunchained:divine_essence",
+                "count": 1,
+                "success_required": true,
+                "time_requirement": "day"
+              }
+            ]
+          }
+        ],
+        "rewards": {
+          "reputation": 30,
+          "commands": [
+            "give {player} minecraft:totem_of_undying 1",
+            "give {player} minecraft:enchanted_golden_apple 3",
+            "effect give {player} minecraft:absorption 2400 4",
+            "effect give {player} minecraft:resistance 1800 2",
+            "tellraw {player} {\"text\":\"✦ You are blessed with the ultimate power of divine creation\",\"color\":\"white\"}"
+          ],
+          "progression_unlock": "light_divine_champion"
+        },
+        "cooldown_hours": 192,
+        "repeatable": true
+      },
+      
+      {
+        "task_id": "light_temple_pilgrimage",
+        "display_name": "Sacred Pilgrimage",
+        "description": "Journey to places where the light shines brightest",
+        "progression_tier": "wanderer",
+        "ai_assignment_context": {
+          "trigger_conditions": {
+            "min_reputation": 8,
+            "max_reputation": 40,
+            "required_time": ["day"],
+            "prayer_types": ["conversation"],
+            "completed_tasks": [],
+            "unlocked_progressions": []
+          },
+          "assignment_prompt": "Faithful wanderer, seek out the sacred places where my light shines brightest. Journey to {location_count} holy locations during daylight hours to receive divine blessings. Your pilgrimage will earn {reputation_reward} sacred favor.",
+          "completion_phrases": [
+            "Your pilgrimage has connected you to the sacred sites where light dwells.",
+            "Each blessed location you've visited has strengthened your bond with the divine.",
+            "Your journey has opened new pathways of understanding and devotion."
+          ]
+        },
+        "requirements": [
+          {
+            "type": "visit_biomes", 
+            "biomes": [
+              {
+                "biome": "minecraft:plains",
+                "duration_seconds": 180,
+                "time_requirement": "day",
+                "display_name": "Peaceful Meadows"
+              },
+              {
+                "biome": "minecraft:flower_forest",
+                "duration_seconds": 180,
+                "time_requirement": "day",
+                "display_name": "Sacred Blossoms"
+              }
+            ]
+          }
+        ],
+        "rewards": {
+          "reputation": 8,
+          "commands": [
+            "give {player} minecraft:diamond 2",
+            "effect give {player} minecraft:speed 1000 1",
+            "give {player} minecraft:compass 1"
+          ],
+          "progression_unlock": "light_pilgrim"
+        },
+        "cooldown_hours": 30,
+        "repeatable": true
+      }
+    ],
+    
+    "progression_chains": {
+      "light_main_path": [
+        "light_purify_darkness",
+        "light_heal_wounded",
+        "light_sacred_ritual", 
+        "light_divine_crucible"
+      ],
+      "light_pilgrimage_path": [
+        "light_temple_pilgrimage"
+      ],
+      "light_mastery_unlocks": {
+        "light_beacon_keeper": ["light_heal_wounded"],
+        "light_divine_healer": ["light_sacred_ritual"],
+        "light_bearer": ["light_divine_crucible"],
+        "light_pilgrim": ["light_heal_wounded"],
+        "light_divine_champion": []
+      }
+    },
+    
+    "ai_integration": {
+      "task_suggestion_prompts": {
+        "no_active_tasks": "This faithful soul seeks purpose in serving the light. Consider offering them a sacred duty that matches their devotion level ({reputation}) and their understanding of divine grace.",
+        "task_available": "A sacred mission awaits this devoted follower: {task_description}. Present this holy opportunity with the warmth of divine love.",
+        "task_completion": "Celebrate their completion of '{completed_task}' with radiant joy. Their success brings more light into the world. Guide them toward their next step in divine service if they are ready.",
+        "progression_milestone": "This blessed soul has grown in divine grace from {old_tier} to {new_tier}. Their spiritual advancement deserves recognition and greater responsibility."
+      },
+      "context_integration": {
+        "include_active_tasks_in_context": true,
+        "include_completed_tasks_count": true,
+        "include_available_task_hints": true,
+        "task_context_format": "Divine Tasks - Active: {active_tasks} | Completed: {completed_count} sacred duties | Ready for: {available_tasks}",
+        "progression_context_format": "Divine Progression: {current_tier} | Blessed Paths: {unlocked_progressions}"
+      }
+    }
+  },
+  
   "api_settings": {
     "temperature": 0.7,
     "max_tokens": 200,

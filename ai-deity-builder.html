@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eidolon Unchained - AI Deity Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f23 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(90deg, rgba(26,26,46,0.95) 0%, rgba(15,15,35,0.95) 100%);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid #4a148c;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(138, 43, 226, 0.3);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+        }
+
+        .title {
+            color: #ff6b35;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .subtitle {
+            color: #9e9e9e;
+            font-size: 0.9rem;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, #7c4dff, #651fff);
+            color: white;
+            box-shadow: 0 4px 12px rgba(124, 77, 255, 0.3);
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 77, 255, 0.5);
+        }
+
+        .btn-import {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 80px);
+        }
+
+        .sidebar {
+            width: 300px;
+            background: rgba(20,20,35,0.9);
+            border-right: 1px solid #333;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .sidebar-title {
+            color: #ff6b35;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: rgba(255, 107, 53, 0.1);
+            border-left: 3px solid #ff6b35;
+        }
+
+        .ai-deity-list {
+            list-style: none;
+        }
+
+        .ai-deity-item {
+            margin: 0.5rem 0;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .ai-deity-item:hover {
+            background: rgba(255, 107, 53, 0.2);
+            transform: translateX(4px);
+        }
+
+        .ai-deity-item.selected {
+            background: linear-gradient(90deg, rgba(255, 107, 53, 0.3), transparent);
+            border-left: 3px solid #ff6b35;
+        }
+
+        .ai-deity-name {
+            font-weight: 600;
+            color: #ff6b35;
+        }
+
+        .ai-deity-ref {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        .add-ai-deity-btn {
+            width: 100%;
+            padding: 0.75rem;
+            margin-top: 1rem;
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px dashed #4caf50;
+            color: #4caf50;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .add-ai-deity-btn:hover {
+            background: rgba(76, 175, 80, 0.3);
+            border-style: solid;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(15,15,35,0.8);
+        }
+
+        .content-header {
+            background: rgba(26,26,46,0.9);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content-title {
+            color: #ff6b35;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .content-body {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .form-section {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            color: #ff6b35;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #444;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            flex: 1;
+        }
+
+        .form-label {
+            display: block;
+            color: #9e9e9e;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(26, 26, 46, 0.95);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #ff6b35;
+            background: rgba(255, 107, 53, 0.05);
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+
+        .form-select option {
+            background: rgba(26, 26, 46, 0.95);
+            color: #e0e0e0;
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+        }
+
+        .field-help {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.25rem;
+            font-style: italic;
+        }
+
+        .personality-container {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .personality-stage {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #555;
+        }
+
+        .stage-badge {
+            background: rgba(255, 107, 53, 0.2);
+            color: #ff6b35;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .remove-btn {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+            border: 1px solid #f44336;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+
+        .remove-btn:hover {
+            background: rgba(244, 67, 54, 0.4);
+        }
+
+        .add-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px dashed #4caf50;
+            color: #4caf50;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .add-btn:hover {
+            background: rgba(76, 175, 80, 0.3);
+            border-style: solid;
+        }
+
+        .welcome-screen {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #9e9e9e;
+        }
+
+        .welcome-screen h2 {
+            color: #ff6b35;
+            margin-bottom: 1rem;
+            font-size: 2rem;
+        }
+
+        .welcome-screen p {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .json-preview {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            color: #e0e0e0;
+        }
+
+        .commands-container {
+            background: rgba(76, 175, 80, 0.05);
+            border: 1px dashed rgba(76, 175, 80, 0.3);
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .command-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .command-item input {
+            flex: 1;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.85rem;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.3);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 107, 53, 0.5);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo-section">
+            <div class="logo">🤖</div>
+            <div>
+                <div class="title">Eidolon Unchained</div>
+                <div class="subtitle">AI Deity Builder</div>
+            </div>
+        </div>
+        <div class="header-buttons">
+            <button class="btn btn-export" onclick="exportAIDeities()">📦 Export AI Deities</button>
+            <button class="btn btn-import" onclick="importAIDeities()">📤 Import</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-title">AI Deities</div>
+            <ul class="ai-deity-list" id="aiDeityList"></ul>
+            <button class="add-ai-deity-btn" onclick="addNewAIDeity()">+ Add New AI Deity</button>
+        </aside>
+
+        <main class="main-content">
+            <div class="content-header">
+                <div class="content-title" id="contentTitle">Select an AI deity to edit</div>
+                <button class="btn btn-export" onclick="showJSON()" id="jsonBtn" style="display: none;">View JSON</button>
+            </div>
+            <div class="content-body" id="contentBody">
+                <div class="welcome-screen">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">🤖</div>
+                    <h2>Create AI-Powered Deities</h2>
+                    <p>Build intelligent deity personalities that can chat with players using Google Gemini AI.</p>
+                    <p>AI Deities reference existing basic deities and add conversation capabilities, dynamic responses, and intelligent command execution.</p>
+                    <p>Click "Add New AI Deity" to get started!</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        const state = {
+            currentAIDeity: null,
+            aiDeities: []
+        };
+
+        function init() {
+            renderAIDeityList();
+        }
+
+        function renderAIDeityList() {
+            const list = document.getElementById('aiDeityList');
+            
+            if (state.aiDeities.length === 0) {
+                list.innerHTML = '<li style="color: #666; padding: 1rem; font-style: italic; text-align: center;">No AI deities yet</li>';
+                return;
+            }
+
+            list.innerHTML = state.aiDeities.map((aiDeity, index) => `
+                <li class="ai-deity-item ${state.currentAIDeity === index ? 'selected' : ''}" 
+                    onclick="selectAIDeity(${index})">
+                    <div class="ai-deity-name">${getAIDeityDisplayName(aiDeity)}</div>
+                    <div class="ai-deity-ref">${aiDeity.deity || 'No deity reference'}</div>
+                </li>
+            `).join('');
+        }
+
+        function getAIDeityDisplayName(aiDeity) {
+            if (aiDeity.deity) {
+                const parts = aiDeity.deity.split(':');
+                return parts[1] ? parts[1].replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'AI Deity';
+            }
+            return 'Unnamed AI Deity';
+        }
+
+        function selectAIDeity(index) {
+            state.currentAIDeity = index;
+            renderAIDeityList();
+            showAIDeityEditor(state.aiDeities[index]);
+        }
+
+        function addNewAIDeity() {
+            const aiDeityCount = state.aiDeities.length + 1;
+            const newAIDeity = {
+                deity: `eidolonunchained:custom_deity_${aiDeityCount}`,
+                api_provider: "gemini",
+                conversation_enabled: true,
+                global_config: {
+                    temperature: 0.7,
+                    max_tokens: 500,
+                    timeout_seconds: 30,
+                    cooldown_seconds: 60
+                },
+                personalities: {
+                    initiate: {
+                        system_prompt: `You are a wise and ancient deity who has just noticed a new follower. You are patient and welcoming to newcomers, offering basic guidance and encouragement. Speak in a mystical but approachable manner, addressing the player as "young seeker" or "new devotee". Keep responses concise but warm.`,
+                        allowed_commands: ["tell", "give"],
+                        command_restrictions: {
+                            give: {
+                                max_items: 3,
+                                allowed_items: ["minecraft:bread", "minecraft:apple", "minecraft:book"]
+                            }
+                        },
+                        conversation_starters: [
+                            "Welcome, young seeker. What brings you to seek my guidance?",
+                            "I sense a new presence before me. Speak, devotee, and I shall listen.",
+                            "The threads of fate have brought you here. What wisdom do you seek?"
+                        ]
+                    },
+                    devotee: {
+                        system_prompt: `You are a deity speaking to a proven follower who has shown dedication. You are more familiar and trusting, offering deeper insights and better rewards. Address them as "faithful one" or "devoted servant". You can be more conversational and share knowledge about your domain. You may occasionally test their knowledge or commitment.`,
+                        allowed_commands: ["tell", "give", "effect"],
+                        command_restrictions: {
+                            give: {
+                                max_items: 5,
+                                allowed_items: ["minecraft:diamond", "minecraft:emerald", "minecraft:enchanted_book", "minecraft:golden_apple"]
+                            },
+                            effect: {
+                                max_duration: 600,
+                                allowed_effects: ["minecraft:regeneration", "minecraft:strength", "minecraft:speed"]
+                            }
+                        },
+                        conversation_starters: [
+                            "Ah, my faithful servant returns. How may I aid you today?",
+                            "Your devotion has not gone unnoticed. Speak freely, loyal one.",
+                            "I am pleased by your continued service. What troubles you?"
+                        ]
+                    },
+                    champion: {
+                        system_prompt: `You are a deity speaking to your most trusted champion - a mortal who has achieved great standing in your service. You treat them almost as an equal, sharing secrets and granting powerful boons. Address them as "my champion" or "trusted ally". You can be more casual and even joke occasionally, while maintaining your divine authority. You expect much from them but reward them greatly.`,
+                        allowed_commands: ["tell", "give", "effect", "summon", "teleport"],
+                        command_restrictions: {
+                            give: {
+                                max_items: 10,
+                                allowed_items: ["minecraft:netherite_ingot", "minecraft:enchanted_golden_apple", "minecraft:totem_of_undying", "minecraft:elytra"]
+                            },
+                            effect: {
+                                max_duration: 1200,
+                                allowed_effects: ["minecraft:regeneration", "minecraft:strength", "minecraft:speed", "minecraft:fire_resistance", "minecraft:water_breathing"]
+                            }
+                        },
+                        conversation_starters: [
+                            "My champion arrives! What great deed shall we accomplish today?",
+                            "Greetings, trusted ally. Your presence brings me joy.",
+                            "Ah, my most valued servant. What wisdom or power do you seek?"
+                        ]
+                    }
+                },
+                prayer_configs: {
+                    conversation: {
+                        enabled: true,
+                        cooldown_seconds: 30,
+                        reputation_cost: 0,
+                        prompt_template: "Player {player_name} (reputation: {reputation}, stage: {stage}) wants to have a conversation. Their message: '{message}'. Respond as the deity."
+                    },
+                    blessing: {
+                        enabled: true,
+                        cooldown_seconds: 300,
+                        reputation_cost: 5,
+                        prompt_template: "Player {player_name} seeks a blessing. They have {reputation} reputation and are at stage {stage}. Current time: {time}, biome: {biome}. Grant an appropriate blessing."
+                    },
+                    guidance: {
+                        enabled: true,
+                        cooldown_seconds: 120,
+                        reputation_cost: 2,
+                        prompt_template: "Player {player_name} seeks guidance. They are at stage {stage} with {reputation} reputation. Location: {biome}. Provide helpful advice or hints."
+                    }
+                },
+                behavior_rules: {
+                    reputation_thresholds: {
+                        hostile: -50,
+                        neutral: 0,
+                        friendly: 25,
+                        devoted: 100
+                    },
+                    mood_modifiers: {
+                        time_of_day: {
+                            dawn: 0.1,
+                            day: 0.0,
+                            dusk: 0.1,
+                            night: 0.2
+                        },
+                        biome_affinity: {
+                            "minecraft:forest": 0.2,
+                            "minecraft:dark_forest": -0.1,
+                            "minecraft:desert": -0.2
+                        }
+                    }
+                }
+            };
+
+            state.aiDeities.push(newAIDeity);
+            const newIndex = state.aiDeities.length - 1;
+            selectAIDeity(newIndex);
+        }
+
+        function showAIDeityEditor(aiDeity) {
+            const title = document.getElementById('contentTitle');
+            const body = document.getElementById('contentBody');
+            const jsonBtn = document.getElementById('jsonBtn');
+
+            title.textContent = getAIDeityDisplayName(aiDeity);
+            jsonBtn.style.display = 'block';
+
+            body.innerHTML = `
+                <div class="form-section">
+                    <div class="section-title">Basic Configuration</div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Deity Reference</label>
+                            <input type="text" class="form-input" value="${aiDeity.deity || ''}" 
+                                   onchange="updateAIDeity('deity', this.value)"
+                                   placeholder="eidolonunchained:nature_deity">
+                            <div class="field-help">ResourceLocation of the basic deity this AI personality is for</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">API Provider</label>
+                            <select class="form-select" onchange="updateAIDeity('api_provider', this.value)">
+                                <option value="gemini" ${aiDeity.api_provider === 'gemini' ? 'selected' : ''}>Google Gemini</option>
+                                <option value="openai" ${aiDeity.api_provider === 'openai' ? 'selected' : ''}>OpenAI (Future)</option>
+                            </select>
+                            <div class="field-help">AI service provider for conversation generation</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Temperature (0.0-1.0)</label>
+                            <input type="number" class="form-input" value="${aiDeity.global_config?.temperature || 0.7}" 
+                                   min="0" max="1" step="0.1" onchange="updateGlobalConfig('temperature', parseFloat(this.value))">
+                            <div class="field-help">Creativity level: 0.0 = very focused, 1.0 = very creative</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Max Tokens</label>
+                            <input type="number" class="form-input" value="${aiDeity.global_config?.max_tokens || 500}" 
+                                   min="50" max="2000" onchange="updateGlobalConfig('max_tokens', parseInt(this.value))">
+                            <div class="field-help">Maximum response length (50-2000 tokens)</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Timeout (seconds)</label>
+                            <input type="number" class="form-input" value="${aiDeity.global_config?.timeout_seconds || 30}" 
+                                   min="5" max="120" onchange="updateGlobalConfig('timeout_seconds', parseInt(this.value))">
+                            <div class="field-help">How long to wait for AI response</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Global Cooldown (seconds)</label>
+                            <input type="number" class="form-input" value="${aiDeity.global_config?.cooldown_seconds || 60}" 
+                                   min="0" max="3600" onchange="updateGlobalConfig('cooldown_seconds', parseInt(this.value))">
+                            <div class="field-help">Minimum time between any AI interactions</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">Progression Personalities</div>
+                    <div class="personality-container">
+                        ${generatePersonalitiesEditor(aiDeity.personalities || {})}
+                        <button class="add-btn" onclick="addPersonality()">+ Add Personality Stage</button>
+                    </div>
+                    <div class="field-help">Different AI personalities for each progression stage. Each stage should reference IDs from your basic deity progression.</div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">Prayer Configurations</div>
+                    ${generatePrayerConfigsEditor(aiDeity.prayer_configs || {})}
+                    <div class="field-help">Configure how different prayer types work with this AI deity</div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">Actions</div>
+                    <div class="form-row">
+                        <button class="btn btn-export" onclick="showJSON()">View JSON</button>
+                        <button class="remove-btn" onclick="deleteAIDeity()" style="padding: 0.75rem 1.5rem;">Delete AI Deity</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generatePersonalitiesEditor(personalities) {
+            const stages = Object.keys(personalities);
+            if (stages.length === 0) {
+                return '<div style="color: #666; text-align: center; padding: 2rem; font-style: italic;">No personalities defined yet</div>';
+            }
+
+            return stages.map(stage => `
+                <div class="personality-stage">
+                    <div class="stage-header">
+                        <div class="stage-badge">${stage}</div>
+                        <button class="remove-btn" onclick="removePersonality('${stage}')">Remove</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">System Prompt</label>
+                        <textarea class="form-textarea" onchange="updatePersonality('${stage}', 'system_prompt', this.value)"
+                                  placeholder="You are a deity speaking to a ${stage}...">${personalities[stage].system_prompt || ''}</textarea>
+                        <div class="field-help">Core personality instructions for the AI at this progression stage</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Allowed Commands</label>
+                        <div class="commands-container">
+                            ${generateCommandsEditor(personalities[stage].allowed_commands || [], stage)}
+                            <button class="add-btn" onclick="addCommand('${stage}')">+ Add Command</button>
+                        </div>
+                        <div class="field-help">Commands this personality can execute: tell, give, effect, summon, teleport</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Conversation Starters</label>
+                        <div class="commands-container">
+                            ${generateStartersEditor(personalities[stage].conversation_starters || [], stage)}
+                            <button class="add-btn" onclick="addStarter('${stage}')">+ Add Starter</button>
+                        </div>
+                        <div class="field-help">Random greeting messages when players initiate conversation</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateCommandsEditor(commands, stage) {
+            if (commands.length === 0) {
+                return '<div style="color: #666; text-align: center; padding: 1rem; font-style: italic;">No commands yet</div>';
+            }
+
+            return commands.map((command, index) => `
+                <div class="command-item">
+                    <input type="text" class="form-input" value="${command}" 
+                           onchange="updateCommand('${stage}', ${index}, this.value)"
+                           placeholder="give">
+                    <button class="remove-btn" onclick="removeCommand('${stage}', ${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function generateStartersEditor(starters, stage) {
+            if (starters.length === 0) {
+                return '<div style="color: #666; text-align: center; padding: 1rem; font-style: italic;">No starters yet</div>';
+            }
+
+            return starters.map((starter, index) => `
+                <div class="command-item">
+                    <input type="text" class="form-input" value="${starter}" 
+                           onchange="updateStarter('${stage}', ${index}, this.value)"
+                           placeholder="Welcome, young seeker...">
+                    <button class="remove-btn" onclick="removeStarter('${stage}', ${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function generatePrayerConfigsEditor(prayerConfigs) {
+            const prayerTypes = ['conversation', 'blessing', 'guidance', 'protection', 'knowledge'];
+            
+            return prayerTypes.map(type => {
+                const config = prayerConfigs[type] || {};
+                return `
+                    <div class="personality-stage">
+                        <div class="stage-header">
+                            <div class="stage-badge">${type}</div>
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" ${config.enabled ? 'checked' : ''}
+                                       onchange="updatePrayerConfig('${type}', 'enabled', this.checked)">
+                                Enabled
+                            </label>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Cooldown (seconds)</label>
+                                <input type="number" class="form-input" value="${config.cooldown_seconds || 60}" 
+                                       onchange="updatePrayerConfig('${type}', 'cooldown_seconds', parseInt(this.value))">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Reputation Cost</label>
+                                <input type="number" class="form-input" value="${config.reputation_cost || 0}" 
+                                       onchange="updatePrayerConfig('${type}', 'reputation_cost', parseInt(this.value))">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Prompt Template</label>
+                            <textarea class="form-textarea" onchange="updatePrayerConfig('${type}', 'prompt_template', this.value)"
+                                      placeholder="Player {player_name} seeks ${type}...">${config.prompt_template || ''}</textarea>
+                            <div class="field-help">Template with placeholders: {player_name}, {reputation}, {stage}, {message}, {time}, {biome}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Update functions
+        function updateAIDeity(field, value) {
+            if (state.currentAIDeity === null) return;
+            state.aiDeities[state.currentAIDeity][field] = value;
+            renderAIDeityList();
+        }
+
+        function updateGlobalConfig(field, value) {
+            if (state.currentAIDeity === null) return;
+            const aiDeity = state.aiDeities[state.currentAIDeity];
+            if (!aiDeity.global_config) aiDeity.global_config = {};
+            aiDeity.global_config[field] = value;
+        }
+
+        function addPersonality() {
+            if (state.currentAIDeity === null) return;
+            const stageName = prompt('Enter stage name (e.g., "initiate", "devotee", "champion"):');
+            if (!stageName) return;
+            
+            const aiDeity = state.aiDeities[state.currentAIDeity];
+            if (!aiDeity.personalities) aiDeity.personalities = {};
+            
+            aiDeity.personalities[stageName] = {
+                system_prompt: `You are a deity speaking to a ${stageName}. Adjust your tone and capabilities accordingly.`,
+                allowed_commands: ["tell"],
+                command_restrictions: {},
+                conversation_starters: [`Greetings, ${stageName}. How may I assist you?`]
+            };
+            
+            showAIDeityEditor(aiDeity);
+        }
+
+        function removePersonality(stage) {
+            if (state.currentAIDeity === null) return;
+            const aiDeity = state.aiDeities[state.currentAIDeity];
+            delete aiDeity.personalities[stage];
+            showAIDeityEditor(aiDeity);
+        }
+
+        function updatePersonality(stage, field, value) {
+            if (state.currentAIDeity === null) return;
+            const aiDeity = state.aiDeities[state.currentAIDeity];
+            aiDeity.personalities[stage][field] = value;
+        }
+
+        function addCommand(stage) {
+            if (state.currentAIDeity === null) return;
+            const aiDeity = state.aiDeities[state.currentAIDeity];
+            if (!aiDeity.personalities[stage].allowed_commands) {
+                aiDeity.personalities[stage].allowed_commands = [];
+            }
+            aiDeity.personalities[stage].allowed_commands.push('tell');
+            showAIDeityEditor(aiDeity);
+        }
+
+        function removeCommand(stage, index) {
+            if (state.currentAIDeity === null) return;
+            const aiDeity = state.aiDeities[state.currentAIDeity];
+            aiDeity.personalities[stage].allowed_commands.splice(index, 1);
+            showAIDeityEditor(aiDeity);
+        }
+
+        function updateCommand(stage, index, value) {
+            if (state.currentAIDeity === null) return;
+            const aiDeity = state.aiDeities[state.currentAIDeity];
+            aiDeity.personalities[stage].allowed_commands[index] = value;
+        }
+
+        function addStarter(stage) {
+            if (state.currentAIDeity === null) return;
+            const aiDeity = state.aiDeities[state.currentAIDeity];
+            if (!aiDeity.personalities[stage].conversation_starters) {
+                aiDeity.personalities[stage].conversation_starters = [];
+            }
+            aiDeity.personalities[stage].conversation_starters.push('Welcome, seeker.');
+            showAIDeityEditor(aiDeity);
+        }
+
+        function removeStarter(stage, index) {
+            if (state.currentAIDeity === null) return;
+            const aiDeity = state.aiDeities[state.currentAIDeity];
+            aiDeity.personalities[stage].conversation_starters.splice(index, 1);
+            showAIDeityEditor(aiDeity);
+        }
+
+        function updateStarter(stage, index, value) {
+            if (state.currentAIDeity === null) return;
+            const aiDeity = state.aiDeities[state.currentAIDeity];
+            aiDeity.personalities[stage].conversation_starters[index] = value;
+        }
+
+        function updatePrayerConfig(type, field, value) {
+            if (state.currentAIDeity === null) return;
+            const aiDeity = state.aiDeities[state.currentAIDeity];
+            if (!aiDeity.prayer_configs) aiDeity.prayer_configs = {};
+            if (!aiDeity.prayer_configs[type]) aiDeity.prayer_configs[type] = {};
+            aiDeity.prayer_configs[type][field] = value;
+        }
+
+        function deleteAIDeity() {
+            if (state.currentAIDeity === null) return;
+            if (confirm('Are you sure you want to delete this AI deity?')) {
+                state.aiDeities.splice(state.currentAIDeity, 1);
+                state.currentAIDeity = null;
+                renderAIDeityList();
+                showWelcomeScreen();
+            }
+        }
+
+        function showWelcomeScreen() {
+            const title = document.getElementById('contentTitle');
+            const body = document.getElementById('contentBody');
+            const jsonBtn = document.getElementById('jsonBtn');
+
+            title.textContent = 'Select an AI deity to edit';
+            jsonBtn.style.display = 'none';
+
+            body.innerHTML = `
+                <div class="welcome-screen">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">🤖</div>
+                    <h2>Create AI-Powered Deities</h2>
+                    <p>Build intelligent deity personalities that can chat with players using Google Gemini AI.</p>
+                    <p>AI Deities reference existing basic deities and add conversation capabilities, dynamic responses, and intelligent command execution.</p>
+                    <p>Click "Add New AI Deity" to get started!</p>
+                </div>
+            `;
+        }
+
+        function showJSON() {
+            if (state.currentAIDeity === null) return;
+            const aiDeity = state.aiDeities[state.currentAIDeity];
+            
+            const body = document.getElementById('contentBody');
+            body.innerHTML = `
+                <div class="form-section">
+                    <div class="section-title">JSON Output</div>
+                    <div class="json-preview">${JSON.stringify(aiDeity, null, 2)}</div>
+                    <button class="btn btn-export" onclick="showAIDeityEditor(state.aiDeities[state.currentAIDeity])" 
+                            style="margin-top: 1rem;">← Back to Editor</button>
+                </div>
+            `;
+        }
+
+        function exportAIDeities() {
+            if (state.aiDeities.length === 0) {
+                alert('No AI deities to export!');
+                return;
+            }
+
+            const zip = new JSZip();
+            const dataFolder = zip.folder('data');
+            const namespaceFolder = dataFolder.folder('eidolonunchained');
+            const aiDeitiesFolder = namespaceFolder.folder('ai_deities');
+
+            state.aiDeities.forEach((aiDeity, index) => {
+                const deityRef = aiDeity.deity || `unknown_deity_${index}`;
+                const filename = deityRef.includes(':') ? deityRef.split(':')[1] : deityRef;
+                aiDeitiesFolder.file(`${filename}.json`, JSON.stringify(aiDeity, null, 2));
+            });
+
+            // Add pack.mcmeta
+            const packMeta = {
+                pack: {
+                    pack_format: 15,
+                    description: "Eidolon Unchained AI Deities Datapack"
+                }
+            };
+            zip.file('pack.mcmeta', JSON.stringify(packMeta, null, 2));
+
+            zip.generateAsync({ type: 'blob' }).then(content => {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = 'eidolon_ai_deities.zip';
+                link.click();
+            });
+        }
+
+        function importAIDeities() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            if (Array.isArray(data)) {
+                                state.aiDeities = data;
+                            } else {
+                                state.aiDeities.push(data);
+                            }
+                            state.currentAIDeity = null;
+                            renderAIDeityList();
+                            showWelcomeScreen();
+                        } catch (error) {
+                            alert('Invalid JSON file');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eidolon Unchained - Complete Datapack Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f23 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(90deg, rgba(26,26,46,0.95) 0%, rgba(15,15,35,0.95) 100%);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid #4a148c;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(138, 43, 226, 0.3);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #8a2be2, #4a148c);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(138, 43, 226, 0.4);
+        }
+
+        .title {
+            color: #ffa500;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .subtitle {
+            color: #9e9e9e;
+            font-size: 0.9rem;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-export, .btn-import {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, #7c4dff, #651fff);
+            color: white;
+            box-shadow: 0 4px 12px rgba(124, 77, 255, 0.3);
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 77, 255, 0.5);
+        }
+
+        .btn-import {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+        }
+
+        .nav-tabs {
+            background: rgba(26,26,46,0.8);
+            padding: 0 2rem;
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid #333;
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            padding: 1rem 1.5rem;
+            background: transparent;
+            color: #9e9e9e;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .nav-tab:hover {
+            color: #fff;
+            background: rgba(138, 43, 226, 0.1);
+        }
+
+        .nav-tab.active {
+            color: #ffa500;
+            border-bottom-color: #ffa500;
+            background: rgba(255, 165, 0, 0.1);
+        }
+
+        .main-content {
+            display: flex;
+            height: calc(100vh - 140px);
+        }
+
+        .sidebar {
+            width: 320px;
+            background: rgba(20,20,35,0.9);
+            border-right: 1px solid #333;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .sidebar-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .sidebar-title {
+            color: #ffa500;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem;
+            background: rgba(255, 165, 0, 0.1);
+            border-left: 3px solid #ffa500;
+        }
+
+        .tree-view {
+            list-style: none;
+        }
+
+        .tree-item {
+            margin: 0.25rem 0;
+        }
+
+        .tree-item-content {
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .tree-item-content:hover {
+            background: rgba(138, 43, 226, 0.2);
+            transform: translateX(4px);
+        }
+
+        .tree-item.selected .tree-item-content {
+            background: linear-gradient(90deg, rgba(138, 43, 226, 0.3), transparent);
+            border-left: 3px solid #8a2be2;
+        }
+
+        .add-btn {
+            width: 100%;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px dashed #4caf50;
+            color: #4caf50;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .add-btn:hover {
+            background: rgba(76, 175, 80, 0.3);
+            border-style: solid;
+        }
+
+        .editor-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(15,15,35,0.8);
+        }
+
+        .editor-header {
+            background: rgba(26,26,46,0.9);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editor-title {
+            color: #ffa500;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .editor-content {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            flex: 1;
+        }
+
+        .form-label {
+            display: block;
+            color: #9e9e9e;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            color: #fff;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-select {
+            background: rgba(26, 26, 46, 0.95);
+            color: #e0e0e0;
+        }
+
+        .form-select option {
+            background: rgba(26, 26, 46, 0.95);
+            color: #e0e0e0;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #8a2be2;
+            background: rgba(138, 43, 226, 0.05);
+            box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+        }
+
+        .form-textarea.large {
+            min-height: 200px;
+        }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-checkbox input {
+            width: auto;
+        }
+
+        .field-help {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.25rem;
+            font-style: italic;
+        }
+
+        .json-preview {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #0f0f23);
+            border: 1px solid #8a2be2;
+            border-radius: 8px;
+            padding: 2rem;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .stages-editor {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .stage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #444;
+        }
+
+        .stage-badge {
+            background: rgba(138, 43, 226, 0.2);
+            color: #8a2be2;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .rewards-editor {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px dashed #4caf50;
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+        }
+
+        .reward-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .reward-item input {
+            flex: 1;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.85rem;
+        }
+
+        .array-editor {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+        }
+
+        .array-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .array-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .array-item input, .array-item select {
+            flex: 1;
+        }
+
+        .dropdown-content {
+            background: rgba(26, 26, 46, 0.95);
+            border: 1px solid #8a2be2;
+            border-radius: 4px;
+            color: #e0e0e0;
+        }
+
+        .dropdown-content option {
+            background: rgba(26, 26, 46, 0.95);
+            color: #e0e0e0;
+        }
+
+        .modal-header {
+            color: #ffa500;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1.5rem;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #8a2be2;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #666;
+            color: white;
+        }
+
+        .welcome-screen {
+            text-align: center;
+            padding: 3rem;
+            color: #9e9e9e;
+        }
+
+        .welcome-screen h2 {
+            color: #ffa500;
+            margin-bottom: 1rem;
+        }
+
+        .page-editor {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .page-type-badge {
+            background: rgba(138, 43, 226, 0.2);
+            color: #8a2be2;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .remove-btn {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+            border: 1px solid #f44336;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.3);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(138, 43, 226, 0.5);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo-section">
+            <div class="logo">🔮</div>
+            <div>
+                <div class="title">Eidolon Unchained</div>
+                <div class="subtitle">Complete Datapack Builder</div>
+            </div>
+        </div>
+        <div class="header-buttons">
+            <button class="btn-export" onclick="exportDatapack()">📦 Export Datapack</button>
+            <button class="btn-export" onclick="exportResourcePack()">🎨 Export Resource Pack</button>
+            <button class="btn-import" onclick="importProject()">📤 Import Project</button>
+        </div>
+    </header>
+
+    <nav class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab(event, 'deities')">🏛️ Deities</button>
+        <button class="nav-tab" onclick="switchTab(event, 'ai_deities')">🧠 AI Configs</button>
+        <button class="nav-tab" onclick="switchTab(event, 'chants')">✨ Chants</button>
+        <button class="nav-tab" onclick="switchTab(event, 'codex_categories')">📁 Codex Categories</button>
+        <button class="nav-tab" onclick="switchTab(event, 'codex_entries')">📚 Codex Entries</button>
+        <button class="nav-tab" onclick="switchTab(event, 'research_chapters')">📖 Research Chapters</button>
+        <button class="nav-tab" onclick="switchTab(event, 'research_entries')">🔬 Research Entries</button>
+        <button class="nav-tab" onclick="switchTab(event, 'research')">📝 Research</button>
+        <button class="nav-tab" onclick="switchTab(event, 'recipes')">⚗️ Recipes</button>
+        <button class="nav-tab" onclick="switchTab(event, 'language')">🌐 Language</button>
+    </nav>
+
+    <div class="main-content">
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Project Structure</div>
+                <ul class="tree-view" id="projectTree"></ul>
+                <button class="add-btn" onclick="addNewItem()">+ Add New</button>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title">Project Info</div>
+                <div class="form-group">
+                    <label class="form-label">Namespace</label>
+                    <input type="text" class="form-input" id="projectNamespace" value="custom_pack" 
+                           onchange="updateProjectNamespace(this.value)">
+                    <div class="field-help">Used as the mod ID for your datapack</div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="editor-area">
+            <div class="editor-header">
+                <div class="editor-title" id="editorTitle">Select an item to edit</div>
+                <div>
+                    <button class="btn btn-secondary" onclick="showJSONPreview()" id="previewBtn" style="display: none;">View JSON</button>
+                </div>
+            </div>
+            <div class="editor-content" id="editorContent">
+                <div class="welcome-screen">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">🔮</div>
+                    <h2>Welcome to the Complete Eidolon Unchained Builder</h2>
+                    <p>Create comprehensive datapacks with all Eidolon Unchained systems:</p>
+                    <br>
+                    <ul style="text-align: left; max-width: 600px; margin: 0 auto;">
+                        <li><strong>🏛️ Deities:</strong> Basic deity definitions with progression systems</li>
+                        <li><strong>🧠 AI Configs:</strong> AI personalities and task configurations</li>
+                        <li><strong>✨ Chants:</strong> Custom chants with sign sequences and effects</li>
+                        <li><strong>📚 Codex:</strong> Codex categories and entries for documentation</li>
+                        <li><strong>🔬 Research:</strong> Custom research chapters and entries</li>
+                        <li><strong>⚗️ Recipes:</strong> Custom crucible recipes with command execution</li>
+                        <li><strong>🌐 Language:</strong> Translation keys and localization</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header" id="modalTitle">Modal Title</div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" id="modalConfirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        const state = {
+            currentTab: 'deities',
+            currentItem: null,
+            projectData: {
+                namespace: 'custom_pack',
+                deities: [],
+                ai_deities: [],
+                chants: [],
+                codex_categories: [],
+                codex_entries: [],
+                research_chapters: [],
+                research_entries: [],
+                research: [],
+                recipes: [],
+                language: {}
+            }
+        };
+
+        function init() {
+            renderProjectTree();
+        }
+
+        function updateProjectNamespace(value) {
+            state.projectData.namespace = value;
+        }
+
+        function switchTab(event, tab) {
+            state.currentTab = tab;
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            state.currentItem = null;
+            const previewBtn = document.getElementById('previewBtn');
+            if (previewBtn) previewBtn.style.display = 'none';
+            renderProjectTree();
+            showWelcomeScreen();
+        }
+
+        function renderProjectTree() {
+            const tree = document.getElementById('projectTree');
+            const items = state.projectData[state.currentTab] || [];
+            
+            if (items.length === 0) {
+                tree.innerHTML = '<li style="color: #666; padding: 1rem; font-style: italic;">No items yet</li>';
+                return;
+            }
+
+            tree.innerHTML = items.map((item, index) => {
+                const displayName = getItemDisplayName(item);
+                const icon = getItemIcon(state.currentTab);
+                return `
+                    <li class="tree-item ${state.currentItem?.index === index ? 'selected' : ''}">
+                        <div class="tree-item-content" onclick="selectItem(${index})">
+                            <span>${icon}</span>
+                            <span title="${displayName}">${displayName}</span>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        function getItemDisplayName(item) {
+            if (item.name) return item.name;
+            if (item.title) return item.title;
+            if (item.id) return item.id;
+            if (item.deity) return `AI: ${item.deity}`;
+            return 'Unnamed Item';
+        }
+
+        function getItemIcon(tabType) {
+            const icons = {
+                deities: '🏛️',
+                ai_deities: '🧠',
+                chants: '✨',
+                codex_categories: '📁',
+                codex_entries: '📚',
+                research_chapters: '📖',
+                research_entries: '🔬',
+                research: '📝',
+                recipes: '⚗️',
+                language: '🌐'
+            };
+            return icons[tabType] || '📄';
+        }
+
+        function selectItem(index) {
+            state.currentItem = { type: state.currentTab, index };
+            const item = state.projectData[state.currentTab][index];
+            showEditor(item);
+            renderProjectTree();
+        }
+
+        function showWelcomeScreen() {
+            const content = document.getElementById('editorContent');
+            const title = document.getElementById('editorTitle');
+            
+            title.textContent = 'Select an item to edit';
+            content.innerHTML = `
+                <div class="welcome-screen">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">🔮</div>
+                    <h2>Welcome to the Complete Eidolon Unchained Builder</h2>
+                    <p>Create comprehensive datapacks with all Eidolon Unchained systems</p>
+                </div>
+            `;
+        }
+
+        function showEditor(item) {
+            const title = document.getElementById('editorTitle');
+            const content = document.getElementById('editorContent');
+            const previewBtn = document.getElementById('previewBtn');
+            
+            title.textContent = getItemDisplayName(item);
+            if (previewBtn) previewBtn.style.display = 'block';
+            
+            content.innerHTML = generateEditorContent(state.currentTab, item);
+        }
+
+        function generateEditorContent(tabType, item) {
+            switch (tabType) {
+                case 'deities':
+                    return generateDeityEditor(item);
+                case 'ai_deities':
+                    return generateAIDeityEditor(item);
+                case 'chants':
+                    return generateChantEditor(item);
+                case 'codex_categories':
+                    return generateCodexCategoryEditor(item);
+                case 'codex_entries':
+                    return generateCodexEntryEditor(item);
+                case 'research_chapters':
+                    return generateResearchChapterEditor(item);
+                case 'research_entries':
+                    return generateResearchEntryEditor(item);
+                case 'research':
+                    return generateResearchEditor(item);
+                case 'recipes':
+                    return generateRecipeEditor(item);
+                case 'language':
+                    return generateLanguageEditor(item);
+                default:
+                    return '<div class="welcome-screen"><h2>Unknown tab type</h2></div>';
+            }
+        }
+
+        // Basic editor generators
+        function generateDeityEditor(deity = {}) {
+            return `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">ID</label>
+                        <input type="text" class="form-input" value="${deity.id || ''}" 
+                               onchange="updateCurrentItem('id', this.value)"
+                               placeholder="eidolonunchained:my_deity">
+                        <div class="field-help">Full ResourceLocation identifier</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-input" value="${deity.name || ''}" 
+                               onchange="updateCurrentItem('name', this.value)">
+                        <div class="field-help">Display name shown to players</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-textarea" onchange="updateCurrentItem('description', this.value)">${deity.description || ''}</textarea>
+                    <div class="field-help">Flavor text describing the deity</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Colors</label>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Red</label>
+                            <input type="number" class="form-input" value="${deity.colors?.red || 74}" min="0" max="255"
+                                   onchange="updateDeityColor('red', parseInt(this.value))">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Green</label>
+                            <input type="number" class="form-input" value="${deity.colors?.green || 124}" min="0" max="255"
+                                   onchange="updateDeityColor('green', parseInt(this.value))">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Blue</label>
+                            <input type="number" class="form-input" value="${deity.colors?.blue || 89}" min="0" max="255"
+                                   onchange="updateDeityColor('blue', parseInt(this.value))">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Prayer Types</label>
+                    <div id="prayerTypesEditor">${generatePrayerTypesEditor(deity.prayer_types || [])}</div>
+                    <div class="field-help">Available prayer categories for this deity</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Progression System</label>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Max Reputation</label>
+                            <input type="number" class="form-input" value="${deity.progression?.max_reputation || 100}" 
+                                   onchange="updateProgression('max_reputation', parseInt(this.value))">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Progression Stages</label>
+                        <div id="stagesEditor">${generateStagesEditor(deity.progression?.stages || [])}</div>
+                        <button class="add-btn" onclick="addProgressionStage()">+ Add Stage</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateAIDeityEditor(aiDeity = {}) {
+            return `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Deity Reference</label>
+                        <select class="form-select" onchange="updateCurrentItem('deity', this.value)">
+                            <option value="">Select a deity...</option>
+                            ${state.projectData.deities.map(d => 
+                                `<option value="${state.projectData.namespace}:${d.name?.toLowerCase().replace(/\s+/g, '_')}" ${aiDeity.deity === `${state.projectData.namespace}:${d.name?.toLowerCase().replace(/\s+/g, '_')}` ? 'selected' : ''}>${d.name || 'Unnamed'}</option>`
+                            ).join('')}
+                        </select>
+                        <div class="field-help">Link to a deity definition</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">API Provider</label>
+                        <select class="form-select" onchange="updateCurrentItem('api_provider', this.value)">
+                            <option value="gemini" ${aiDeity.api_provider === 'gemini' ? 'selected' : ''}>Google Gemini</option>
+                            <option value="openai" ${aiDeity.api_provider === 'openai' ? 'selected' : ''}>OpenAI GPT</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateChantEditor(chant = {}) {
+            return `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Name (Translation Key)</label>
+                        <input type="text" class="form-input" value="${chant.name || ''}" 
+                               onchange="updateCurrentItem('name', this.value)"
+                               placeholder="eidolonunchained.chant.my_chant.name">
+                        <div class="field-help">Translation key for the chant name</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <input type="text" class="form-input" value="${chant.category || ''}" 
+                               onchange="updateCurrentItem('category', this.value)"
+                               placeholder="examples">
+                        <div class="field-help">Codex category for organization</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description (Translation Key)</label>
+                    <input type="text" class="form-input" value="${chant.description || ''}" 
+                           onchange="updateCurrentItem('description', this.value)"
+                           placeholder="eidolonunchained.chant.my_chant.description">
+                    <div class="field-help">Translation key for the chant description</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Codex Icon</label>
+                        <input type="text" class="form-input" value="${chant.codex_icon || 'minecraft:book'}" 
+                               onchange="updateCurrentItem('codex_icon', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Difficulty</label>
+                        <input type="number" class="form-input" value="${chant.difficulty || 1}" min="1" max="5"
+                               onchange="updateCurrentItem('difficulty', parseInt(this.value))">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Mana Cost</label>
+                        <input type="number" class="form-input" value="${chant.mana_cost || 20}" 
+                               onchange="updateCurrentItem('mana_cost', parseInt(this.value))">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cooldown (seconds)</label>
+                        <input type="number" class="form-input" value="${chant.cooldown || 30}" 
+                               onchange="updateCurrentItem('cooldown', parseInt(this.value))">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Show in Codex</label>
+                        <div class="form-checkbox">
+                            <input type="checkbox" ${chant.show_in_codex !== false ? 'checked' : ''}
+                                   onchange="updateCurrentItem('show_in_codex', this.checked)">
+                            <label>Display this chant in the codex</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Linked Deity</label>
+                        <select class="form-select" onchange="updateCurrentItem('linked_deity', this.value)">
+                            <option value="">None</option>
+                            ${state.projectData.deities.map(d => 
+                                `<option value="${d.id}" ${chant.linked_deity === d.id ? 'selected' : ''}>${d.name || d.id}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Sign Sequence</label>
+                    <div id="signsEditor">${generateSignsEditor(chant.signs || [])}</div>
+                    <button class="add-btn" onclick="addSign()">+ Add Sign</button>
+                    <div class="field-help">Eidolon signs required to cast this chant</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Requirements</label>
+                    <div id="requirementsEditor">${generateArrayEditor(chant.requirements || [], 'requirements')}</div>
+                    <button class="add-btn" onclick="addRequirement()">+ Add Requirement</button>
+                    <div class="field-help">Prerequisites to learn this chant</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Chant Effects</label>
+                    <div id="effectsEditor">${generateEffectsEditor(chant.effects || [])}</div>
+                    <button class="add-btn" onclick="addChantEffect()">+ Add Effect</button>
+                </div>
+            `;
+        }
+
+        function generateCodexCategoryEditor(category = {}) {
+            return `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-input" value="${category.name || ''}" 
+                               onchange="updateCurrentItem('name', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Icon</label>
+                        <input type="text" class="form-input" value="${category.icon || 'minecraft:book'}" 
+                               onchange="updateCurrentItem('icon', this.value)">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-textarea" onchange="updateCurrentItem('description', this.value)">${category.description || ''}</textarea>
+                </div>
+            `;
+        }
+
+        function generateCodexEntryEditor(entry = {}) {
+            return `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-input" value="${entry.title || ''}" 
+                               onchange="updateCurrentItem('title', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select class="form-select" onchange="updateCurrentItem('category', this.value)">
+                            <option value="">Select category...</option>
+                            ${state.projectData.codex_categories.map(c => 
+                                `<option value="${c.name}" ${entry.category === c.name ? 'selected' : ''}>${c.name || 'Unnamed'}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Text Content</label>
+                    <textarea class="form-textarea large" onchange="updateCurrentItem('text', this.value)">${entry.text || ''}</textarea>
+                </div>
+            `;
+        }
+
+        function generateResearchChapterEditor(chapter = {}) {
+            return `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-input" value="${chapter.name || ''}" 
+                               onchange="updateCurrentItem('name', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Icon</label>
+                        <input type="text" class="form-input" value="${chapter.icon || 'minecraft:book'}" 
+                               onchange="updateCurrentItem('icon', this.value)">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-textarea" onchange="updateCurrentItem('description', this.value)">${chapter.description || ''}</textarea>
+                </div>
+            `;
+        }
+
+        function generateResearchEntryEditor(entry = {}) {
+            return `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-input" value="${entry.name || ''}" 
+                               onchange="updateCurrentItem('name', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Icon</label>
+                        <input type="text" class="form-input" value="${entry.icon || 'minecraft:book'}" 
+                               onchange="updateCurrentItem('icon', this.value)">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-textarea" onchange="updateCurrentItem('description', this.value)">${entry.description || ''}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Chapter</label>
+                    <select class="form-select" onchange="updateCurrentItem('chapter', this.value)">
+                        <option value="">Select chapter...</option>
+                        ${state.projectData.research_chapters.map(c => 
+                            `<option value="${state.projectData.namespace}:${c.name?.toLowerCase().replace(/\s+/g, '_')}" ${entry.chapter === `${state.projectData.namespace}:${c.name?.toLowerCase().replace(/\s+/g, '_')}` ? 'selected' : ''}>${c.name || 'Unnamed'}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+            `;
+        }
+
+        function generateResearchEditor(research = {}) {
+            return `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-input" value="${research.name || ''}" 
+                               onchange="updateCurrentItem('name', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Icon</label>
+                        <input type="text" class="form-input" value="${research.icon || 'minecraft:book'}" 
+                               onchange="updateCurrentItem('icon', this.value)">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-textarea" onchange="updateCurrentItem('description', this.value)">${research.description || ''}</textarea>
+                </div>
+            `;
+        }
+
+        function generateRecipeEditor(recipe = {}) {
+            return `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Type</label>
+                        <select class="form-select" onchange="updateCurrentItem('type', this.value)">
+                            <option value="crucible" ${recipe.type === 'crucible' ? 'selected' : ''}>Crucible</option>
+                            <option value="workbench" ${recipe.type === 'workbench' ? 'selected' : ''}>Workbench</option>
+                            <option value="smelting" ${recipe.type === 'smelting' ? 'selected' : ''}>Smelting</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Soul Cost</label>
+                        <input type="number" class="form-input" value="${recipe.soul_cost || 50}" 
+                               onchange="updateCurrentItem('soul_cost', parseInt(this.value))">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Result Item</label>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Item</label>
+                            <input type="text" class="form-input" value="${recipe.result?.item || ''}" 
+                                   onchange="updateRecipeResult('item', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Count</label>
+                            <input type="number" class="form-input" value="${recipe.result?.count || 1}" 
+                                   onchange="updateRecipeResult('count', parseInt(this.value))">
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateLanguageEditor(language = {}) {
+            return `
+                <div class="form-group">
+                    <label class="form-label">Language Keys</label>
+                    <div class="field-help">Add translation keys in the format: key = value</div>
+                    <textarea class="form-textarea large" id="languageKeys" 
+                              onchange="updateLanguageKeys(this.value)">${formatLanguageKeys(language)}</textarea>
+                </div>
+            `;
+        }
+
+        // Helper functions
+        function generatePrayerTypesEditor(prayerTypes) {
+            const availableTypes = ['conversation', 'blessing', 'guidance', 'protection', 'knowledge', 'balance'];
+            return availableTypes.map(type => {
+                const isChecked = prayerTypes.includes(type);
+                return `
+                    <div class="form-checkbox">
+                        <input type="checkbox" id="prayer_${type}" ${isChecked ? 'checked' : ''}
+                               onchange="updatePrayerType('${type}', this.checked)">
+                        <label for="prayer_${type}">${type.charAt(0).toUpperCase() + type.slice(1)}</label>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function generateStagesEditor(stages) {
+            return stages.map((stage, index) => `
+                <div class="stages-editor">
+                    <div class="stage-header">
+                        <div class="stage-badge">${stage.title || `Stage ${index + 1}`}</div>
+                        <button class="remove-btn" onclick="removeProgressionStage(${index})">Remove</button>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Stage ID</label>
+                            <input type="text" class="form-input" value="${stage.id || ''}" 
+                                   onchange="updateProgressionStage(${index}, 'id', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Reputation Required</label>
+                            <input type="number" class="form-input" value="${stage.reputation || 0}" 
+                                   onchange="updateProgressionStage(${index}, 'reputation', parseInt(this.value))">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Title</label>
+                            <input type="text" class="form-input" value="${stage.title || ''}" 
+                                   onchange="updateProgressionStage(${index}, 'title', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Major Stage</label>
+                            <div class="form-checkbox">
+                                <input type="checkbox" ${stage.major ? 'checked' : ''}
+                                       onchange="updateProgressionStage(${index}, 'major', this.checked)">
+                                <label>This is a major progression milestone</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-textarea" onchange="updateProgressionStage(${index}, 'description', this.value)">${stage.description || ''}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Rewards</label>
+                        <div class="rewards-editor">
+                            ${(stage.rewards || []).map((reward, rewardIndex) => `
+                                <div class="reward-item">
+                                    <input type="text" class="form-input" value="${reward}" 
+                                           onchange="updateStageReward(${index}, ${rewardIndex}, this.value)"
+                                           placeholder="command:give {player} minecraft:diamond 1">
+                                    <button class="remove-btn" onclick="removeStageReward(${index}, ${rewardIndex})">×</button>
+                                </div>
+                            `).join('')}
+                            <button class="add-btn" onclick="addStageReward(${index})">+ Add Reward</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateEffectsEditor(effects) {
+            return effects.map((effect, index) => `
+                <div class="page-editor">
+                    <div class="page-header">
+                        <div class="page-type-badge">${effect.type || 'Effect'}</div>
+                        <button class="remove-btn" onclick="removeChantEffect(${index})">Remove</button>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Effect Type</label>
+                            <select class="form-select" onchange="updateChantEffect(${index}, 'type', this.value)">
+                                <option value="apply_effect" ${effect.type === 'apply_effect' ? 'selected' : ''}>Apply Status Effect</option>
+                                <option value="run_command" ${effect.type === 'run_command' ? 'selected' : ''}>Run Command</option>
+                                <option value="send_message" ${effect.type === 'send_message' ? 'selected' : ''}>Send Message</option>
+                                <option value="start_conversation" ${effect.type === 'start_conversation' ? 'selected' : ''}>Start AI Conversation</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    ${generateEffectSpecificFields(effect, index)}
+                </div>
+            `).join('');
+        }
+
+        function generateEffectSpecificFields(effect, index) {
+            switch (effect.type) {
+                case 'apply_effect':
+                    return `
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Effect ID</label>
+                                <input type="text" class="form-input" value="${effect.effect || ''}" 
+                                       onchange="updateChantEffect(${index}, 'effect', this.value)"
+                                       placeholder="minecraft:regeneration">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Duration (ticks)</label>
+                                <input type="number" class="form-input" value="${effect.duration || 600}" 
+                                       onchange="updateChantEffect(${index}, 'duration', parseInt(this.value))">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Amplifier</label>
+                                <input type="number" class="form-input" value="${effect.amplifier || 0}" 
+                                       onchange="updateChantEffect(${index}, 'amplifier', parseInt(this.value))">
+                            </div>
+                        </div>
+                    `;
+                case 'run_command':
+                    return `
+                        <div class="form-group">
+                            <label class="form-label">Command</label>
+                            <input type="text" class="form-input" value="${effect.command || ''}" 
+                                   onchange="updateChantEffect(${index}, 'command', this.value)"
+                                   placeholder="particle minecraft:happy_villager ~ ~1 ~ 1 1 1 0.1 30">
+                        </div>
+                    `;
+                case 'send_message':
+                    return `
+                        <div class="form-group">
+                            <label class="form-label">Message</label>
+                            <textarea class="form-textarea" onchange="updateChantEffect(${index}, 'message', this.value)">${effect.message || ''}</textarea>
+                        </div>
+                    `;
+                default:
+                    return '';
+            }
+        }
+
+        function generateArrayEditor(array, arrayName) {
+            return array.map((item, index) => `
+                <div class="array-item">
+                    <input type="text" class="form-input" value="${item}" 
+                           onchange="updateArrayItem('${arrayName}', ${index}, this.value)"
+                           placeholder="Enter requirement...">
+                    <button class="remove-btn" onclick="removeArrayItem('${arrayName}', ${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function generateSignsEditor(signs) {
+            const availableSigns = [
+                'eidolon:sacred', 'eidolon:mind', 'eidolon:soul', 'eidolon:harmony', 'eidolon:blood',
+                'eidolon:earth', 'eidolon:flame', 'eidolon:wicked', 'eidolon:winter'
+            ];
+            
+            return signs.map((sign, index) => `
+                <div class="form-row" style="align-items: center; margin-bottom: 0.5rem;">
+                    <div style="width: 60px; color: #ffa500;">Step ${index + 1}:</div>
+                    <div class="form-group" style="margin: 0; flex: 1;">
+                        <select class="form-select" onchange="updateSign(${index}, this.value)">
+                            <option value="">Select sign...</option>
+                            ${availableSigns.map(s => 
+                                `<option value="${s}" ${sign === s ? 'selected' : ''}>${s.replace('eidolon:', '')}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    <button class="remove-btn" onclick="removeSign(${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function formatLanguageKeys(language) {
+            return Object.entries(language).map(([key, value]) => `${key}=${value}`).join('\n');
+        }
+
+        // Update functions
+        function updateCurrentItem(field, value) {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            item[field] = value;
+            renderProjectTree();
+        }
+
+        function updateDeityColor(component, value) {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            if (!item.colors) item.colors = {};
+            item.colors[component] = value;
+        }
+
+        function updateProgression(field, value) {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            if (!item.progression) item.progression = {};
+            item.progression[field] = value;
+        }
+
+        function updatePrayerType(type, checked) {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            if (!item.prayer_types) item.prayer_types = [];
+            
+            if (checked && !item.prayer_types.includes(type)) {
+                item.prayer_types.push(type);
+            } else if (!checked) {
+                item.prayer_types = item.prayer_types.filter(t => t !== type);
+            }
+        }
+
+        function addProgressionStage() {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            if (!item.progression) item.progression = {};
+            if (!item.progression.stages) item.progression.stages = [];
+            
+            item.progression.stages.push({
+                id: '',
+                reputation: 0,
+                major: false,
+                title: '',
+                description: '',
+                rewards: []
+            });
+            showEditor(item);
+        }
+
+        function removeProgressionStage(index) {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            item.progression.stages.splice(index, 1);
+            showEditor(item);
+        }
+
+        function updateProgressionStage(stageIndex, field, value) {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            item.progression.stages[stageIndex][field] = value;
+        }
+
+        function addStageReward(stageIndex) {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            if (!item.progression.stages[stageIndex].rewards) {
+                item.progression.stages[stageIndex].rewards = [];
+            }
+            item.progression.stages[stageIndex].rewards.push('');
+            showEditor(item);
+        }
+
+        function removeStageReward(stageIndex, rewardIndex) {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            item.progression.stages[stageIndex].rewards.splice(rewardIndex, 1);
+            showEditor(item);
+        }
+
+        function updateStageReward(stageIndex, rewardIndex, value) {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            item.progression.stages[stageIndex].rewards[rewardIndex] = value;
+        }
+
+        function addChantEffect() {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            if (!item.effects) item.effects = [];
+            item.effects.push({ type: 'apply_effect' });
+            showEditor(item);
+        }
+
+        function removeChantEffect(index) {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            item.effects.splice(index, 1);
+            showEditor(item);
+        }
+
+        function updateChantEffect(index, field, value) {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            item.effects[index][field] = value;
+        }
+
+        function addRequirement() {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            if (!item.requirements) item.requirements = [];
+            item.requirements.push('');
+            showEditor(item);
+        }
+
+        function updateArrayItem(arrayName, index, value) {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            if (!item[arrayName]) item[arrayName] = [];
+            item[arrayName][index] = value;
+        }
+
+        function removeArrayItem(arrayName, index) {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            item[arrayName].splice(index, 1);
+            showEditor(item);
+        }
+
+        function updateRecipeResult(field, value) {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            if (!item.result) item.result = {};
+            item.result[field] = value;
+        }
+
+        function updateLanguageKeys(value) {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            
+            // Clear existing keys
+            for (const key in item) {
+                delete item[key];
+            }
+            
+            // Parse new keys
+            value.split('\n').forEach(line => {
+                const [key, ...valueParts] = line.split('=');
+                if (key && valueParts.length > 0) {
+                    item[key.trim()] = valueParts.join('=').trim();
+                }
+            });
+        }
+
+        function addSign() {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            if (!item.signs) item.signs = [];
+            item.signs.push('');
+            showEditor(item);
+        }
+
+        function removeSign(index) {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            item.signs.splice(index, 1);
+            showEditor(item);
+        }
+
+        function updateSign(index, value) {
+            if (!state.currentItem) return;
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            item.signs[index] = value;
+        }
+
+        function addNewItem() {
+            const itemTemplates = {
+                deities: { 
+                    id: '', 
+                    name: '', 
+                    description: '', 
+                    colors: { red: 74, green: 124, blue: 89 }, 
+                    prayer_types: [], 
+                    progression: { 
+                        max_reputation: 100, 
+                        stages: [] 
+                    } 
+                },
+                ai_deities: { 
+                    deity: '', 
+                    ai_provider: 'player2ai',
+                    item_context_id: '',
+                    personality: '',
+                    behavior_rules: {}
+                },
+                chants: { 
+                    name: '', 
+                    description: '', 
+                    category: '', 
+                    codex_icon: 'minecraft:book',
+                    difficulty: 1,
+                    mana_cost: 20,
+                    cooldown: 30,
+                    show_in_codex: true,
+                    linked_deity: '',
+                    signs: [],
+                    requirements: [],
+                    effects: []
+                },
+                codex_categories: { 
+                    name: '', 
+                    description: '', 
+                    icon: 'minecraft:book' 
+                },
+                codex_entries: { 
+                    title: '', 
+                    text: '', 
+                    category: '' 
+                },
+                research_chapters: { 
+                    name: '', 
+                    description: '', 
+                    icon: 'minecraft:book' 
+                },
+                research_entries: { 
+                    name: '', 
+                    description: '', 
+                    icon: 'minecraft:book', 
+                    chapter: '' 
+                },
+                research: { 
+                    name: '', 
+                    description: '', 
+                    icon: 'minecraft:book' 
+                },
+                recipes: { 
+                    type: 'crucible', 
+                    result: { item: '', count: 1 }, 
+                    soul_cost: 50 
+                },
+                language: {}
+            };
+
+            const newItem = JSON.parse(JSON.stringify(itemTemplates[state.currentTab]));
+            state.projectData[state.currentTab].push(newItem);
+            
+            const newIndex = state.projectData[state.currentTab].length - 1;
+            selectItem(newIndex);
+            renderProjectTree();
+        }
+
+        function showJSONPreview() {
+            if (!state.currentItem) return;
+            
+            const item = state.projectData[state.currentItem.type][state.currentItem.index];
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            const modalConfirm = document.getElementById('modalConfirm');
+
+            modalTitle.textContent = 'JSON Preview';
+            modalBody.innerHTML = `<pre class="json-preview">${JSON.stringify(item, null, 2)}</pre>`;
+            modalConfirm.style.display = 'none';
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        function exportDatapack() {
+            const zip = new JSZip();
+            const rootFolder = zip.folder(`${state.projectData.namespace}_datapack`);
+            const dataFolder = rootFolder.folder('data').folder(state.projectData.namespace);
+
+            // Export each type
+            ['deities', 'ai_deities', 'chants', 'codex_entries', 'research_chapters', 'research_entries', 'research', 'recipes'].forEach(type => {
+                if (state.projectData[type].length > 0) {
+                    const folder = dataFolder.folder(type);
+                    state.projectData[type].forEach((item, index) => {
+                        const filename = item.name?.toLowerCase().replace(/\s+/g, '_') || item.title?.toLowerCase().replace(/\s+/g, '_') || `item_${index}`;
+                        folder.file(`${filename}.json`, JSON.stringify(item, null, 2));
+                    });
+                }
+            });
+
+            // Export codex categories as _category.json files
+            if (state.projectData.codex_categories.length > 0) {
+                const codexFolder = dataFolder.folder('codex');
+                state.projectData.codex_categories.forEach(category => {
+                    const categoryFolder = codexFolder.folder(category.name?.toLowerCase().replace(/\s+/g, '_') || 'unnamed');
+                    categoryFolder.file('_category.json', JSON.stringify(category, null, 2));
+                });
+            }
+
+            // Add pack.mcmeta
+            const packMeta = {
+                pack: {
+                    pack_format: 15,
+                    description: `Eidolon Unchained Datapack - ${state.projectData.namespace}`
+                }
+            };
+            rootFolder.file('pack.mcmeta', JSON.stringify(packMeta, null, 2));
+
+            // Generate and download
+            zip.generateAsync({ type: 'blob' }).then(content => {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `${state.projectData.namespace}_datapack.zip`;
+                link.click();
+            });
+        }
+
+        function exportResourcePack() {
+            const zip = new JSZip();
+            const rootFolder = zip.folder(`${state.projectData.namespace}_resourcepack`);
+            const assetsFolder = rootFolder.folder('assets').folder(state.projectData.namespace);
+
+            // Generate language files
+            const langFolder = assetsFolder.folder('lang');
+            const enUsLang = {};
+
+            // Auto-generate from deities
+            state.projectData.deities.forEach(deity => {
+                if (deity.name) {
+                    const key = deity.name.toLowerCase().replace(/\s+/g, '_');
+                    enUsLang[`eidolonunchained.deity.${key}.name`] = deity.name;
+                    if (deity.description) {
+                        enUsLang[`eidolonunchained.deity.${key}.description`] = deity.description;
+                    }
+                }
+            });
+
+            // Auto-generate from chants
+            state.projectData.chants.forEach(chant => {
+                if (chant.name) {
+                    const key = chant.name.toLowerCase().replace(/\s+/g, '_');
+                    enUsLang[`eidolonunchained.chant.${key}.name`] = chant.name;
+                    if (chant.description) {
+                        enUsLang[`eidolonunchained.chant.${key}.description`] = chant.description;
+                    }
+                }
+            });
+
+            // Add custom language entries
+            Object.assign(enUsLang, state.projectData.language);
+
+            langFolder.file('en_us.json', JSON.stringify(enUsLang, null, 2));
+
+            // Add pack.mcmeta
+            const packMeta = {
+                pack: {
+                    pack_format: 15,
+                    description: `Eidolon Unchained Resource Pack - ${state.projectData.namespace}`
+                }
+            };
+            rootFolder.file('pack.mcmeta', JSON.stringify(packMeta, null, 2));
+
+            // Generate and download
+            zip.generateAsync({ type: 'blob' }).then(content => {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `${state.projectData.namespace}_resourcepack.zip`;
+                link.click();
+            });
+        }
+
+        function importProject() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            state.projectData = { ...state.projectData, ...data };
+                            renderProjectTree();
+                            showWelcomeScreen();
+                        } catch (error) {
+                            alert('Invalid JSON file');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

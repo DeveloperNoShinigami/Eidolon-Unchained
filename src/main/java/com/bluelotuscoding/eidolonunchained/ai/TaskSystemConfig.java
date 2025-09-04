@@ -13,12 +13,16 @@ public class TaskSystemConfig {
     
     public static class TaskTemplate {
         public String taskId;
+        public String displayName;
         public String description;
+        public String progressionTier;
         public List<String> requirements = new ArrayList<>();
         public int reputationReward = 5; // Reputation points awarded on completion
         public int reputationRequired = 0;
         public long cooldownHours = 24;
+        public boolean repeatable = false;
         public List<String> rewardCommands = new ArrayList<>();
+        public String aiAssignmentContext; // JSON string for complex AI assignment rules
         
         public TaskTemplate() {}
         
@@ -30,21 +34,7 @@ public class TaskSystemConfig {
     }
     
     public TaskSystemConfig() {
-        // Add default tasks
-        TaskTemplate gatherHerbs = new TaskTemplate("gather_herbs", "Collect 16 mystical herbs from the forest", 3);
-        gatherHerbs.requirements.add("item:minecraft:wheat:16");
-        gatherHerbs.rewardCommands.add("give {player} eidolon:lesser_soul_gem 1");
-        availableTasks.add(gatherHerbs);
-        
-        TaskTemplate performRituals = new TaskTemplate("perform_rituals", "Successfully perform 3 different chants", 5);
-        performRituals.reputationRequired = 10;
-        performRituals.rewardCommands.add("give {player} minecraft:experience_bottle 5");
-        availableTasks.add(performRituals);
-        
-        TaskTemplate exploreNether = new TaskTemplate("explore_nether", "Visit the Nether and gather soul sand", 8);
-        exploreNether.requirements.add("item:minecraft:soul_sand:8");
-        exploreNether.reputationRequired = 25;
-        exploreNether.rewardCommands.add("give {player} eidolon:soul_shard 2");
-        availableTasks.add(exploreNether);
+        // Empty constructor - all tasks should come from JSON configuration
+        // No hardcoded tasks to ensure complete JSON-driven configuration
     }
 }

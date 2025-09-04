@@ -135,6 +135,352 @@
     }
   },
   
+  "task_config": {
+    "enabled": true,
+    "max_active_tasks": 3,
+    "task_assignment_behavior": {
+      "auto_assign_probability": 0.45,
+      "min_reputation_for_auto_assign": 5,
+      "conversation_triggers": [
+        "first_conversation",
+        "reputation_milestone", 
+        "completed_previous_task",
+        "shadow_prayer",
+        "dark_communion"
+      ],
+      "cooldown_between_assignments_hours": 18
+    },
+    
+    "available_tasks": [
+      {
+        "task_id": "dark_shadow_harvest",
+        "display_name": "Harvest the Shadows",
+        "description": "Collect the essence of darkness from places where shadows gather",
+        "progression_tier": "initiate",
+        "ai_assignment_context": {
+          "trigger_conditions": {
+            "min_reputation": 0,
+            "max_reputation": 30,
+            "required_time": ["night"],
+            "prayer_types": ["conversation", "shadow"],
+            "completed_tasks": [],
+            "unlocked_progressions": []
+          },
+          "assignment_prompt": "Young shadow-seeker, the darkness calls to you. Venture into {location_count} places where shadows pool deepest and gather the essence that dwells there. This service will earn you {reputation_reward} dark favor.",
+          "completion_phrases": [
+            "The shadows recognize your dedication - they whisper secrets only to the faithful.",
+            "You have proven yourself worthy of the darkness that flows through all things.",
+            "Your harvest of shadow essence strengthens the veil between worlds."
+          ]
+        },
+        "requirements": [
+          {
+            "type": "mine_blocks",
+            "blocks": [
+              {
+                "block": "minecraft:obsidian",
+                "count": 8,
+                "time_requirement": "night",
+                "light_level_below": 5,
+                "display_name": "Shadow-Touched Obsidian"
+              }
+            ]
+          },
+          {
+            "type": "collect_items",
+            "items": [
+              {
+                "item": "minecraft:coal",
+                "count": 32,
+                "source": "mining",
+                "time_requirement": "night",
+                "display_name": "Darkest Coal"
+              }
+            ]
+          }
+        ],
+        "rewards": {
+          "reputation": 8,
+          "commands": [
+            "give {player} minecraft:black_dye 16",
+            "effect give {player} minecraft:night_vision 1200 0",
+            "give {player} eidolon:soul_shard 3",
+            "tellraw {player} {\"text\":\"✧ The shadows embrace you - darkness bends to your will\",\"color\":\"dark_purple\"}"
+          ],
+          "progression_unlock": "shadow_harvester"
+        },
+        "cooldown_hours": 22,
+        "repeatable": false
+      },
+      
+      {
+        "task_id": "dark_soul_binding",
+        "display_name": "Bind the Restless Souls",
+        "description": "Channel dark magic to bind wandering spirits to your service",
+        "progression_tier": "acolyte",
+        "ai_assignment_context": {
+          "trigger_conditions": {
+            "min_reputation": 20,
+            "max_reputation": 50,
+            "required_time": ["night"],
+            "prayer_types": ["dark_communion", "conversation"],
+            "completed_tasks": ["dark_shadow_harvest"],
+            "unlocked_progressions": ["shadow_harvester"]
+          },
+          "assignment_prompt": "Devoted acolyte, the restless dead cry out for purpose. Use your growing power to bind {soul_count} wandering spirits and grant them new purpose in darkness. This necromantic work will grant you {reputation_reward} unholy favor.",
+          "completion_phrases": [
+            "The bound souls now serve the darkness - your necromantic skill grows ever stronger.",
+            "You have mastered the art of commanding the dead. They obey your dark will.",
+            "The spirits whisper your name with reverence. You are becoming a true death-dealer."
+          ]
+        },
+        "requirements": [
+          {
+            "type": "kill_entities",
+            "entities": [
+              {
+                "entity_type": "minecraft:skeleton",
+                "count": 6,
+                "time_requirement": "night",
+                "weapon_type": "eidolon:bonechill_wand",
+                "display_name": "Skeletal Warriors"
+              },
+              {
+                "entity_type": "minecraft:zombie",
+                "count": 4,
+                "time_requirement": "night",
+                "display_name": "Shambling Dead"
+              }
+            ]
+          },
+          {
+            "type": "use_items",
+            "items": [
+              {
+                "item": "eidolon:soul_shard",
+                "count": 5,
+                "usage_type": "consume",
+                "display_name": "Soul Binding Essence"
+              }
+            ]
+          }
+        ],
+        "rewards": {
+          "reputation": 15,
+          "commands": [
+            "give {player} eidolon:lesser_soul_gem 3",
+            "effect give {player} minecraft:strength 900 1",
+            "give {player} minecraft:wither_skeleton_skull 1",
+            "tellraw {player} {\"text\":\"✧ The dead bend to your will - necromantic power flows through your veins\",\"color\":\"dark_red\"}"
+          ],
+          "progression_unlock": "soul_binder"
+        },
+        "cooldown_hours": 40,
+        "repeatable": false
+      },
+      
+      {
+        "task_id": "dark_forbidden_ritual",
+        "display_name": "Perform the Rite of Shadows",
+        "description": "Conduct the forbidden ritual to prove your mastery of dark arts",
+        "progression_tier": "priest",
+        "ai_assignment_context": {
+          "trigger_conditions": {
+            "min_reputation": 40,
+            "max_reputation": 75,
+            "required_time": ["night"],
+            "prayer_types": ["dark_communion"],
+            "completed_tasks": ["dark_soul_binding"],
+            "unlocked_progressions": ["soul_binder"],
+            "required_research": ["eidolonunchained:shadow_mysteries"]
+          },
+          "assignment_prompt": "Dark priest, you have proven worthy of the forbidden knowledge. Perform the ancient Rite of Shadows to bind yourself permanently to the darkness. This unholy act will bless you with {reputation_reward} supreme dark favor.",
+          "completion_phrases": [
+            "The ritual circle burns with shadow-fire - you have touched the source of all darkness.",
+            "Your soul is now bound to the eternal shadows. You have become one with the void.",
+            "The dark flames recognize your worthiness. You have earned the title of Shadow-Sworn."
+          ]
+        },
+        "requirements": [
+          {
+            "type": "complete_ritual",
+            "rituals": [
+              {
+                "ritual_id": "eidolonunchained:dark_patronage_ritual",
+                "count": 1,
+                "success_required": true,
+                "time_requirement": "night",
+                "location_requirement": "underground"
+              }
+            ]
+          }
+        ],
+        "rewards": {
+          "reputation": 25,
+          "commands": [
+            "give {player} minecraft:enchanted_book 1",
+            "give {player} eidolon:dark_gem 2",
+            "effect give {player} minecraft:resistance 1200 2",
+            "effect give {player} minecraft:night_vision 2400 0",
+            "tellraw {player} {\"text\":\"✧ You are Shadow-Sworn - the darkness itself flows through your corrupted soul\",\"color\":\"black\"}"
+          ],
+          "progression_unlock": "shadow_sworn"
+        },
+        "cooldown_hours": 96,
+        "repeatable": false
+      },
+      
+      {
+        "task_id": "dark_void_crucible",
+        "display_name": "Forge from the Void",
+        "description": "Create cursed items using the unholy crucible of darkness",
+        "progression_tier": "high_priest",
+        "ai_assignment_context": {
+          "trigger_conditions": {
+            "min_reputation": 65,
+            "max_reputation": 999,
+            "required_time": ["night"],
+            "prayer_types": ["dark_communion"],
+            "completed_tasks": ["dark_forbidden_ritual"],
+            "unlocked_progressions": ["shadow_sworn"],
+            "required_research": ["eidolonunchained:void_alchemy"]
+          },
+          "assignment_prompt": "My dark champion, you have mastered all lesser mysteries. Use the void crucible to forge items cursed with pure darkness. This ultimate blasphemy will grant you {reputation_reward} absolute dark dominion.",
+          "completion_phrases": [
+            "Your crucible burns with void-fire - you have mastered the art of dark creation.",
+            "The cursed items you've forged will spread darkness and despair across the realm.",
+            "You have achieved the pinnacle of dark craftsmanship. Your skill honors the void itself."
+          ]
+        },
+        "requirements": [
+          {
+            "type": "complete_crucible_recipe",
+            "recipes": [
+              {
+                "recipe_id": "eidolonunchained:void_essence",
+                "count": 1,
+                "success_required": true,
+                "time_requirement": "night",
+                "location_requirement": "underground"
+              }
+            ]
+          }
+        ],
+        "rewards": {
+          "reputation": 35,
+          "commands": [
+            "give {player} minecraft:nether_star 1",
+            "give {player} eidolon:void_gem 2",
+            "effect give {player} minecraft:absorption 3600 4",
+            "effect give {player} minecraft:wither 600 0",
+            "tellraw {player} {\"text\":\"✧ You are blessed with the ultimate power of void creation - reality bends to your dark will\",\"color\":\"dark_gray\"}"
+          ],
+          "progression_unlock": "void_master"
+        },
+        "cooldown_hours": 240,
+        "repeatable": true
+      },
+      
+      {
+        "task_id": "dark_crypt_exploration",
+        "display_name": "Explore the Ancient Crypts",
+        "description": "Seek out the deepest places where ancient darkness dwells",
+        "progression_tier": "wanderer",
+        "ai_assignment_context": {
+          "trigger_conditions": {
+            "min_reputation": 10,
+            "max_reputation": 45,
+            "required_time": ["night"],
+            "prayer_types": ["conversation"],
+            "completed_tasks": [],
+            "unlocked_progressions": []
+          },
+          "assignment_prompt": "Dark wanderer, the ancient places call to you with whispers of forgotten power. Explore {location_count} deep chambers where darkness has festered for eons. Your journey will earn {reputation_reward} shadowy favor.",
+          "completion_phrases": [
+            "Your exploration has awakened ancient shadows that slumbered in the deep places.",
+            "The crypts have revealed their secrets to one worthy of the darkness.",
+            "Your journey into the depths has connected you to the primordial void."
+          ]
+        },
+        "requirements": [
+          {
+            "type": "visit_structures",
+            "structures": [
+              {
+                "structure": "minecraft:ancient_city",
+                "duration_seconds": 300,
+                "time_requirement": "night",
+                "display_name": "Ancient Dark Citadel"
+              },
+              {
+                "structure": "minecraft:stronghold",
+                "duration_seconds": 240,
+                "time_requirement": "night",
+                "display_name": "Forgotten Stronghold"
+              }
+            ]
+          },
+          {
+            "type": "reach_depth",
+            "depth": {
+              "y_level": 0,
+              "duration_seconds": 180,
+              "time_requirement": "night",
+              "display_name": "Abyssal Depths"
+            }
+          }
+        ],
+        "rewards": {
+          "reputation": 12,
+          "commands": [
+            "give {player} minecraft:diamond 3",
+            "effect give {player} minecraft:night_vision 1800 0",
+            "give {player} minecraft:ender_pearl 4",
+            "tellraw {player} {\"text\":\"✧ The ancient darkness recognizes your dedication to exploring the forbidden depths\",\"color\":\"dark_purple\"}"
+          ],
+          "progression_unlock": "crypt_walker"
+        },
+        "cooldown_hours": 35,
+        "repeatable": true
+      }
+    ],
+    
+    "progression_chains": {
+      "dark_main_path": [
+        "dark_shadow_harvest",
+        "dark_soul_binding",
+        "dark_forbidden_ritual", 
+        "dark_void_crucible"
+      ],
+      "dark_exploration_path": [
+        "dark_crypt_exploration"
+      ],
+      "dark_mastery_unlocks": {
+        "shadow_harvester": ["dark_soul_binding"],
+        "soul_binder": ["dark_forbidden_ritual"],
+        "shadow_sworn": ["dark_void_crucible"],
+        "crypt_walker": ["dark_soul_binding"],
+        "void_master": []
+      }
+    },
+    
+    "ai_integration": {
+      "task_suggestion_prompts": {
+        "no_active_tasks": "This ambitious soul seeks power in the darkness. Consider offering them a shadowy task that matches their corruption level ({reputation}) and their understanding of forbidden arts.",
+        "task_available": "A dark opportunity awaits this devoted follower: {task_description}. Present this unholy chance with the majesty of shadow dominion.",
+        "task_completion": "Celebrate their completion of '{completed_task}' with dark satisfaction. Their success spreads more shadow into the world. Guide them toward their next step in dark mastery if they are ready.",
+        "progression_milestone": "This corrupted soul has grown in shadow power from {old_tier} to {new_tier}. Their dark advancement deserves recognition and greater forbidden knowledge."
+      },
+      "context_integration": {
+        "include_active_tasks_in_context": true,
+        "include_completed_tasks_count": true,
+        "include_available_task_hints": true,
+        "task_context_format": "Shadow Tasks - Active: {active_tasks} | Completed: {completed_count} dark deeds | Ready for: {available_tasks}",
+        "progression_context_format": "Dark Progression: {current_tier} | Shadow Paths: {unlocked_progressions}"
+      }
+    }
+  },
+  
   "api_settings": {
     "temperature": 0.8,
     "max_tokens": 400,
