@@ -104,12 +104,10 @@ public class Player2HealthSignal {
             URL url = URI.create(HEALTH_ENDPOINT).toURL();
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             
-            // Configure request
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json");
+            // Configure request - Use GET for health endpoints (most common pattern)
+            connection.setRequestMethod("GET");
             connection.setRequestProperty("Accept", "application/json");
             connection.setRequestProperty("player2-game-key", GAME_CLIENT_ID);
-            connection.setDoOutput(true);
             connection.setConnectTimeout(10000); // 10 second timeout
             connection.setReadTimeout(10000);
             
@@ -120,17 +118,7 @@ public class Player2HealthSignal {
                 connection.setRequestProperty("X-API-Key", apiKey);
             }
             
-            // Send health signal payload
-            JsonObject payload = new JsonObject();
-            payload.addProperty("game_client_id", GAME_CLIENT_ID);
-            payload.addProperty("status", "active");
-            payload.addProperty("timestamp", System.currentTimeMillis());
-            
-            try (OutputStreamWriter writer = new OutputStreamWriter(
-                connection.getOutputStream(), StandardCharsets.UTF_8)) {
-                writer.write(payload.toString());
-                writer.flush();
-            }
+            // For GET request, no body is needed - just connect
             
             // Check response
             int responseCode = connection.getResponseCode();
