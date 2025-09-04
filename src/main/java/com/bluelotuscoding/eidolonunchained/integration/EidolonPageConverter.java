@@ -55,7 +55,10 @@ import java.util.Map;
 /**
  * Converts JSON page definitions to Eidolon Page objects using the exact same structure as Eidolon.
  * Based on decompiled Eidolon classes: EntityPage, TextPage, CraftingPage, etc.
+ * Since this deals with client-side page rendering (including Minecraft.getInstance() calls), 
+ * this entire class is marked as client-only.
  */
+@OnlyIn(Dist.CLIENT)
 public class EidolonPageConverter {
     /**
      * Resolve an item or recipe ID to an ItemStack using registry lookup

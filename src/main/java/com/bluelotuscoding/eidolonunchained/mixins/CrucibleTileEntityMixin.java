@@ -1,0 +1,101 @@
+package com.bluelotuscoding.eidolonunchained.mixins;
+
+import com.bluelotuscoding.eidolonunchained.recipe.CrucibleCommandRecipe;
+import elucent.eidolon.common.tile.CrucibleTileEntity;
+import elucent.eidolon.recipe.CrucibleRecipe;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.List;
+
+/**
+ * Mixin to hook into crucible recipe completion and execute commands for CrucibleCommandRecipe
+ */
+@Mixin(CrucibleTileEntity.class)
+public class CrucibleTileEntityMixin {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CrucibleTileEntityMixin.class);
+    
+    /**
+     * Inject into completeCraft to execute commands when a CrucibleCommandRecipe completes
+     * TEMPORARILY DISABLED due to obfuscation mapping issues
+     */
+    // @Inject(method = "completeCraft", at = @At("HEAD"))
+    private void onCompleteCraft_DISABLED(float steamR, float steamG, float steamB, 
+                                List<ItemStack> contents, CrucibleRecipe recipe, CallbackInfo ci) {
+        try {
+            // Check if this is our custom command recipe
+            if (recipe instanceof CrucibleCommandRecipe commandRecipe) {
+                LOGGER.info("🔮 CrucibleCommandRecipe completed: {} with {} commands", 
+                    recipe.getId(), commandRecipe.getCommands().size());
+                
+                // Cast to get access to level and worldPosition
+                CrucibleTileEntity self = (CrucibleTileEntity) (Object) this;
+                
+                // Find nearby player for command context
+                ServerPlayer nearbyPlayer = findNearbyPlayer(self);
+                
+                // Execute the commands
+                commandRecipe.executeCommands(self.getLevel(), 
+                    self.getBlockPos().getX(), self.getBlockPos().getY(), self.getBlockPos().getZ(), 
+                    nearbyPlayer);
+                
+                LOGGER.info("✅ Executed crucible commands for recipe: {}", recipe.getId());
+            }
+        } catch (Exception e) {
+            LOGGER.error("❌ Error executing crucible commands for recipe {}: {}", 
+                recipe.getId(), e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Find the nearest player within 10 blocks of the crucible
+     */
+    private ServerPlayer findNearbyPlayer(CrucibleTileEntity crucible) {
+        if (!(crucible.getLevel() instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        
+        BlockPos pos = crucible.getBlockPos();
+        double range = 10.0;
+        AABB searchArea = new AABB(
+            pos.getX() - range, pos.getY() - range, pos.getZ() - range,
+            pos.getX() + range, pos.getY() + range, pos.getZ() + range
+        );
+        
+        List<Player> nearbyPlayers = serverLevel.getEntitiesOfClass(Player.class, searchArea);
+        
+        if (!nearbyPlayers.isEmpty()) {
+            Player closest = nearbyPlayers.get(0);
+            double closestDistance = closest.distanceToSqr(pos.getX(), pos.getY(), pos.getZ());
+            
+            for (Player player : nearbyPlayers) {
+                double distance = player.distanceToSqr(pos.getX(), pos.getY(), pos.getZ());
+                if (distance < closestDistance) {
+                    closest = player;
+                    closestDistance = distance;
+                }
+            }
+            
+            if (closest instanceof ServerPlayer serverPlayer) {
+                LOGGER.debug("Found nearby player for crucible commands: {} at distance {}", 
+                    serverPlayer.getName().getString(), Math.sqrt(closestDistance));
+                return serverPlayer;
+            }
+        }
+        
+        LOGGER.debug("No nearby players found for crucible command execution");
+        return null;
+    }
+}

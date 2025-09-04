@@ -40,18 +40,18 @@ public class ChantSlotActivationPacket {
         buf.writeUtf(this.castingMode);
     }
     
-    public static boolean handle(ChantSlotActivationPacket packet, Supplier<NetworkEvent.Context> supplier) {
+    public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player != null) {
                 LOGGER.info("Processing slot activation for player: {} slot: {} mode: {}", 
-                           player.getName().getString(), packet.slotNumber, packet.castingMode);
+                           player.getName().getString(), slotNumber, castingMode);
                 
                 // Get the assignment for this slot and activate with the specified mode
-                boolean success = SlotAssignmentManager.activateSlot(player, packet.slotNumber, packet.castingMode);
+                boolean success = SlotAssignmentManager.activateSlot(player, slotNumber, castingMode);
                 if (!success) {
-                    player.sendSystemMessage(Component.literal("§cNo assignment in slot " + packet.slotNumber + ". Use /chant assign-sign <slot> <sign> or /chant assign-chant <slot> <chant> to configure."));
+                    player.sendSystemMessage(Component.literal("§cNo assignment in slot " + slotNumber + ". Use /chant assign-sign <slot> <sign> or /chant assign-chant <slot> <chant> to configure."));
                 }
             }
         });

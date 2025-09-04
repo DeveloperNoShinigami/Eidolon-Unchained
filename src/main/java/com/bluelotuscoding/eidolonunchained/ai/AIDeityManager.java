@@ -127,8 +127,12 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
         LOGGER.info("Queued {} AI deity configurations with {} errors", loaded, errors);
         
         // If deities are already loaded, link immediately
+        LOGGER.info("Checking if deities are loaded: {}", deitiesLoaded);
         if (deitiesLoaded) {
+            LOGGER.info("Deities already loaded, linking {} pending configurations now", pendingConfigs.size());
             linkPendingConfigs();
+        } else {
+            LOGGER.info("Deities not yet loaded, will link when DatapackDeitiesLoadedEvent fires");
         }
     }
     
@@ -183,6 +187,11 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
      * Links pending AI configurations to loaded deities
      */
     private void linkPendingConfigs() {
+        if (pendingConfigs.isEmpty()) {
+            LOGGER.info("No pending AI configurations to link");
+            return;
+        }
+        
         LOGGER.info("Linking {} pending AI configurations to loaded deities", pendingConfigs.size());
         LOGGER.info("Available deities: {}", Deities.getDeities().stream()
             .map(d -> d.getId()).toList());

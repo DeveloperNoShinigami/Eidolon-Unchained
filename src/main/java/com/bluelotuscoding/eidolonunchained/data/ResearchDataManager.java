@@ -27,6 +27,8 @@ import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +46,6 @@ import com.bluelotuscoding.eidolonunchained.research.conditions.InventoryConditi
 import com.bluelotuscoding.eidolonunchained.research.conditions.ResearchCondition;
 import com.bluelotuscoding.eidolonunchained.research.conditions.TimeCondition;
 import com.bluelotuscoding.eidolonunchained.research.conditions.WeatherCondition;
-import com.bluelotuscoding.eidolonunchained.integration.EidolonResearchIntegration;
 
 /**
  * Manages loading and registration of custom research entries and chapters from datapacks.
@@ -183,11 +184,16 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
 
         // CRITICAL TIMING FIX: Call Eidolon integration AFTER resource loading completes
         // This ensures research entries are loaded before attempting to inject them
-        LOGGER.info("Resource loading complete - triggering Eidolon research integration");
-        try {
-            EidolonResearchIntegration.injectCustomResearch();
-        } catch (Exception e) {
-            LOGGER.error("Failed to trigger Eidolon research integration", e);
+        // Only call research integration on client side since Eidolon research is client-only
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            LOGGER.info("Resource loading complete - triggering Eidolon research integration (client-side)");
+            try {
+                com.bluelotuscoding.eidolonunchained.integration.EidolonResearchIntegration.injectCustomResearch();
+            } catch (Exception e) {
+                LOGGER.error("Failed to trigger Eidolon research integration", e);
+            }
+        } else {
+            LOGGER.info("Skipping Eidolon research integration on server side (research system is client-only)");
         }
     }
 
@@ -332,13 +338,12 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
      * Loads a trigger-based research (the original working format)
      */
     private void loadTriggerBasedResearch(ResourceLocation entryId, JsonObject json) {
-        try {
-            // Generate basic research entry data from trigger-based research
-            Component title = Component.translatable("eidolonunchained.research." + entryId.getPath() + ".title");
-            Component description = Component.translatable("eidolonunchained.research." + entryId.getPath() + ".description");
-            
-            // Use a default chapter for trigger-based research
-            ResourceLocation chapter = new ResourceLocation(EidolonUnchained.MODID, "trigger_research");
+        // Generate basic research entry data from trigger-based research
+        Component title = Component.translatable("eidolonunchained.research." + entryId.getPath() + ".title");
+        Component description = Component.translatable("eidolonunchained.research." + entryId.getPath() + ".description");
+        
+        // Use a default chapter for trigger-based research
+        ResourceLocation chapter = new ResourceLocation(EidolonUnchained.MODID, "trigger_research");
         
         // Default icon
         ItemStack icon = new ItemStack(Items.BOOK);
@@ -415,10 +420,6 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
         }
 
         LOGGER.info("Loaded trigger-based research: {}", entryId);
-        } catch (Exception e) {
-            LOGGER.error("Failed to load trigger-based research {}: {}", entryId, e.getMessage(), e);
-            throw new RuntimeException("Failed to load trigger-based research " + entryId, e);
-        }
     }
 
     /**
@@ -590,46 +591,41 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
     }
 
     private static void integrateTask(com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task) {
-        try {
-            if (task instanceof CollectItemsTask collect) {
-                Item item = ForgeRegistries.ITEMS.getValue(collect.getItem());
-                if (item != null) {
-                    Researches.addTask(rand -> new ResearchTask.TaskItems(new ItemStack(item, collect.getCount())));
-                    return;
-                }
-            }
-            if (task instanceof ExploreBiomesTask explore) {
-                Researches.addTask(rand -> new com.bluelotuscoding.eidolonunchained.research.integration.EidolonTaskWrapper.BiomeTaskWrapper(explore));
+        if (task instanceof CollectItemsTask collect) {
+            Item item = ForgeRegistries.ITEMS.getValue(collect.getItem());
+            if (item != null) {
+                Researches.addTask(rand -> new ResearchTask.TaskItems(new ItemStack(item, collect.getCount())));
                 return;
             }
-            if (task instanceof EnterDimensionTask dimension) {
-                Researches.addTask(rand -> new com.bluelotuscoding.eidolonunchained.research.integration.EidolonTaskWrapper.DimensionTaskWrapper(dimension));
-                return;
-            }
-            if (task instanceof WeatherTask weather) {
-                Researches.addTask(rand -> new com.bluelotuscoding.eidolonunchained.research.integration.EidolonTaskWrapper.WeatherTaskWrapper(weather));
-                return;
-            }
-            if (task instanceof HasNbtTask nbt) {
-                Researches.addTask(rand -> new com.bluelotuscoding.eidolonunchained.research.integration.EidolonTaskWrapper.NbtTaskWrapper(nbt));
-                return;
-            }
-            if (task instanceof KillEntitiesTask kill) {
-                // Keep using XP for kill tasks since they're tracked separately
-                Researches.addTask(rand -> new ResearchTask.XP(1));
-                return;
-            }
-            if (task instanceof KillEntityWithNbtTask killNbt) {
-                // Keep using XP for kill tasks since they're tracked separately  
-                Researches.addTask(rand -> new ResearchTask.XP(1));
-                return;
-            }
-            // Fallback placeholder task to ensure registration
-            Researches.addTask(rand -> new ResearchTask.XP(1));
-        } catch (Exception e) {
-            // Eidolon research system may not be available yet - this is not critical
-            LOGGER.debug("Deferred task integration for {} due to: {}", task.getClass().getSimpleName(), e.getMessage());
         }
+        if (task instanceof ExploreBiomesTask explore) {
+            Researches.addTask(rand -> new com.bluelotuscoding.eidolonunchained.research.integration.EidolonTaskWrapper.BiomeTaskWrapper(explore));
+            return;
+        }
+        if (task instanceof EnterDimensionTask dimension) {
+            Researches.addTask(rand -> new com.bluelotuscoding.eidolonunchained.research.integration.EidolonTaskWrapper.DimensionTaskWrapper(dimension));
+            return;
+        }
+        if (task instanceof WeatherTask weather) {
+            Researches.addTask(rand -> new com.bluelotuscoding.eidolonunchained.research.integration.EidolonTaskWrapper.WeatherTaskWrapper(weather));
+            return;
+        }
+        if (task instanceof HasNbtTask nbt) {
+            Researches.addTask(rand -> new com.bluelotuscoding.eidolonunchained.research.integration.EidolonTaskWrapper.NbtTaskWrapper(nbt));
+            return;
+        }
+        if (task instanceof KillEntitiesTask kill) {
+            // Keep using XP for kill tasks since they're tracked separately
+            Researches.addTask(rand -> new ResearchTask.XP(1));
+            return;
+        }
+        if (task instanceof KillEntityWithNbtTask killNbt) {
+            // Keep using XP for kill tasks since they're tracked separately  
+            Researches.addTask(rand -> new ResearchTask.XP(1));
+            return;
+        }
+        // Fallback placeholder task to ensure registration
+        Researches.addTask(rand -> new ResearchTask.XP(1));
     }
     // Public API methods for accessing loaded research data
     

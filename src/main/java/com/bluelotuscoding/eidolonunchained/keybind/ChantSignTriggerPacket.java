@@ -36,35 +36,32 @@ public class ChantSignTriggerPacket {
         buf.writeResourceLocation(this.signId);
     }
     
-    public static boolean handle(ChantSignTriggerPacket packet, Supplier<NetworkEvent.Context> supplier) {
+    @OnlyIn(Dist.CLIENT)
+    public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
-            handlePacketOnClient(packet);
-        });
-        return true;
-    }
-    
-    @OnlyIn(Dist.CLIENT)
-    private static void handlePacketOnClient(ChantSignTriggerPacket packet) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
-        
-        LOGGER.debug("Received chant sign trigger packet for sign: {}", packet.signId);
-        
-        // Find the sign
-        Sign sign = Signs.find(packet.signId);
-        if (sign == null) {
-            LOGGER.warn("Sign not found: {}", packet.signId);
-            return;
-        }
-        
-        try {
-            // Add the sign to the chant overlay (new independent system)
-            ChantOverlay.addSignToChant(sign);
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player == null || mc.level == null) return;
             
-            LOGGER.debug("Successfully added sign {} to chant overlay", packet.signId);
-        } catch (Exception e) {
-            LOGGER.error("Failed to process sign trigger: {}", e.getMessage(), e);
-        }
+            LOGGER.debug("Received chant sign trigger packet for sign: {}", signId);
+            
+            // Find the sign
+            Sign sign = Signs.find(signId);
+            if (sign == null) {
+                LOGGER.warn("Sign not found: {}", signId);
+                return;
+            }
+            
+            try {
+                // Add the sign to the chant overlay (new independent system)
+                ChantOverlay.addSignToChant(sign);
+                
+                LOGGER.debug("Successfully added sign {} to chant overlay", signId);
+            } catch (Exception e) {
+                LOGGER.error("Failed to process sign trigger: {}", e.getMessage(), e);
+            }
+        });
+        
+        return true;
     }
 }

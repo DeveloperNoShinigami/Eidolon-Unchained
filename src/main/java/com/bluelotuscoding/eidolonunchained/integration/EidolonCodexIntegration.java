@@ -17,6 +17,9 @@ import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -33,12 +36,14 @@ import java.util.Map;
 
 /**
  * Handles integration with Eidolon's codex system to inject custom entries.
+ * Since Eidolon's codex system is client-side only, this entire class is client-only.
  * 
  * ⚠️ NOTE: This class uses REFLECTION only where absolutely necessary.
  * We prefer using the new event-driven system (EidolonCategoryExtension) for new content.
  * This class is kept for compatibility with existing content injection needs.
  */
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE)
+@OnlyIn(Dist.CLIENT)
+@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class EidolonCodexIntegration {
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -64,7 +69,12 @@ public class EidolonCodexIntegration {
         }
         
         LOGGER.info("Starting Eidolon codex integration...");
-        EidolonPageConverter.initialize();
+        
+        // Only initialize page converter on client side
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            EidolonPageConverter.initialize();
+        }
+        
         injectCustomEntries();
         integrationCompleted = true;
     }
@@ -310,9 +320,18 @@ public class EidolonCodexIntegration {
 
             // Additional pages
             for (JsonObject pageJson : entry.getPages()) {
-                Page eidolonPage = EidolonPageConverter.convertPage(pageJson);
-                if (eidolonPage != null) {
-                    chapter.addPage(eidolonPage);
+                // Only convert pages on client side
+                if (FMLEnvironment.dist == Dist.CLIENT) {
+                    Page eidolonPage = EidolonPageConverter.convertPage(pageJson);
+                    if (eidolonPage != null) {
+                        chapter.addPage(eidolonPage);
+                    }
+                } else {
+                    // On server, create a simple text page placeholder
+                    String pageType = pageJson.has("type") ? pageJson.get("type").getAsString() : "text";
+                    if ("text".equals(pageType) && pageJson.has("text")) {
+                        chapter.addPage(new TextPage(pageJson.get("text").getAsString()));
+                    }
                 }
             }
 

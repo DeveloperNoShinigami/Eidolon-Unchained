@@ -21,35 +21,6 @@
   "eidolonunchained.codex.entry.recipe_example.description": "Learn how to display crafting recipes in your codex entries.",
   "eidolonunchained.codex.entry.recipe_example.explanation": "Recipe pages automatically display crafting grids and ingredients.",
   
-  "eidolonunchained.codex.entry.crucible_example.title": "Crucible Recipe Examples",
-  "eidolonunchained.codex.entry.crucible_example.intro": "The crucible can be used to create powerful ritualistic items infused with divine or shadow energies. These recipes require specific combinations of materials and divine favor.",
-  "eidolonunchained.codex.entry.crucible_example.shadow_explanation": "Enhanced Shadow Gems concentrate dark energy for use in shadow magic rituals. They require the blessing of a shadow deity to create.",
-  "eidolonunchained.codex.entry.crucible_example.nature_explanation": "Nature Soul Gems harmonize natural energies for earth magic rituals. They channel the power of nature deities.",
-  
-  "eidolonunchained.codex.entry.enhanced_shadow_gems.title": "Enhanced Shadow Gems",
-  "eidolonunchained.codex.entry.enhanced_shadow_gems.intro": "These dark crystals concentrate shadow energy for powerful rituals. Created through crucible magic with the blessing of shadow deities.",
-  "eidolonunchained.codex.entry.enhanced_shadow_gems.warning": "Warning: Creating these gems without proper divine favor may result in corruption or backlash.",
-  
-  "eidolonunchained.codex.entry.shadow_patronage_ritual": "Shadow Patronage Ritual",
-  "eidolonunchained.codex.entry.shadow_patronage_ritual.description": "A dark ceremony to pledge allegiance to Nyxathel, the Shadow Lord. This ritual marks the beginning of a follower's journey into shadow magic.",
-  "eidolonunchained.codex.entry.shadow_patronage_ritual.effects": "Grants initial shadow magic abilities and establishes divine connection for future prayers and rituals.",
-  
-  "eidolonunchained.codex.entry.light_patronage_ritual": "Light Patronage Ritual", 
-  "eidolonunchained.codex.entry.light_patronage_ritual.description": "A sacred ceremony to pledge devotion to Lumina, the Sacred Guardian. This holy ritual begins a follower's path of divine light.",
-  "eidolonunchained.codex.entry.light_patronage_ritual.effects": "Grants divine protection and healing abilities, establishing a blessed connection for prayers and holy magic.",
-  
-  "eidolonunchained.codex.entry.nature_patronage_ritual": "Nature Patronage Ritual",
-  "eidolonunchained.codex.entry.nature_patronage_ritual.description": "A natural ceremony to bond with Verdania, Guardian of Nature. This ritual harmonizes the follower with the natural world.",
-  "eidolonunchained.codex.entry.nature_patronage_ritual.effects": "Grants nature magic abilities and plant growth powers, establishing harmony with natural forces.",
-  
-  "eidolonunchained.codex.entry.deity_rituals_overview": "Deity Rituals Overview",
-  "eidolonunchained.codex.entry.deity_rituals_overview.intro": "Divine rituals are sacred ceremonies that strengthen your connection with deities. Each deity offers unique rituals that provide different benefits and unlock new powers.",
-  "eidolonunchained.codex.entry.deity_rituals_overview.nature": "Nature rituals focus on harmony with the natural world, plant growth, and earth magic. They require natural materials and outdoor locations.",
-  "eidolonunchained.codex.entry.deity_rituals_overview.light": "Light rituals channel divine radiance for healing, protection, and purification. They are most powerful during daylight hours.",
-  "eidolonunchained.codex.entry.deity_rituals_overview.dark": "Shadow rituals harness forbidden knowledge and dark energies. They require rare materials and are enhanced by moonless nights.",
-  "eidolonunchained.codex.entry.deity_rituals_overview.tasks": "Each deity may assign divine tasks to their followers. Completing these tasks increases your reputation and unlocks more powerful rituals.",
-  
-  "eidolonunchained.codex.entry.entity_example": "Entity Example",
   "eidolonunchained.codex.entry.entity_example.title": "Entity Example",
   "eidolonunchained.codex.entry.entity_example.description": "This entry demonstrates how to display entities in the codex.",
   "eidolonunchained.codex.entry.entity_example.details": "This example demonstrates how to show entity information.",
@@ -78,9 +49,36 @@
   "eidolonunchained.codex.entry.forbidden_knowledge.description": "A dangerous chant that reveals hidden knowledge at a terrible price.",
   "eidolonunchained.codex.entry.forbidden_knowledge.chant_description": "Seek out secrets that should remain hidden. Draw the signs of Wicked, Mind, and Magic to access forbidden lore.",
   
-  "eidolonunchained.codex.page.shadow_patronage_ritual": "Shadow Patronage Ritual Page",
-  "eidolonunchained.codex.page.light_patronage_ritual": "Light Patronage Ritual Page", 
-  "eidolonunchained.codex.page.nature_patronage_ritual": "Nature Patronage Ritual Page",
+  "eidolonunchained.codex.entry.crucible_example.title": "Crucible Example",
+  "eidolonunchained.codex.entry.crucible_example.intro": "The Eidolon Crucible can be used to create enhanced magical items through careful alchemical processes.",
+  "eidolonunchained.codex.entry.crucible_example.shadow_explanation": "Enhanced Shadow Gems require careful preparation using dark essence and corrupted materials.",
+  "eidolonunchained.codex.entry.crucible_example.nature_explanation": "Nature Soul Gems are created by infusing natural materials with elemental energies.",
+  
+  "eidolonunchained.codex.entry.enhanced_shadow_gems.title": "Enhanced Shadow Gems",
+  "eidolonunchained.codex.entry.enhanced_shadow_gems.intro": "These powerful gems are infused with shadow magic and can be used to craft advanced items.",
+  "eidolonunchained.codex.entry.enhanced_shadow_gems.warning": "Warning: Handling these gems requires careful preparation and protection from corruption.",
+  
+  "eidolonunchained.codex.entry.nature_patronage_ritual": "Nature Patronage Ritual",
+  "eidolonunchained.codex.entry.nature_patronage_ritual.description": "A sacred ritual to establish connection with Verdania, Guardian of Nature.",
+  "eidolonunchained.codex.entry.nature_patronage_ritual.effects": "Successfully completing this ritual grants Nature Patronage and allows communion with Verdania.",
+  "eidolonunchained.codex.page.nature_patronage_ritual": "The Nature Patronage Ritual requires creating a sacred grove and offering natural treasures to Verdania.",
+  
+  "eidolonunchained.codex.entry.light_patronage_ritual": "Light Patronage Ritual",
+  "eidolonunchained.codex.entry.light_patronage_ritual.description": "A sacred ritual to establish connection with Lumina, the Sacred Guardian.",
+  "eidolonunchained.codex.entry.light_patronage_ritual.effects": "Successfully completing this ritual grants Light Patronage and allows communion with Lumina.",
+  "eidolonunchained.codex.page.light_patronage_ritual": "The Light Patronage Ritual requires creating a sacred altar and offering divine treasures to Lumina.",
+  
+  "eidolonunchained.codex.entry.shadow_patronage_ritual": "Shadow Patronage Ritual",
+  "eidolonunchained.codex.entry.shadow_patronage_ritual.description": "A dangerous ritual to establish connection with Nyxathel, the Shadow Lord.",
+  "eidolonunchained.codex.entry.shadow_patronage_ritual.effects": "Successfully completing this ritual grants Shadow Patronage and allows communion with Nyxathel.",
+  "eidolonunchained.codex.page.shadow_patronage_ritual": "The Shadow Patronage Ritual requires creating a dark altar and offering forbidden treasures to Nyxathel.",
+  
+  "eidolonunchained.codex.entry.deity_rituals_overview": "Divine Rituals Overview",
+  "eidolonunchained.codex.entry.deity_rituals_overview.intro": "The three primary deities each offer unique rituals and powers to their faithful followers.",
+  "eidolonunchained.codex.entry.deity_rituals_overview.nature": "Verdania, Guardian of Nature, offers growth, healing, and natural protection.",
+  "eidolonunchained.codex.entry.deity_rituals_overview.light": "Lumina, Sacred Guardian, provides divine protection, purification, and holy power.",
+  "eidolonunchained.codex.entry.deity_rituals_overview.dark": "Nyxathel, Shadow Lord, grants forbidden knowledge, dark magic, and power over shadows.",
+  "eidolonunchained.codex.entry.deity_rituals_overview.tasks": "Each deity offers tasks and challenges that grow in complexity as your devotion increases.",
   
   "_comment_research_system": "=== RESEARCH SYSTEM ===",
   "eidolonunchained.research.chapter.simple_examples.title": "Simple Examples",
@@ -349,7 +347,7 @@
   "eidolonunchained.chat.presence_fades": "The divine presence fades...",
   "eidolonunchained.chat.prayers_heard": "%s has heard your prayers.",
   
-  "_comment_task_messages": "=== TASK SYSTEM MESSAGES ===",
+  "_comment_task_system_messages": "=== TASK SYSTEM MESSAGES ===",
   "eidolonunchained.task.assigned": "[Divine Task] %s",
   "eidolonunchained.task.reward": "Reward: %s reputation points",
   "eidolonunchained.task.completed_reputation": "Gained %s reputation points!",

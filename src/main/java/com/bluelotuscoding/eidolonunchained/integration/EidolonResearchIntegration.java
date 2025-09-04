@@ -10,10 +10,12 @@ import elucent.eidolon.registries.Researches;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.client.Minecraft;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import org.slf4j.Logger;
 
 // No reflection imports needed
@@ -27,7 +29,10 @@ import java.util.Map;
  * 
  * CRITICAL: Integration is now called from ResearchDataManager after resource loading
  * completes to ensure proper timing - research entries must be loaded before injection.
+ * 
+ * Since Eidolon's research system is client-side only, this entire class is client-only.
  */
+@OnlyIn(Dist.CLIENT)
 public class EidolonResearchIntegration {
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -36,6 +41,12 @@ public class EidolonResearchIntegration {
      * Now called from ResearchDataManager after resource loading completes.
      */
     public static void injectCustomResearch() {
+        // Skip integration on dedicated server since research system is client-side
+        if (FMLEnvironment.dist == Dist.DEDICATED_SERVER) {
+            LOGGER.info("Skipping research integration on dedicated server (research system is client-side)");
+            return;
+        }
+        
         try {
             Map<ResourceLocation, ResearchChapter> customChapters = ResearchDataManager.getLoadedResearchChapters();
             LOGGER.info("Attempting to register {} custom research chapters", customChapters.size());
@@ -63,17 +74,11 @@ public class EidolonResearchIntegration {
                     LOGGER.warn("✗ Missing chapter {} for research {} - skipping", data.getChapter(), researchId);
                     continue;
                 }
-                boolean conditionsMet = true;
-                if (!data.getConditions().isEmpty()) {
-                    conditionsMet = data.getConditions().stream().allMatch(c -> c.test(Minecraft.getInstance().player));
-                }
-                if (conditionsMet) {
-                    Research research = createResearchFromEntry(data);
-                    Researches.register(research);
-                    LOGGER.info("✓ Injected research entry: {}", researchId);
-                } else {
-                    LOGGER.info("✗ Skipping research entry {} due to unmet conditions", researchId);
-                }
+                
+                // Always inject research - conditions will be checked when players access research in-game
+                Research research = createResearchFromEntry(data);
+                Researches.register(research);
+                LOGGER.info("✓ Injected research entry: {}", researchId);
             }
 
             LOGGER.info("Research integration complete!");

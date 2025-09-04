@@ -11,6 +11,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.slf4j.Logger;
 
 import java.util.HashSet;
@@ -111,9 +113,13 @@ public class ResearchCompletionTracker {
             }
             
             if (chapterShouldBeVisible) {
-                // Trigger codex integration to add this chapter
-                LOGGER.info("Chapter '{}' should now be visible - triggering codex integration", chapterId);
-                EidolonCodexIntegration.attemptIntegrationIfNeeded();
+                // Trigger codex integration to add this chapter (client-side only)
+                if (FMLEnvironment.dist == Dist.CLIENT) {
+                    LOGGER.info("Chapter '{}' should now be visible - triggering codex integration (client-side)", chapterId);
+                    EidolonCodexIntegration.attemptIntegrationIfNeeded();
+                } else {
+                    LOGGER.info("Chapter '{}' should now be visible (server-side - codex integration skipped)", chapterId);
+                }
                 break; // Only need to trigger integration once
             }
         }

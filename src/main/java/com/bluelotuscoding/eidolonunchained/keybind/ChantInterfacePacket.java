@@ -48,15 +48,15 @@ public class ChantInterfacePacket {
         buf.writeUtf(this.data);
     }
     
-    public static boolean handle(ChantInterfacePacket packet, Supplier<NetworkEvent.Context> supplier) {
+    public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player != null) {
                 LOGGER.info("Processing chant interface packet for player: {} action: {}", 
-                           player.getName().getString(), packet.action);
+                           player.getName().getString(), action);
                 
-                switch (packet.action) {
+                switch (action) {
                     case OPEN_INTERFACE:
                         // Send current chant assignments to client
                         String assignments = ChantSlotManager.getPlayerChantAssignments(player);

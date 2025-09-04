@@ -27,6 +27,8 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
@@ -111,13 +113,17 @@ public class EidolonUnchained
         ResearchDataManager.logLoadedData();
         
         LOGGER.info("About to attempt integration...");
-        // Now inject our custom entries into Eidolon's systems
-        try {
-            LOGGER.info("Calling attemptIntegrationIfNeeded...");
-            com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration.attemptIntegrationIfNeeded();
-            LOGGER.info("Integration call completed successfully");
-        } catch (Exception e) {
-            LOGGER.error("Failed to integrate with Eidolon codex system", e);
+        // Only integrate with client-side codex system if we're on the client
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            try {
+                LOGGER.info("Calling attemptIntegrationIfNeeded (client-side)...");
+                com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration.attemptIntegrationIfNeeded();
+                LOGGER.info("Integration call completed successfully");
+            } catch (Exception e) {
+                LOGGER.error("Failed to integrate with Eidolon codex system", e);
+            }
+        } else {
+            LOGGER.info("Skipping codex integration on server side (codex system is client-only)");
         }
         
         // Chant integration is handled by the datapack reload system, not here
