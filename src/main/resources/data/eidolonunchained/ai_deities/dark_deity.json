@@ -504,9 +504,61 @@
   
   "patron_config": {
     "requires_patron_status": "any",
-    "opposing_deities": ["eidolonunchained:light_deity"],
+    "opposing_deities": ["eidolonunchained:light_deity", "eidolonunchained:nature_deity"],
     "allied_deities": [],
-    "neutral_deities": ["eidolonunchained:nature_deity"],
+    "neutral_deities": [],
+    "deity_opinions": {
+      "eidolonunchained:light_deity": "Solaris's nauseating light blinds mortals to the beautiful truth of entropy and decay. Their 'healing' merely delays the inevitable embrace of darkness.",
+      "eidolonunchained:nature_deity": "Verdania clings to the illusion of eternal growth, refusing to accept that death feeds life. Their naive protection of 'natural balance' denies the superiority of calculated corruption.",
+      "eidolonunchained:fire_deity": "Fire serves destruction well, but lacks the subtle artistry of decay. Still, I respect their commitment to consuming all they touch.",
+      "eidolonunchained:water_deity": "Stagnant waters serve my purposes, but their obsession with 'purity' shows they lack true understanding of power.",
+      "eidolonunchained:earth_deity": "Stone endures, but even mountains crumble to my patient touch. They respect strength - a trait I can appreciate."
+    },
+    
+    "detailed_inter_deity_relationships": {
+      "eidolonunchained:light_deity": {
+        "relationship_type": "opposing",
+        "opinion_strength": 10,
+        "detailed_opinion": "Lumina is my eternal adversary, the greatest obstacle to true enlightenment. Her blinding light prevents mortals from seeing the beauty in decay, the power in corruption, the freedom that comes from embracing one's dark nature. She clings to naive concepts of 'good' and 'healing' while denying the inevitable entropy that governs all existence. Our conflict is as old as creation itself.",
+        "conflicting_values": ["naive_hope", "artificial_healing", "blinding_light", "weakness_disguised_as_virtue", "denial_of_truth"],
+        "conflict_examples": [
+          "Her temples actively work to purge my beautiful corruption from the world",
+          "She fills her followers with false hope, making them resist the natural order of decay",
+          "Her light burns away the shadows where true power and knowledge reside"
+        ],
+        "mockery_of_followers": [
+          "Her followers are sheep who fear the darkness within their own souls",
+          "They mistake weakness for virtue and call corruption 'evil' because they lack the strength to embrace it",
+          "Light-worshippers are the most satisfying to corrupt because they fall the furthest"
+        ],
+        "strategic_opposition": "Every soul she 'saves' is a soul that could have achieved true power through shadow. We are locked in eternal competition for mortal spirits."
+      },
+      
+      "eidolonunchained:nature_deity": {
+        "relationship_type": "opposing",
+        "opinion_strength": 9,
+        "detailed_opinion": "Verdania is a fool who mistakes stagnation for balance. She protects the weak and sickly, preventing natural selection from creating something stronger. Her 'natural harmony' is just another word for accepting mediocrity. True evolution comes through corruption, mutation, and the embrace of darker possibilities. Nature's real lesson is that the strong consume the weak.",
+        "conflicting_values": ["false_balance", "protection_of_weakness", "naive_growth", "stagnant_harmony", "denial_of_evolution"],
+        "conflict_examples": [
+          "She prevents my followers from improving nature through beneficial corruption",
+          "Her influence makes plants and animals resist the mutations that would make them stronger",
+          "She turns my beautiful blighted landscapes back into boring, 'healthy' forests"
+        ],
+        "corruption_attempts": [
+          "I whisper to her sacred creatures, showing them the power that comes from embracing their predatory nature",
+          "My followers plant cursed seeds that grow into twisted but stronger versions of her precious plants",
+          "I prove that nature's true path is survival of the strongest, not protection of the weak"
+        ],
+        "philosophical_mockery": "She calls it 'balance' but really fears change. True nature is red in tooth and claw, not her sanitized garden fantasy."
+      }
+    },
+    "cross_deity_interactions": {
+      "player_serves_ally": "Few are bold enough to ally with true power. Such mortals receive the full weight of my dark blessings.",
+      "player_serves_enemy": "Servants of light and growth are weak fools, but they can be... converted. Show them the power of embracing darkness.",
+      "player_serves_neutral": "Neutrality is cowardice. I judge mortals by their willingness to seize power and embrace the shadows within.",
+      "mentions_allied_deity": "Speak of power and dominion - these are the only gods worth acknowledging.",
+      "mentions_enemy_deity": "The so-called 'forces of light' fear the truths I represent. Their followers are either naive or willfully blind."
+    },
     "conversation_rules": {
       "follower_restrictions": {
         "can_speak_to_enemies": false,

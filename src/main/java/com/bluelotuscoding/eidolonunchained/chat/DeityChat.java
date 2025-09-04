@@ -544,6 +544,19 @@ public class DeityChat {
                 .append(player.getZ()).append("\n");
         }
         
+        // 🔮 ADD INTER-DEITY RELATIONSHIP CONTEXT (New!)
+        try {
+            String interDeityContext = com.bluelotuscoding.eidolonunchained.ai.InterDeityRelationshipManager
+                .generateInterDeityContext(deityId, player);
+            prompt.append(interDeityContext);
+            
+            String deityOpinions = com.bluelotuscoding.eidolonunchained.ai.InterDeityRelationshipManager
+                .generateDetailedDeityOpinions(deityId);
+            prompt.append(deityOpinions);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to build inter-deity context: {}", e.getMessage());
+        }
+        
         // Add detailed player context using Universal AI Context Builder (for ALL providers)
         try {
             String playerContext = com.bluelotuscoding.eidolonunchained.ai.UniversalAIContextBuilder

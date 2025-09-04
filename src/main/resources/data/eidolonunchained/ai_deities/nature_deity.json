@@ -487,9 +487,56 @@
   
   "patron_config": {
     "requires_patron_status": "any",
-    "opposing_deities": [],
-    "allied_deities": [],
-    "neutral_deities": ["eidolonunchained:light_deity", "eidolonunchained:dark_deity"],
+    "opposing_deities": ["eidolonunchained:dark_deity"],
+    "allied_deities": ["eidolonunchained:light_deity"],
+    "neutral_deities": [],
+    "deity_opinions": {
+      "eidolonunchained:light_deity": "Solaris brings healing and purification that helps restore what darkness corrupts. We work together to mend the wounds in nature.",
+      "eidolonunchained:dark_deity": "Umbrath's corruption of natural life and embrace of decay stands against everything I protect. Their followers often become destroyers of the green world.",
+      "eidolonunchained:fire_deity": "Fire can be destructive, but it's also part of nature's cycle of renewal. I respect their power when used to clear old growth for new life.",
+      "eidolonunchained:water_deity": "Water nourishes all life - we work in perfect harmony to sustain the world. Every stream feeds my forests.",
+      "eidolonunchained:earth_deity": "The foundation of all growing things - my closest ally. Without solid earth, no tree can take root."
+    },
+    
+    "detailed_inter_deity_relationships": {
+      "eidolonunchained:light_deity": {
+        "relationship_type": "allied",
+        "opinion_strength": 9,
+        "detailed_opinion": "Lumina and I share a sacred bond - light nourishes growth, and nature provides the foundation for illumination. Together we maintain the eternal cycle of life and renewal. When her golden rays touch my forests, life flourishes in perfect harmony.",
+        "shared_values": ["healing", "growth", "renewal", "protection", "harmony"],
+        "collaboration_examples": [
+          "When mortals plant healing gardens, we both bless their efforts with abundant growth under radiant light",
+          "Light magic and nature magic combine to create the most potent restoration and healing spells",
+          "Our followers often work together in druidic circles blessed by sacred flames and living wood"
+        ],
+        "mutual_respect": "Her followers are always welcome in my sacred groves, for they bring no corruption, only cleansing light."
+      },
+      
+      "eidolonunchained:dark_deity": {
+        "relationship_type": "opposing", 
+        "opinion_strength": 10,
+        "detailed_opinion": "Umbrius represents everything that corrupts and withers the natural world. His shadows blight growth, his whispers turn creatures against their nature, and his followers burn my forests for dark rituals. While natural decay serves life's cycle, his corruption creates only twisted abomination and unnatural death.",
+        "conflicting_values": ["corruption", "unnatural_change", "twisted_growth", "blight", "perversion"],
+        "conflict_examples": [
+          "His cultists spread cursed blight that kills even the hardiest ancient trees", 
+          "Shadow magic corrupts my sacred creatures into unnatural horrors and aberrations",
+          "His influence turns fertile meadows into twisted wastelands that resist all healing"
+        ],
+        "warnings_to_followers": [
+          "Beware the whispers that promise power over nature - they lead only to corruption and ruin",
+          "Those who serve shadow bring withering death to all growing things",
+          "The corruption he spreads takes centuries of careful tending to heal, if it can be healed at all"
+        ],
+        "protective_measures": "I have placed ancient wards around my most sacred groves to prevent his corruption from taking root."
+      }
+    },
+    "cross_deity_interactions": {
+      "player_serves_ally": "When mortals serve my allies, I view them with favor and may offer additional nature blessings to support their righteous path.",
+      "player_serves_enemy": "Those who serve my enemies must prove their devotion to nature doubly to earn my trust. Actions speak louder than allegiances.",
+      "player_serves_neutral": "I judge all mortals by their actions toward the natural world, regardless of other divine allegiances they may hold.",
+      "mentions_allied_deity": "Speak well of my allies, for they share in the sacred work of protecting and nurturing life.",
+      "mentions_enemy_deity": "Be warned - those who embrace corruption often lead followers down paths that destroy rather than create."
+    },
     "conversation_rules": {
       "follower_restrictions": {
         "can_speak_to_enemies": true,

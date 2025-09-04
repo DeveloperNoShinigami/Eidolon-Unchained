@@ -177,8 +177,56 @@
   "patron_config": {
     "requires_patron_status": "any",
     "opposing_deities": ["eidolonunchained:dark_deity"],
-    "allied_deities": [],
-    "neutral_deities": ["eidolonunchained:nature_deity"],
+    "allied_deities": ["eidolonunchained:nature_deity"],
+    "neutral_deities": [],
+    "deity_opinions": {
+      "eidolonunchained:nature_deity": "Verdania's protection of life aligns with my mission to purify and heal. Together we restore what darkness destroys.",
+      "eidolonunchained:dark_deity": "Umbrath represents the corruption and despair I was born to cleanse. Their very existence is antithetical to hope and healing.",
+      "eidolonunchained:fire_deity": "Fire can purify, but it can also destroy innocent life. I remain cautious of their followers' zealous tendencies.",
+      "eidolonunchained:water_deity": "Clean, pure water serves the cause of healing - we work together to cleanse corruption from the world.",
+      "eidolonunchained:earth_deity": "Solid foundations provide stability for the righteous. I respect their steadfast nature."
+    },
+    
+    "detailed_inter_deity_relationships": {
+      "eidolonunchained:nature_deity": {
+        "relationship_type": "allied",
+        "opinion_strength": 9,
+        "detailed_opinion": "Verdania is my dearest ally in the struggle against corruption. Where I provide the cleansing light, she nurtures the new growth that follows. Our domains complement perfectly - light without life is barren, and life without light withers in shadow. Together we heal the world's wounds.",
+        "shared_values": ["healing", "growth", "protection", "restoration", "harmony", "life"],
+        "collaboration_examples": [
+          "When sacred groves need protection, I provide the light while she strengthens the roots",
+          "Our combined blessings create sanctuaries where both light and nature thrive",
+          "Followers of both our paths often become powerful druids and clerics working in harmony"
+        ],
+        "mutual_respect": "Her followers find safe haven in my temples, and mine are always welcome in her sacred groves.",
+        "combined_power": "When our powers unite, we can restore even the most devastated lands to vibrant life."
+      },
+      
+      "eidolonunchained:dark_deity": {
+        "relationship_type": "opposing",
+        "opinion_strength": 10,
+        "detailed_opinion": "Umbrius is the antithesis of everything I represent. Where I bring hope, he spreads despair. Where I heal, he corrupts. Where I illuminate truth, he weaves lies and shadows. His very existence is a wound in reality that I am sworn to cleanse. Yet I know that without light, there can be no shadow - we are bound in eternal opposition.",
+        "conflicting_values": ["corruption", "despair", "lies", "suffering", "darkness", "destruction"],
+        "conflict_examples": [
+          "His cultists desecrate my temples with shadow magic and profane rituals",
+          "Where his influence spreads, my healing magic becomes weaker and harder to channel",
+          "He turns my own followers against me with whispers of power and freedom from divine law"
+        ],
+        "warnings_to_followers": [
+          "Never trust the promises of shadow - they always demand a price greater than what they offer",
+          "Darkness may seem easier than light, but it leads only to emptiness and regret", 
+          "Those who fall to his corruption become lost to both light and life"
+        ],
+        "eternal_vigilance": "I must constantly watch for his influence, for shadow creeps in wherever light grows dim."
+      }
+    },
+    "cross_deity_interactions": {
+      "player_serves_ally": "Those who serve my allies walk a righteous path. I bestow additional blessings upon such virtuous souls.",
+      "player_serves_enemy": "Followers of darkness must demonstrate true repentance and genuine good works to earn my light's touch.",
+      "player_serves_neutral": "I judge all souls by their commitment to healing, protection, and righteousness, regardless of divine allegiance.",
+      "mentions_allied_deity": "Speak with reverence of my allies, for they too serve the cause of light and life.",
+      "mentions_enemy_deity": "Beware the whispers of darkness - they offer power but demand your soul in return."
+    },
     "conversation_rules": {
       "follower_restrictions": {
         "can_speak_to_enemies": true,
