@@ -98,7 +98,8 @@ public class AIDebugCommands {
                 source.sendSuccess(() -> Component.literal("§a✅ Found " + matches.size() + " matches:"), false);
                 for (int i = 0; i < Math.min(10, matches.size()); i++) {
                     ResourceLocation match = matches.get(i);
-                    source.sendSuccess(() -> Component.literal("§7  " + (i+1) + ". " + match.toString()), false);
+                    final int index = i + 1; // Make effectively final for lambda
+                    source.sendSuccess(() -> Component.literal("§7  " + index + ". " + match.toString()), false);
                 }
                 if (matches.size() > 10) {
                     source.sendSuccess(() -> Component.literal("§7  ... and " + (matches.size() - 10) + " more"), false);

@@ -378,41 +378,9 @@ public class EnhancedCommandExtractor {
             effect, searchMods, BuiltInRegistries.MOB_EFFECT.keySet().size());
         return null; // Don't guess - return null if not found
     }
-        
-        // Already properly formatted with namespace
-        if (effect.contains(":")) {
-            ResourceLocation effectId = ResourceLocation.tryParse(effect);
-            if (effectId != null && BuiltInRegistries.MOB_EFFECT.containsKey(effectId)) {
-                return effect;
-            }
-            return null; // Invalid namespaced effect
-        }
-        
-        // 🔥 DYNAMIC REGISTRY SEARCH - Check ALL registered effects from ALL mods
-        String[] namespaces = {"minecraft", "eidolon", "eidolonunchained", "forge"};
-        
-        for (String namespace : namespaces) {
-            ResourceLocation testId = new ResourceLocation(namespace, effect);
-            if (BuiltInRegistries.MOB_EFFECT.containsKey(testId)) {
-                LOGGER.info("🔥 Found effect in {} registry: {} -> {}", namespace, effect, testId);
-                return testId.toString();
-            }
-        }
-        
-        // 🔥 FUZZY SEARCH - Look for partial matches in ALL effect registries
-        for (ResourceLocation registeredEffect : BuiltInRegistries.MOB_EFFECT.keySet()) {
-            String path = registeredEffect.getPath();
-            // Check if registered effect contains our search term
-            if (path.contains(effect) || effect.contains(path)) {
-                LOGGER.info("🔥 Found fuzzy effect match: {} -> {}", effect, registeredEffect);
-                return registeredEffect.toString();
-            }
-        }
-        
-        LOGGER.warn("🔥 Could not find effect '{}' in any registry. Available effects: {}", 
-            effect, BuiltInRegistries.MOB_EFFECT.keySet().size());
-        return null; // Don't guess - return null if not found
-    }
+    
+    /**
+     * Extract common deity actions and convert to commands
     
     /**
      * Generic method to find ResourceLocation in any registry
