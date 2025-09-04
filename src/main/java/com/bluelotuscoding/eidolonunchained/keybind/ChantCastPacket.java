@@ -32,19 +32,19 @@ public class ChantCastPacket {
         buf.writeResourceLocation(this.chantId);
     }
     
-    public boolean handle(Supplier<NetworkEvent.Context> supplier) {
+    public static boolean handle(ChantCastPacket packet, Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player != null) {
                 LOGGER.info("Processing chant cast packet for player: {} chant: {}", 
-                           player.getName().getString(), chantId);
+                           player.getName().getString(), packet.chantId);
                 
-                boolean success = DatapackChantManager.executeChant(chantId, player);
+                boolean success = DatapackChantManager.executeChant(packet.chantId, player);
                 if (success) {
                     player.sendSystemMessage(Component.literal("§6✨ Chant cast successfully via keybind!"));
                 } else {
-                    player.sendSystemMessage(Component.literal("§cFailed to cast chant: " + chantId.getPath()));
+                    player.sendSystemMessage(Component.literal("§cFailed to cast chant: " + packet.chantId.getPath()));
                 }
             }
         });
