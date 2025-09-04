@@ -444,21 +444,76 @@ public class DeityChat {
         double reputation = deity.getPlayerReputation(player);
         String progressionLevel = getDynamicProgressionLevel(deity, player);
         
-        // Use AI deity configuration behavior rules for context
+        // 🔥 ENHANCED DEITY CONTEXT FROM AI_DEITIES FOLDER
         if (aiConfig != null) {
+            // Add comprehensive AI deity identity context
+            prompt.append("\n\n=== DEITY IDENTITY & CONFIGURATION ===\n");
+            prompt.append("Deity ID: ").append(aiConfig.deity_id).append("\n");
+            prompt.append("AI Provider: ").append(aiConfig.ai_provider).append("\n");
+            prompt.append("Base Personality: ").append(aiConfig.personality).append("\n");
+            
+            // Add patron configuration details
+            if (aiConfig.patron_config != null) {
+                prompt.append("Accepts Followers: ").append(aiConfig.patron_config.acceptsFollowers).append("\n");
+                prompt.append("Patron Status Required: ").append(aiConfig.patron_config.requiresPatronStatus).append("\n");
+                if (!aiConfig.patron_config.opposingDeities.isEmpty()) {
+                    prompt.append("Opposing Deities: ").append(String.join(", ", aiConfig.patron_config.opposingDeities)).append("\n");
+                }
+                if (!aiConfig.patron_config.alliedDeities.isEmpty()) {
+                    prompt.append("Allied Deities: ").append(String.join(", ", aiConfig.patron_config.alliedDeities)).append("\n");
+                }
+            }
+            
+            // Add reputation-based behavior context
             String reputationBehavior = aiConfig.getReputationBehavior(reputation);
             if (reputationBehavior != null) {
-                prompt.append(reputationBehavior).append(" ");
+                prompt.append("Current Behavioral Context: ").append(reputationBehavior).append("\n");
             }
             
             // Add progression stage context from AI config
             if (aiConfig.patron_config.followerPersonalityModifiers.containsKey(progressionLevel)) {
-                prompt.append(aiConfig.patron_config.followerPersonalityModifiers.get(progressionLevel)).append(" ");
+                prompt.append("Progression Modifier: ").append(aiConfig.patron_config.followerPersonalityModifiers.get(progressionLevel)).append("\n");
+            }
+            
+            // Add mod context awareness
+            if (!aiConfig.mod_context_ids.isEmpty()) {
+                prompt.append("Aware of Mods: ").append(String.join(", ", aiConfig.mod_context_ids)).append("\n");
             }
         }
         
         prompt.append("This player currently holds the rank of '").append(progressionLevel)
               .append("' with you (reputation: ").append((int)reputation).append("). ");
+        
+        // 🎯 ENHANCED PATRON & TITLE TRACKING
+        try {
+            player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
+                .ifPresent(patronData -> {
+                    ResourceLocation playerPatron = patronData.getPatron(player);
+                    String title = patronData.getTitle(player);
+                    
+                    prompt.append("\n\n=== PLAYER PATRON STATUS ===\n");
+                    if (playerPatron != null) {
+                        prompt.append("Current Patron: ").append(playerPatron.toString()).append("\n");
+                        if (playerPatron.equals(deityId)) {
+                            prompt.append("This player is YOUR devoted follower!\n");
+                        } else {
+                            prompt.append("This player follows another deity. Act accordingly.\n");
+                        }
+                    } else {
+                        prompt.append("This player has no patron deity (godless).\n");
+                    }
+                    
+                    if (title != null && !title.isEmpty()) {
+                        prompt.append("Player Title: ").append(title).append("\n");
+                    } else {
+                        prompt.append("Player has no special title.\n");
+                    }
+                });
+        } catch (Exception e) {
+            LOGGER.warn("Failed to get patron capability: {}", e.getMessage());
+            prompt.append("\n\n=== PLAYER PATRON STATUS ===\n");
+            prompt.append("Patron data unavailable\n");
+        }
         
         // Check if the rank has recently changed (within conversation history)
         String fullHistory = ConversationHistoryManager.getPlayerFullContext(player, deityId);
@@ -473,6 +528,21 @@ public class DeityChat {
         // 🌍 ADD COMPREHENSIVE WORLD REGISTRY INFORMATION
         prompt.append("\n\n=== MINECRAFT WORLD KNOWLEDGE ===\n");
         prompt.append(buildMinecraftRegistryContext(player));
+        
+        // 🎯 ADD REAL-TIME WORLD STATE INFORMATION
+        prompt.append("\n\n=== CURRENT WORLD STATE ===\n");
+        try {
+            String worldContext = com.bluelotuscoding.eidolonunchained.ai.WorldContextProvider
+                .generatePlayerWorldContext(player);
+            prompt.append(worldContext);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to build world context: {}", e.getMessage());
+            // Fallback to basic position info
+            prompt.append("Player is at coordinates: ")
+                .append(player.getX()).append(", ")
+                .append(player.getY()).append(", ")
+                .append(player.getZ()).append("\n");
+        }
         
         // Add detailed player context using Universal AI Context Builder (for ALL providers)
         try {
