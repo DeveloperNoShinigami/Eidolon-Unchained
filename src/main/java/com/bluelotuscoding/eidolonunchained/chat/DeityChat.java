@@ -322,11 +322,14 @@ public class DeityChat {
                 }
                 
                 String rawResponse = aiResponse.dialogue;
+                LOGGER.info("🔥 DEBUG: AI Response received: '{}'", rawResponse);
                 
                 // 🔥 ENHANCED COMMAND EXTRACTION AND EXECUTION
                 // Use the enhanced command extractor to detect and execute natural language commands
+                LOGGER.info("🔥 DEBUG: Starting command extraction...");
                 List<String> extractedCommands = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
                     .extractAndConvertCommands(rawResponse, player);
+                LOGGER.info("🔥 DEBUG: Extracted {} commands: {}", extractedCommands.size(), extractedCommands);
                 
                 int commandsExecuted = 0;
                 if (!extractedCommands.isEmpty()) {
@@ -391,6 +394,7 @@ public class DeityChat {
                 });
                 
             }).exceptionally(throwable -> {
+                LOGGER.error("🔥 DEBUG: Exception in AI response processing: {}", throwable.getMessage(), throwable);
                 LOGGER.error("Error generating AI response: {}", throwable.getMessage(), throwable);
                 
                 // Enhanced error handling for specific issues
