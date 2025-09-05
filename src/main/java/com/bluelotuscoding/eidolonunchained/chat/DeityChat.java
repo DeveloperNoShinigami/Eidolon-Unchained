@@ -11,9 +11,6 @@ import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
-import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
-import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.CommandSource;
@@ -863,10 +860,11 @@ public class DeityChat {
             }
         }
         
-        // 🔥 FIX: Route to appropriate display method - NO MIXED APPROACHES
+        // 🔥 FIX: Route to appropriate display method - Enhanced Action Bar by default
         switch (displayMethod) {
             case "TITLE_SUBTITLE":
-                sendLegacyTitleSubtitle(player, deityName, message);
+                // Use enhanced action bar instead of problematic title system
+                sendPureActionBarDisplay(player, deityName, message);
                 break;
             case "ACTION_BAR":
                 sendPureActionBarDisplay(player, deityName, message); // Pure action bar only
@@ -875,59 +873,9 @@ public class DeityChat {
                 sendEnhancedChatMessage(player, deityName, message);
                 break;
             default:
-                // Fallback to enhanced chat for safety
-                sendEnhancedChatMessage(player, deityName, message);
+                // Fallback to enhanced action bar for best experience
+                sendPureActionBarDisplay(player, deityName, message);
         }
-    }
-    
-    /**
-     * Legacy title/subtitle display (original system)
-     */
-    private static void sendLegacyTitleSubtitle(ServerPlayer player, String deityName, String message) {
-        int maxSubtitleLength = EidolonUnchainedConfig.COMMON.maxSubtitleLength.get();
-        
-        Component titleComponent = Component.literal("§6§l" + deityName);
-        Component subtitleComponent;
-        
-        if (message.length() > maxSubtitleLength) {
-            // Split long messages
-            String[] words = message.split(" ");
-            StringBuilder line1 = new StringBuilder();
-            StringBuilder line2 = new StringBuilder();
-            boolean firstLine = true;
-            
-            for (String word : words) {
-                if (firstLine && (line1.length() + word.length() + 1) <= maxSubtitleLength) {
-                    if (line1.length() > 0) line1.append(" ");
-                    line1.append(word);
-                } else {
-                    firstLine = false;
-                    if (line2.length() > 0) line2.append(" ");
-                    line2.append(word);
-                }
-            }
-            
-            subtitleComponent = Component.literal("§f" + line1.toString());
-            if (line2.length() > 0) {
-                // Send second line to action bar
-                Component actionBar = Component.literal("§7" + line2.toString());
-                player.sendSystemMessage(actionBar, true);
-            }
-        } else {
-            subtitleComponent = Component.literal("§f" + message);
-        }
-        
-        // Send title/subtitle packets
-        int fadeInTicks = EidolonUnchainedConfig.COMMON.fadeInTicks.get();
-        int displayDurationTicks = EidolonUnchainedConfig.COMMON.displayDurationTicks.get();
-        int fadeOutTicks = EidolonUnchainedConfig.COMMON.fadeOutTicks.get();
-        
-        ClientboundSetTitlesAnimationPacket animationPacket = new ClientboundSetTitlesAnimationPacket(
-            fadeInTicks, displayDurationTicks, fadeOutTicks);
-        
-        player.connection.send(animationPacket);
-        player.connection.send(new ClientboundSetTitleTextPacket(titleComponent));
-        player.connection.send(new ClientboundSetSubtitleTextPacket(subtitleComponent));
     }
     
     /**
@@ -957,123 +905,52 @@ public class DeityChat {
     }
     
     /**
-     * 🔥 LAYERED ACTION BAR MESSAGES - Using direct packet system
-     * Creates custom multi-line action bar using ClientboundSetActionBarTextPacket
+     * 🔥 ENHANCED ACTION BAR MESSAGES - Smart wrapping with sequential display
+     * Breaks long messages into action bar-sized chunks and displays them sequentially
      */
     private static void startActionBarTypingAnimation(ServerPlayer player, String deityName, String message, 
                                                     int typingSpeed, int sentenceDelay, int fadeDelay, 
                                                     int maxWidth, boolean centerText, boolean wrapText) {
         
-        // Split message into sentences for layered display
-        String[] sentences = message.split("(?<=[.!?])\\s+");
-        if (sentences.length == 0) return;
+        // Split message into action bar-friendly chunks
+        List<String> messageChunks = intelligentTextWrap(message, deityName, maxWidth);
         
-        // If only one sentence, use single action bar
-        if (sentences.length == 1) {
-            startSingleSentenceTyping(player, deityName, message, typingSpeed, fadeDelay, maxWidth, centerText);
-            return;
-        }
+        if (messageChunks.isEmpty()) return;
         
-        // Multiple sentences: create custom layered display using title/subtitle system
-        startCustomLayeredDisplay(player, deityName, sentences, typingSpeed, sentenceDelay, fadeDelay, maxWidth, centerText);
+        // Display each chunk sequentially with typing animation
+        startSequentialActionBarDisplay(player, deityName, messageChunks, typingSpeed, sentenceDelay, fadeDelay, maxWidth, centerText);
     }
     
     /**
-     * Create custom layered display using title/subtitle system for multi-line effect
+     * Display message chunks sequentially in action bar with typing animation
      */
-    private static void startCustomLayeredDisplay(ServerPlayer player, String deityName, String[] sentences, 
-                                                 int typingSpeed, int sentenceDelay, int fadeDelay, 
-                                                 int maxWidth, boolean centerText) {
+    private static void startSequentialActionBarDisplay(ServerPlayer player, String deityName, List<String> messageChunks,
+                                                       int typingSpeed, int sentenceDelay, int fadeDelay, 
+                                                       int maxWidth, boolean centerText) {
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
-                List<String> completedSentences = new ArrayList<>();
-                
-                for (int sentenceIndex = 0; sentenceIndex < sentences.length; sentenceIndex++) {
-                    String sentence = sentences[sentenceIndex].trim();
-                    if (sentence.isEmpty()) continue;
+                for (int chunkIndex = 0; chunkIndex < messageChunks.size(); chunkIndex++) {
+                    String chunk = messageChunks.get(chunkIndex);
                     
-                    // Type out this sentence character by character
-                    for (int charIndex = 0; charIndex <= sentence.length(); charIndex++) {
-                        String partialSentence = sentence.substring(0, charIndex);
+                    // Type out this chunk character by character
+                    for (int charIndex = 0; charIndex <= chunk.length(); charIndex++) {
+                        String partialChunk = chunk.substring(0, charIndex);
+                        String formattedMessage = formatActionBarMessage(deityName, partialChunk, maxWidth, centerText, false);
+                        Component actionBarComponent = Component.literal(formattedMessage);
                         
-                        // Build display with all completed sentences + current partial
-                        StringBuilder displayBuilder = new StringBuilder();
-                        
-                        // Add all completed sentences
-                        for (String completed : completedSentences) {
-                            if (displayBuilder.length() > 0) displayBuilder.append("\n");
-                            displayBuilder.append("§6⟦ ").append(deityName).append(" ⟧ §f").append(completed);
-                        }
-                        
-                        // Add current typing sentence
-                        if (displayBuilder.length() > 0) displayBuilder.append("\n");
-                        displayBuilder.append("§6⟦ ").append(deityName).append(" ⟧ §f").append(partialSentence);
-                        
-                        String fullDisplay = displayBuilder.toString();
-                        
-                        // Send using title system for multi-line display
+                        // Send to action bar on main thread
                         player.getServer().execute(() -> {
-                            // Use title with empty subtitle for cleaner display
-                            player.connection.send(new ClientboundSetTitleTextPacket(
-                                Component.literal(fullDisplay)
-                            ));
-                            
-                            // Set title timing: fade in (0), stay (long), fade out (0)
-                            player.connection.send(new ClientboundSetTitlesAnimationPacket(
-                                0, // fade in
-                                typingSpeed * 2, // stay duration  
-                                0 // fade out
-                            ));
+                            player.sendSystemMessage(actionBarComponent, true);
                         });
                         
                         // Wait for typing speed
                         Thread.sleep(typingSpeed);
                     }
                     
-                    // Add completed sentence to list
-                    completedSentences.add(sentence);
-                    
-                    // Pause between sentences (except for last sentence)
-                    if (sentenceIndex < sentences.length - 1) {
+                    // Pause between chunks (except for last chunk)
+                    if (chunkIndex < messageChunks.size() - 1) {
                         Thread.sleep(sentenceDelay);
                     }
-                }
-                
-                // Final display stays for fade delay
-                Thread.sleep(fadeDelay * 50); // Convert ticks to milliseconds
-                
-                // Clear title by sending empty title
-                player.getServer().execute(() -> {
-                    player.connection.send(new ClientboundSetTitleTextPacket(Component.literal("")));
-                });
-                
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                LOGGER.warn("Custom layered display interrupted for player {}", player.getName().getString());
-            }
-        });
-    }
-    
-    /**
-     * Display single sentence with character-by-character typing
-     */
-    private static void startSingleSentenceTyping(ServerPlayer player, String deityName, String message, 
-                                                 int typingSpeed, int fadeDelay, int maxWidth, boolean centerText) {
-        java.util.concurrent.CompletableFuture.runAsync(() -> {
-            try {
-                // Type out character by character
-                for (int charIndex = 0; charIndex <= message.length(); charIndex++) {
-                    String partialMessage = message.substring(0, charIndex);
-                    String formattedMessage = formatActionBarMessage(deityName, partialMessage, maxWidth, centerText, false);
-                    Component actionBarComponent = Component.literal(formattedMessage);
-                    
-                    // Send to action bar on main thread
-                    player.getServer().execute(() -> {
-                        player.sendSystemMessage(actionBarComponent, true);
-                    });
-                    
-                    // Wait for typing speed
-                    Thread.sleep(typingSpeed);
                 }
                 
                 // Final message stays for fade delay
@@ -1086,38 +963,91 @@ public class DeityChat {
                 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                LOGGER.warn("Single sentence typing animation interrupted for player {}", player.getName().getString());
+                LOGGER.warn("Sequential action bar display interrupted for player {}", player.getName().getString());
             }
         });
     }
+
+    /**
+     * Intelligently wrap text into action bar-friendly chunks
+     * Splits on sentence boundaries first, then word boundaries if needed
+     */
+    private static List<String> intelligentTextWrap(String message, String deityName, int maxWidth) {
+        List<String> chunks = new ArrayList<>();
+        
+        // Calculate usable width (subtract deity header space)
+        String header = "⟦ " + deityName + " ⟧ ";
+        int headerLength = header.length();
+        int usableWidth = maxWidth - headerLength;
+        
+        // First, split on sentence boundaries
+        String[] sentences = message.split("(?<=[.!?])\\s+");
+        
+        for (String sentence : sentences) {
+            sentence = sentence.trim();
+            if (sentence.isEmpty()) continue;
+            
+            // If sentence fits in one action bar, add it as is
+            if (sentence.length() <= usableWidth) {
+                chunks.add(sentence);
+            } else {
+                // Break long sentence into word-wrapped chunks
+                String[] words = sentence.split("\\s+");
+                StringBuilder currentChunk = new StringBuilder();
+                
+                for (String word : words) {
+                    // Check if adding this word would exceed the width
+                    String testChunk = currentChunk.length() == 0 ? word : currentChunk + " " + word;
+                    
+                    if (testChunk.length() <= usableWidth) {
+                        // Add word to current chunk
+                        if (currentChunk.length() > 0) currentChunk.append(" ");
+                        currentChunk.append(word);
+                    } else {
+                        // Start new chunk with this word
+                        if (currentChunk.length() > 0) {
+                            chunks.add(currentChunk.toString());
+                            currentChunk = new StringBuilder();
+                        }
+                        
+                        // Handle very long single words
+                        if (word.length() > usableWidth) {
+                            // Split the word itself
+                            for (int i = 0; i < word.length(); i += usableWidth) {
+                                chunks.add(word.substring(i, Math.min(i + usableWidth, word.length())));
+                            }
+                        } else {
+                            currentChunk.append(word);
+                        }
+                    }
+                }
+                
+                // Add remaining chunk
+                if (currentChunk.length() > 0) {
+                    chunks.add(currentChunk.toString());
+                }
+            }
+        }
+        
+        return chunks;
+    }
+    
+
     
     /**
-     * 🔥 FORMAT ACTION BAR MESSAGE with proper centering and wrapping
+     * 🔥 FORMAT ACTION BAR MESSAGE with proper centering - NO TRUNCATION
      */
     private static String formatActionBarMessage(String deityName, String message, int maxWidth, boolean centerText, boolean wrapText) {
         // Create header with deity name
         String header = "§6⟦ " + deityName + " ⟧";
         
-        // Calculate available width for message (subtract header width)
-        int headerWidth = deityName.length() + 6; // 6 for "⟦  ⟧" characters
-        int messageWidth = maxWidth - headerWidth - 2; // 2 for spacing
+        // Combine header and message - NO TRUNCATION, show full message
+        String fullText = header + " §f" + message;
         
-        // Handle message wrapping/truncation - DISABLED for progressive display
-        String processedMessage;
-        if (message.length() > messageWidth && wrapText) {
-            // Show first part with ellipsis
-            processedMessage = message.substring(0, Math.max(1, messageWidth - 3)) + "...";
-        } else {
-            // NO TRUNCATION - show full message regardless of length
-            processedMessage = message;
-        }
-        
-        // Combine header and message
-        String fullText = header + " §f" + processedMessage;
-        
-        // Center text if enabled (but only if message fits)
-        if (centerText && fullText.replaceAll("§.", "").length() <= maxWidth) {
-            int padding = Math.max(0, (maxWidth - fullText.replaceAll("§.", "").length()) / 2);
+        // Center text if enabled and reasonable length
+        if (centerText && fullText.replaceAll("§.", "").length() <= maxWidth * 1.2) { // Allow slight overflow for centering
+            int textLength = fullText.replaceAll("§.", "").length();
+            int padding = Math.max(0, (maxWidth - textLength) / 2);
             String paddingSpaces = " ".repeat(padding);
             return paddingSpaces + fullText;
         } else {
