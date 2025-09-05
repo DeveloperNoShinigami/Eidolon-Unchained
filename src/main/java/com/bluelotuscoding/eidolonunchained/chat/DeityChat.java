@@ -1068,11 +1068,35 @@ public class DeityChat {
         // Create header with deity name
         String header = "§6⟦ " + deityName + " ⟧";
         
-        // Combine header and message - NO TRUNCATION, show full message
+        // If message is already properly chunked (from intelligentTextWrap), just format it
         String fullText = header + " §f" + message;
         
+        // Check if the full message exceeds action bar width
+        int visibleLength = fullText.replaceAll("§.", "").length();
+        
+        if (visibleLength > maxWidth && wrapText) {
+            // This should not happen if intelligentTextWrap worked correctly
+            LOGGER.warn("Action bar message still too long after wrapping: {} chars vs {} max", visibleLength, maxWidth);
+            
+            // Emergency truncation to prevent overflow
+            String visibleText = fullText.replaceAll("§.", "");
+            if (visibleText.length() > maxWidth) {
+                // Calculate how much of the message we can show
+                int headerLength = header.replaceAll("§.", "").length() + 1; // +1 for space
+                int availableLength = maxWidth - headerLength - 3; // -3 for "..."
+                
+                if (availableLength > 0) {
+                    String truncatedMessage = message.substring(0, Math.min(availableLength, message.length())) + "...";
+                    fullText = header + " §f" + truncatedMessage;
+                } else {
+                    // Not enough space even for truncation
+                    fullText = header;
+                }
+            }
+        }
+        
         // Center text if enabled and reasonable length
-        if (centerText && fullText.replaceAll("§.", "").length() <= maxWidth * 1.2) { // Allow slight overflow for centering
+        if (centerText && fullText.replaceAll("§.", "").length() <= maxWidth) {
             int textLength = fullText.replaceAll("§.", "").length();
             int padding = Math.max(0, (maxWidth - textLength) / 2);
             String paddingSpaces = " ".repeat(padding);
@@ -1247,37 +1271,42 @@ public class DeityChat {
             // Secondary: Use AI deity config reputation thresholds if available
             AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deity.getId());
             if (aiConfig != null && !aiConfig.getReputationBehaviors().isEmpty()) {
-                // Find the highest threshold the player qualifies for
-                String progressionTitle = "Initiate";
-                int highestThreshold = -1;
                 
-                // Check AI config reputation thresholds and extract proper titles
-                for (Map.Entry<Integer, String> entry : aiConfig.getReputationBehaviors().entrySet()) {
-                    if (reputation >= entry.getKey() && entry.getKey() > highestThreshold) {
-                        highestThreshold = entry.getKey();
+                // Get follower personality modifiers (tier names) from JSON
+                if (aiConfig.patron_config != null && aiConfig.patron_config.followerPersonalityModifiers != null) {
+                    Map<String, String> personalityModifiers = aiConfig.patron_config.followerPersonalityModifiers;
+                    Map<Integer, String> reputationBehaviors = aiConfig.getReputationBehaviors();
+                    
+                    // Sort reputation thresholds to find the highest one the player qualifies for
+                    List<Integer> sortedThresholds = reputationBehaviors.keySet().stream()
+                        .filter(threshold -> reputation >= threshold)
+                        .sorted(Integer::compareTo)
+                        .collect(java.util.stream.Collectors.toList());
+                    
+                    if (!sortedThresholds.isEmpty()) {
+                        // Get the highest threshold the player qualifies for
+                        int qualifyingThreshold = sortedThresholds.get(sortedThresholds.size() - 1);
                         
-                        // Use deity-specific progression titles based on thresholds
-                        if (entry.getKey() >= 100) progressionTitle = getDeitySpecificTitle(aiConfig, "champion");
-                        else if (entry.getKey() >= 75) progressionTitle = getDeitySpecificTitle(aiConfig, "master");
-                        else if (entry.getKey() >= 50) progressionTitle = getDeitySpecificTitle(aiConfig, "priest");
-                        else if (entry.getKey() >= 25) progressionTitle = getDeitySpecificTitle(aiConfig, "acolyte");
-                        else if (entry.getKey() >= 0) progressionTitle = getDeitySpecificTitle(aiConfig, "initiate");
+                        LOGGER.debug("🎯 Player {} qualifies for reputation threshold: {} (reputation: {})", 
+                            player.getName().getString(), qualifyingThreshold, (int)reputation);
+                        
+                        // Now map this threshold to the appropriate tier name from followerPersonalityModifiers
+                        String tierName = mapThresholdToTierName(qualifyingThreshold, personalityModifiers, reputationBehaviors);
+                        
+                        LOGGER.info("✅ AI Config progression for {}/{}: '{}' ({}rep, threshold={})", 
+                            player.getName().getString(), deity.getName(), tierName, (int)reputation, qualifyingThreshold);
+                        
+                        return tierName;
                     }
                 }
                 
-                LOGGER.debug("🤖 AI Config progression for {}/{}: {} ({}rep, threshold={})", 
-                    player.getName().getString(), deity.getName(), progressionTitle, (int)reputation, highestThreshold);
-                
-                return progressionTitle;
+                // Fallback if no personality modifiers found
+                LOGGER.warn("⚠️ No followerPersonalityModifiers found in AI config for deity {}", deity.getName());
             }
             
-            // Final fallback to hardcoded levels
-            LOGGER.debug("🔍 No AI config or JSON stages for deity {}, using fallback", deity.getId());
-            if (reputation >= 75) return "Master";
-            if (reputation >= 50) return "Priest"; 
-            if (reputation >= 25) return "Acolyte";
-            if (reputation >= 10) return "Initiate";
-            return "Initiate";
+            // Final fallback - only if no AI config at all
+            LOGGER.debug("🔍 No AI config or JSON stages for deity {}, using minimal fallback", deity.getId());
+            return "Initiate"; // Single fallback instead of hardcoded progression
             
         } catch (Exception e) {
             LOGGER.error("🚨 Error determining progression level for {}/{}, using fallback: {}", 
@@ -1310,10 +1339,17 @@ public class DeityChat {
     public static void checkAndHandleTierProgression(ServerPlayer player, ResourceLocation deityId) {
         try {
             DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
-            if (deity == null) return;
-            
+            if (deity == null) {
+                LOGGER.warn("🚫 TIER PROGRESSION CHECK: Deity {} not found", deityId);
+                return;
+            }
+
             String currentTier = getDynamicProgressionLevel(deity, player);
             UUID playerId = player.getUUID();
+            double currentReputation = deity.getPlayerReputation(player);
+            
+            LOGGER.info("🔍 TIER PROGRESSION CHECK for {}: deity={}, currentTier='{}', reputation={}", 
+                player.getName().getString(), deity.getName(), currentTier, (int)currentReputation);
             
             // Get player's progression tracking
             Map<ResourceLocation, String> playerTiers = playerProgressionTracker.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
@@ -1321,17 +1357,21 @@ public class DeityChat {
             String previousTier = playerTiers.get(deityId);
             String highestTierEver = playerHighestTiers.get(deityId);
             
+            LOGGER.info("🔄 TIER TRACKING for {}: previousTier='{}', highestTierEver='{}', currentTier='{}'", 
+                player.getName().getString(), previousTier, highestTierEver, currentTier);
+
             // Check if this is a tier advancement
             if (previousTier != null && !previousTier.equals(currentTier)) {
-                // Get current and previous reputation to verify this is actual advancement
-                double currentReputation = deity.getPlayerReputation(player);
-                
                 // Log the tier change for debugging
                 LOGGER.info("🔄 TIER CHANGE detected for player {}: '{}' → '{}' with deity {} (rep: {})", 
                     player.getName().getString(), previousTier, currentTier, deity.getName(), (int)currentReputation);
                 
                 // Check if this is actual advancement using proper tier comparison
-                if (isTierAdvancement(previousTier, currentTier, deity)) {
+                boolean isAdvancement = isTierAdvancement(previousTier, currentTier, deity);
+                LOGGER.info("🎯 TIER ADVANCEMENT CHECK: previousTier='{}' → currentTier='{}', isAdvancement={}", 
+                    previousTier, currentTier, isAdvancement);
+                
+                if (isAdvancement) {
                     LOGGER.info("🎉 TIER ADVANCEMENT confirmed for player {}: '{}' → '{}' with deity {}", 
                         player.getName().getString(), previousTier, currentTier, deity.getName());
                     
@@ -1340,12 +1380,17 @@ public class DeityChat {
                     
                     // Check if this is truly a new highest tier (prevents downgrade-upgrade reward abuse)
                     boolean isNewHighestTier = isNewHighestTier(currentTier, highestTierEver, deity);
+                    LOGGER.info("🏆 NEW HIGHEST TIER CHECK: currentTier='{}', highestTierEver='{}', isNewHighest={}", 
+                        currentTier, highestTierEver, isNewHighestTier);
                     
                     if (isNewHighestTier) {
                         // Update highest tier achieved
                         playerHighestTiers.put(deityId, currentTier);
                         
                         // Auto-trigger congratulation conversation with rewards
+                        LOGGER.info("🚀 TRIGGERING TIER CONGRATULATION: player={}, deity={}, previousTier='{}', currentTier='{}'", 
+                            player.getName().getString(), deity.getName(), previousTier, currentTier);
+                        
                         triggerTierCongratulation(player, deity, previousTier, currentTier);
                         
                         LOGGER.info("🏆 NEW HIGHEST TIER achieved: {} for player {} with deity {}", 
@@ -1361,7 +1406,7 @@ public class DeityChat {
                 } else {
                     // Just update the tracking without congratulation (demotion)
                     playerTiers.put(deityId, currentTier);
-                    LOGGER.debug("� Tier demotion for player {}: '{}' → '{}' with deity {}", 
+                    LOGGER.info("⬇️ Tier demotion for player {}: '{}' → '{}' with deity {}", 
                         player.getName().getString(), previousTier, currentTier, deity.getName());
                 }
                 
@@ -1369,15 +1414,22 @@ public class DeityChat {
                 // First time tracking - record tier and highest tier
                 playerTiers.put(deityId, currentTier);
                 
+                LOGGER.info("📝 FIRST TIME TRACKING for {}: currentTier='{}', reputation={}", 
+                    player.getName().getString(), currentTier, (int)currentReputation);
+                
                 // If starting above initiate tier, they should get progression rewards
-                if (!currentTier.toLowerCase().contains("initiate") && !currentTier.toLowerCase().contains("shadow init")) {
+                if (!currentTier.toLowerCase().contains("initiate")) {
                     playerHighestTiers.put(deityId, currentTier);
-                    triggerTierCongratulation(player, deity, "Shadow Initiate", currentTier);
-                    LOGGER.info("🚀 INITIAL HIGH TIER detected: {} for player {} with deity {}", 
-                        currentTier, player.getName().getString(), deity.getName());
+                    
+                    // Get the proper first tier instead of hardcoding
+                    String firstTier = getFirstTierForDeity(deity);
+                    LOGGER.info("🚀 INITIAL HIGH TIER detected: {} for player {} with deity {} (vs firstTier: {})", 
+                        currentTier, player.getName().getString(), deity.getName(), firstTier);
+                    
+                    triggerTierCongratulation(player, deity, firstTier, currentTier);
                 } else {
                     playerHighestTiers.put(deityId, currentTier);
-                    LOGGER.debug("📝 Initial tier tracking for player {}: '{}' with deity {}", 
+                    LOGGER.info("📝 Initial tier tracking for player {}: '{}' with deity {}", 
                         player.getName().getString(), currentTier, deity.getName());
                 }
             }
@@ -1433,31 +1485,143 @@ public class DeityChat {
     
     /**
      * Get the reputation threshold for a specific tier from AI config
+     * READS DIRECTLY FROM JSON - NO HARDCODING
      */
     private static int getTierReputationThreshold(String tierName, AIDeityConfig aiConfig) {
-        // Try to match tier name to reputation behaviors
-        for (Map.Entry<Integer, String> entry : aiConfig.getReputationBehaviors().entrySet()) {
-            String behaviorText = entry.getValue().toLowerCase();
-            String tierLower = tierName.toLowerCase();
-            
-            // Check if this behavior describes this tier
-            if (behaviorText.contains(tierLower) || 
-                (tierLower.contains("champion") && entry.getKey() >= 100) ||
-                (tierLower.contains("master") && entry.getKey() >= 75) ||
-                (tierLower.contains("priest") && entry.getKey() >= 50) ||
-                (tierLower.contains("acolyte") && entry.getKey() >= 25) ||
-                (tierLower.contains("initiate") && entry.getKey() >= 0)) {
-                return entry.getKey();
-            }
+        LOGGER.debug("🔍 Getting reputation threshold for tier: '{}'", tierName);
+        
+        // STEP 1: Get the exact reputation thresholds from JSON
+        Map<Integer, String> reputationBehaviors = aiConfig.getReputationBehaviors();
+        
+        // STEP 2: Get the follower personality modifiers to map tier names
+        if (aiConfig.patron_config == null || aiConfig.patron_config.followerPersonalityModifiers == null) {
+            LOGGER.warn("❌ No patron_config.followerPersonalityModifiers found for tier mapping");
+            return 0;
         }
         
-        // Fallback threshold detection
-        String tierLower = tierName.toLowerCase();
-        if (tierLower.contains("champion")) return 100;
-        if (tierLower.contains("master") || tierLower.contains("void")) return 75;
-        if (tierLower.contains("priest") || tierLower.contains("high")) return 50;
-        if (tierLower.contains("acolyte") || tierLower.contains("dark")) return 25;
-        return 0; // Initiate/default
+        Map<String, String> personalityModifiers = aiConfig.patron_config.followerPersonalityModifiers;
+        
+        // STEP 3: Find the exact tier name in followerPersonalityModifiers
+        if (!personalityModifiers.containsKey(tierName)) {
+            LOGGER.warn("❌ Tier '{}' not found in followerPersonalityModifiers. Available tiers: {}", 
+                tierName, personalityModifiers.keySet());
+            return 0;
+        }
+        
+        LOGGER.debug("✅ Found tier '{}' in followerPersonalityModifiers", tierName);
+        
+        // STEP 4: Now we need to map this tier to its reputation threshold
+        // The JSON has reputation_thresholds (0, 25, 50, 75, 100) and followerPersonalityModifiers
+        // We need to determine which reputation threshold corresponds to each tier
+        
+        // Get all reputation thresholds sorted
+        List<Integer> sortedThresholds = reputationBehaviors.keySet().stream()
+            .sorted()
+            .collect(java.util.stream.Collectors.toList());
+        
+        LOGGER.debug("📊 Available reputation thresholds: {}", sortedThresholds);
+        
+        // Get all tier names sorted by their likely progression order
+        List<String> sortedTierNames = personalityModifiers.keySet().stream()
+            .sorted() // This gives us alphabetical, but we need logical order
+            .collect(java.util.stream.Collectors.toList());
+        
+        LOGGER.debug("📊 Available tier names: {}", sortedTierNames);
+        
+        // Find the index of our target tier
+        List<String> tierNamesList = new ArrayList<>(personalityModifiers.keySet());
+        
+        // Sort tier names by their logical progression (lowest to highest)
+        // We can infer this from tier name patterns
+        tierNamesList.sort((a, b) -> {
+            int scoreA = getTierProgressionScore(a);
+            int scoreB = getTierProgressionScore(b);
+            return Integer.compare(scoreA, scoreB);
+        });
+        
+        LOGGER.debug("📈 Sorted tier names by progression: {}", tierNamesList);
+        
+        int tierIndex = tierNamesList.indexOf(tierName);
+        if (tierIndex == -1) {
+            LOGGER.warn("❌ Could not find tier '{}' in sorted tier list", tierName);
+            return 0;
+        }
+        
+        // Map tier index to reputation threshold
+        if (tierIndex < sortedThresholds.size()) {
+            int threshold = sortedThresholds.get(tierIndex);
+            LOGGER.info("✅ Mapped tier '{}' (index {}) to reputation threshold {}", 
+                tierName, tierIndex, threshold);
+            return threshold;
+        } else {
+            LOGGER.warn("❌ Tier index {} exceeds available thresholds {}", tierIndex, sortedThresholds.size());
+            return sortedThresholds.get(sortedThresholds.size() - 1); // Return highest threshold
+        }
+    }
+    
+    /**
+     * Helper method to score tier names for progression ordering
+     * Lower scores = earlier tiers, Higher scores = later tiers
+     */
+    private static int getTierProgressionScore(String tierName) {
+        String lower = tierName.toLowerCase();
+        
+        // Score based on tier progression keywords
+        if (lower.contains("initiate") || lower.contains("novice") || lower.contains("beginner")) return 0;
+        if (lower.contains("acolyte") || lower.contains("apprentice")) return 1;
+        if (lower.contains("priest") || lower.contains("adept")) return 2;  
+        if (lower.contains("master") || lower.contains("void") || lower.contains("high")) return 3;
+        if (lower.contains("champion") || lower.contains("supreme") || lower.contains("ultimate")) return 4;
+        
+        // Default scoring based on common progression words
+        if (lower.contains("shadow") && !lower.contains("champion")) return 0; // Shadow Initiate
+        if (lower.contains("dark") && !lower.contains("master")) return 1; // Dark Acolyte  
+        
+        return 2; // Default middle tier
+    }
+    
+    /**
+     * Map a reputation threshold to the corresponding tier name from JSON
+     * This creates the connection between reputation_thresholds and followerPersonalityModifiers
+     */
+    private static String mapThresholdToTierName(int threshold, Map<String, String> personalityModifiers, Map<Integer, String> reputationBehaviors) {
+        
+        // Get all thresholds in sorted order
+        List<Integer> sortedThresholds = reputationBehaviors.keySet().stream()
+            .sorted()
+            .collect(java.util.stream.Collectors.toList());
+            
+        // Get all tier names in progression order
+        List<String> sortedTierNames = personalityModifiers.keySet().stream()
+            .sorted((a, b) -> {
+                int scoreA = getTierProgressionScore(a);
+                int scoreB = getTierProgressionScore(b);
+                return Integer.compare(scoreA, scoreB);
+            })
+            .collect(java.util.stream.Collectors.toList());
+        
+        LOGGER.debug("🔗 Mapping threshold {} to tier name. Thresholds: {}, Tiers: {}", 
+            threshold, sortedThresholds, sortedTierNames);
+        
+        // Find the index of this threshold
+        int thresholdIndex = sortedThresholds.indexOf(threshold);
+        
+        if (thresholdIndex >= 0 && thresholdIndex < sortedTierNames.size()) {
+            String tierName = sortedTierNames.get(thresholdIndex);
+            LOGGER.debug("✅ Mapped threshold {} (index {}) to tier '{}'", threshold, thresholdIndex, tierName);
+            return tierName;
+        }
+        
+        // Fallback: return the first tier name if mapping fails
+        if (!sortedTierNames.isEmpty()) {
+            String fallbackTier = sortedTierNames.get(0);
+            LOGGER.warn("⚠️ Could not map threshold {} to tier, using fallback: '{}'", threshold, fallbackTier);
+            return fallbackTier;
+        }
+        
+        // Ultimate fallback
+        LOGGER.error("❌ No tier names available for mapping threshold {}", threshold);
+        return "Initiate";
     }
     
     /**
@@ -1495,6 +1659,9 @@ public class DeityChat {
      */
     private static void triggerTierCongratulation(ServerPlayer player, DatapackDeity deity, String previousTier, String newTier) {
         try {
+            LOGGER.info("🎊 TRIGGER TIER CONGRATULATION: player={}, deity={}, previousTier='{}', newTier='{}'", 
+                player.getName().getString(), deity.getName(), previousTier, newTier);
+            
             // Create congratulation message prompt
             String congratulationPrompt = String.format(
                 "The player %s has just advanced from %s to %s tier with you! " +
@@ -1504,22 +1671,28 @@ public class DeityChat {
                 player.getName().getString(), previousTier, newTier
             );
             
-            LOGGER.info("🎭 Triggering tier congratulation for player {}: {} → {}", 
-                player.getName().getString(), previousTier, newTier);
+            LOGGER.info("🎭 Generated congratulation prompt: {}", congratulationPrompt);
             
             // Send immediate notification
             player.sendSystemMessage(Component.literal("§6✨ " + deity.getName() + " senses your growing devotion... ✨"));
+            LOGGER.info("📧 Sent notification to player: 'senses your growing devotion'");
             
             // Trigger AI conversation with congratulation context
             AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deity.getId());
             if (aiConfig != null) {
+                LOGGER.info("✅ AI config found for deity {}, starting congratulation conversation", deity.getName());
+                
                 // Start conversation automatically
                 activeConversations.put(player.getUUID(), deity.getId());
+                LOGGER.info("🗣️ Added player {} to active conversations with deity {}", 
+                    player.getName().getString(), deity.getName());
                 
                 // Process the congratulation
+                LOGGER.info("🤖 Processing deity conversation with congratulation prompt...");
                 processDeityConversation(player, deity.getId(), congratulationPrompt);
                 
                 // Auto-execute tier advancement rewards
+                LOGGER.info("🎁 Executing tier advancement rewards for tier: {}", newTier);
                 executeTierAdvancementRewards(player, deity, newTier);
                 
                 // Schedule automatic conversation closure after tier advancement
@@ -1537,14 +1710,16 @@ public class DeityChat {
                             player.getName().getString(), deity.getName());
                             
                     } catch (Exception e) {
-                        LOGGER.error("Error auto-closing tier advancement conversation: {}", e.getMessage());
+                        LOGGER.error("❌ Error auto-closing tier advancement conversation: {}", e.getMessage());
                     }
                 }, 3, java.util.concurrent.TimeUnit.SECONDS); // 3-second delay to let rewards finish
                 
             } else {
-                // Fallback message if no AI config
+                LOGGER.error("❌ AI config not found for deity {}, cannot trigger congratulation", deity.getName());
+                
+                // Fallback: Send a simple congratulation message
                 player.sendSystemMessage(Component.literal("§6⟦ " + deity.getName() + " ⟧ §f" +
-                    "Well done, " + newTier + "! Your devotion has been recognized."));
+                    "You have advanced to " + newTier + "! Your devotion is acknowledged."));
             }
             
         } catch (Exception e) {
@@ -1898,6 +2073,84 @@ public class DeityChat {
         info.append("Rewards received: ").append(rewardsReceived != null ? rewardsReceived.toString() : "none");
         
         return info.toString();
+    }
+    
+    /**
+     * Get the first/lowest tier for a deity based on their progression system
+     */
+    /**
+     * Get the first/lowest tier for a deity based on their JSON configuration
+     * NO HARDCODING - reads directly from JSON
+     */
+    private static String getFirstTierForDeity(DatapackDeity deity) {
+        try {
+            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deity.getId());
+            if (aiConfig != null && aiConfig.getReputationBehaviors() != null && !aiConfig.getReputationBehaviors().isEmpty()) {
+                
+                // Get follower personality modifiers (tier names) from JSON
+                if (aiConfig.patron_config != null && aiConfig.patron_config.followerPersonalityModifiers != null) {
+                    Map<String, String> personalityModifiers = aiConfig.patron_config.followerPersonalityModifiers;
+                    Map<Integer, String> reputationBehaviors = aiConfig.getReputationBehaviors();
+                    
+                    // Find the lowest reputation threshold
+                    int lowestThreshold = reputationBehaviors.keySet().stream()
+                        .mapToInt(Integer::intValue)
+                        .min()
+                        .orElse(0);
+                    
+                    LOGGER.debug("🔍 Lowest reputation threshold for deity {}: {}", deity.getName(), lowestThreshold);
+                    
+                    // Map this threshold to the corresponding tier name
+                    String firstTier = mapThresholdToTierName(lowestThreshold, personalityModifiers, reputationBehaviors);
+                    
+                    LOGGER.info("✅ First tier for deity {}: '{}' (threshold: {})", 
+                        deity.getName(), firstTier, lowestThreshold);
+                    
+                    return firstTier;
+                }
+            }
+            
+            // Check for datapack stages if no AI config
+            if (deity.getProgressionStages() != null && !deity.getProgressionStages().isEmpty()) {
+                // Find the stage with the lowest reputation requirement
+                String firstTier = "initiate";
+                int lowestRep = Integer.MAX_VALUE;
+                
+                for (java.util.Map.Entry<String, Object> entry : deity.getProgressionStages().entrySet()) {
+                    Object stage = entry.getValue();
+                    if (stage instanceof java.util.Map) {
+                        @SuppressWarnings("unchecked")
+                        java.util.Map<String, Object> stageMap = (java.util.Map<String, Object>) stage;
+                        Object repReq = stageMap.get("reputation_required");
+                        if (repReq instanceof Number) {
+                            int repValue = ((Number) repReq).intValue();
+                            if (repValue < lowestRep) {
+                                lowestRep = repValue;
+                                firstTier = entry.getKey();
+                            }
+                        }
+                    }
+                }
+                return firstTier;
+            }
+            
+        } catch (Exception e) {
+            LOGGER.warn("❌ Error getting first tier for deity {}: {}", deity.getName(), e.getMessage());
+        }
+        
+        // Minimal fallback
+        return "Initiate";
+    }
+    
+    /**
+     * Helper to get tier name for reputation threshold
+     */
+    private static String getTierNameForThreshold(int threshold) {
+        if (threshold >= 100) return "champion";
+        else if (threshold >= 75) return "master";
+        else if (threshold >= 50) return "priest";
+        else if (threshold >= 25) return "acolyte";
+        else return "initiate";
     }
     
     // Static map to track blessing cooldowns

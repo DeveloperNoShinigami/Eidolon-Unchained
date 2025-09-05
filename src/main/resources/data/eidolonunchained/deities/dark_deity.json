@@ -95,5 +95,5 @@
       }
     ]
   },
-  "prayer_types": ["conversation", "blessing", "knowledge", "judgment"]
+  "prayer_types": ["conversation", "blessing", "knowledge", "curse"]
 }

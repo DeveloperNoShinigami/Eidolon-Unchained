@@ -323,7 +323,17 @@ public class UnifiedCommands {
                         .suggests(PLAYER_SUGGESTIONS)
                         .then(Commands.argument("deity", StringArgumentType.string())
                             .suggests(DEITY_SUGGESTIONS)
-                            .executes(UnifiedCommands::debugTierTracking))))));
+                            .executes(UnifiedCommands::debugTierTracking))))
+                .then(Commands.literal("verify-progression-stages")
+                    .then(Commands.argument("deity", StringArgumentType.string())
+                        .suggests(DEITY_SUGGESTIONS)
+                        .executes(UnifiedCommands::verifyProgressionStages)))
+                .then(Commands.literal("test-tier-progression")
+                    .then(Commands.argument("player", StringArgumentType.string())
+                        .suggests(PLAYER_SUGGESTIONS)
+                        .then(Commands.argument("deity", StringArgumentType.string())
+                            .suggests(DEITY_SUGGESTIONS)
+                            .executes(UnifiedCommands::testTierProgression))))));
             
             // TODO: Reputation system commands - implement these methods when needed
             /*
@@ -335,7 +345,7 @@ public class UnifiedCommands {
                 .then(Commands.literal("set")
                     .requires(cs -> cs.hasPermission(2))
                     .then(Commands.argument("player", StringArgumentType.string())
-                        .then(Commands.argument("deity", StringArgumentType.string())
+                        .then(Commands.argument("deity", StringArgumentType.string()))
                             .then(Commands.argument("amount", DoubleArgumentType.doubleArg(-100, 100))
                                 .executes(UnifiedCommands::setPlayerReputation)))))
                 .then(Commands.literal("add")
@@ -1932,6 +1942,92 @@ public class UnifiedCommands {
     }
     
     /**
+     * 🎯 VERIFY PROGRESSION STAGES - Critical debugging for tier progression issues
+     * 
+     * Validates that progression stages are properly loaded from /deities/ JSON files
+     */
+    private static int verifyProgressionStages(CommandContext<CommandSourceStack> context) {
+        try {
+            String rawDeityId = StringArgumentType.getString(context, "deity");
+            String deityId = CommandStringUtils.safeTrim(rawDeityId);
+            
+            // Validate deity ID
+            if (deityId == null || deityId.isEmpty()) {
+                context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
+                return 0;
+            }
+            
+            net.minecraft.resources.ResourceLocation deityLocation = new net.minecraft.resources.ResourceLocation(deityId);
+            com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = 
+                com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(deityLocation);
+            
+            if (deity == null) {
+                context.getSource().sendFailure(Component.literal("§cDeity not found: " + deityId));
+                return 0;
+            }
+            
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§6=== PROGRESSION STAGES VERIFICATION: " + deity.getName() + " ==="), false);
+                
+            // Get progression stages map (this is what DeityChat uses)
+            Map<String, Object> stagesMap = deity.getProgressionStages();
+            
+            if (stagesMap == null || stagesMap.isEmpty()) {
+                context.getSource().sendFailure(Component.literal("§c❌ NO PROGRESSION STAGES FOUND! This is the root cause of tier progression issues."));
+                context.getSource().sendFailure(Component.literal("§eCheck if /deities/" + deityId.replace(":", "/") + ".json exists and has progression.stages array"));
+                return 0;
+            }
+            
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§a✅ Found " + stagesMap.size() + " progression stages:"), false);
+            
+            // Sort stages by reputation requirement for logical display
+            stagesMap.entrySet().stream()
+                .sorted((a, b) -> {
+                    Map<String, Object> stageA = (Map<String, Object>) a.getValue();
+                    Map<String, Object> stageB = (Map<String, Object>) b.getValue();
+                    Integer repA = (Integer) stageA.get("reputationRequired");
+                    Integer repB = (Integer) stageB.get("reputationRequired");
+                    return repA.compareTo(repB);
+                })
+                .forEach(entry -> {
+                    String stageId = entry.getKey();
+                    Map<String, Object> stageData = (Map<String, Object>) entry.getValue();
+                    Integer reputation = (Integer) stageData.get("reputationRequired");
+                    String title = (String) stageData.get("title");
+                    Boolean isMajor = (Boolean) stageData.get("isMajor");
+                    
+                    String majorText = (isMajor != null && isMajor) ? " §6[MAJOR]" : "";
+                    context.getSource().sendSuccess(() -> Component.literal(
+                        String.format("§b  %s §7(rep: %d) §f→ §e'%s'%s", 
+                            stageId, reputation, title, majorText)), false);
+                });
+            
+            // Also check Eidolon's internal progression data
+            context.getSource().sendSuccess(() -> Component.literal("§e--- Eidolon Internal Progression ---"), false);
+            var progression = deity.getProgression();
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§7Eidolon progression steps: " + progression.getSteps().size()), false);
+            
+            progression.getSteps().values().forEach(stage -> {
+                context.getSource().sendSuccess(() -> Component.literal(
+                    String.format("§7  %s → rep: %d, major: %s", 
+                        stage.id(), stage.rep(), stage.major())), false);
+            });
+            
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§a✅ Progression stages verification complete!"), false);
+                
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError verifying progression stages: " + e.getMessage()));
+            LOGGER.error("Error in verifyProgressionStages command", e);
+            return 0;
+        }
+    }
+    
+    /**
      * 🔮 LIST LOADED RITUALS
      * 
      * Shows all loaded ritual recipes for debugging
@@ -2449,6 +2545,45 @@ public class UnifiedCommands {
         } catch (Exception e) {
             String safeError = CommandStringUtils.safeChatDisplay(e.getMessage());
             source.sendFailure(Component.literal("§cDebug test failed: " + safeError));
+        }
+        
+        return 1;
+    }
+    
+    /**
+     * Test tier progression system manually
+     */
+    private static int testTierProgression(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        
+        try {
+            String playerName = StringArgumentType.getString(context, "player");
+            String deityName = StringArgumentType.getString(context, "deity");
+            
+            // Get the player
+            ServerPlayer player = source.getServer().getPlayerList().getPlayerByName(playerName);
+            if (player == null) {
+                source.sendFailure(Component.literal("§cPlayer not found: " + playerName));
+                return 0;
+            }
+            
+            // Parse deity resource location
+            ResourceLocation deityId = ResourceLocation.tryParse(deityName);
+            if (deityId == null) {
+                source.sendFailure(Component.literal("§cInvalid deity ID: " + deityName));
+                return 0;
+            }
+            
+            source.sendSuccess(() -> Component.literal("§eTesting tier progression for " + playerName + " with deity " + deityName), false);
+            
+            // Manually trigger tier progression check
+            com.bluelotuscoding.eidolonunchained.chat.DeityChat.checkAndHandleTierProgression(player, deityId);
+            
+            source.sendSuccess(() -> Component.literal("§aTier progression check completed. Check logs for details."), false);
+            
+        } catch (Exception e) {
+            String safeError = CommandStringUtils.safeChatDisplay(e.getMessage());
+            source.sendFailure(Component.literal("§cTier progression test failed: " + safeError));
         }
         
         return 1;

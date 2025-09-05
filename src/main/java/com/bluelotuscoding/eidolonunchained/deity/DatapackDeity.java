@@ -21,7 +21,7 @@ import com.mojang.logging.LogUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Collectors;
+import java.util.Arrays;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -457,31 +457,49 @@ public class DatapackDeity extends Deity {
     }
     
     /**
-     * Gets the progression stages map for external access (simplified implementation)
+     * Gets the progression stages map for external access (properly reading from JSON data)
+     * 🎯 CRITICAL: This method provides tier progression data to DeityChat system
      */
     public Map<String, Object> getProgressionStages() {
         Map<String, Object> stages = new HashMap<>();
         
-        // Build stages map from actual progression data
+        // Build stages map from actual progression data loaded from /deities/ JSON
         for (Stage stage : this.progression.getSteps().values()) {
             Map<String, Object> stageData = new HashMap<>();
-            stageData.put("reputationRequired", stage.rep());
+            stageData.put("reputationRequired", stage.rep()); // The reputation threshold from JSON
             
-            // Use stored title from JSON, fall back to stage ID if not found
+            // Use stored title from JSON (set by DatapackDeityManager.loadProgression)
             String title = stageTitles.get(stage.id().getPath());
             if (title == null) {
-                title = stage.id().getPath(); // Fallback to stage ID
-                LOGGER.warn("No title found for stage {}, using ID as title", stage.id().getPath());
+                // Fallback: format stage ID nicely if no title found
+                title = formatStageIdAsTitle(stage.id().getPath());
+                LOGGER.warn("No title found for stage {}, using formatted ID: '{}'", stage.id().getPath(), title);
             }
             stageData.put("title", title);
             
-            stageData.put("description", "Stage description"); // Default description
+            // Default description (could be enhanced later to read from JSON)
+            stageData.put("description", "Tier in " + displayName + " devotion");
             stageData.put("isMajor", stage.major());
             
             stages.put(stage.id().getPath(), stageData);
+            
+            LOGGER.debug("🎯 Mapped progression stage: {} → reputation={}, title='{}'", 
+                stage.id().getPath(), stage.rep(), title);
         }
         
+        LOGGER.info("📊 Built progression stages map for deity {}: {} stages total", 
+            getId(), stages.size());
+        
         return stages;
+    }
+    
+    /**
+     * Formats stage ID as a readable title (fallback method)
+     */
+    private String formatStageIdAsTitle(String stageId) {
+        return Arrays.stream(stageId.split("_"))
+            .map(word -> word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase())
+            .collect(Collectors.joining(" "));
     }
     
     /**
