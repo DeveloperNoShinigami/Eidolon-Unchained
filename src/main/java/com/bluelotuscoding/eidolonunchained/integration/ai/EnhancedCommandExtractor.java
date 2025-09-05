@@ -81,7 +81,7 @@ public class EnhancedCommandExtractor {
                 // Filter out common words to prevent false positives
                 if (!isCommonWord(requestedItem)) {
                     List<ResourceLocation> matches = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
-                        .findMatchingItems(requestedItem, Arrays.asList("minecraft", "eidolon", "eidolonunchained"));
+                        .findMatchingItemsWithScoring(requestedItem, Arrays.asList("minecraft", "eidolon", "eidolonunchained"));
                     
                     if (!matches.isEmpty()) {
                         String normalizedItem = matches.get(0).toString(); // Take best match
@@ -278,7 +278,7 @@ public class EnhancedCommandExtractor {
         }
         
         // 🔥 USE REGISTRY CONTEXT PROVIDER for fuzzy matching
-        List<ResourceLocation> matches = RegistryContextProvider.findMatchingItems(item, searchMods);
+        List<ResourceLocation> matches = RegistryContextProvider.findMatchingItemsWithScoring(item, searchMods);
         if (!matches.isEmpty()) {
             ResourceLocation bestMatch = matches.get(0); // First is best match
             LOGGER.info("🔥 Found fuzzy item match: {} -> {}", item, bestMatch);
@@ -494,7 +494,7 @@ public class EnhancedCommandExtractor {
             // Filter out common words
             if (!isCommonWord(requestedItem)) {
                 List<ResourceLocation> matches = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
-                    .findMatchingItems(requestedItem, Arrays.asList("minecraft", "eidolon", "eidolonunchained"));
+                    .findMatchingItemsWithScoring(requestedItem, Arrays.asList("minecraft", "eidolon", "eidolonunchained"));
                 
                 if (!matches.isEmpty()) {
                     String itemId = matches.get(0).toString();

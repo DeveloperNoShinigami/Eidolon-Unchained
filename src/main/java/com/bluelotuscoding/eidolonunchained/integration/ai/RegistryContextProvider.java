@@ -134,6 +134,120 @@ public class RegistryContextProvider {
     }
     
     /**
+     * Enhanced multi-word item matching with scoring system
+     * Handles searches like "zombie heart" or "bone paladin helm"
+     */
+    public static List<ResourceLocation> findMatchingItemsWithScoring(String searchTerm, List<String> modIds) {
+        // Split search term into individual words
+        String[] searchWords = searchTerm.toLowerCase().split("\\s+");
+        List<ScoredItem> scoredItems = new ArrayList<>();
+        
+        // If single word, use existing logic
+        if (searchWords.length == 1) {
+            return findMatchingItems(searchTerm, modIds);
+        }
+        
+        // For multi-word search, expand to all loaded mods if only default mods specified
+        List<String> searchMods = modIds;
+        if (modIds.size() <= 3 && modIds.contains("minecraft") && modIds.contains("eidolon")) {
+            searchMods = getAllLoadedModIds();
+            LOGGER.info("🔥 Multi-word search '{}' expanded to all {} loaded mods", searchTerm, searchMods.size());
+        }
+        
+        // Multi-word search: score items based on how many words they contain
+        for (ResourceLocation itemKey : BuiltInRegistries.ITEM.keySet()) {
+            // Only search in specified mod namespaces
+            if (!searchMods.contains(itemKey.getNamespace())) continue;
+            
+            String path = itemKey.getPath().toLowerCase();
+            int score = calculateItemScore(path, searchWords);
+            
+            if (score > 0) {
+                scoredItems.add(new ScoredItem(itemKey, score));
+            }
+        }
+        
+        // Sort by score (highest first)
+        scoredItems.sort((a, b) -> Integer.compare(b.score, a.score));
+        
+        // Extract ResourceLocations
+        List<ResourceLocation> matches = scoredItems.stream()
+            .map(item -> item.resourceLocation)
+            .collect(Collectors.toList());
+        
+        LOGGER.info("🔥 Enhanced search for '{}' found {} items in {} mods. Top matches: {}", 
+            searchTerm, matches.size(), searchMods.size(),
+            matches.subList(0, Math.min(5, matches.size())));
+        
+        return matches;
+    }
+    
+    /**
+     * Get all loaded mod IDs for comprehensive searching
+     */
+    public static List<String> getAllLoadedModIds() {
+        Set<String> modIds = new HashSet<>();
+        
+        // Collect mod IDs from item registry
+        for (ResourceLocation itemKey : BuiltInRegistries.ITEM.keySet()) {
+            modIds.add(itemKey.getNamespace());
+        }
+        
+        return new ArrayList<>(modIds);
+    }
+    
+    /**
+     * Calculate score for an item based on how many search words it contains
+     * Higher score = better match
+     */
+    private static int calculateItemScore(String itemPath, String[] searchWords) {
+        int score = 0;
+        
+        for (String word : searchWords) {
+            if (itemPath.contains(word)) {
+                // Exact word match gets highest score
+                if (itemPath.equals(word)) {
+                    score += 10;
+                } else if (itemPath.startsWith(word) || itemPath.endsWith(word)) {
+                    // Word at start/end gets high score
+                    score += 5;
+                } else {
+                    // Word anywhere in item gets basic score
+                    score += 2;
+                }
+            }
+        }
+        
+        // Bonus for items that contain all search words
+        boolean containsAllWords = true;
+        for (String word : searchWords) {
+            if (!itemPath.contains(word)) {
+                containsAllWords = false;
+                break;
+            }
+        }
+        
+        if (containsAllWords) {
+            score += 5; // Bonus for containing all words
+        }
+        
+        return score;
+    }
+    
+    /**
+     * Helper class for scoring items
+     */
+    private static class ScoredItem {
+        final ResourceLocation resourceLocation;
+        final int score;
+        
+        ScoredItem(ResourceLocation resourceLocation, int score) {
+            this.resourceLocation = resourceLocation;
+            this.score = score;
+        }
+    }
+    
+    /**
      * Find effects that match a search term across all specified mods
      */
     public static List<ResourceLocation> findMatchingEffects(String searchTerm, List<String> modIds) {

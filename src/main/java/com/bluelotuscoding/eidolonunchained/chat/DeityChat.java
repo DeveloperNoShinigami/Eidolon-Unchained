@@ -957,57 +957,127 @@ public class DeityChat {
     }
     
     /**
-     * 🔥 SENTENCE-BY-SENTENCE TYPING ANIMATION
+     * 🔥 LAYERED ACTION BAR MESSAGES - Using direct packet system
+     * Creates custom multi-line action bar using ClientboundSetActionBarTextPacket
      */
     private static void startActionBarTypingAnimation(ServerPlayer player, String deityName, String message, 
                                                     int typingSpeed, int sentenceDelay, int fadeDelay, 
                                                     int maxWidth, boolean centerText, boolean wrapText) {
         
-        // Split message into sentences
+        // Split message into sentences for layered display
         String[] sentences = message.split("(?<=[.!?])\\s+");
+        if (sentences.length == 0) return;
         
-        // Start async typing animation
+        // If only one sentence, use single action bar
+        if (sentences.length == 1) {
+            startSingleSentenceTyping(player, deityName, message, typingSpeed, fadeDelay, maxWidth, centerText);
+            return;
+        }
+        
+        // Multiple sentences: create custom layered display using title/subtitle system
+        startCustomLayeredDisplay(player, deityName, sentences, typingSpeed, sentenceDelay, fadeDelay, maxWidth, centerText);
+    }
+    
+    /**
+     * Create custom layered display using title/subtitle system for multi-line effect
+     */
+    private static void startCustomLayeredDisplay(ServerPlayer player, String deityName, String[] sentences, 
+                                                 int typingSpeed, int sentenceDelay, int fadeDelay, 
+                                                 int maxWidth, boolean centerText) {
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
-                StringBuilder fullMessage = new StringBuilder();
+                List<String> completedSentences = new ArrayList<>();
                 
-                for (int i = 0; i < sentences.length; i++) {
-                    String sentence = sentences[i].trim();
+                for (int sentenceIndex = 0; sentenceIndex < sentences.length; sentenceIndex++) {
+                    String sentence = sentences[sentenceIndex].trim();
                     if (sentence.isEmpty()) continue;
                     
-                    // Add current sentence to full message
-                    if (fullMessage.length() > 0) {
-                        fullMessage.append(" ");
-                    }
-                    
-                    // Type out character by character
+                    // Type out this sentence character by character
                     for (int charIndex = 0; charIndex <= sentence.length(); charIndex++) {
                         String partialSentence = sentence.substring(0, charIndex);
-                        String displayText = fullMessage.toString() + partialSentence;
                         
-                        String formattedMessage = formatActionBarMessage(deityName, displayText, maxWidth, centerText, wrapText);
-                        Component actionBarComponent = Component.literal(formattedMessage);
+                        // Build display with all completed sentences + current partial
+                        StringBuilder displayBuilder = new StringBuilder();
                         
-                        // Send to action bar on main thread
+                        // Add all completed sentences
+                        for (String completed : completedSentences) {
+                            if (displayBuilder.length() > 0) displayBuilder.append("\n");
+                            displayBuilder.append("§6⟦ ").append(deityName).append(" ⟧ §f").append(completed);
+                        }
+                        
+                        // Add current typing sentence
+                        if (displayBuilder.length() > 0) displayBuilder.append("\n");
+                        displayBuilder.append("§6⟦ ").append(deityName).append(" ⟧ §f").append(partialSentence);
+                        
+                        String fullDisplay = displayBuilder.toString();
+                        
+                        // Send using title system for multi-line display
                         player.getServer().execute(() -> {
-                            player.sendSystemMessage(actionBarComponent, true);
+                            // Use title with empty subtitle for cleaner display
+                            player.connection.send(new ClientboundSetTitleTextPacket(
+                                Component.literal(fullDisplay)
+                            ));
+                            
+                            // Set title timing: fade in (0), stay (long), fade out (0)
+                            player.connection.send(new ClientboundSetTitlesAnimationPacket(
+                                0, // fade in
+                                typingSpeed * 2, // stay duration  
+                                0 // fade out
+                            ));
                         });
                         
                         // Wait for typing speed
                         Thread.sleep(typingSpeed);
                     }
                     
-                    // Add completed sentence to full message
-                    fullMessage.append(sentence);
+                    // Add completed sentence to list
+                    completedSentences.add(sentence);
                     
                     // Pause between sentences (except for last sentence)
-                    if (i < sentences.length - 1) {
+                    if (sentenceIndex < sentences.length - 1) {
                         Thread.sleep(sentenceDelay);
                     }
                 }
                 
+                // Final display stays for fade delay
+                Thread.sleep(fadeDelay * 50); // Convert ticks to milliseconds
+                
+                // Clear title by sending empty title
+                player.getServer().execute(() -> {
+                    player.connection.send(new ClientboundSetTitleTextPacket(Component.literal("")));
+                });
+                
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                LOGGER.warn("Custom layered display interrupted for player {}", player.getName().getString());
+            }
+        });
+    }
+    
+    /**
+     * Display single sentence with character-by-character typing
+     */
+    private static void startSingleSentenceTyping(ServerPlayer player, String deityName, String message, 
+                                                 int typingSpeed, int fadeDelay, int maxWidth, boolean centerText) {
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                // Type out character by character
+                for (int charIndex = 0; charIndex <= message.length(); charIndex++) {
+                    String partialMessage = message.substring(0, charIndex);
+                    String formattedMessage = formatActionBarMessage(deityName, partialMessage, maxWidth, centerText, false);
+                    Component actionBarComponent = Component.literal(formattedMessage);
+                    
+                    // Send to action bar on main thread
+                    player.getServer().execute(() -> {
+                        player.sendSystemMessage(actionBarComponent, true);
+                    });
+                    
+                    // Wait for typing speed
+                    Thread.sleep(typingSpeed);
+                }
+                
                 // Final message stays for fade delay
-                Thread.sleep(fadeDelay * 50); // Convert ticks to milliseconds (1 tick = 50ms)
+                Thread.sleep(fadeDelay * 50); // Convert ticks to milliseconds
                 
                 // Clear action bar
                 player.getServer().execute(() -> {
@@ -1016,7 +1086,7 @@ public class DeityChat {
                 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                LOGGER.warn("Action bar typing animation interrupted for player {}", player.getName().getString());
+                LOGGER.warn("Single sentence typing animation interrupted for player {}", player.getName().getString());
             }
         });
     }
@@ -1032,23 +1102,21 @@ public class DeityChat {
         int headerWidth = deityName.length() + 6; // 6 for "⟦  ⟧" characters
         int messageWidth = maxWidth - headerWidth - 2; // 2 for spacing
         
-        // Handle message wrapping/truncation
+        // Handle message wrapping/truncation - DISABLED for progressive display
         String processedMessage;
         if (message.length() > messageWidth && wrapText) {
             // Show first part with ellipsis
             processedMessage = message.substring(0, Math.max(1, messageWidth - 3)) + "...";
-        } else if (message.length() > messageWidth) {
-            // Truncate without ellipsis
-            processedMessage = message.substring(0, Math.max(1, messageWidth));
         } else {
+            // NO TRUNCATION - show full message regardless of length
             processedMessage = message;
         }
         
         // Combine header and message
         String fullText = header + " §f" + processedMessage;
         
-        // Center text if enabled
-        if (centerText) {
+        // Center text if enabled (but only if message fits)
+        if (centerText && fullText.replaceAll("§.", "").length() <= maxWidth) {
             int padding = Math.max(0, (maxWidth - fullText.replaceAll("§.", "").length()) / 2);
             String paddingSpaces = " ".repeat(padding);
             return paddingSpaces + fullText;
@@ -1184,53 +1252,10 @@ public class DeityChat {
         double reputation = deity.getPlayerReputation(player);
         
         try {
-            // 🔥 PRIORITY: Use AI deity config reputation thresholds if available
-            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deity.getId());
-            if (aiConfig != null && !aiConfig.getReputationBehaviors().isEmpty()) {
-                // Find the highest threshold the player qualifies for
-                String progressionTitle = "Newcomer";
-                int highestThreshold = -1;
-                
-                // Check AI config reputation thresholds
-                for (Map.Entry<Integer, String> entry : aiConfig.getReputationBehaviors().entrySet()) {
-                    if (reputation >= entry.getKey() && entry.getKey() > highestThreshold) {
-                        highestThreshold = entry.getKey();
-                        
-                        // Extract appropriate progression title from AI config
-                        if (aiConfig.patron_config != null && aiConfig.patron_config.followerPersonalityModifiers != null) {
-                            // Use AI config follower titles if available
-                            for (String title : aiConfig.patron_config.followerPersonalityModifiers.keySet()) {
-                                if (!title.equals("default")) {
-                                    // Map reputation thresholds to AI config titles
-                                    if (entry.getKey() >= 100) progressionTitle = "Shadow Champion"; // Dark deity example
-                                    else if (entry.getKey() >= 75) progressionTitle = "Void Master";
-                                    else if (entry.getKey() >= 50) progressionTitle = "Shadow Priest";
-                                    else if (entry.getKey() >= 25) progressionTitle = "Dark Acolyte";
-                                    else if (entry.getKey() >= 0) progressionTitle = "Shadow Initiate";
-                                    break;
-                                }
-                            }
-                        } else {
-                            // Fallback to generic titles based on threshold
-                            if (entry.getKey() >= 100) progressionTitle = "Champion";
-                            else if (entry.getKey() >= 75) progressionTitle = "Master";
-                            else if (entry.getKey() >= 50) progressionTitle = "Priest";
-                            else if (entry.getKey() >= 25) progressionTitle = "Acolyte";
-                            else if (entry.getKey() >= 0) progressionTitle = "Initiate";
-                        }
-                    }
-                }
-                
-                LOGGER.debug("🤖 AI Config progression for {}/{}: {} ({}rep, threshold={})", 
-                    player.getName().getString(), deity.getName(), progressionTitle, (int)reputation, highestThreshold);
-                
-                return progressionTitle;
-            }
-            
-            // Secondary: Try deity's progression stages from JSON
+            // 🔥 PRIORITY: Use deity's progression stages from JSON first (most accurate)
             Map<String, Object> stagesMap = deity.getProgressionStages();
             if (!stagesMap.isEmpty()) {
-                String bestStage = "initiate";
+                String bestStage = "Initiate";
                 double highestQualifyingReputation = -1;
                 
                 for (Map.Entry<String, Object> stageEntry : stagesMap.entrySet()) {
@@ -1247,8 +1272,12 @@ public class DeityChat {
                     double requiredReputation = ((Number) repReqObj).doubleValue();
                     
                     if (reputation >= requiredReputation && requiredReputation > highestQualifyingReputation) {
-                        bestStage = stageName;
-                        highestQualifyingReputation = requiredReputation;
+                        // Get the actual title from the stage data
+                        Object titleObj = stageDataMap.get("title");
+                        if (titleObj instanceof String) {
+                            bestStage = (String) titleObj;
+                            highestQualifyingReputation = requiredReputation;
+                        }
                     }
                 }
                 
@@ -1258,13 +1287,40 @@ public class DeityChat {
                 return bestStage;
             }
             
+            // Secondary: Use AI deity config reputation thresholds if available
+            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deity.getId());
+            if (aiConfig != null && !aiConfig.getReputationBehaviors().isEmpty()) {
+                // Find the highest threshold the player qualifies for
+                String progressionTitle = "Initiate";
+                int highestThreshold = -1;
+                
+                // Check AI config reputation thresholds and extract proper titles
+                for (Map.Entry<Integer, String> entry : aiConfig.getReputationBehaviors().entrySet()) {
+                    if (reputation >= entry.getKey() && entry.getKey() > highestThreshold) {
+                        highestThreshold = entry.getKey();
+                        
+                        // Use deity-specific progression titles based on thresholds
+                        if (entry.getKey() >= 100) progressionTitle = getDeitySpecificTitle(aiConfig, "champion");
+                        else if (entry.getKey() >= 75) progressionTitle = getDeitySpecificTitle(aiConfig, "master");
+                        else if (entry.getKey() >= 50) progressionTitle = getDeitySpecificTitle(aiConfig, "priest");
+                        else if (entry.getKey() >= 25) progressionTitle = getDeitySpecificTitle(aiConfig, "acolyte");
+                        else if (entry.getKey() >= 0) progressionTitle = getDeitySpecificTitle(aiConfig, "initiate");
+                    }
+                }
+                
+                LOGGER.debug("🤖 AI Config progression for {}/{}: {} ({}rep, threshold={})", 
+                    player.getName().getString(), deity.getName(), progressionTitle, (int)reputation, highestThreshold);
+                
+                return progressionTitle;
+            }
+            
             // Final fallback to hardcoded levels
             LOGGER.debug("🔍 No AI config or JSON stages for deity {}, using fallback", deity.getId());
-            if (reputation >= 75) return "master";
-            if (reputation >= 50) return "advanced"; 
-            if (reputation >= 25) return "intermediate";
-            if (reputation >= 10) return "novice";
-            return "beginner";
+            if (reputation >= 75) return "Master";
+            if (reputation >= 50) return "Priest"; 
+            if (reputation >= 25) return "Acolyte";
+            if (reputation >= 10) return "Initiate";
+            return "Initiate";
             
         } catch (Exception e) {
             LOGGER.error("🚨 Error determining progression level for {}/{}, using fallback: {}", 
@@ -1304,6 +1360,37 @@ public class DeityChat {
         cleaned = cleaned.replaceAll("\\b([a-z]+)_([a-z]+)\\b", "$1 $2");
         
         return cleaned;
+    }
+    
+    /**
+     * Get deity-specific title for a tier level
+     */
+    private static String getDeitySpecificTitle(AIDeityConfig aiConfig, String tierLevel) {
+        // Try to extract the actual title from followerPersonalityModifiers
+        if (aiConfig.patron_config != null && aiConfig.patron_config.followerPersonalityModifiers != null) {
+            // Look for titles matching the tier level pattern
+            for (String title : aiConfig.patron_config.followerPersonalityModifiers.keySet()) {
+                String lowerTitle = title.toLowerCase();
+                if (lowerTitle.contains(tierLevel.toLowerCase()) || 
+                    (tierLevel.equals("initiate") && (lowerTitle.contains("initiate") || lowerTitle.contains("newcomer"))) ||
+                    (tierLevel.equals("acolyte") && lowerTitle.contains("acolyte")) ||
+                    (tierLevel.equals("priest") && lowerTitle.contains("priest")) ||
+                    (tierLevel.equals("master") && lowerTitle.contains("master")) ||
+                    (tierLevel.equals("champion") && lowerTitle.contains("champion"))) {
+                    return title;
+                }
+            }
+        }
+        
+        // Fallback to generic titles
+        switch (tierLevel.toLowerCase()) {
+            case "champion": return "Champion";
+            case "master": return "Master";
+            case "priest": return "Priest";
+            case "acolyte": return "Acolyte";
+            case "initiate": 
+            default: return "Initiate";
+        }
     }
     
     /**
@@ -1372,12 +1459,22 @@ public class DeityChat {
      * Get maximum commands allowed per tier to prevent over-blessing
      */
     private static int getMaxCommandsForTier(String progressionLevel) {
-        switch (progressionLevel.toLowerCase()) {
+        String lowerLevel = progressionLevel.toLowerCase();
+        
+        // Handle deity-specific tier names
+        if (lowerLevel.contains("champion")) return 3; // Champions get 3 blessings
+        if (lowerLevel.contains("master") || lowerLevel.contains("void")) return 3; // Masters/Void Masters get 3 blessings
+        if (lowerLevel.contains("priest") || lowerLevel.contains("high")) return 2; // Priests get 2 blessings
+        if (lowerLevel.contains("acolyte") || lowerLevel.contains("dark")) return 1; // Acolytes get 1 blessing
+        if (lowerLevel.contains("initiate") || lowerLevel.contains("shadow")) return 1; // Initiates get 1 blessing
+        
+        // Fallback to generic tier names
+        switch (lowerLevel) {
             case "master": return 3; // Masters can receive multiple blessings
             case "advanced": return 2; // Advanced gets 2 blessings
             case "intermediate": return 1; // Intermediate gets 1 blessing
             case "novice": return 1; // Novice gets 1 blessing
-            default: return 1; // Beginners get 1 blessing maximum
+            default: return 1; // Default to 1 blessing maximum
         }
     }
     
