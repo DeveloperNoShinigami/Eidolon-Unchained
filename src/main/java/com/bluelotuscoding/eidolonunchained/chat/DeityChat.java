@@ -1449,13 +1449,13 @@ public class DeityChat {
         if (previousTier.equals(currentTier)) return false;
         
         try {
-            // Get AI config to determine tier rankings
-            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deity.getId());
-            if (aiConfig != null && !aiConfig.getReputationBehaviors().isEmpty()) {
+            // 🎯 FIXED: Use base deity progression stages instead of AI config
+            Map<String, Object> stagesMap = deity.getProgressionStages();
+            if (stagesMap != null && !stagesMap.isEmpty()) {
                 
-                // Get reputation thresholds for both tiers
-                int previousThreshold = getTierReputationThreshold(previousTier, aiConfig);
-                int currentThreshold = getTierReputationThreshold(currentTier, aiConfig);
+                // Get reputation thresholds for both tiers from base deity
+                int previousThreshold = getTierReputationThreshold(previousTier, deity);
+                int currentThreshold = getTierReputationThreshold(currentTier, deity);
                 
                 // Advancement means moving to a higher threshold
                 boolean isAdvancement = currentThreshold > previousThreshold;
@@ -1467,8 +1467,7 @@ public class DeityChat {
                 return isAdvancement;
             }
             
-            // Fallback: Use deity progression stages
-            Map<String, Object> stagesMap = deity.getProgressionStages();
+            // Fallback: Use basic alphabetical comparison if no progression data
             if (!stagesMap.isEmpty()) {
                 double previousRep = getStageReputation(previousTier, stagesMap);
                 double currentRep = getStageReputation(currentTier, stagesMap);
@@ -1484,79 +1483,37 @@ public class DeityChat {
     }
     
     /**
-     * Get the reputation threshold for a specific tier from AI config
-     * READS DIRECTLY FROM JSON - NO HARDCODING
+     * 🎯 FIXED: Get the reputation threshold for a specific tier from BASE DEITY progression
+     * NO MORE AI CONFIG DEPENDENCY - Uses actual progression stages from /deities/ JSON
      */
-    private static int getTierReputationThreshold(String tierName, AIDeityConfig aiConfig) {
-        LOGGER.debug("🔍 Getting reputation threshold for tier: '{}'", tierName);
+    private static int getTierReputationThreshold(String tierName, DatapackDeity deity) {
+        LOGGER.debug("🔍 Getting reputation threshold for tier: '{}' from base deity progression", tierName);
         
-        // STEP 1: Get the exact reputation thresholds from JSON
-        Map<Integer, String> reputationBehaviors = aiConfig.getReputationBehaviors();
+        // Get progression stages from base deity (loaded from /deities/ JSON)
+        Map<String, Object> stagesMap = deity.getProgressionStages();
         
-        // STEP 2: Get the follower personality modifiers to map tier names
-        if (aiConfig.patron_config == null || aiConfig.patron_config.followerPersonalityModifiers == null) {
-            LOGGER.warn("❌ No patron_config.followerPersonalityModifiers found for tier mapping");
+        if (stagesMap == null || stagesMap.isEmpty()) {
+            LOGGER.warn("❌ No progression stages found for deity {}", deity.getId());
             return 0;
         }
         
-        Map<String, String> personalityModifiers = aiConfig.patron_config.followerPersonalityModifiers;
-        
-        // STEP 3: Find the exact tier name in followerPersonalityModifiers
-        if (!personalityModifiers.containsKey(tierName)) {
-            LOGGER.warn("❌ Tier '{}' not found in followerPersonalityModifiers. Available tiers: {}", 
-                tierName, personalityModifiers.keySet());
-            return 0;
+        // Find the stage with matching title or ID
+        for (Map.Entry<String, Object> entry : stagesMap.entrySet()) {
+            String stageId = entry.getKey();
+            Map<String, Object> stageData = (Map<String, Object>) entry.getValue();
+            String stageTitle = (String) stageData.get("title");
+            Integer reputation = (Integer) stageData.get("reputationRequired");
+            
+            // Match by title or by stage ID
+            if (tierName.equals(stageTitle) || tierName.equals(stageId)) {
+                LOGGER.debug("✅ Found tier '{}' → reputation threshold: {}", tierName, reputation);
+                return reputation != null ? reputation : 0;
+            }
         }
         
-        LOGGER.debug("✅ Found tier '{}' in followerPersonalityModifiers", tierName);
-        
-        // STEP 4: Now we need to map this tier to its reputation threshold
-        // The JSON has reputation_thresholds (0, 25, 50, 75, 100) and followerPersonalityModifiers
-        // We need to determine which reputation threshold corresponds to each tier
-        
-        // Get all reputation thresholds sorted
-        List<Integer> sortedThresholds = reputationBehaviors.keySet().stream()
-            .sorted()
-            .collect(java.util.stream.Collectors.toList());
-        
-        LOGGER.debug("📊 Available reputation thresholds: {}", sortedThresholds);
-        
-        // Get all tier names sorted by their likely progression order
-        List<String> sortedTierNames = personalityModifiers.keySet().stream()
-            .sorted() // This gives us alphabetical, but we need logical order
-            .collect(java.util.stream.Collectors.toList());
-        
-        LOGGER.debug("📊 Available tier names: {}", sortedTierNames);
-        
-        // Find the index of our target tier
-        List<String> tierNamesList = new ArrayList<>(personalityModifiers.keySet());
-        
-        // Sort tier names by their logical progression (lowest to highest)
-        // We can infer this from tier name patterns
-        tierNamesList.sort((a, b) -> {
-            int scoreA = getTierProgressionScore(a);
-            int scoreB = getTierProgressionScore(b);
-            return Integer.compare(scoreA, scoreB);
-        });
-        
-        LOGGER.debug("📈 Sorted tier names by progression: {}", tierNamesList);
-        
-        int tierIndex = tierNamesList.indexOf(tierName);
-        if (tierIndex == -1) {
-            LOGGER.warn("❌ Could not find tier '{}' in sorted tier list", tierName);
-            return 0;
-        }
-        
-        // Map tier index to reputation threshold
-        if (tierIndex < sortedThresholds.size()) {
-            int threshold = sortedThresholds.get(tierIndex);
-            LOGGER.info("✅ Mapped tier '{}' (index {}) to reputation threshold {}", 
-                tierName, tierIndex, threshold);
-            return threshold;
-        } else {
-            LOGGER.warn("❌ Tier index {} exceeds available thresholds {}", tierIndex, sortedThresholds.size());
-            return sortedThresholds.get(sortedThresholds.size() - 1); // Return highest threshold
-        }
+        LOGGER.warn("❌ Tier '{}' not found in base deity progression stages. Available: {}", 
+            tierName, stagesMap.keySet());
+        return 0;
     }
     
     /**

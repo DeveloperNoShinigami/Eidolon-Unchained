@@ -431,17 +431,29 @@ public class DatapackDeity extends Deity {
             }
             
             if (bestStage != null) {
-                String stageTitle = bestStage.id().getPath(); // Use the stage ID as title
-                LOGGER.debug("✅ Progression Stage: Reputation {} maps to stage '{}' for deity {}", 
-                    reputation, bestStage.id(), this.id);
+                // 🎭 USE STORED TITLE FROM JSON, NOT STAGE ID
+                String stageTitle = stageTitles.get(bestStage.id().getPath());
+                if (stageTitle == null || stageTitle.isEmpty()) {
+                    // Fallback to formatted stage ID if no title stored
+                    stageTitle = formatStageIdAsTitle(bestStage.id().getPath());
+                    LOGGER.warn("⚠️ No title found for stage {}, using formatted ID: '{}'", 
+                        bestStage.id().getPath(), stageTitle);
+                }
+                
+                LOGGER.debug("✅ Progression Stage: Reputation {} maps to stage '{}' (title: '{}') for deity {}", 
+                    reputation, bestStage.id().getPath(), stageTitle, this.id);
                 return stageTitle;
             } else {
                 // Emergency fallback - return the first stage or a default
                 if (!this.progression.getSteps().isEmpty()) {
                     Stage firstStage = this.progression.getSteps().values().iterator().next();
-                    LOGGER.debug("⚠️ Fallback: Using first stage '{}' for reputation {} on deity {}", 
-                        firstStage.id().getPath(), reputation, this.id);
-                    return firstStage.id().getPath();
+                    String firstStageTitle = stageTitles.get(firstStage.id().getPath());
+                    if (firstStageTitle == null || firstStageTitle.isEmpty()) {
+                        firstStageTitle = formatStageIdAsTitle(firstStage.id().getPath());
+                    }
+                    LOGGER.debug("⚠️ Fallback: Using first stage '{}' (title: '{}') for reputation {} on deity {}", 
+                        firstStage.id().getPath(), firstStageTitle, reputation, this.id);
+                    return firstStageTitle;
                 } else {
                     LOGGER.warn("⚠️ No progression stages defined for deity {}, using generic fallback", this.id);
                     return "Initiate";

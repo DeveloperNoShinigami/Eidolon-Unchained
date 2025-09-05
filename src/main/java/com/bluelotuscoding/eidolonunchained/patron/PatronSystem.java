@@ -1,7 +1,5 @@
 package com.bluelotuscoding.eidolonunchained.patron;
 
-import com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig;
-import com.bluelotuscoding.eidolonunchained.ai.AIDeityManager;
 import com.bluelotuscoding.eidolonunchained.capability.IPatronData;
 import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
@@ -34,19 +32,16 @@ public class PatronSystem {
                 return false;
             }
             
-            // Validate deity exists
+            // Validate deity exists in base configuration (not AI config)
             DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
             if (deity == null) {
                 sendError(player, "Unknown deity: " + deityId);
                 return false;
             }
             
-            // Get AI configuration for patron requirements
-            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deityId);
-            if (aiConfig == null || aiConfig.patron_config == null) {
-                sendError(player, "Deity does not accept patrons");
-                return false;
-            }
+            // 🎯 REMOVED AI CONFIG DEPENDENCY - Use base deity progression instead
+            // The patron system should work with base deity data, not AI configurations
+            // AI configs are for personality/conversation behavior only
             
             // Check if already patron of this deity
             ResourceLocation currentPatron = patronData.getPatron(player);
@@ -55,19 +50,27 @@ public class PatronSystem {
                 return true;
             }
             
-            // Check minimum reputation requirement
+            // Get reputation capability for potential initial grant
             IReputation reputation = player.getCapability(IReputation.INSTANCE).orElse(null);
-            if (reputation != null) {
-                double currentRep = reputation.getReputation(player.getUUID(), deityId);
-                if (currentRep < MIN_REPUTATION_FOR_PATRON) {
-                    sendError(player, "You need at least " + MIN_REPUTATION_FOR_PATRON + " reputation with " + 
-                             deity.getDisplayName() + " to become their follower (current: " + (int)currentRep + ")");
-                    return false;
-                }
-            }
             
             // Apply patron switch
             patronData.setPatron(player, deityId);
+            
+            // 🎁 GRANT INITIAL REPUTATION IF PLAYER HAS NONE
+            // This ensures new players can immediately become patrons and get starting rewards
+            if (reputation != null) {
+                double currentRep = reputation.getReputation(player.getUUID(), deityId);
+                if (currentRep < MIN_REPUTATION_FOR_PATRON) {
+                    // Grant minimum reputation to unlock first stage
+                    reputation.setReputation(player.getUUID(), deityId, MIN_REPUTATION_FOR_PATRON);
+                    LOGGER.info("🎁 Granted initial reputation {} to new patron {} for deity {}", 
+                        MIN_REPUTATION_FOR_PATRON, player.getName().getString(), deityId);
+                    
+                    // This will trigger onReputationChange and unlock the first stage rewards
+                    sendSuccess(player, "You gain divine favor as you pledge yourself to " + deity.getDisplayName());
+                }
+            }
+            
             sendSuccess(player, "You are now a follower of " + deity.getDisplayName());
             
             return true;

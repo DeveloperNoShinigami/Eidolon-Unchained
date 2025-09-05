@@ -1,7 +1,5 @@
 package com.bluelotuscoding.eidolonunchained.patron;
 
-import com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig;
-import com.bluelotuscoding.eidolonunchained.ai.AIDeityManager;
 import com.bluelotuscoding.eidolonunchained.capability.IPatronData;
 import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
@@ -34,19 +32,16 @@ public class PatronSystemSimple {
                 return false;
             }
             
-            // Validate deity exists
+            // Validate deity exists in base configuration (not AI config)
             DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
             if (deity == null) {
                 sendError(player, "Unknown deity: " + deityId);
                 return false;
             }
             
-            // Get AI configuration for patron requirements
-            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deityId);
-            if (aiConfig == null || aiConfig.patron_config == null) {
-                sendError(player, "Deity does not accept patrons");
-                return false;
-            }
+            // 🎯 REMOVED AI CONFIG DEPENDENCY - Use base deity progression instead
+            // The patron system should work with base deity data, not AI configurations
+            // AI configs are for personality/conversation behavior only
             
             // Check if already patron of this deity
             ResourceLocation currentPatron = patronData.getPatron(player);
