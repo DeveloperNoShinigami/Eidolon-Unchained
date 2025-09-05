@@ -313,7 +313,17 @@ public class UnifiedCommands {
                         .suggests(PLAYER_SUGGESTIONS)
                         .then(Commands.argument("deity", StringArgumentType.string())
                             .suggests(DEITY_SUGGESTIONS)
-                            .executes(UnifiedCommands::clearPlayerRewards)))))
+                            .executes(UnifiedCommands::clearPlayerRewards))))
+                .then(Commands.literal("clear-all-rewards")
+                    .then(Commands.argument("player", StringArgumentType.string())
+                        .suggests(PLAYER_SUGGESTIONS)
+                        .executes(UnifiedCommands::clearAllPlayerRewards)))
+                .then(Commands.literal("tier-debug")
+                    .then(Commands.argument("player", StringArgumentType.string())
+                        .suggests(PLAYER_SUGGESTIONS)
+                        .then(Commands.argument("deity", StringArgumentType.string())
+                            .suggests(DEITY_SUGGESTIONS)
+                            .executes(UnifiedCommands::debugTierTracking))))));
             
             // TODO: Reputation system commands - implement these methods when needed
             /*
@@ -338,48 +348,6 @@ public class UnifiedCommands {
                     .then(Commands.argument("player", StringArgumentType.string())
                         .executes(UnifiedCommands::listPlayerReputations))))
             */
-            
-            // Debug commands
-            .then(Commands.literal("debug")
-                .then(Commands.literal("toggle")
-                    .executes(UnifiedCommands::toggleDebug))
-                .then(Commands.literal("logs")
-                    .executes(UnifiedCommands::showDebugLogs))
-                .then(Commands.literal("triggers")
-                    .executes(UnifiedCommands::debugTriggers))
-                .then(Commands.literal("status")
-                    .executes(UnifiedCommands::systemStatus))
-                .then(Commands.literal("commands")
-                    .then(Commands.argument("player", StringArgumentType.string())
-                        .suggests(PLAYER_SUGGESTIONS)
-                        .then(Commands.argument("deity", StringArgumentType.string())
-                            .suggests(DEITY_SUGGESTIONS)
-                            .executes(UnifiedCommands::showCommandHistory))))
-                .then(Commands.literal("report")
-                    .then(Commands.argument("player", StringArgumentType.string())
-                        .suggests(PLAYER_SUGGESTIONS)
-                        .then(Commands.argument("deity", StringArgumentType.string())
-                            .suggests(DEITY_SUGGESTIONS)
-                            .executes(UnifiedCommands::generateCommandReport))))
-                .then(Commands.literal("personality")
-            
-            // Reputation status command
-            .then(Commands.literal("status")
-                .then(Commands.argument("deity", StringArgumentType.string())
-                    .suggests(DEITY_SUGGESTIONS)
-                    .executes(UnifiedCommands::showReputationStatus)))
-                    .then(Commands.argument("player", StringArgumentType.string())
-                        .suggests(PLAYER_SUGGESTIONS)
-                        .then(Commands.argument("deity", StringArgumentType.string())
-                            .suggests(DEITY_SUGGESTIONS)
-                            .executes(UnifiedCommands::debugPersonality))))
-                .then(Commands.literal("fire-ritual-completion")
-                    .then(Commands.argument("ritual", StringArgumentType.string())
-                        .suggests(RITUAL_SUGGESTIONS)
-                        .executes(UnifiedCommands::fireRitualCompletion)))
-                .then(Commands.literal("validate-all")
-                    .executes(UnifiedCommands::validateAll)))
-        );
         
         // Alias commands for convenience
         dispatcher.register(Commands.literal("eu")
@@ -387,6 +355,12 @@ public class UnifiedCommands {
         
         dispatcher.register(Commands.literal("eidolon-config")
             .redirect(dispatcher.getRoot().getChild("eidolon-unchained").getChild("config")));
+        
+        // Separate reputation status command
+        dispatcher.register(Commands.literal("eidolon-status")
+            .then(Commands.argument("deity", StringArgumentType.string())
+                .suggests(DEITY_SUGGESTIONS)
+                .executes(UnifiedCommands::showReputationStatus)));
         
         // Register the new flexible chant slot commands
         ChantSlotCommands.register(dispatcher);
@@ -1832,20 +1806,127 @@ public class UnifiedCommands {
                 return 0;
             }
             
-            // Clear the player's reward history for this deity
-            deity.clearPlayerRewardHistory(player.getUUID());
+            // Clear the player's tier progression tracking for this deity
+            com.bluelotuscoding.eidolonunchained.chat.DeityChat.clearPlayerTierTracking(player.getUUID(), deityLocation);
             
             context.getSource().sendSuccess(() -> Component.literal(
-                "§6Cleared reward history for " + playerName + " with " + deity.getName()), false);
+                "§6Cleared tier reward tracking for " + playerName + " with " + deity.getName()), false);
             
             // Also notify the player
             player.sendSystemMessage(Component.literal(
-                "§6Your reward history with " + deity.getName() + " has been reset for testing."));
+                "§6Your tier progression tracking with " + deity.getName() + " has been reset for testing."));
             
             return 1;
             
         } catch (Exception e) {
             context.getSource().sendFailure(Component.literal("§cError clearing rewards: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    /**
+     * 🧹 Clear all tier progression tracking for a player (all deities)
+     * Usage: /eidolon-unchained debug clear-all-rewards <player>
+     */
+    private static int clearAllPlayerRewards(CommandContext<CommandSourceStack> context) {
+        try {
+            String rawPlayerName = StringArgumentType.getString(context, "player");
+            String playerName = CommandStringUtils.safeTrim(rawPlayerName);
+            
+            // Validate player name
+            if (playerName == null || playerName.isEmpty()) {
+                context.getSource().sendFailure(Component.literal("§cPlayer name cannot be empty"));
+                return 0;
+            }
+            
+            ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+            if (player == null) {
+                context.getSource().sendFailure(Component.literal("§cPlayer not found: " + playerName));
+                return 0;
+            }
+            
+            // Clear all tier progression tracking for this player
+            com.bluelotuscoding.eidolonunchained.chat.DeityChat.clearAllPlayerTierTracking(player.getUUID());
+            
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§6Cleared ALL tier reward tracking for " + playerName), false);
+            
+            // Also notify the player
+            player.sendSystemMessage(Component.literal(
+                "§6Your tier progression tracking with ALL deities has been reset for testing."));
+            
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError clearing all rewards: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    /**
+     * 🔍 Show tier progression tracking debug information
+     * Usage: /eidolon-unchained debug tier-debug <player> <deity>
+     */
+    private static int debugTierTracking(CommandContext<CommandSourceStack> context) {
+        try {
+            String rawPlayerName = StringArgumentType.getString(context, "player");
+            String playerName = CommandStringUtils.safeTrim(rawPlayerName);
+            
+            // Validate player name
+            if (playerName == null || playerName.isEmpty()) {
+                context.getSource().sendFailure(Component.literal("§cPlayer name cannot be empty"));
+                return 0;
+            }
+            
+            String rawDeityId = StringArgumentType.getString(context, "deity");
+            String deityId = CommandStringUtils.safeTrim(rawDeityId);
+            
+            // Validate deity ID
+            if (deityId == null || deityId.isEmpty()) {
+                context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
+                return 0;
+            }
+            
+            ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+            if (player == null) {
+                context.getSource().sendFailure(Component.literal("§cPlayer not found: " + playerName));
+                return 0;
+            }
+            
+            net.minecraft.resources.ResourceLocation deityLocation = new net.minecraft.resources.ResourceLocation(deityId);
+            com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = 
+                com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(deityLocation);
+            
+            if (deity == null) {
+                context.getSource().sendFailure(Component.literal("§cDeity not found: " + deityId));
+                return 0;
+            }
+            
+            // Get current actual tier and reputation
+            String currentTier = getDynamicProgressionLevel(deity, player);
+            double currentReputation = deity.getPlayerReputation(player);
+            
+            // Get debug tracking information
+            String debugInfo = com.bluelotuscoding.eidolonunchained.chat.DeityChat.getPlayerTierTrackingDebugInfo(
+                player.getUUID(), deityLocation);
+            
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§6=== TIER TRACKING DEBUG: " + playerName + " & " + deity.getName() + " ==="), false);
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§eCurrent reputation: §b" + String.format("%.1f", currentReputation)), false);
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§eCurrent actual tier: §b" + currentTier), false);
+            context.getSource().sendSuccess(() -> Component.literal(
+                "§e--- Tracking Data ---"), false);
+            
+            for (String line : debugInfo.split("\n")) {
+                context.getSource().sendSuccess(() -> Component.literal("§7" + line), false);
+            }
+            
+            return 1;
+            
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("§cError getting tier debug info: " + e.getMessage()));
             return 0;
         }
     }

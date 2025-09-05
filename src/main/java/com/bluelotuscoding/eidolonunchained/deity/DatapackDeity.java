@@ -189,6 +189,10 @@ public class DatapackDeity extends Deity {
                             }
                         }
                     });
+                
+                // 🎉 CHECK FOR TIER PROGRESSION AND AUTO-CONGRATULATION
+                // This triggers automatic deity conversations when players advance in tier
+                com.bluelotuscoding.eidolonunchained.chat.DeityChat.checkAndHandleTierProgression(serverPlayer, getId());
                     
             } catch (Exception e) {
                 LOGGER.error("Error updating title for reputation change on deity {}: {}", getId(), e.getMessage(), e);

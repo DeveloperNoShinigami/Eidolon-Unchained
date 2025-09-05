@@ -744,42 +744,62 @@ public class DeityChat {
      */
     private static void executeCommands(ServerPlayer player, ResourceLocation deityId, List<String> commands) {
         MinecraftServer server = player.getServer();
-        if (server == null) return;
-        
+        if (server == null) {
+            LOGGER.error("Cannot execute deity commands - server is null for player {}", player.getName().getString());
+            return;
+        }
+
         CommandSourceStack commandSource = server.createCommandSourceStack()
             .withSource(CommandSource.NULL)
             .withLevel(player.serverLevel())
             .withPosition(player.position())
             .withPermission(4); // Admin permission level
-        
+
         int successCount = 0;
         for (String command : commands) {
             try {
+                if (command == null || command.trim().isEmpty()) {
+                    LOGGER.warn("Skipping empty/null command for player {}", player.getName().getString());
+                    continue;
+                }
+
                 // Replace placeholders
                 String processedCommand = command
                     .replace("{player}", player.getName().getString())
                     .replace("{x}", String.valueOf((int) player.getX()))
                     .replace("{y}", String.valueOf((int) player.getY()))
                     .replace("{z}", String.valueOf((int) player.getZ()));
+
+                LOGGER.info("Executing deity command for {}: {}", player.getName().getString(), processedCommand);
                 
-                server.getCommands().performPrefixedCommand(commandSource, processedCommand);
-                successCount++;
+                // Execute command and check result
+                int result = server.getCommands().performPrefixedCommand(commandSource, processedCommand);
                 
-                // Enhanced logging with debugging
-                LOGGER.info("Successfully executed deity command for {}: {}", player.getName().getString(), processedCommand);
-                ConversationHistoryManager.logCommandExecutionStatic(player, deityId, processedCommand, true, "Command executed successfully");
-                
+                if (result > 0) {
+                    successCount++;
+                    LOGGER.info("✅ Successfully executed deity command for {}: {} (result: {})", 
+                        player.getName().getString(), processedCommand, result);
+                    ConversationHistoryManager.logCommandExecutionStatic(player, deityId, processedCommand, true, "Command executed successfully");
+                } else {
+                    LOGGER.warn("❌ Command executed but returned 0 result for {}: {}", 
+                        player.getName().getString(), processedCommand);
+                    ConversationHistoryManager.logCommandExecutionStatic(player, deityId, processedCommand, false, "Command returned 0 result");
+                }
+
             } catch (Exception e) {
-                // Enhanced error logging with debugging
+                // Enhanced error logging with stack trace for debugging
                 String errorMsg = e.getMessage() != null ? e.getMessage() : "Unknown error";
-                LOGGER.error("Failed to execute deity command '{}' for player {}: {}", command, player.getName().getString(), errorMsg);
+                LOGGER.error("❌ Failed to execute deity command '{}' for player {}: {}", 
+                    command, player.getName().getString(), errorMsg, e);
                 ConversationHistoryManager.logCommandExecutionStatic(player, deityId, command, false, errorMsg);
             }
         }
-        
+
         // Send feedback to player about divine intervention
         if (successCount > 0) {
             player.sendSystemMessage(Component.literal("§6✦ Divine power flows through you... §7(" + successCount + " blessing" + (successCount == 1 ? "" : "s") + " granted)"));
+        } else if (!commands.isEmpty()) {
+            player.sendSystemMessage(Component.literal("§c✦ The divine energy falters... §7(No blessings were granted)"));
         }
     }
     
@@ -971,14 +991,15 @@ public class DeityChat {
     /**
      * Intelligently wrap text into action bar-friendly chunks
      * Splits on sentence boundaries first, then word boundaries if needed
+     * Properly accounts for formatting codes when calculating length
      */
     private static List<String> intelligentTextWrap(String message, String deityName, int maxWidth) {
         List<String> chunks = new ArrayList<>();
         
-        // Calculate usable width (subtract deity header space)
-        String header = "⟦ " + deityName + " ⟧ ";
-        int headerLength = header.length();
-        int usableWidth = maxWidth - headerLength;
+        // Calculate usable width (subtract deity header space - accounting for formatting codes)
+        String header = "§6⟦ " + deityName + " ⟧ §f";
+        int headerVisibleLength = ("⟦ " + deityName + " ⟧ ").length(); // Length without formatting codes
+        int usableWidth = maxWidth - headerVisibleLength;
         
         // First, split on sentence boundaries
         String[] sentences = message.split("(?<=[.!?])\\s+");
@@ -987,8 +1008,11 @@ public class DeityChat {
             sentence = sentence.trim();
             if (sentence.isEmpty()) continue;
             
+            // Calculate visible length (without formatting codes)
+            int visibleLength = sentence.replaceAll("§.", "").length();
+            
             // If sentence fits in one action bar, add it as is
-            if (sentence.length() <= usableWidth) {
+            if (visibleLength <= usableWidth) {
                 chunks.add(sentence);
             } else {
                 // Break long sentence into word-wrapped chunks
@@ -996,10 +1020,11 @@ public class DeityChat {
                 StringBuilder currentChunk = new StringBuilder();
                 
                 for (String word : words) {
-                    // Check if adding this word would exceed the width
+                    // Calculate visible length of test chunk
                     String testChunk = currentChunk.length() == 0 ? word : currentChunk + " " + word;
+                    int testVisibleLength = testChunk.replaceAll("§.", "").length();
                     
-                    if (testChunk.length() <= usableWidth) {
+                    if (testVisibleLength <= usableWidth) {
                         // Add word to current chunk
                         if (currentChunk.length() > 0) currentChunk.append(" ");
                         currentChunk.append(word);
@@ -1011,10 +1036,12 @@ public class DeityChat {
                         }
                         
                         // Handle very long single words
-                        if (word.length() > usableWidth) {
-                            // Split the word itself
-                            for (int i = 0; i < word.length(); i += usableWidth) {
-                                chunks.add(word.substring(i, Math.min(i + usableWidth, word.length())));
+                        int wordVisibleLength = word.replaceAll("§.", "").length();
+                        if (wordVisibleLength > usableWidth) {
+                            // Split the word itself - this is rare but handle it
+                            String cleanWord = word.replaceAll("§.", "");
+                            for (int i = 0; i < cleanWord.length(); i += usableWidth) {
+                                chunks.add(cleanWord.substring(i, Math.min(i + usableWidth, cleanWord.length())));
                             }
                         } else {
                             currentChunk.append(word);
@@ -1265,6 +1292,389 @@ public class DeityChat {
         }
     }
     
+    // Track player progression levels to detect tier changes
+    private static final Map<UUID, Map<ResourceLocation, String>> playerProgressionTracker = new ConcurrentHashMap<>();
+    
+    // Track which tier rewards have been given to prevent duplicates
+    private static final Map<UUID, Map<ResourceLocation, Set<String>>> playerTierRewardsTracker = new ConcurrentHashMap<>();
+    
+    // Track highest tier achieved to prevent downgrade rewards
+    private static final Map<UUID, Map<ResourceLocation, String>> playerHighestTierTracker = new ConcurrentHashMap<>();
+    
+    /**
+     * 🎉 AUTOMATIC TIER PROGRESSION CONGRATULATION SYSTEM
+     * 
+     * Checks if player has achieved a new tier and automatically triggers deity congratulation
+     * Uses actual AI config and deity progression data instead of hardcoded values
+     */
+    public static void checkAndHandleTierProgression(ServerPlayer player, ResourceLocation deityId) {
+        try {
+            DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
+            if (deity == null) return;
+            
+            String currentTier = getDynamicProgressionLevel(deity, player);
+            UUID playerId = player.getUUID();
+            
+            // Get player's progression tracking
+            Map<ResourceLocation, String> playerTiers = playerProgressionTracker.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
+            Map<ResourceLocation, String> playerHighestTiers = playerHighestTierTracker.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
+            String previousTier = playerTiers.get(deityId);
+            String highestTierEver = playerHighestTiers.get(deityId);
+            
+            // Check if this is a tier advancement
+            if (previousTier != null && !previousTier.equals(currentTier)) {
+                // Get current and previous reputation to verify this is actual advancement
+                double currentReputation = deity.getPlayerReputation(player);
+                
+                // Log the tier change for debugging
+                LOGGER.info("🔄 TIER CHANGE detected for player {}: '{}' → '{}' with deity {} (rep: {})", 
+                    player.getName().getString(), previousTier, currentTier, deity.getName(), (int)currentReputation);
+                
+                // Check if this is actual advancement using proper tier comparison
+                if (isTierAdvancement(previousTier, currentTier, deity)) {
+                    LOGGER.info("🎉 TIER ADVANCEMENT confirmed for player {}: '{}' → '{}' with deity {}", 
+                        player.getName().getString(), previousTier, currentTier, deity.getName());
+                    
+                    // Update tracking
+                    playerTiers.put(deityId, currentTier);
+                    
+                    // Check if this is truly a new highest tier (prevents downgrade-upgrade reward abuse)
+                    boolean isNewHighestTier = isNewHighestTier(currentTier, highestTierEver, deity);
+                    
+                    if (isNewHighestTier) {
+                        // Update highest tier achieved
+                        playerHighestTiers.put(deityId, currentTier);
+                        
+                        // Auto-trigger congratulation conversation with rewards
+                        triggerTierCongratulation(player, deity, previousTier, currentTier);
+                        
+                        LOGGER.info("🏆 NEW HIGHEST TIER achieved: {} for player {} with deity {}", 
+                            currentTier, player.getName().getString(), deity.getName());
+                    } else {
+                        // Player re-achieved a tier they had before - just acknowledge, no rewards
+                        player.sendSystemMessage(Component.literal("§6⟦ " + deity.getName() + " ⟧ §f" +
+                            "You have regained your former rank of " + currentTier + "."));
+                        
+                        LOGGER.info("🔄 TIER RE-ACHIEVED (no rewards): {} for player {} with deity {}", 
+                            currentTier, player.getName().getString(), deity.getName());
+                    }
+                } else {
+                    // Just update the tracking without congratulation (demotion)
+                    playerTiers.put(deityId, currentTier);
+                    LOGGER.debug("� Tier demotion for player {}: '{}' → '{}' with deity {}", 
+                        player.getName().getString(), previousTier, currentTier, deity.getName());
+                }
+                
+            } else if (previousTier == null) {
+                // First time tracking - record tier and highest tier
+                playerTiers.put(deityId, currentTier);
+                
+                // If starting above initiate tier, they should get progression rewards
+                if (!currentTier.toLowerCase().contains("initiate") && !currentTier.toLowerCase().contains("shadow init")) {
+                    playerHighestTiers.put(deityId, currentTier);
+                    triggerTierCongratulation(player, deity, "Shadow Initiate", currentTier);
+                    LOGGER.info("🚀 INITIAL HIGH TIER detected: {} for player {} with deity {}", 
+                        currentTier, player.getName().getString(), deity.getName());
+                } else {
+                    playerHighestTiers.put(deityId, currentTier);
+                    LOGGER.debug("📝 Initial tier tracking for player {}: '{}' with deity {}", 
+                        player.getName().getString(), currentTier, deity.getName());
+                }
+            }
+            
+        } catch (Exception e) {
+            LOGGER.error("❌ Error checking tier progression for player {}: {}", 
+                player.getName().getString(), e.getMessage());
+        }
+    }
+    
+    /**
+     * Determine if tier change represents advancement (not demotion)
+     * Uses actual AI config reputation thresholds and deity progression stages
+     */
+    private static boolean isTierAdvancement(String previousTier, String currentTier, DatapackDeity deity) {
+        if (previousTier == null || currentTier == null) return true;
+        if (previousTier.equals(currentTier)) return false;
+        
+        try {
+            // Get AI config to determine tier rankings
+            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deity.getId());
+            if (aiConfig != null && !aiConfig.getReputationBehaviors().isEmpty()) {
+                
+                // Get reputation thresholds for both tiers
+                int previousThreshold = getTierReputationThreshold(previousTier, aiConfig);
+                int currentThreshold = getTierReputationThreshold(currentTier, aiConfig);
+                
+                // Advancement means moving to a higher threshold
+                boolean isAdvancement = currentThreshold > previousThreshold;
+                
+                LOGGER.debug("🔍 Tier comparison for {}: '{}' ({}rep) → '{}' ({}rep) = {} advancement",
+                    deity.getName(), previousTier, previousThreshold, currentTier, currentThreshold, 
+                    isAdvancement ? "IS" : "NOT");
+                
+                return isAdvancement;
+            }
+            
+            // Fallback: Use deity progression stages
+            Map<String, Object> stagesMap = deity.getProgressionStages();
+            if (!stagesMap.isEmpty()) {
+                double previousRep = getStageReputation(previousTier, stagesMap);
+                double currentRep = getStageReputation(currentTier, stagesMap);
+                return currentRep > previousRep;
+            }
+            
+        } catch (Exception e) {
+            LOGGER.warn("Error determining tier advancement: {}", e.getMessage());
+        }
+        
+        // Safe fallback: Assume any change is advancement (this was the old behavior)
+        return true;
+    }
+    
+    /**
+     * Get the reputation threshold for a specific tier from AI config
+     */
+    private static int getTierReputationThreshold(String tierName, AIDeityConfig aiConfig) {
+        // Try to match tier name to reputation behaviors
+        for (Map.Entry<Integer, String> entry : aiConfig.getReputationBehaviors().entrySet()) {
+            String behaviorText = entry.getValue().toLowerCase();
+            String tierLower = tierName.toLowerCase();
+            
+            // Check if this behavior describes this tier
+            if (behaviorText.contains(tierLower) || 
+                (tierLower.contains("champion") && entry.getKey() >= 100) ||
+                (tierLower.contains("master") && entry.getKey() >= 75) ||
+                (tierLower.contains("priest") && entry.getKey() >= 50) ||
+                (tierLower.contains("acolyte") && entry.getKey() >= 25) ||
+                (tierLower.contains("initiate") && entry.getKey() >= 0)) {
+                return entry.getKey();
+            }
+        }
+        
+        // Fallback threshold detection
+        String tierLower = tierName.toLowerCase();
+        if (tierLower.contains("champion")) return 100;
+        if (tierLower.contains("master") || tierLower.contains("void")) return 75;
+        if (tierLower.contains("priest") || tierLower.contains("high")) return 50;
+        if (tierLower.contains("acolyte") || tierLower.contains("dark")) return 25;
+        return 0; // Initiate/default
+    }
+    
+    /**
+     * Get reputation requirement for a stage from progression stages map
+     */
+    private static double getStageReputation(String stageName, Map<String, Object> stagesMap) {
+        for (Map.Entry<String, Object> entry : stagesMap.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(stageName) && entry.getValue() instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> stageData = (Map<String, Object>) entry.getValue();
+                Object repReq = stageData.get("reputationRequired");
+                if (repReq instanceof Number) {
+                    return ((Number) repReq).doubleValue();
+                }
+            }
+        }
+        return 0; // Default
+    }
+    
+    /**
+     * Check if the current tier is higher than the player's previous highest
+     */
+    private static boolean isNewHighestTier(String currentTier, String highestTierEver, DatapackDeity deity) {
+        if (highestTierEver == null) return true; // First time reaching any tier
+        if (currentTier.equals(highestTierEver)) return false; // Same as highest
+        
+        // Use the same logic as tier advancement to compare tiers
+        return isTierAdvancement(highestTierEver, currentTier, deity);
+    }
+    
+    /**
+     * 🎭 AUTOMATIC TIER CONGRATULATION CONVERSATION
+     * 
+     * Triggers an automatic deity conversation when player advances in tier
+     */
+    private static void triggerTierCongratulation(ServerPlayer player, DatapackDeity deity, String previousTier, String newTier) {
+        try {
+            // Create congratulation message prompt
+            String congratulationPrompt = String.format(
+                "The player %s has just advanced from %s to %s tier with you! " +
+                "Congratulate them on their progression and acknowledge their new title. " +
+                "Be proud and offer a blessing or reward appropriate for their new rank. " +
+                "Make this feel like a special achievement moment.",
+                player.getName().getString(), previousTier, newTier
+            );
+            
+            LOGGER.info("🎭 Triggering tier congratulation for player {}: {} → {}", 
+                player.getName().getString(), previousTier, newTier);
+            
+            // Send immediate notification
+            player.sendSystemMessage(Component.literal("§6✨ " + deity.getName() + " senses your growing devotion... ✨"));
+            
+            // Trigger AI conversation with congratulation context
+            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deity.getId());
+            if (aiConfig != null) {
+                // Start conversation automatically
+                activeConversations.put(player.getUUID(), deity.getId());
+                
+                // Process the congratulation
+                processDeityConversation(player, deity.getId(), congratulationPrompt);
+                
+                // Auto-execute tier advancement rewards
+                executeTierAdvancementRewards(player, deity, newTier);
+                
+                // Schedule automatic conversation closure after tier advancement
+                java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+                    try {
+                        // Send closing message
+                        player.sendSystemMessage(Component.literal(
+                            "§6⟦ " + deity.getName() + " ⟧ §f" +
+                            "Your advancement has been acknowledged. Go forth with your new power, " + newTier + "."));
+                        
+                        // Close the conversation
+                        endConversation(player);
+                        
+                        LOGGER.info("🔚 Auto-closed tier advancement conversation for player {} with {}", 
+                            player.getName().getString(), deity.getName());
+                            
+                    } catch (Exception e) {
+                        LOGGER.error("Error auto-closing tier advancement conversation: {}", e.getMessage());
+                    }
+                }, 3, java.util.concurrent.TimeUnit.SECONDS); // 3-second delay to let rewards finish
+                
+            } else {
+                // Fallback message if no AI config
+                player.sendSystemMessage(Component.literal("§6⟦ " + deity.getName() + " ⟧ §f" +
+                    "Well done, " + newTier + "! Your devotion has been recognized."));
+            }
+            
+        } catch (Exception e) {
+            LOGGER.error("❌ Error triggering tier congratulation for player {}: {}", 
+                player.getName().getString(), e.getMessage());
+        }
+    }
+    
+    /**
+     * Execute tier-specific advancement rewards with proper tracking to prevent duplicates
+     */
+    private static void executeTierAdvancementRewards(ServerPlayer player, DatapackDeity deity, String newTier) {
+        try {
+            UUID playerId = player.getUUID();
+            ResourceLocation deityId = deity.getId();
+            
+            // Get or create tier rewards tracking
+            Map<ResourceLocation, Set<String>> playerRewards = playerTierRewardsTracker.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
+            Set<String> givenRewards = playerRewards.computeIfAbsent(deityId, k -> new HashSet<>());
+            
+            // Check if rewards for this tier were already given
+            if (givenRewards.contains(newTier)) {
+                LOGGER.info("🔒 Tier rewards for '{}' already given to player {} - skipping duplicates", 
+                    newTier, player.getName().getString());
+                return;
+            }
+            
+            // Get tier-specific commands from AI config
+            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deity.getId());
+            if (aiConfig == null) {
+                LOGGER.warn("No AI config found for deity {} - using fallback rewards", deityId);
+                executeFallbackTierRewards(player, newTier);
+                givenRewards.add(newTier);
+                return;
+            }
+            
+            List<String> tierCommands = new ArrayList<>();
+            
+            // Check for tier advancement rewards in prayer configs
+            if (aiConfig.prayer_configs.containsKey("tier_advancement")) {
+                PrayerAIConfig tierConfig = aiConfig.prayer_configs.get("tier_advancement");
+                tierCommands.addAll(tierConfig.allowed_commands);
+            }
+            
+            // Get current reputation to determine reward level
+            double reputation = deity.getPlayerReputation(player);
+            
+            // Use AI config reputation thresholds to determine reward tier
+            Map<Integer, String> reputationBehaviors = aiConfig.getReputationBehaviors();
+            int currentThreshold = -1;
+            
+            for (int threshold : reputationBehaviors.keySet()) {
+                if (reputation >= threshold && threshold > currentThreshold) {
+                    currentThreshold = threshold;
+                }
+            }
+            
+            // Add reputation-based rewards based on current threshold
+            if (currentThreshold >= 100) {
+                // Highest tier rewards
+                tierCommands.add("give {player} minecraft:experience_bottle 10");
+                tierCommands.add("give {player} minecraft:golden_apple 2");
+                tierCommands.add("give {player} minecraft:diamond 1");
+                tierCommands.add("effect give {player} minecraft:strength 600 1");
+            } else if (currentThreshold >= 75) {
+                // High tier rewards
+                tierCommands.add("give {player} minecraft:experience_bottle 7");
+                tierCommands.add("give {player} minecraft:golden_apple 1");
+                tierCommands.add("effect give {player} minecraft:strength 300 0");
+            } else if (currentThreshold >= 50) {
+                // Mid tier rewards
+                tierCommands.add("give {player} minecraft:experience_bottle 5");
+                tierCommands.add("give {player} minecraft:golden_apple 1");
+                tierCommands.add("effect give {player} minecraft:regeneration 300 0");
+            } else if (currentThreshold >= 25) {
+                // Low tier rewards
+                tierCommands.add("give {player} minecraft:experience_bottle 3");
+            } else if (currentThreshold >= 0) {
+                // Entry tier rewards
+                tierCommands.add("give {player} minecraft:experience_bottle 1");
+            }
+            
+            if (!tierCommands.isEmpty()) {
+                LOGGER.info("🎁 Executing {} tier advancement rewards for player {} (tier: {}, rep: {}, threshold: {})", 
+                    tierCommands.size(), player.getName().getString(), newTier, (int)reputation, currentThreshold);
+                executeCommands(player, deity.getId(), tierCommands);
+                
+                // Mark this tier's rewards as given
+                givenRewards.add(newTier);
+                
+                LOGGER.info("✅ Tier rewards marked as given for player {} tier '{}'", 
+                    player.getName().getString(), newTier);
+            } else {
+                LOGGER.info("ℹ️ No specific tier rewards configured for tier '{}' - using fallback", newTier);
+                executeFallbackTierRewards(player, newTier);
+                givenRewards.add(newTier);
+            }
+            
+        } catch (Exception e) {
+            LOGGER.error("❌ Error executing tier advancement rewards for player {}: {}", 
+                player.getName().getString(), e.getMessage());
+        }
+    }
+    
+    /**
+     * Execute fallback tier rewards when AI config is not available
+     */
+    private static void executeFallbackTierRewards(ServerPlayer player, String newTier) {
+        List<String> fallbackCommands = new ArrayList<>();
+        String tierLower = newTier.toLowerCase();
+        
+        // Basic fallback rewards based on tier name
+        if (tierLower.contains("champion") || tierLower.contains("master") || tierLower.contains("void")) {
+            fallbackCommands.add("give {player} minecraft:experience_bottle 10");
+            fallbackCommands.add("give {player} minecraft:golden_apple 2");
+            fallbackCommands.add("give {player} minecraft:diamond 1");
+        } else if (tierLower.contains("priest") || tierLower.contains("high") || tierLower.contains("dark")) {
+            fallbackCommands.add("give {player} minecraft:experience_bottle 5");
+            fallbackCommands.add("give {player} minecraft:golden_apple 1");
+        } else if (tierLower.contains("acolyte") || tierLower.contains("adept")) {
+            fallbackCommands.add("give {player} minecraft:experience_bottle 3");
+        } else {
+            fallbackCommands.add("give {player} minecraft:experience_bottle 1");
+        }
+        
+        if (!fallbackCommands.isEmpty()) {
+            executeCommands(player, null, fallbackCommands);
+        }
+    }
+    
     /**
      * Clean mod ID leakage from AI responses
      * Converts technical IDs like "eidolon:light_blessing" to natural language
@@ -1355,8 +1765,24 @@ public class DeityChat {
                 long cooldownMs = getBlessingCooldown(progressionLevel);
                 
                 if (timeSince < cooldownMs) {
+                    // Calculate remaining time in minutes and seconds
+                    long remainingMs = cooldownMs - timeSince;
+                    long remainingMinutes = remainingMs / 60000;
+                    long remainingSeconds = (remainingMs % 60000) / 1000;
+                    
+                    // Inform the player about the cooldown
+                    if (remainingMinutes > 0) {
+                        player.sendSystemMessage(Component.literal(
+                            "§e⟦ " + deity.getName() + " ⟧ §7The divine energies still resonate from your last blessing. " +
+                            "§cWait " + remainingMinutes + "m " + remainingSeconds + "s before requesting another."));
+                    } else {
+                        player.sendSystemMessage(Component.literal(
+                            "§e⟦ " + deity.getName() + " ⟧ §7The divine energies are still settling. " +
+                            "§cWait " + remainingSeconds + " seconds before requesting another blessing."));
+                    }
+                    
                     LOGGER.info("🕒 Blessing on cooldown for {}: {}ms remaining", 
-                        player.getName().getString(), cooldownMs - timeSince);
+                        player.getName().getString(), remainingMs);
                     return false;
                 }
             }
@@ -1406,6 +1832,72 @@ public class DeityChat {
             case "novice": return 1; // Novice gets 1 blessing
             default: return 1; // Default to 1 blessing maximum
         }
+    }
+    
+    // 🔧 DEBUG METHODS FOR TESTING TIER PROGRESSION
+    
+    /**
+     * Clear all tier progression tracking for a specific player and deity (for testing)
+     */
+    public static void clearPlayerTierTracking(UUID playerId, ResourceLocation deityId) {
+        Map<ResourceLocation, String> playerTiers = playerProgressionTracker.get(playerId);
+        if (playerTiers != null) {
+            playerTiers.remove(deityId);
+            if (playerTiers.isEmpty()) {
+                playerProgressionTracker.remove(playerId);
+            }
+        }
+        
+        Map<ResourceLocation, Set<String>> playerRewards = playerTierRewardsTracker.get(playerId);
+        if (playerRewards != null) {
+            playerRewards.remove(deityId);
+            if (playerRewards.isEmpty()) {
+                playerTierRewardsTracker.remove(playerId);
+            }
+        }
+        
+        Map<ResourceLocation, String> playerHighestTiers = playerHighestTierTracker.get(playerId);
+        if (playerHighestTiers != null) {
+            playerHighestTiers.remove(deityId);
+            if (playerHighestTiers.isEmpty()) {
+                playerHighestTierTracker.remove(playerId);
+            }
+        }
+        
+        LOGGER.info("🧹 Cleared tier progression tracking for player {} with deity {}", playerId, deityId);
+    }
+    
+    /**
+     * Clear all tier progression tracking for a specific player (all deities)
+     */
+    public static void clearAllPlayerTierTracking(UUID playerId) {
+        playerProgressionTracker.remove(playerId);
+        playerTierRewardsTracker.remove(playerId);
+        playerHighestTierTracker.remove(playerId);
+        
+        LOGGER.info("🧹 Cleared ALL tier progression tracking for player {}", playerId);
+    }
+    
+    /**
+     * Get debugging info about a player's tier progression tracking
+     */
+    public static String getPlayerTierTrackingDebugInfo(UUID playerId, ResourceLocation deityId) {
+        StringBuilder info = new StringBuilder();
+        
+        Map<ResourceLocation, String> playerTiers = playerProgressionTracker.get(playerId);
+        String currentTrackedTier = playerTiers != null ? playerTiers.get(deityId) : "none";
+        
+        Map<ResourceLocation, Set<String>> playerRewards = playerTierRewardsTracker.get(playerId);
+        Set<String> rewardsReceived = playerRewards != null ? playerRewards.get(deityId) : null;
+        
+        Map<ResourceLocation, String> playerHighestTiers = playerHighestTierTracker.get(playerId);
+        String highestTier = playerHighestTiers != null ? playerHighestTiers.get(deityId) : "none";
+        
+        info.append("Current tracked tier: ").append(currentTrackedTier).append("\n");
+        info.append("Highest tier achieved: ").append(highestTier).append("\n");
+        info.append("Rewards received: ").append(rewardsReceived != null ? rewardsReceived.toString() : "none");
+        
+        return info.toString();
     }
     
     // Static map to track blessing cooldowns
