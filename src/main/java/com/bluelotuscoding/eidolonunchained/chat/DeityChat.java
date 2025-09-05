@@ -324,26 +324,39 @@ public class DeityChat {
                 String rawResponse = aiResponse.dialogue;
                 LOGGER.info("🔥 DEBUG: AI Response received: '{}'", rawResponse);
                 
-                // 🔥 ENHANCED COMMAND EXTRACTION AND EXECUTION
-                // Use the enhanced command extractor to detect and execute natural language commands
-                LOGGER.info("🔥 DEBUG: Starting command extraction...");
+                // 🔥 FIXED: EXTRACT COMMANDS FROM PLAYER INPUT, NOT AI RESPONSE
+                // This prevents AI from giving items just because it mentions them in narrative
+                LOGGER.info("🔥 DEBUG: Starting command extraction from PLAYER input: '{}'", message);
                 List<String> extractedCommands = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
-                    .extractAndConvertCommands(rawResponse, player);
-                LOGGER.info("🔥 DEBUG: Extracted {} commands: {}", extractedCommands.size(), extractedCommands);
+                    .extractAndConvertCommands(message, player); // Extract from PLAYER message, not AI response
+                LOGGER.info("🔥 DEBUG: Extracted {} commands from player input: {}", extractedCommands.size(), extractedCommands);
                 
                 int commandsExecuted = 0;
                 if (!extractedCommands.isEmpty()) {
-                    // Execute enhanced extracted commands
-                    commandsExecuted = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
-                        .executeCommands(extractedCommands, player);
-                    
-                    LOGGER.info("🔥 Enhanced AI extraction executed {} commands for {}: {}", 
-                        commandsExecuted, player.getName().getString(), extractedCommands);
+                    // 🔥 TIER ENFORCEMENT: Check if player is allowed to receive blessings
+                    if (shouldAllowBlessing(player, deity, message)) {
+                        // Limit commands based on progression level
+                        String progressionLevel = getDynamicProgressionLevel(deity, player);
+                        int maxCommands = getMaxCommandsForTier(progressionLevel);
+                        
+                        // Limit the commands to appropriate tier
+                        List<String> limitedCommands = extractedCommands.size() > maxCommands ? 
+                            extractedCommands.subList(0, maxCommands) : extractedCommands;
+                        
+                        commandsExecuted = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
+                            .executeCommands(limitedCommands, player);
+                        
+                        LOGGER.info("🔥 Player request fulfilled: executed {} commands for {} (tier: {}, max: {}): {}", 
+                            commandsExecuted, player.getName().getString(), progressionLevel, maxCommands, limitedCommands);
+                    } else {
+                        LOGGER.info("🚫 Blessing request denied for {} due to tier restrictions or cooldown", 
+                            player.getName().getString());
+                        // Still allow AI to respond, just don't give items
+                    }
                 }
                 
-                // Clean response for display (remove command patterns but keep the conversational parts)
-                String cleanedResponse = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
-                    .cleanResponseForDisplay(rawResponse);
+                // Clean response for display (remove any technical mod IDs that leaked through)
+                String cleanedResponse = cleanModIdLeakage(rawResponse);
                 
                 // Add response to history (using cleaned version)
                 history.add("Deity: " + cleanedResponse);
@@ -601,18 +614,19 @@ public class DeityChat {
         prompt.append("2. WORLD AWARENESS: You know all Minecraft items, blocks, biomes, and dimensions listed above\n");
         prompt.append("3. IMMERSIVE CONVERSATION: Speak naturally as your deity character would\n");
         prompt.append("4. NO ACTION TAGS: NEVER use [ACTION:...] or similar tags - speak naturally instead\n");
-        prompt.append("5. CONTEXTUAL RESPONSE: Adapt to the player's current situation, health, and needs\n");
-        prompt.append("6. REPUTATION-BASED REWARDS: Higher reputation = better rewards and privileges\n");
-        prompt.append("7. AVOID REPETITION: Each response should be unique and situational\n");
-        prompt.append("8. EXECUTE REQUESTS: When granting items, mention them naturally in conversation\n");
-        prompt.append("9. DYNAMIC JUDGMENT: Consider player's immediate context for appropriate responses\n");
-        prompt.append("\nCRITICAL: When giving items, speak naturally as a deity would:\n");
-        prompt.append("  ✓ 'Take this blade to defend yourself' (system detects 'blade' -> gives iron_sword)\n");
-        prompt.append("  ✓ 'I grant you strength to overcome your foes' (system detects blessing)\n");
-        prompt.append("  ✓ 'Receive this golden apple as my blessing' (system detects item)\n");
-        prompt.append("  ✗ '[ACTION:gift iron_sword]' - NEVER use this old format!\n");
-        prompt.append("The system automatically detects natural language and executes the appropriate commands.\n");
-        prompt.append("Remember: Be adaptive, not scripted! Respond uniquely to each situation!\n");
+        prompt.append("5. NO MOD IDS: Never say technical names like 'eidolon:light_blessing' - use natural language like 'divine light'\n");
+        prompt.append("6. TIER AWARENESS: Your follower is currently ").append(getDynamicProgressionLevel(deity, player)).append(" level - respond appropriately\n");
+        prompt.append("7. CONVERSATIONAL PRIORITY: Focus on conversation over item-giving unless specifically requested\n");
+        prompt.append("8. AVOID REPETITION: Each response should be unique and situational\n");
+        prompt.append("9. RESPOND TO PLAYER: Address what the PLAYER actually said, not what you want to give\n");
+        prompt.append("10. DYNAMIC JUDGMENT: Consider player's immediate context for appropriate responses\n");
+        prompt.append("\nCRITICAL BLESSING GUIDELINES:\n");
+        prompt.append("- ONLY give items if player explicitly asks (uses words like 'give', 'bless', 'help', 'need')\n");
+        prompt.append("- LOW TIER players should mostly receive conversation, not constant gifts\n");
+        prompt.append("- When giving items, speak naturally: 'Take this blade' (NOT technical mod IDs)\n");
+        prompt.append("- Focus on being a conversational deity, not a vending machine\n");
+        prompt.append("- Your words should match your character - mysterious, divine, personality-driven\n");
+        prompt.append("Remember: Quality conversation over quantity of gifts! Be adaptive, not scripted!\n");
         
         return prompt.toString();
     }
@@ -1134,4 +1148,109 @@ public class DeityChat {
             return "beginner";
         }
     }
+    
+    /**
+     * Clean mod ID leakage from AI responses
+     * Converts technical IDs like "eidolon:light_blessing" to natural language
+     */
+    private static String cleanModIdLeakage(String response) {
+        if (response == null) return "";
+        
+        String cleaned = response;
+        
+        // Remove or replace common mod ID patterns with natural language
+        cleaned = cleaned.replaceAll("\\bminecraft:", "");
+        cleaned = cleaned.replaceAll("\\beidolon:([\\w_]+)", "ancient $1");
+        cleaned = cleaned.replaceAll("\\beidolonunchained:([\\w_]+)", "divine $1");
+        
+        // Fix specific common cases
+        cleaned = cleaned.replaceAll("\\blight_blessing\\b", "divine light");
+        cleaned = cleaned.replaceAll("\\bshadow_gem\\b", "dark crystal");
+        cleaned = cleaned.replaceAll("\\bsoul_shard\\b", "soul fragment");
+        cleaned = cleaned.replaceAll("\\biron_sword\\b", "iron blade");
+        cleaned = cleaned.replaceAll("\\bgolden_apple\\b", "golden fruit");
+        
+        // Remove underscores in remaining technical terms
+        cleaned = cleaned.replaceAll("\\b([a-z]+)_([a-z]+)\\b", "$1 $2");
+        
+        return cleaned;
+    }
+    
+    /**
+     * Enforce tier-based blessing limits
+     * Prevents over-giving items based on player progression
+     */
+    private static boolean shouldAllowBlessing(ServerPlayer player, DatapackDeity deity, String playerMessage) {
+        try {
+            double reputation = deity.getPlayerReputation(player);
+            String progressionLevel = getDynamicProgressionLevel(deity, player);
+            
+            // Check if player explicitly requested something
+            String lowerMessage = playerMessage.toLowerCase();
+            boolean explicitRequest = lowerMessage.contains("give") || lowerMessage.contains("bless") || 
+                                    lowerMessage.contains("grant") || lowerMessage.contains("help") ||
+                                    lowerMessage.contains("need") || lowerMessage.contains("want");
+            
+            // No blessings for non-explicit requests at low levels
+            if (!explicitRequest && reputation < 25) {
+                LOGGER.info("🚫 Blocked non-explicit blessing request for low-tier player {}: '{}'", 
+                    player.getName().getString(), playerMessage);
+                return false;
+            }
+            
+            // Check recent blessing cooldown (simple time-based)
+            long currentTime = System.currentTimeMillis();
+            String cooldownKey = player.getUUID() + "_" + deity.getId();
+            Long lastBlessing = lastBlessingTimes.get(cooldownKey);
+            
+            if (lastBlessing != null) {
+                long timeSince = currentTime - lastBlessing;
+                long cooldownMs = getBlessingCooldown(progressionLevel);
+                
+                if (timeSince < cooldownMs) {
+                    LOGGER.info("🕒 Blessing on cooldown for {}: {}ms remaining", 
+                        player.getName().getString(), cooldownMs - timeSince);
+                    return false;
+                }
+            }
+            
+            // Update last blessing time
+            lastBlessingTimes.put(cooldownKey, currentTime);
+            
+            return true;
+            
+        } catch (Exception e) {
+            LOGGER.error("Error checking blessing allowance: {}", e.getMessage());
+            return false; // Default to safe side
+        }
+    }
+    
+    /**
+     * Get blessing cooldown based on progression level
+     */
+    private static long getBlessingCooldown(String progressionLevel) {
+        switch (progressionLevel.toLowerCase()) {
+            case "master": return 30000; // 30 seconds
+            case "advanced": return 60000; // 1 minute  
+            case "intermediate": return 120000; // 2 minutes
+            case "novice": return 300000; // 5 minutes
+            default: return 600000; // 10 minutes for beginners
+        }
+    }
+    
+    /**
+     * Get maximum commands allowed per tier to prevent over-blessing
+     */
+    private static int getMaxCommandsForTier(String progressionLevel) {
+        switch (progressionLevel.toLowerCase()) {
+            case "master": return 3; // Masters can receive multiple blessings
+            case "advanced": return 2; // Advanced gets 2 blessings
+            case "intermediate": return 1; // Intermediate gets 1 blessing
+            case "novice": return 1; // Novice gets 1 blessing
+            default: return 1; // Beginners get 1 blessing maximum
+        }
+    }
+    
+    // Static map to track blessing cooldowns
+    private static final java.util.Map<String, Long> lastBlessingTimes = new java.util.concurrent.ConcurrentHashMap<>();
 }

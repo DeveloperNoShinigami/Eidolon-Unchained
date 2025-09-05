@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,7 +28,12 @@ import java.util.regex.Pattern;
 public class EnhancedCommandExtractor {
     private static final Logger LOGGER = LogManager.getLogger();
     
-    // Patterns for natural language command detection
+    // Patterns for natural language command detection - MORE CONSERVATIVE
+    private static final Pattern EXPLICIT_REQUEST_PATTERN = Pattern.compile(
+        "\\b(?:give me|grant me|bless me with|i need|i want|can you give|please give)\\s+([\\w\\s:_-]+?)(?:\\s*[?!.]|$)", 
+        Pattern.CASE_INSENSITIVE
+    );
+    
     private static final Pattern GIVE_PATTERN = Pattern.compile(
         "\\b(?:give|grant|bestow)\\s+(?:(?:you|player|\\{player\\})\\s+)?([\\w:_-]+)(?:\\s+(\\d+))?", 
         Pattern.CASE_INSENSITIVE
@@ -49,6 +55,13 @@ public class EnhancedCommandExtractor {
         Pattern.CASE_INSENSITIVE
     );
     
+    // Common words to filter out to prevent false positives
+    private static final Set<String> COMMON_WORDS = Set.of(
+        "the", "and", "or", "but", "with", "from", "of", "in", "on", "at", "by", "for", "as", "to", "is", "are", "was", "were",
+        "you", "your", "me", "my", "i", "we", "they", "them", "this", "that", "these", "those", "here", "there",
+        "dark", "light", "shadow", "void", "breath", "pulse", "hands", "eyes", "power", "energy", "spirit", "soul"
+    );
+    
     /**
      * Extract and convert AI natural language to executable commands
      * 🔥 NOW WITH DYNAMIC REGISTRY CONTEXT
@@ -57,16 +70,34 @@ public class EnhancedCommandExtractor {
         List<String> commands = new ArrayList<>();
         
         try {
-            // Clean the AI response first
+            // Clean the input first
             String cleanResponse = cleanAIResponse(aiResponse);
             
-            // 1. Look for [ACTION:...] patterns first (highest priority)
+            // 🔥 PRIORITY 1: Look for explicit player requests (most important)
+            Matcher explicitRequestMatcher = EXPLICIT_REQUEST_PATTERN.matcher(cleanResponse);
+            while (explicitRequestMatcher.find()) {
+                String requestedItem = explicitRequestMatcher.group(1).trim();
+                
+                // Filter out common words to prevent false positives
+                if (!isCommonWord(requestedItem)) {
+                    List<ResourceLocation> matches = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
+                        .findMatchingItems(requestedItem, Arrays.asList("minecraft", "eidolon", "eidolonunchained"));
+                    
+                    if (!matches.isEmpty()) {
+                        String normalizedItem = matches.get(0).toString(); // Take best match
+                        String command = String.format("/give %s %s 1", player.getName().getString(), normalizedItem);
+                        commands.add(command);
+                        LOGGER.info("🔥 Player explicit request: '{}' -> {}", explicitRequestMatcher.group(0), normalizedItem);
+                    }
+                }
+            }
+            
+            // 🔥 PRIORITY 2: Look for [ACTION:...] patterns (old format compatibility)
             Matcher actionMatcher = ACTION_PATTERN.matcher(cleanResponse);
             while (actionMatcher.find()) {
                 String item = actionMatcher.group(1);
                 String amount = actionMatcher.group(2);
                 
-                // 🔥 Use dynamic registry lookup
                 String normalizedItem = normalizeItemId(item, modContextIds);
                 if (normalizedItem != null) {
                     String command = String.format("/give %s %s %s", 
@@ -79,62 +110,55 @@ public class EnhancedCommandExtractor {
                 }
             }
             
-            // 2. Look for explicit command patterns
-            Matcher explicitMatcher = EXPLICIT_COMMAND_PATTERN.matcher(cleanResponse);
-            while (explicitMatcher.find()) {
-                String command = explicitMatcher.group(0);
-                String cleanCommand = cleanAndValidateCommand(command, player);
-                if (cleanCommand != null) {
-                    commands.add(cleanCommand);
-                    LOGGER.debug("Found explicit command: {}", cleanCommand);
+            // 🔥 PRIORITY 3: Look for explicit blessing/help requests only
+            if (cleanResponse.toLowerCase().contains("help") || cleanResponse.toLowerCase().contains("bless")) {
+                // 3a. Look for give/grant patterns only if player asked for help
+                Matcher giveMatcher = GIVE_PATTERN.matcher(cleanResponse);
+                while (giveMatcher.find()) {
+                    String item = giveMatcher.group(1);
+                    String amount = giveMatcher.group(2);
+                    
+                    if (!isCommonWord(item)) {
+                        String normalizedItem = normalizeItemId(item, modContextIds);
+                        if (normalizedItem != null) {
+                            String command = String.format("/give %s %s %s", 
+                                player.getName().getString(),
+                                normalizedItem,
+                                amount != null ? amount : "1"
+                            );
+                            commands.add(command);
+                            LOGGER.debug("Converted give pattern to command: {}", command);
+                        }
+                    }
                 }
-            }
-            
-            // 3. Look for give/grant patterns
-            Matcher giveMatcher = GIVE_PATTERN.matcher(cleanResponse);
-            while (giveMatcher.find()) {
-                String item = giveMatcher.group(1);
-                String amount = giveMatcher.group(2);
                 
-                // 🔥 Use dynamic registry lookup
-                String normalizedItem = normalizeItemId(item, modContextIds);
-                if (normalizedItem != null) {
-                    String command = String.format("/give %s %s %s", 
-                        player.getName().getString(),
-                        normalizedItem,
-                        amount != null ? amount : "1"
-                    );
-                    commands.add(command);
-                    LOGGER.debug("Converted give pattern to command: {}", command);
+                // 3b. Look for effect patterns only if player asked for help
+                Matcher effectMatcher = EFFECT_PATTERN.matcher(cleanResponse);
+                while (effectMatcher.find()) {
+                    String effect = effectMatcher.group(1);
+                    String duration = effectMatcher.group(2);
+                    String amplifier = effectMatcher.group(3);
+                    
+                    if (!isCommonWord(effect)) {
+                        String normalizedEffect = normalizeEffectId(effect, modContextIds);
+                        if (normalizedEffect != null) {
+                            String command = String.format("/effect give %s %s %s %s", 
+                                player.getName().getString(),
+                                normalizedEffect,
+                                duration != null ? duration : "300",
+                                amplifier != null ? amplifier : "0"
+                            );
+                            commands.add(command);
+                            LOGGER.debug("Converted effect pattern to command: {}", command);
+                        }
+                    }
                 }
             }
             
-            // 4. Look for effect patterns
-            Matcher effectMatcher = EFFECT_PATTERN.matcher(cleanResponse);
-            while (effectMatcher.find()) {
-                String effect = effectMatcher.group(1);
-                String duration = effectMatcher.group(2);
-                String amplifier = effectMatcher.group(3);
-                
-                // 🔥 Use dynamic registry lookup
-                String normalizedEffect = normalizeEffectId(effect, modContextIds);
-                if (normalizedEffect != null) {
-                    String command = String.format("/effect give %s %s %s %s", 
-                        player.getName().getString(),
-                        normalizedEffect,
-                        duration != null ? duration : "300",
-                        amplifier != null ? amplifier : "0"
-                    );
-                    commands.add(command);
-                    LOGGER.debug("Converted effect pattern to command: {}", command);
-                }
-            }
-            
-            // 5. Look for common deity actions and convert to commands
-            commands.addAll(extractDeityActions(cleanResponse, player, modContextIds));
+            // Skip the old aggressive deity actions - let the AI decide naturally
             
         } catch (Exception e) {
-            LOGGER.error("Error extracting commands from AI response: {}", e.getMessage());
+            LOGGER.error("Error extracting commands from input: {}", e.getMessage());
         }
         
         return commands;
@@ -145,6 +169,26 @@ public class EnhancedCommandExtractor {
      */
     public static List<String> extractAndConvertCommands(String aiResponse, ServerPlayer player) {
         return extractAndConvertCommands(aiResponse, player, Arrays.asList("minecraft", "eidolon", "eidolonunchained"));
+    }
+    
+    /**
+     * Check if a word is too common to be an item/effect name
+     */
+    private static boolean isCommonWord(String word) {
+        if (word == null || word.trim().isEmpty()) return true;
+        
+        String normalized = word.toLowerCase().trim();
+        
+        // Check against common words set
+        if (COMMON_WORDS.contains(normalized)) return true;
+        
+        // Check for overly short words (likely articles/prepositions)
+        if (normalized.length() <= 2) return true;
+        
+        // Check for very long phrases (likely not item names)
+        if (normalized.length() > 30) return true;
+        
+        return false;
     }
     
     /**
@@ -190,80 +234,9 @@ public class EnhancedCommandExtractor {
         return cleaned;
     }
     
-    /**
-     * Extract common deity actions and convert to commands
-     * Backward compatibility version
-     */
-    private static List<String> extractDeityActions(String response, ServerPlayer player) {
-        return extractDeityActions(response, player, Arrays.asList("minecraft", "eidolon", "eidolonunchained"));
-    }
-    
-    /**
-     * Extract common deity actions and convert to commands
-     * 🔥 Now uses dynamic registry context instead of hardcoded effects
-     */
-    private static List<String> extractDeityActions(String response, ServerPlayer player, List<String> modContextIds) {
-        List<String> commands = new ArrayList<>();
-        String lowerResponse = response.toLowerCase();
-        String playerName = player.getName().getString();
-        
-        // 🔥 DYNAMIC NATURAL LANGUAGE PATTERNS - NO HARDCODING!
-        
-        // Pattern: "Take this [item]" / "I grant you [item]" / "Receive this [item]"
-        Pattern naturalGiftPattern = Pattern.compile(
-            "\\b(?:take|receive|accept|i (?:grant|give|bestow)|here is)\\s+(?:this\\s+|a\\s+)?([\\w\\s:_-]+?)(?:\\s*[,.]|$)",
-            Pattern.CASE_INSENSITIVE
-        );
-        
-        Matcher naturalGiftMatcher = naturalGiftPattern.matcher(response);
-        while (naturalGiftMatcher.find()) {
-            String itemText = naturalGiftMatcher.group(1).trim();
-            // 🔥 USE DYNAMIC REGISTRY MATCHING - Let the registry find the best match
-            String itemId = normalizeItemId(itemText.replace(" ", "_"), modContextIds);
-            if (itemId != null) {
-                commands.add(String.format("give %s %s 1", playerName, itemId));
-                LOGGER.info("🔥 Extracted natural gift: '{}' -> {}", naturalGiftMatcher.group(0), itemId);
-            }
-        }
-        
-        // 🔥 DYNAMIC ITEM DETECTION - Find ANY mentioned item using fuzzy registry matching
-        Pattern itemMentionPattern = Pattern.compile("\\b([a-z_]+(?:_[a-z_]+)*)\\b", Pattern.CASE_INSENSITIVE);
-        Matcher itemMentionMatcher = itemMentionPattern.matcher(lowerResponse);
-        while (itemMentionMatcher.find()) {
-            String potentialItem = itemMentionMatcher.group(1);
-            // Skip common words that aren't items
-            if (isCommonWord(potentialItem)) continue;
-            
-            String itemId = normalizeItemId(potentialItem, modContextIds);
-            if (itemId != null) {
-                commands.add(String.format("give %s %s 1", playerName, itemId));
-                LOGGER.info("🔥 Detected item mention: '{}' -> {}", potentialItem, itemId);
-                break; // Only give one item per response to avoid spam
-            }
-        }
-        
-        // 🔥 DYNAMIC EFFECT DETECTION - Find ANY mentioned effect using fuzzy registry matching
-        Pattern effectMentionPattern = Pattern.compile("\\b([a-z_]+(?:_[a-z_]+)*)\\b", Pattern.CASE_INSENSITIVE);
-        Matcher effectMentionMatcher = effectMentionPattern.matcher(lowerResponse);
-        while (effectMentionMatcher.find()) {
-            String potentialEffect = effectMentionMatcher.group(1);
-            // Skip common words that aren't effects
-            if (isCommonWord(potentialEffect)) continue;
-            
-            String effectId = normalizeEffectId(potentialEffect, modContextIds);
-            if (effectId != null) {
-                // Determine duration and amplifier based on context
-                int duration = lowerResponse.contains("brief") ? 300 : 600;
-                int amplifier = lowerResponse.contains("strong") || lowerResponse.contains("powerful") ? 2 : 1;
-                
-                commands.add(String.format("effect give %s %s %d %d", playerName, effectId, duration, amplifier));
-                LOGGER.info("🔥 Detected effect mention: '{}' -> {}", potentialEffect, effectId);
-                break; // Only apply one effect per response to avoid spam
-            }
-        }
-        
-        return commands;
-    }
+    // 🔥 OLD AGGRESSIVE DEITY ACTIONS REMOVED
+    // These methods were causing inappropriate item giving by scanning AI narrative
+    // for random words that might be items. Replaced with explicit request detection.
     
     /**
      * 🔥 DYNAMIC ITEM ID NORMALIZATION - Uses actual registries!
@@ -443,38 +416,6 @@ public class EnhancedCommandExtractor {
         cleaned = cleaned.replaceAll("\\n\\s*\\n", "\n").trim();
         
         return cleaned;
-    }
-    
-    /**
-     * Check if a word is too common to be an item/effect name
-     * Prevents false positives in dynamic registry matching
-     */
-    private static boolean isCommonWord(String word) {
-        if (word == null || word.length() < 3) return true;
-        
-        // Common English words that shouldn't be interpreted as items/effects
-        String[] commonWords = {
-            "the", "and", "you", "are", "for", "not", "but", "can", "has", "had", 
-            "this", "that", "with", "will", "your", "from", "they", "have", "been",
-            "take", "give", "make", "come", "know", "time", "work", "look", "get",
-            "way", "see", "him", "two", "may", "say", "she", "use", "her", "each",
-            "which", "their", "said", "how", "out", "many", "them", "these", "so",
-            "some", "what", "would", "make", "like", "into", "than", "find", "was",
-            "more", "very", "when", "where", "much", "before", "right", "too", "any",
-            "same", "tell", "boy", "follow", "came", "want", "show", "also", "around",
-            "form", "three", "small", "set", "put", "end", "why", "turn", "ask",
-            "went", "men", "read", "need", "land", "different", "home", "move", "try",
-            "kind", "hand", "picture", "again", "change", "off", "play", "spell",
-            "air", "away", "animal", "house", "point", "page", "letter", "mother",
-            "answer", "found", "study", "still", "learn", "should", "america", "world"
-        };
-        
-        String lowerWord = word.toLowerCase();
-        for (String common : commonWords) {
-            if (common.equals(lowerWord)) return true;
-        }
-        
-        return false;
     }
     
     /**
