@@ -474,4 +474,82 @@ public class EnhancedCommandExtractor {
         
         return successCount;
     }
+    
+    /**
+     * 🔥 NEW: Extract only explicit player requests like "give me", "I need", "can I have"
+     */
+    public static List<String> extractExplicitRequests(String playerInput, ServerPlayer player) {
+        List<String> commands = new ArrayList<>();
+        
+        // Pattern for explicit requests from player
+        Pattern explicitPattern = Pattern.compile(
+            "\\b(?:give\\s+me|i\\s+(?:need|want|require)|can\\s+i\\s+(?:have|get)|please\\s+(?:give|grant))\\s+(?:a\\s+|an\\s+|some\\s+)?([\\w\\s:_-]+?)(?:\\s*[,.?!]|$)",
+            Pattern.CASE_INSENSITIVE
+        );
+        
+        Matcher matcher = explicitPattern.matcher(playerInput);
+        while (matcher.find()) {
+            String requestedItem = matcher.group(1).trim();
+            
+            // Filter out common words
+            if (!isCommonWord(requestedItem)) {
+                List<ResourceLocation> matches = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
+                    .findMatchingItems(requestedItem, Arrays.asList("minecraft", "eidolon", "eidolonunchained"));
+                
+                if (!matches.isEmpty()) {
+                    String itemId = matches.get(0).toString();
+                    String command = String.format("give %s %s 1", player.getName().getString(), itemId);
+                    commands.add(command);
+                    LOGGER.info("🔥 Player explicit request: '{}' -> {}", matcher.group(0), itemId);
+                }
+            }
+        }
+        
+        return commands;
+    }
+    
+    /**
+     * 🔥 NEW: Extract contextual actions from AI response (conservative approach)
+     */
+    public static List<String> extractContextualActions(String aiResponse, ServerPlayer player, String playerMessage) {
+        List<String> commands = new ArrayList<>();
+        
+        // Only extract contextual actions if:
+        // 1. Player seems to be in need (low health, asking for help)
+        // 2. AI explicitly mentions giving something specific
+        // 3. Context suggests appropriate divine intervention
+        
+        String lowerResponse = aiResponse.toLowerCase();
+        String lowerPlayerMessage = playerMessage.toLowerCase();
+        String playerName = player.getName().getString();
+        
+        // Check if player seems to need help
+        boolean playerNeedsHelp = player.getHealth() < (player.getMaxHealth() * 0.5f) ||
+                                 lowerPlayerMessage.contains("help") ||
+                                 lowerPlayerMessage.contains("blessing") ||
+                                 lowerPlayerMessage.contains("aid");
+        
+        // Only give contextual items if player actually needs help
+        if (playerNeedsHelp) {
+            // Look for AI explicitly mentioning giving healing items
+            if (lowerResponse.contains("heal") || lowerResponse.contains("restore")) {
+                String regenEffect = normalizeEffectId("regeneration", Arrays.asList("minecraft"));
+                if (regenEffect != null) {
+                    commands.add(String.format("effect give %s %s 300 1", playerName, regenEffect));
+                    LOGGER.info("🔥 AI contextual healing for needy player");
+                }
+            }
+            
+            // Look for AI blessing mentions when player asked for blessing
+            if (lowerPlayerMessage.contains("blessing") && lowerResponse.contains("bless")) {
+                String strengthEffect = normalizeEffectId("strength", Arrays.asList("minecraft"));
+                if (strengthEffect != null) {
+                    commands.add(String.format("effect give %s %s 600 1", playerName, strengthEffect));
+                    LOGGER.info("🔥 AI contextual blessing for requesting player");
+                }
+            }
+        }
+        
+        return commands;
+    }
 }

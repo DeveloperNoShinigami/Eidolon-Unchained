@@ -64,6 +64,15 @@ public class EidolonUnchainedConfig {
         public final ForgeConfigSpec.DoubleValue titleScale;
         public final ForgeConfigSpec.DoubleValue subtitleScale;
         
+        // Action Bar Specific Configuration
+        public final ForgeConfigSpec.BooleanValue enableActionBarTyping;
+        public final ForgeConfigSpec.IntValue actionBarTypingSpeed;
+        public final ForgeConfigSpec.IntValue actionBarSentenceDelay;
+        public final ForgeConfigSpec.IntValue actionBarFadeDelayTicks;
+        public final ForgeConfigSpec.IntValue actionBarMaxWidth;
+        public final ForgeConfigSpec.BooleanValue actionBarCenterText;
+        public final ForgeConfigSpec.BooleanValue actionBarWrapText;
+        
         // ===========================================
         // CHANT SYSTEM CONFIGURATION
         // ===========================================
@@ -277,6 +286,57 @@ public class EidolonUnchainedConfig {
                 .comment("Scale factor for deity response subtitle text",
                         "Higher values make the response text bigger (1.0 = normal size)")
                 .defineInRange("subtitle_scale", 1.1, 0.5, 3.0);
+            
+            // ===========================================
+            // ACTION BAR SPECIFIC CONFIGURATION
+            // ===========================================
+            builder.comment(
+                "",
+                "═══ ACTION BAR SPECIFIC SETTINGS ═══",
+                "Configure typing animation and display behavior for action bar mode"
+            );
+            
+            enableActionBarTyping = builder
+                .comment("Enable sentence-by-sentence typing animation in action bar",
+                        "When true: Messages appear one sentence at a time with animation",
+                        "When false: Full message appears instantly")
+                .define("enable_action_bar_typing", true);
+            
+            actionBarTypingSpeed = builder
+                .comment("Speed of typing animation in milliseconds per character",
+                        "Lower values = faster typing, higher values = slower typing",
+                        "Recommended: 30-100ms per character")
+                .defineInRange("action_bar_typing_speed_ms", 50, 10, 200);
+            
+            actionBarSentenceDelay = builder
+                .comment("Delay between sentences in milliseconds",
+                        "How long to pause between each sentence during typing animation",
+                        "Recommended: 800-2000ms between sentences")
+                .defineInRange("action_bar_sentence_delay_ms", 1200, 200, 5000);
+            
+            actionBarFadeDelayTicks = builder
+                .comment("How long the final message stays before fading (in ticks)",
+                        "20 ticks = 1 second, time after typing completes before fading",
+                        "Recommended: 60-120 ticks (3-6 seconds)")
+                .defineInRange("action_bar_fade_delay_ticks", 80, 20, 300);
+            
+            actionBarMaxWidth = builder
+                .comment("Maximum character width for action bar messages",
+                        "Text longer than this will wrap or truncate",
+                        "Recommended: 50-70 characters for most screen sizes")
+                .defineInRange("action_bar_max_width", 55, 30, 100);
+            
+            actionBarCenterText = builder
+                .comment("Center text in the action bar",
+                        "When true: Text is centered horizontally",
+                        "When false: Text is left-aligned")
+                .define("action_bar_center_text", true);
+            
+            actionBarWrapText = builder
+                .comment("Automatically wrap long text to multiple lines",
+                        "When true: Long messages show first line with '...' indicator",
+                        "When false: Long messages are truncated")
+                .define("action_bar_wrap_text", true);
             
             builder.pop();
             

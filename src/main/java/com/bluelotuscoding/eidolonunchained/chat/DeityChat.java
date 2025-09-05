@@ -18,6 +18,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.server.MinecraftServer;
+
+import java.util.Arrays;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -324,12 +326,28 @@ public class DeityChat {
                 String rawResponse = aiResponse.dialogue;
                 LOGGER.info("🔥 DEBUG: AI Response received: '{}'", rawResponse);
                 
-                // 🔥 FIXED: EXTRACT COMMANDS FROM PLAYER INPUT, NOT AI RESPONSE
-                // This prevents AI from giving items just because it mentions them in narrative
-                LOGGER.info("🔥 DEBUG: Starting command extraction from PLAYER input: '{}'", message);
-                List<String> extractedCommands = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
-                    .extractAndConvertCommands(message, player); // Extract from PLAYER message, not AI response
-                LOGGER.info("🔥 DEBUG: Extracted {} commands from player input: {}", extractedCommands.size(), extractedCommands);
+                // 🔥 HYBRID APPROACH: Check player input first, then AI decision
+                LOGGER.info("🔥 DEBUG: Starting hybrid command extraction...");
+                
+                // Step 1: Check if player explicitly requested something
+                List<String> playerRequestCommands = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
+                    .extractExplicitRequests(message, player);
+                LOGGER.info("🔥 DEBUG: Player explicit requests: {}", playerRequestCommands);
+                
+                // Step 2: If no explicit requests, check if AI wants to give something contextually
+                List<String> aiContextCommands = new ArrayList<>();
+                if (playerRequestCommands.isEmpty()) {
+                    aiContextCommands = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
+                        .extractContextualActions(rawResponse, player, message);
+                    LOGGER.info("🔥 DEBUG: AI contextual actions: {}", aiContextCommands);
+                }
+                
+                // Combine commands (player requests take priority)
+                List<String> extractedCommands = new ArrayList<>();
+                extractedCommands.addAll(playerRequestCommands);
+                extractedCommands.addAll(aiContextCommands);
+                
+                LOGGER.info("🔥 DEBUG: Total extracted commands: {}", extractedCommands);
                 
                 int commandsExecuted = 0;
                 if (!extractedCommands.isEmpty()) {
@@ -836,22 +854,22 @@ public class DeityChat {
         boolean useProminentDisplay = EidolonUnchainedConfig.COMMON.useProminentDisplay.get();
         int maxSubtitleLength = EidolonUnchainedConfig.COMMON.maxSubtitleLength.get();
         
-        // Auto-select display method if configured
+        // 🔥 FIX: Only auto-select if explicitly set to AUTO
         if ("AUTO".equals(displayMethod)) {
             if (message.length() > maxSubtitleLength) {
                 displayMethod = "ENHANCED_CHAT";
             } else {
-                displayMethod = "ACTION_BAR";
+                displayMethod = "TITLE_SUBTITLE"; // Default to title/subtitle, not action bar
             }
         }
         
-        // Route to appropriate display method
+        // 🔥 FIX: Route to appropriate display method - NO MIXED APPROACHES
         switch (displayMethod) {
             case "TITLE_SUBTITLE":
                 sendLegacyTitleSubtitle(player, deityName, message);
                 break;
             case "ACTION_BAR":
-                sendActionBarDisplay(player, deityName, message);
+                sendPureActionBarDisplay(player, deityName, message); // Pure action bar only
                 break;
             case "ENHANCED_CHAT":
                 sendEnhancedChatMessage(player, deityName, message);
@@ -913,17 +931,129 @@ public class DeityChat {
     }
     
     /**
-     * Action bar display - centered, readable, persistent
+     * 🔥 FULLY CONFIGURABLE ACTION BAR DISPLAY with typing animation
      */
-    private static void sendActionBarDisplay(ServerPlayer player, String deityName, String message) {
-        int maxSubtitleLength = EidolonUnchainedConfig.COMMON.maxSubtitleLength.get();
+    private static void sendPureActionBarDisplay(ServerPlayer player, String deityName, String message) {
+        // Get all action bar configuration
+        boolean enableTyping = EidolonUnchainedConfig.COMMON.enableActionBarTyping.get();
+        int typingSpeed = EidolonUnchainedConfig.COMMON.actionBarTypingSpeed.get();
+        int sentenceDelay = EidolonUnchainedConfig.COMMON.actionBarSentenceDelay.get();
+        int fadeDelay = EidolonUnchainedConfig.COMMON.actionBarFadeDelayTicks.get();
+        int maxWidth = EidolonUnchainedConfig.COMMON.actionBarMaxWidth.get();
+        boolean centerText = EidolonUnchainedConfig.COMMON.actionBarCenterText.get();
+        boolean wrapText = EidolonUnchainedConfig.COMMON.actionBarWrapText.get();
         
-        if (message.length() > maxSubtitleLength) {
-            // Long messages: use action bar + chat combination
-            sendActionBarWithChat(player, deityName, message);
+        if (enableTyping) {
+            // Use animated typing
+            startActionBarTypingAnimation(player, deityName, message, typingSpeed, sentenceDelay, fadeDelay, maxWidth, centerText, wrapText);
         } else {
-            // Short messages: use persistent action bar
-            sendPersistentActionBar(player, deityName, message);
+            // Show instant message
+            String formattedMessage = formatActionBarMessage(deityName, message, maxWidth, centerText, wrapText);
+            Component actionBarComponent = Component.literal(formattedMessage);
+            player.sendSystemMessage(actionBarComponent, true);
+            
+            LOGGER.debug("Sent instant action bar message to {}: {}", player.getName().getString(), formattedMessage);
+        }
+    }
+    
+    /**
+     * 🔥 SENTENCE-BY-SENTENCE TYPING ANIMATION
+     */
+    private static void startActionBarTypingAnimation(ServerPlayer player, String deityName, String message, 
+                                                    int typingSpeed, int sentenceDelay, int fadeDelay, 
+                                                    int maxWidth, boolean centerText, boolean wrapText) {
+        
+        // Split message into sentences
+        String[] sentences = message.split("(?<=[.!?])\\s+");
+        
+        // Start async typing animation
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                StringBuilder fullMessage = new StringBuilder();
+                
+                for (int i = 0; i < sentences.length; i++) {
+                    String sentence = sentences[i].trim();
+                    if (sentence.isEmpty()) continue;
+                    
+                    // Add current sentence to full message
+                    if (fullMessage.length() > 0) {
+                        fullMessage.append(" ");
+                    }
+                    
+                    // Type out character by character
+                    for (int charIndex = 0; charIndex <= sentence.length(); charIndex++) {
+                        String partialSentence = sentence.substring(0, charIndex);
+                        String displayText = fullMessage.toString() + partialSentence;
+                        
+                        String formattedMessage = formatActionBarMessage(deityName, displayText, maxWidth, centerText, wrapText);
+                        Component actionBarComponent = Component.literal(formattedMessage);
+                        
+                        // Send to action bar on main thread
+                        player.getServer().execute(() -> {
+                            player.sendSystemMessage(actionBarComponent, true);
+                        });
+                        
+                        // Wait for typing speed
+                        Thread.sleep(typingSpeed);
+                    }
+                    
+                    // Add completed sentence to full message
+                    fullMessage.append(sentence);
+                    
+                    // Pause between sentences (except for last sentence)
+                    if (i < sentences.length - 1) {
+                        Thread.sleep(sentenceDelay);
+                    }
+                }
+                
+                // Final message stays for fade delay
+                Thread.sleep(fadeDelay * 50); // Convert ticks to milliseconds (1 tick = 50ms)
+                
+                // Clear action bar
+                player.getServer().execute(() -> {
+                    player.sendSystemMessage(Component.literal(""), true);
+                });
+                
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                LOGGER.warn("Action bar typing animation interrupted for player {}", player.getName().getString());
+            }
+        });
+    }
+    
+    /**
+     * 🔥 FORMAT ACTION BAR MESSAGE with proper centering and wrapping
+     */
+    private static String formatActionBarMessage(String deityName, String message, int maxWidth, boolean centerText, boolean wrapText) {
+        // Create header with deity name
+        String header = "§6⟦ " + deityName + " ⟧";
+        
+        // Calculate available width for message (subtract header width)
+        int headerWidth = deityName.length() + 6; // 6 for "⟦  ⟧" characters
+        int messageWidth = maxWidth - headerWidth - 2; // 2 for spacing
+        
+        // Handle message wrapping/truncation
+        String processedMessage;
+        if (message.length() > messageWidth && wrapText) {
+            // Show first part with ellipsis
+            processedMessage = message.substring(0, Math.max(1, messageWidth - 3)) + "...";
+        } else if (message.length() > messageWidth) {
+            // Truncate without ellipsis
+            processedMessage = message.substring(0, Math.max(1, messageWidth));
+        } else {
+            processedMessage = message;
+        }
+        
+        // Combine header and message
+        String fullText = header + " §f" + processedMessage;
+        
+        // Center text if enabled
+        if (centerText) {
+            int padding = Math.max(0, (maxWidth - fullText.replaceAll("§.", "").length()) / 2);
+            String paddingSpaces = " ".repeat(padding);
+            return paddingSpaces + fullText;
+        } else {
+            return fullText;
         }
     }
     
