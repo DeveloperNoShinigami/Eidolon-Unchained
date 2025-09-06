@@ -55,44 +55,64 @@ public class DatapackSyncPacket {
     
     private void collectServerData() {
         try {
+            System.out.println("DatapackSyncPacket: Collecting server data...");
+            
             // Collect deity data
             Map<ResourceLocation, DatapackDeity> deities = DatapackDeityManager.getAllDeities();
             if (deities != null) {
+                System.out.println("DatapackSyncPacket: Found " + deities.size() + " deities to sync");
                 deities.forEach((id, deity) -> {
                     try {
                         deityData.put(id, GSON.toJson(deity.toJson()));
+                        System.out.println("DatapackSyncPacket: Serialized deity " + id);
                     } catch (Exception e) {
                         System.err.println("Failed to serialize deity " + id + ": " + e.getMessage());
                     }
                 });
+            } else {
+                System.out.println("DatapackSyncPacket: No deities found on server");
             }
             
             // Collect chant data
             Map<ResourceLocation, DatapackChant> chants = DatapackChantManager.getAllChantsAsMap();
             if (chants != null) {
+                System.out.println("DatapackSyncPacket: Found " + chants.size() + " chants to sync");
                 chants.forEach((id, chant) -> {
                     try {
                         chantData.put(id, GSON.toJson(chant.toJson()));
+                        System.out.println("DatapackSyncPacket: Serialized chant " + id);
                     } catch (Exception e) {
                         System.err.println("Failed to serialize chant " + id + ": " + e.getMessage());
                     }
                 });
+            } else {
+                System.out.println("DatapackSyncPacket: No chants found on server");
             }
             
             // Collect codex data  
             Map<ResourceLocation, CodexEntry> codexEntries = CodexDataManager.getAllEntries();
             if (codexEntries != null) {
+                System.out.println("DatapackSyncPacket: Found " + codexEntries.size() + " codex entries to sync");
                 codexEntries.forEach((id, entry) -> {
                     try {
                         codexData.put(id, GSON.toJson(entry.toJson()));
+                        System.out.println("DatapackSyncPacket: Serialized codex entry " + id);
                     } catch (Exception e) {
                         System.err.println("Failed to serialize codex entry " + id + ": " + e.getMessage());
                     }
                 });
+            } else {
+                System.out.println("DatapackSyncPacket: No codex entries found on server");
             }
+            
+            System.out.println("DatapackSyncPacket: Collection complete - " + 
+                             deityData.size() + " deities, " + 
+                             chantData.size() + " chants, " + 
+                             codexData.size() + " codex entries");
             
         } catch (Exception e) {
             System.err.println("Failed to collect server datapack data: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
@@ -177,10 +197,15 @@ public class DatapackSyncPacket {
      */
     private static void handleClientSide(DatapackSyncPacket packet) {
         try {
-            System.out.println("Synchronizing datapack content to client...");
-            System.out.println("Received " + packet.deityData.size() + " deities, " + 
+            System.out.println("CLIENT: Received DatapackSyncPacket - processing...");
+            System.out.println("CLIENT: Packet contains " + packet.deityData.size() + " deities, " + 
                              packet.chantData.size() + " chants, " + 
                              packet.codexData.size() + " codex entries");
+            
+            // Clear existing client data first
+            DatapackDeityManager.clearClientDeities();
+            DatapackChantManager.clearClientChants();
+            CodexDataManager.clearClientEntries();
             
             // Populate client-side deity data
             packet.deityData.forEach((id, jsonData) -> {
@@ -189,9 +214,10 @@ public class DatapackSyncPacket {
                     DatapackDeity deity = DatapackDeity.fromJson(deityJson);
                     if (deity != null) {
                         DatapackDeityManager.addClientDeity(id, deity);
+                        System.out.println("CLIENT: Added deity " + id);
                     }
                 } catch (Exception e) {
-                    System.err.println("Failed to deserialize deity " + id + ": " + e.getMessage());
+                    System.err.println("CLIENT: Failed to deserialize deity " + id + ": " + e.getMessage());
                 }
             });
             
@@ -202,9 +228,10 @@ public class DatapackSyncPacket {
                     DatapackChant chant = DatapackChant.fromJson(id, chantJson);
                     if (chant != null) {
                         DatapackChantManager.addClientChant(id, chant);
+                        System.out.println("CLIENT: Added chant " + id);
                     }
                 } catch (Exception e) {
-                    System.err.println("Failed to deserialize chant " + id + ": " + e.getMessage());
+                    System.err.println("CLIENT: Failed to deserialize chant " + id + ": " + e.getMessage());
                 }
             });
             
@@ -215,16 +242,21 @@ public class DatapackSyncPacket {
                     CodexEntry entry = CodexEntry.fromJson(codexJson);
                     if (entry != null) {
                         CodexDataManager.addClientEntry(id, entry);
+                        System.out.println("CLIENT: Added codex entry " + id);
                     }
                 } catch (Exception e) {
-                    System.err.println("Failed to deserialize codex entry " + id + ": " + e.getMessage());
+                    System.err.println("CLIENT: Failed to deserialize codex entry " + id + ": " + e.getMessage());
                 }
             });
             
-            System.out.println("Datapack synchronization complete!");
+            System.out.println("CLIENT: Datapack synchronization complete!");
+            System.out.println("CLIENT: Final counts - Deities: " + DatapackDeityManager.getAllDeities().size() + 
+                             ", Chants: " + DatapackChantManager.getAllChantsCollection().size() + 
+                             ", Codex: " + CodexDataManager.getAllEntries().size());
             
         } catch (Exception e) {
-            System.err.println("Failed to handle client-side datapack sync: " + e.getMessage());
+            System.err.println("CLIENT: Failed to handle datapack sync: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

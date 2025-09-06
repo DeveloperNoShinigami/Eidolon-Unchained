@@ -33,24 +33,30 @@ public class NetworkEventHandler {
                 try {
                     // Verify the player is still connected and in play phase
                     if (serverPlayer.connection != null && !serverPlayer.hasDisconnected()) {
-                        // Send deity sync packet to the player - but only if networking is working
-                        DeitySyncPacket syncPacket = DeitySyncPacket.createFromServer();
+                        LOGGER.info("Sending comprehensive datapack sync to player: {}", serverPlayer.getName().getString());
                         
-                        // Only send if we actually have data to send
-                        if (syncPacket != null) {
+                        // Send comprehensive datapack sync packet (includes deities, chants, codex)
+                        DatapackSyncPacket comprehensiveSync = new DatapackSyncPacket();
+                        EidolonUnchainedNetworking.INSTANCE.send(
+                            PacketDistributor.PLAYER.with(() -> serverPlayer), 
+                            comprehensiveSync
+                        );
+                        LOGGER.info("Sent comprehensive datapack sync to player: {}", serverPlayer.getName().getString());
+                        
+                        // Keep legacy deity sync for compatibility
+                        DeitySyncPacket legacySync = DeitySyncPacket.createFromServer();
+                        if (legacySync != null) {
                             EidolonUnchainedNetworking.INSTANCE.send(
                                 PacketDistributor.PLAYER.with(() -> serverPlayer), 
-                                syncPacket
+                                legacySync
                             );
-                            
-                            LOGGER.info("Sent deity sync packet to player: {}", serverPlayer.getName().getString());
-                        } else {
-                            LOGGER.debug("No deity data to sync for player: {}", serverPlayer.getName().getString());
+                            LOGGER.info("Sent legacy deity sync packet to player: {}", serverPlayer.getName().getString());
                         }
                     }
                 } catch (Exception e) {
-                    LOGGER.warn("Failed to send sync packet to player {}: {}", 
+                    LOGGER.warn("Failed to send sync packets to player {}: {}", 
                         serverPlayer.getName().getString(), e.getMessage());
+                    e.printStackTrace(); // Add stack trace for debugging
                     // Don't throw exception - allow player to stay connected
                 }
             });
