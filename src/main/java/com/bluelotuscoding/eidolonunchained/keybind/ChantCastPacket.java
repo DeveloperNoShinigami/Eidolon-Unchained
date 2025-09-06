@@ -28,27 +28,30 @@ public class ChantCastPacket {
         this.chantId = buf.readResourceLocation();
     }
     
-    public void toBytes(FriendlyByteBuf buf) {
-        buf.writeResourceLocation(this.chantId);
+    public static void encode(ChantCastPacket packet, FriendlyByteBuf buf) {
+        buf.writeResourceLocation(packet.chantId);
     }
     
-    public boolean handle(Supplier<NetworkEvent.Context> supplier) {
-        NetworkEvent.Context context = supplier.get();
+    public static ChantCastPacket decode(FriendlyByteBuf buf) {
+        return new ChantCastPacket(buf.readResourceLocation());
+    }
+    
+    public static void consume(ChantCastPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
+        NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player != null) {
                 LOGGER.info("Processing chant cast packet for player: {} chant: {}", 
-                           player.getName().getString(), chantId);
+                           player.getName().getString(), packet.chantId);
                 
-                boolean success = DatapackChantManager.executeChant(chantId, player);
+                boolean success = DatapackChantManager.executeChant(packet.chantId, player);
                 if (success) {
                     player.sendSystemMessage(Component.literal("§6✨ Chant cast successfully via keybind!"));
                 } else {
-                    player.sendSystemMessage(Component.literal("§cFailed to cast chant: " + chantId.getPath()));
+                    player.sendSystemMessage(Component.literal("§cFailed to cast chant: " + packet.chantId.getPath()));
                 }
             }
         });
         context.setPacketHandled(true);
-        return true;
     }
 }

@@ -43,20 +43,26 @@ public class ChantInterfacePacket {
         this.data = buf.readUtf();
     }
     
-    public void toBytes(FriendlyByteBuf buf) {
-        buf.writeInt(this.action.ordinal());
-        buf.writeUtf(this.data);
+    public static void encode(ChantInterfacePacket packet, FriendlyByteBuf buf) {
+        buf.writeEnum(packet.action);
+        buf.writeUtf(packet.data != null ? packet.data : "");
     }
     
-    public boolean handle(Supplier<NetworkEvent.Context> supplier) {
-        NetworkEvent.Context context = supplier.get();
+    public static ChantInterfacePacket decode(FriendlyByteBuf buf) {
+        Action action = buf.readEnum(Action.class);
+        String data = buf.readUtf();
+        return new ChantInterfacePacket(action, data.isEmpty() ? null : data);
+    }
+    
+    public static void consume(ChantInterfacePacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
+        NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player != null) {
                 LOGGER.info("Processing chant interface packet for player: {} action: {}", 
-                           player.getName().getString(), action);
+                           player.getName().getString(), packet.action);
                 
-                switch (action) {
+                switch (packet.action) {
                     case OPEN_INTERFACE:
                         // Send current chant assignments to client
                         String assignments = ChantSlotManager.getPlayerChantAssignments(player);
@@ -72,6 +78,5 @@ public class ChantInterfacePacket {
             }
         });
         context.setPacketHandled(true);
-        return true;
     }
 }

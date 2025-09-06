@@ -35,27 +35,30 @@ public class ChantSlotActivationPacket {
         this.castingMode = buf.readUtf();
     }
     
-    public void toBytes(FriendlyByteBuf buf) {
-        buf.writeInt(this.slotNumber);
-        buf.writeUtf(this.castingMode);
+    public static void encode(ChantSlotActivationPacket packet, FriendlyByteBuf buf) {
+        buf.writeInt(packet.slotNumber);
+        buf.writeUtf(packet.castingMode);
     }
     
-    public boolean handle(Supplier<NetworkEvent.Context> supplier) {
-        NetworkEvent.Context context = supplier.get();
+    public static ChantSlotActivationPacket decode(FriendlyByteBuf buf) {
+        return new ChantSlotActivationPacket(buf.readInt(), buf.readUtf());
+    }
+    
+    public static void consume(ChantSlotActivationPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
+        NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player != null) {
                 LOGGER.info("Processing slot activation for player: {} slot: {} mode: {}", 
-                           player.getName().getString(), slotNumber, castingMode);
+                           player.getName().getString(), packet.slotNumber, packet.castingMode);
                 
                 // Get the assignment for this slot and activate with the specified mode
-                boolean success = SlotAssignmentManager.activateSlot(player, slotNumber, castingMode);
+                boolean success = SlotAssignmentManager.activateSlot(player, packet.slotNumber, packet.castingMode);
                 if (!success) {
-                    player.sendSystemMessage(Component.literal("§cNo assignment in slot " + slotNumber + ". Use /chant assign-sign <slot> <sign> or /chant assign-chant <slot> <chant> to configure."));
+                    player.sendSystemMessage(Component.literal("§cNo assignment in slot " + packet.slotNumber + ". Use /chant assign-sign <slot> <sign> or /chant assign-chant <slot> <chant> to configure."));
                 }
             }
         });
         context.setPacketHandled(true);
-        return true;
     }
 }

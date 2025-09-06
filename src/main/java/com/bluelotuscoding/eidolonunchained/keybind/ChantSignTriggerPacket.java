@@ -32,23 +32,27 @@ public class ChantSignTriggerPacket {
         this.signId = buf.readResourceLocation();
     }
     
-    public void toBytes(FriendlyByteBuf buf) {
-        buf.writeResourceLocation(this.signId);
+    public static void encode(ChantSignTriggerPacket packet, FriendlyByteBuf buf) {
+        buf.writeResourceLocation(packet.signId);
+    }
+    
+    public static ChantSignTriggerPacket decode(FriendlyByteBuf buf) {
+        return new ChantSignTriggerPacket(buf.readResourceLocation());
     }
     
     @OnlyIn(Dist.CLIENT)
-    public boolean handle(Supplier<NetworkEvent.Context> supplier) {
-        NetworkEvent.Context context = supplier.get();
+    public static void consume(ChantSignTriggerPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
+        NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null || mc.level == null) return;
             
-            LOGGER.debug("Received chant sign trigger packet for sign: {}", signId);
+            LOGGER.debug("Received chant sign trigger packet for sign: {}", packet.signId);
             
             // Find the sign
-            Sign sign = Signs.find(signId);
+            Sign sign = Signs.find(packet.signId);
             if (sign == null) {
-                LOGGER.warn("Sign not found: {}", signId);
+                LOGGER.warn("Sign not found: {}", packet.signId);
                 return;
             }
             
@@ -56,12 +60,11 @@ public class ChantSignTriggerPacket {
                 // Add the sign to the chant overlay (new independent system)
                 ChantOverlay.addSignToChant(sign);
                 
-                LOGGER.debug("Successfully added sign {} to chant overlay", signId);
+                LOGGER.debug("Successfully added sign {} to chant overlay", packet.signId);
             } catch (Exception e) {
                 LOGGER.error("Failed to process sign trigger: {}", e.getMessage(), e);
             }
         });
         context.setPacketHandled(true);
-        return true;
     }
 }

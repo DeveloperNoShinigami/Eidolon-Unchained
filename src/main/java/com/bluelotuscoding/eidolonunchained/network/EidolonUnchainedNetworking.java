@@ -44,36 +44,36 @@ public class EidolonUnchainedNetworking {
             INSTANCE.registerMessage(
                 ++packetId,
                 ChantCastPacket.class,
-                ChantCastPacket::toBytes,
-                ChantCastPacket::new,
-                ChantCastPacket::handle
+                ChantCastPacket::encode,
+                ChantCastPacket::decode,
+                ChantCastPacket::consume
             );
             
             // Register chant slot activation packet
             INSTANCE.registerMessage(
                 ++packetId,
                 ChantSlotActivationPacket.class,
-                ChantSlotActivationPacket::toBytes,
-                ChantSlotActivationPacket::new,
-                ChantSlotActivationPacket::handle
+                ChantSlotActivationPacket::encode,
+                ChantSlotActivationPacket::decode,
+                ChantSlotActivationPacket::consume
             );
             
             // Register chant interface packet
             INSTANCE.registerMessage(
                 ++packetId,
                 ChantInterfacePacket.class,
-                ChantInterfacePacket::toBytes,
-                ChantInterfacePacket::new,
-                ChantInterfacePacket::handle
+                ChantInterfacePacket::encode,
+                ChantInterfacePacket::decode,
+                ChantInterfacePacket::consume
             );
             
             // Register chant sign trigger packet
             INSTANCE.registerMessage(
                 ++packetId,
                 ChantSignTriggerPacket.class,
-                ChantSignTriggerPacket::toBytes,
-                ChantSignTriggerPacket::new,
-                ChantSignTriggerPacket::handle
+                ChantSignTriggerPacket::encode,
+                ChantSignTriggerPacket::decode,
+                ChantSignTriggerPacket::consume
             );
             
             // Add more packets here as needed
