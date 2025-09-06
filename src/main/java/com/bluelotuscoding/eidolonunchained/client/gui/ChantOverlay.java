@@ -1,6 +1,7 @@
 package com.bluelotuscoding.eidolonunchained.client.gui;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
+import com.bluelotuscoding.eidolonunchained.chant.ActiveChantingManager;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
 import elucent.eidolon.api.spells.Sign;
@@ -76,11 +77,14 @@ public class ChantOverlay implements IGuiOverlay {
             activeChant.clear();
         }
         
-        // Add the sign
+        // Add the sign to our overlay sequence
         activeChant.add(sign);
         lastSignAddTime = currentTime;
         lastSignId = signId;
         autoCompleteTriggered = false;
+        
+        // ✨ NEW: Add sign to the active chanting entity for real-time visual feedback
+        ActiveChantingManager.addSignToActiveChant(mc.player, sign);
         
         // Play Eidolon's SELECT_RUNE sound (like selecting in codex)
         if (mc.player != null) {
@@ -139,6 +143,12 @@ public class ChantOverlay implements IGuiOverlay {
      * Clear the active chant and remove floating signs
      */
     public static void clearChant() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) {
+            // ✨ NEW: Clear the active chanting entity
+            ActiveChantingManager.clearActiveChant(mc.player);
+        }
+        
         activeChant.clear();
         isActive = false;
         autoCompleteTriggered = false;
@@ -192,6 +202,9 @@ public class ChantOverlay implements IGuiOverlay {
         
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
+        
+        // ✨ NEW: Clean up removed active chanting entities
+        ActiveChantingManager.cleanup();
         
         // Check for auto-completion timing
         int autoCompleteDelayMs = EidolonUnchainedConfig.COMMON.chantAutoCompleteDelay.get() * 50;
@@ -314,7 +327,7 @@ public class ChantOverlay implements IGuiOverlay {
     }
     
     /**
-     * Execute the completed chant using Eidolon's AttemptCastPacket
+     * Execute the completed chant using the active chanting entity
      */
     private void executeChant() {
         if (activeChant.isEmpty()) return;
@@ -327,7 +340,10 @@ public class ChantOverlay implements IGuiOverlay {
             mc.player.playNotifySound(SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.NEUTRAL, 1.0f, 1.0f);
         }
         
-        // Send AttemptCastPacket to server (this will handle the actual spell casting)
+        // ✨ NEW: Complete the active chanting entity (it will handle the spell casting)
+        ActiveChantingManager.completeActiveChant(mc.player);
+        
+        // Also send AttemptCastPacket as backup for compatibility
         AttemptCastPacket castPacket = new AttemptCastPacket(mc.player, new ArrayList<>(activeChant));
         Networking.INSTANCE.sendToServer(castPacket);
         
