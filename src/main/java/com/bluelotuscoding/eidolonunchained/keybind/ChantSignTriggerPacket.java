@@ -37,7 +37,7 @@ public class ChantSignTriggerPacket {
     }
     
     @OnlyIn(Dist.CLIENT)
-    public static boolean handle(ChantSignTriggerPacket packet, Supplier<NetworkEvent.Context> supplier) {
+    public static void handle(ChantSignTriggerPacket packet, Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
             Minecraft mc = Minecraft.getInstance();
@@ -62,6 +62,5 @@ public class ChantSignTriggerPacket {
             }
         });
         context.setPacketHandled(true);
-        return true;
     }
 }
