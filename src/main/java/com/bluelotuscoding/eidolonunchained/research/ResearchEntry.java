@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 import com.bluelotuscoding.eidolonunchained.research.conditions.DimensionCondition;
 import com.bluelotuscoding.eidolonunchained.research.conditions.InventoryCondition;

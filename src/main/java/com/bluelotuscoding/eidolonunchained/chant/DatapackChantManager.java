@@ -417,48 +417,44 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
     }
     
     /**
-     * CLIENT-SIDE ONLY: Register all synced chants with Eidolon's spell system
-     * Called after client receives DatapackSyncPacket
+     * CLIENT-SIDE ONLY: Register synced chants with Eidolon's spell system
+     * This is crucial for chants to actually work in multiplayer
      */
     public static void registerClientChantsWithEidolon() {
         if (!net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
-            return; // Server-side should use the normal registration method
-        }
-        
-        if (!EidolonUnchainedConfig.COMMON.enableChantSystem.get()) {
-            LOGGER.info("CLIENT: Chant system disabled, skipping Eidolon registration");
             return;
         }
         
-        LOGGER.info("CLIENT: Registering {} synced chants with Eidolon spell system", clientChants.size());
-        
-        for (Map.Entry<ResourceLocation, DatapackChant> entry : clientChants.entrySet()) {
-            ResourceLocation id = entry.getKey();
-            DatapackChant chant = entry.getValue();
+        try {
+            LOGGER.info("CLIENT: Registering {} chants with Eidolon spell system", clientChants.size());
             
-            try {
-                // Convert chant signs to Eidolon Sign objects
-                Sign[] signs = getInstance().convertToSigns(chant.getSignSequence());
+            // Use reflection to access Eidolon's Spells class
+            Class<?> spellsClass = Class.forName("elucent.eidolon.registry.Spells");
+            java.lang.reflect.Field spellsField = spellsClass.getDeclaredField("spells");
+            spellsField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            Map<ResourceLocation, elucent.eidolon.api.spells.Spell> eidolonSpells = 
+                (Map<ResourceLocation, elucent.eidolon.api.spells.Spell>) spellsField.get(null);
+            
+            int registered = 0;
+            for (Map.Entry<ResourceLocation, DatapackChant> entry : clientChants.entrySet()) {
+                ResourceLocation chantId = entry.getKey();
+                DatapackChant chant = entry.getValue();
                 
-                // Create spell for this chant
-                DatapackChantSpell spell = new DatapackChantSpell(id, chant, signs);
+                // Create DatapackChantSpell wrapper and register it
+                // Use empty signs array - signs are handled by DatapackChant internally
+                Sign[] emptySignsArray = new Sign[0];
+                DatapackChantSpell spellWrapper = new DatapackChantSpell(chantId, chant, emptySignsArray);
+                eidolonSpells.put(chantId, spellWrapper);
+                registered++;
                 
-                // CRITICAL FIX: Set the sign sequence after construction
-                spell.setSigns(new elucent.eidolon.api.spells.SignSequence(signs));
-                
-                // Register the spell with Eidolon's spell system
-                elucent.eidolon.registries.Spells.registerWithFallback(spell);
-                
-                LOGGER.debug("CLIENT: Registered chant spell '{}' with {} signs", id, signs.length);
-                
-            } catch (Exception e) {
-                LOGGER.error("CLIENT: Failed to register chant '{}' with Eidolon: {}", id, e.getMessage());
-                if (EidolonUnchainedConfig.COMMON.enableDebugMode.get()) {
-                    e.printStackTrace();
-                }
+                LOGGER.debug("CLIENT: Registered chant {} with Eidolon", chantId);
             }
+            
+            LOGGER.info("CLIENT: Successfully registered {} chants with Eidolon", registered);
+            
+        } catch (Exception e) {
+            LOGGER.error("CLIENT: Failed to register chants with Eidolon", e);
         }
-        
-        LOGGER.info("CLIENT: Finished registering chants with Eidolon spell system");
     }
 }

@@ -397,9 +397,6 @@ public class DatapackSyncPacket {
                 }
             });
             
-            // CRITICAL FIX: Register synced chants with Eidolon's spell system
-            DatapackChantManager.registerClientChantsWithEidolon();
-            
             // Populate client-side codex data
             packet.codexData.forEach((id, jsonData) -> {
                 try {
@@ -467,6 +464,25 @@ public class DatapackSyncPacket {
                              ", AI Configs: " + AIDeityManager.getAllClientSafeConfigs().size() +
                              ", Research Chapters: " + ResearchDataManager.getLoadedResearchChapters().size() +
                              ", Research Entries: " + ResearchDataManager.getLoadedResearchEntries().size());
+            
+            // CRITICAL: Register synced data with Eidolon systems for actual functionality
+            System.out.println("CLIENT: Registering synced data with Eidolon systems...");
+            
+            try {
+                // Register chants with Eidolon spell system (essential for keybind execution)
+                DatapackChantManager.registerClientChantsWithEidolon();
+                System.out.println("CLIENT: Registered chants with Eidolon spell system");
+                
+                // Register research with Eidolon research system
+                ResearchDataManager.registerClientResearchWithEidolon();
+                System.out.println("CLIENT: Registered research with Eidolon research system");
+                
+                System.out.println("CLIENT: All Eidolon integrations complete!");
+                
+            } catch (Exception e) {
+                System.err.println("CLIENT: Failed to register with Eidolon systems: " + e.getMessage());
+                e.printStackTrace();
+            }
             
         } catch (Exception e) {
             System.err.println("CLIENT: Failed to handle datapack sync: " + e.getMessage());

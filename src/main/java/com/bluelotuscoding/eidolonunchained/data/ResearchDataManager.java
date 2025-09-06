@@ -745,4 +745,52 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
             CLIENT_RESEARCH_ENTRIES.clear();
         }
     }
+    
+    /**
+     * CLIENT-SIDE ONLY: Register synced research with Eidolon's research system
+     * This is crucial for research to work properly in multiplayer
+     */
+    public static void registerClientResearchWithEidolon() {
+        if (!net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            return;
+        }
+        
+        try {
+            LOGGER.info("CLIENT: Registering {} research chapters and {} entries with Eidolon", 
+                       CLIENT_RESEARCH_CHAPTERS.size(), CLIENT_RESEARCH_ENTRIES.size());
+            
+            // Use the same integration as server-side but with client data
+            for (Map.Entry<ResourceLocation, ResearchEntry> entry : CLIENT_RESEARCH_ENTRIES.entrySet()) {
+                ResourceLocation researchId = entry.getKey();
+                ResearchEntry researchEntry = entry.getValue();
+                
+                try {
+                    // Determine star requirement
+                    int stars = researchEntry.getRequiredStars();
+                    if (stars < 0) {
+                        switch (researchEntry.getType()) {
+                            case ADVANCED -> stars = 1;
+                            case FORBIDDEN -> stars = 2;
+                            case RITUAL -> stars = 1;
+                            case CRAFTING, BASIC -> stars = 0;
+                            default -> stars = 0;
+                        }
+                    }
+                    
+                    // Create and register research with Eidolon
+                    elucent.eidolon.api.research.Research research = new elucent.eidolon.api.research.Research(researchId, stars);
+                    elucent.eidolon.registries.Researches.register(research);
+                    LOGGER.info("CLIENT: ✓ Registered research entry: {}", researchId);
+                    
+                } catch (Exception e) {
+                    LOGGER.error("CLIENT: Failed to register research entry {}: {}", researchId, e.getMessage());
+                }
+            }
+            
+            LOGGER.info("CLIENT: Research registration with Eidolon complete!");
+            
+        } catch (Exception e) {
+            LOGGER.error("CLIENT: Failed to register research with Eidolon", e);
+        }
+    }
 }

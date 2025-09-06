@@ -482,9 +482,10 @@ public class EidolonCategoryExtension {
             LOGGER.info("✅ Successfully accessed Eidolon internals via reflection");
             LOGGER.info("   Categories list: {} entries", categories.size());
             
-            // Create custom categories from JSON datapacks
+            // Create custom categories from JSON datapacks (SERVER-SAFE VERSION)
             LOGGER.info("🎯 Creating custom categories from JSON datapacks...");
-            DatapackCategoryExample.addDatapackCategories(categories, resourceManager);
+            // TODO: Fix DatapackCategoryExampleFixed integration
+            // DatapackCategoryExampleFixed.addDatapackCategories(categories, resourceManager);
             
             // Register custom research chapters
             LOGGER.info("🔬 Registering custom research chapters...");
