@@ -377,4 +377,89 @@ public class AIDeityConfig {
         // Response rules
         public Map<String, Object> conversationRules = new HashMap<>();
     }
+    
+    /**
+     * Convert AIDeityConfig to JSON for synchronization
+     */
+    public com.google.gson.JsonObject toJson() {
+        com.google.gson.JsonObject json = new com.google.gson.JsonObject();
+        
+        // Basic settings
+        if (deity_id != null) json.addProperty("deity_id", deity_id.toString());
+        if (ai_provider != null) json.addProperty("ai_provider", ai_provider);
+        if (model != null) json.addProperty("model", model);
+        if (personality != null) json.addProperty("personality", personality);
+        if (api_key_env != null) json.addProperty("api_key_env", api_key_env);
+        json.addProperty("timeout_seconds", timeout_seconds);
+        json.addProperty("temperature", temperature);
+        json.addProperty("max_output_tokens", max_output_tokens);
+        
+        // Convert collections to JSON
+        if (!mod_context_ids.isEmpty()) {
+            com.google.gson.JsonArray contextArray = new com.google.gson.JsonArray();
+            mod_context_ids.forEach(contextArray::add);
+            json.add("mod_context_ids", contextArray);
+        }
+        
+        if (!safety_settings.isEmpty()) {
+            com.google.gson.JsonObject safetyObj = new com.google.gson.JsonObject();
+            safety_settings.entrySet().forEach(entry -> safetyObj.addProperty(entry.getKey(), entry.getValue()));
+            json.add("safety_settings", safetyObj);
+        }
+        
+        if (!reputation_behaviors.isEmpty()) {
+            com.google.gson.JsonObject repObj = new com.google.gson.JsonObject();
+            reputation_behaviors.entrySet().forEach(entry -> repObj.addProperty(entry.getKey().toString(), entry.getValue()));
+            json.add("reputation_behaviors", repObj);
+        }
+        
+        return json;
+    }
+    
+    /**
+     * Create AIDeityConfig from JSON (simplified)
+     */
+    public static AIDeityConfig fromJson(com.google.gson.JsonObject json) {
+        AIDeityConfig config = new AIDeityConfig();
+        
+        try {
+            // Basic settings
+            if (json.has("deity_id")) config.deity_id = new ResourceLocation(json.get("deity_id").getAsString());
+            if (json.has("ai_provider")) config.ai_provider = json.get("ai_provider").getAsString();
+            if (json.has("model")) config.model = json.get("model").getAsString();
+            if (json.has("personality")) config.personality = json.get("personality").getAsString();
+            if (json.has("api_key_env")) config.api_key_env = json.get("api_key_env").getAsString();
+            if (json.has("timeout_seconds")) config.timeout_seconds = json.get("timeout_seconds").getAsInt();
+            if (json.has("temperature")) config.temperature = json.get("temperature").getAsFloat();
+            if (json.has("max_output_tokens")) config.max_output_tokens = json.get("max_output_tokens").getAsInt();
+            
+            // Parse arrays and objects
+            if (json.has("mod_context_ids")) {
+                com.google.gson.JsonArray contextArray = json.getAsJsonArray("mod_context_ids");
+                contextArray.forEach(element -> config.mod_context_ids.add(element.getAsString()));
+            }
+            
+            if (json.has("safety_settings")) {
+                com.google.gson.JsonObject safetyObj = json.getAsJsonObject("safety_settings");
+                safetyObj.entrySet().forEach(entry -> config.safety_settings.put(entry.getKey(), entry.getValue().getAsString()));
+            }
+            
+            if (json.has("reputation_behaviors")) {
+                com.google.gson.JsonObject repObj = json.getAsJsonObject("reputation_behaviors");
+                repObj.entrySet().forEach(entry -> {
+                    try {
+                        int key = Integer.parseInt(entry.getKey());
+                        config.reputation_behaviors.put(key, entry.getValue().getAsString());
+                    } catch (NumberFormatException e) {
+                        // Skip invalid keys
+                    }
+                });
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Failed to parse AIDeityConfig from JSON: " + e.getMessage());
+        }
+        
+        return config;
+    }
 }

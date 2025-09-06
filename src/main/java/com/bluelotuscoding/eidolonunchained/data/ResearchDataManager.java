@@ -63,6 +63,10 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
     private static final Map<ResourceLocation, ResearchEntry> LOADED_RESEARCH_ENTRIES = new HashMap<>();
     private static final Map<ResourceLocation, ResourceLocation> ENTRIES_WITH_MISSING_CHAPTER = new HashMap<>();
     
+    // Client-side storage for synchronized data
+    private static final Map<ResourceLocation, ResearchChapter> CLIENT_RESEARCH_CHAPTERS = new HashMap<>();
+    private static final Map<ResourceLocation, ResearchEntry> CLIENT_RESEARCH_ENTRIES = new HashMap<>();
+    
     private static ResearchDataManager INSTANCE;
     
     public ResearchDataManager() {
@@ -633,6 +637,10 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
      * Gets all loaded research chapters
      */
     public static Map<ResourceLocation, ResearchChapter> getLoadedResearchChapters() {
+        // Return client data if on client-side and available
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient() && !CLIENT_RESEARCH_CHAPTERS.isEmpty()) {
+            return new HashMap<>(CLIENT_RESEARCH_CHAPTERS);
+        }
         return new HashMap<>(LOADED_RESEARCH_CHAPTERS);
     }
     
@@ -640,6 +648,10 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
      * Gets all loaded research entries
      */
     public static Map<ResourceLocation, ResearchEntry> getLoadedResearchEntries() {
+        // Return client data if on client-side and available
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient() && !CLIENT_RESEARCH_ENTRIES.isEmpty()) {
+            return new HashMap<>(CLIENT_RESEARCH_ENTRIES);
+        }
         return new HashMap<>(LOADED_RESEARCH_ENTRIES);
     }
     
@@ -702,5 +714,35 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
             def.getCategory(), // Use the category from the definition
             new JsonObject() // Empty extra data
         );
+    }
+    
+    // ===== CLIENT-SIDE SYNC METHODS =====
+    
+    /**
+     * Add a research chapter to client-side storage (called from network packet)
+     */
+    public static void addClientResearchChapter(ResourceLocation id, ResearchChapter chapter) {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            CLIENT_RESEARCH_CHAPTERS.put(id, chapter);
+        }
+    }
+    
+    /**
+     * Add a research entry to client-side storage (called from network packet)
+     */
+    public static void addClientResearchEntry(ResourceLocation id, ResearchEntry entry) {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            CLIENT_RESEARCH_ENTRIES.put(id, entry);
+        }
+    }
+    
+    /**
+     * Clear all client-side research data (called before sync)
+     */
+    public static void clearClientResearchData() {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            CLIENT_RESEARCH_CHAPTERS.clear();
+            CLIENT_RESEARCH_ENTRIES.clear();
+        }
     }
 }

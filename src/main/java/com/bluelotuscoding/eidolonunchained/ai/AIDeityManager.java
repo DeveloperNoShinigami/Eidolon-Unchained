@@ -47,6 +47,9 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
     private final Map<ResourceLocation, JsonObject> pendingConfigs = new ConcurrentHashMap<>();
     private boolean deitiesLoaded = false;
     
+    // Client-side storage for synchronized configurations
+    private static final Map<ResourceLocation, AIDeityConfig> CLIENT_AI_CONFIGS = new ConcurrentHashMap<>();
+    
     public AIDeityManager() {
         super(GSON, "ai_deities");
         INSTANCE = this;
@@ -636,5 +639,48 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             case "balance" -> "Player {player} seeks to restore balance in their life or surroundings. Reputation: {reputation}. Help them achieve harmony through your divine power.";
             default -> "Player {player} prays to you seeking {prayer_type}. Their reputation with you is {reputation}. Respond as befits your divine nature and their standing.";
         };
+    }
+    
+    // =====================================
+    // CLIENT-SIDE SYNCHRONIZATION METHODS
+    // =====================================
+    
+    /**
+     * Clear all client-side AI configurations (called before sync)
+     */
+    public static void clearClientConfigs() {
+        CLIENT_AI_CONFIGS.clear();
+        LOGGER.debug("Cleared client-side AI configurations");
+    }
+    
+    /**
+     * Add a client-side AI configuration (called during sync)
+     */
+    public static void addClientConfig(ResourceLocation id, AIDeityConfig config) {
+        CLIENT_AI_CONFIGS.put(id, config);
+        LOGGER.debug("Added client-side AI config: {}", id);
+    }
+    
+    /**
+     * Get all AI configurations (combined client/server safe)
+     */
+    public static Map<ResourceLocation, AIDeityConfig> getAllClientSafeConfigs() {
+        // Return client configs on client, server configs on server
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            return new java.util.HashMap<>(CLIENT_AI_CONFIGS);
+        } else {
+            return getInstance().aiConfigs.isEmpty() ? new java.util.HashMap<>() : new java.util.HashMap<>(getInstance().aiConfigs);
+        }
+    }
+    
+    /**
+     * Get a specific AI configuration (works on both client and server)
+     */
+    public static AIDeityConfig getConfig(ResourceLocation deityId) {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            return CLIENT_AI_CONFIGS.get(deityId);
+        } else {
+            return getInstance().aiConfigs.get(deityId);
+        }
     }
 }

@@ -11,6 +11,7 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 
 import com.bluelotuscoding.eidolonunchained.research.conditions.DimensionCondition;
 import com.bluelotuscoding.eidolonunchained.research.conditions.InventoryCondition;
@@ -260,6 +261,98 @@ public class ResearchEntry {
         }
 
         return json;
+    }
+
+    /**
+     * Create ResearchEntry from JSON data (simplified deserialization)
+     */
+    public static ResearchEntry fromJson(JsonObject json) {
+        try {
+            ResourceLocation id = new ResourceLocation(json.get("id").getAsString());
+            Component title = Component.literal(json.get("title").getAsString());
+            Component description = Component.literal(json.get("description").getAsString());
+            ResourceLocation chapter = new ResourceLocation(json.get("chapter").getAsString());
+            
+            // Parse type
+            ResearchType type = ResearchType.BASIC;
+            if (json.has("type")) {
+                String typeName = json.get("type").getAsString();
+                for (ResearchType rt : ResearchType.values()) {
+                    if (rt.getName().equals(typeName)) {
+                        type = rt;
+                        break;
+                    }
+                }
+            }
+            
+            // Parse coordinates
+            int x = json.has("x") ? json.get("x").getAsInt() : 0;
+            int y = json.has("y") ? json.get("y").getAsInt() : 0;
+            int requiredStars = json.has("required_stars") ? json.get("required_stars").getAsInt() : 0;
+            
+            // Parse icon
+            ItemStack icon = net.minecraft.world.item.Items.BOOK.getDefaultInstance();
+            if (json.has("icon")) {
+                JsonObject iconData = json.getAsJsonObject("icon");
+                try {
+                    net.minecraft.world.item.Item item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(
+                        new ResourceLocation(iconData.get("item").getAsString()));
+                    if (item != null) {
+                        int count = iconData.has("count") ? iconData.get("count").getAsInt() : 1;
+                        icon = new ItemStack(item, count);
+                    }
+                } catch (Exception e) {
+                    // Use default if icon parsing fails
+                }
+            }
+            
+            // Parse prerequisites
+            List<ResourceLocation> prerequisites = new ArrayList<>();
+            if (json.has("prerequisites")) {
+                JsonArray prereqArray = json.getAsJsonArray("prerequisites");
+                prereqArray.forEach(element -> {
+                    try {
+                        prerequisites.add(new ResourceLocation(element.getAsString()));
+                    } catch (Exception e) {
+                        // Skip invalid prerequisites
+                    }
+                });
+            }
+            
+            // Parse unlocks
+            List<ResourceLocation> unlocks = new ArrayList<>();
+            if (json.has("unlocks")) {
+                JsonArray unlockArray = json.getAsJsonArray("unlocks");
+                unlockArray.forEach(element -> {
+                    try {
+                        unlocks.add(new ResourceLocation(element.getAsString()));
+                    } catch (Exception e) {
+                        // Skip invalid unlocks
+                    }
+                });
+            }
+            
+            // Create default empty tasks and conditions for now
+            java.util.Map<Integer, java.util.List<ResearchTask>> tasks = new HashMap<>();
+            List<ResearchCondition> conditions = new ArrayList<>();
+            
+            // Parse additional data
+            JsonObject additionalData = new JsonObject();
+            json.entrySet().forEach(entry -> {
+                String key = entry.getKey();
+                if (!key.equals("id") && !key.equals("title") && !key.equals("description") && 
+                    !key.equals("chapter") && !key.equals("type") && !key.equals("x") && 
+                    !key.equals("y") && !key.equals("required_stars") && !key.equals("icon") && 
+                    !key.equals("prerequisites") && !key.equals("unlocks")) {
+                    additionalData.add(key, entry.getValue());
+                }
+            });
+            
+            return new ResearchEntry(id, title, description, chapter, icon, prerequisites, 
+                                   unlocks, x, y, type, requiredStars, additionalData, tasks, conditions);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse ResearchEntry from JSON", e);
+        }
     }
 
     /**

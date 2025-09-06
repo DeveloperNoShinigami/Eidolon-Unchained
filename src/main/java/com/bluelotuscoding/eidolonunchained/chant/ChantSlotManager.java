@@ -172,11 +172,17 @@ public class ChantSlotManager {
         modData.putLong("chant_start_time", System.currentTimeMillis());
         playerData.put(EidolonUnchained.MODID, modData);
         
-        // TODO: Integrate with Eidolon's spell system to execute the full sequence
-        // For now, just show completion message
-        player.sendSystemMessage(Component.literal("§a✅ Full chant sequence completed!"));
-        
-        return true;
+        try {
+            // Execute the chant effects
+            chant.execute(player);
+            player.sendSystemMessage(Component.literal("§a✅ Chant '" + chant.getName() + "' executed successfully!"));
+            LOGGER.info("Player {} successfully executed chant: {}", player.getName().getString(), chant.getId());
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Failed to execute chant {} for player {}", chant.getId(), player.getName().getString(), e);
+            player.sendSystemMessage(Component.literal("§cChant execution failed: " + e.getMessage()));
+            return false;
+        }
     }
     
     /**

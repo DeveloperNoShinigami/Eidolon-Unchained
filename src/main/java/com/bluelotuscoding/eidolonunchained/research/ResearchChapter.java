@@ -82,6 +82,61 @@ public class ResearchChapter {
     }
 
     /**
+     * Create ResearchChapter from JSON data
+     */
+    public static ResearchChapter fromJson(JsonObject json) {
+        try {
+            ResourceLocation id = new ResourceLocation(json.get("id").getAsString());
+            Component title = Component.literal(json.get("title").getAsString());
+            Component description = Component.literal(json.get("description").getAsString());
+            int sortOrder = json.has("sort_order") ? json.get("sort_order").getAsInt() : 0;
+            boolean isSecret = json.has("secret") ? json.get("secret").getAsBoolean() : false;
+            
+            // Parse icon
+            ItemStack icon = net.minecraft.world.item.Items.BOOK.getDefaultInstance();
+            if (json.has("icon")) {
+                JsonObject iconData = json.getAsJsonObject("icon");
+                try {
+                    net.minecraft.world.item.Item item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(
+                        new ResourceLocation(iconData.get("item").getAsString()));
+                    if (item != null) {
+                        int count = iconData.has("count") ? iconData.get("count").getAsInt() : 1;
+                        icon = new ItemStack(item, count);
+                        // TODO: Handle NBT if needed
+                    }
+                } catch (Exception e) {
+                    // Use default if icon parsing fails
+                }
+            }
+            
+            // Parse background texture
+            ResourceLocation backgroundTexture = null;
+            if (json.has("background")) {
+                backgroundTexture = new ResourceLocation(json.get("background").getAsString());
+            }
+            
+            // Parse category
+            String category = json.has("category") ? json.get("category").getAsString() : "unknown";
+            
+            // Parse additional data
+            JsonObject additionalData = new JsonObject();
+            json.entrySet().forEach(entry -> {
+                String key = entry.getKey();
+                if (!key.equals("id") && !key.equals("title") && !key.equals("description") && 
+                    !key.equals("sort_order") && !key.equals("secret") && !key.equals("icon") && 
+                    !key.equals("background") && !key.equals("category")) {
+                    additionalData.add(key, entry.getValue());
+                }
+            });
+            
+            return new ResearchChapter(id, title, description, icon, sortOrder, isSecret, 
+                                     backgroundTexture, category, additionalData);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse ResearchChapter from JSON", e);
+        }
+    }
+
+    /**
      * Builder pattern for easier chapter creation
      */
     public static class Builder {

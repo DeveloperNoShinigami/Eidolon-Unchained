@@ -415,4 +415,50 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
         }
         return new HashMap<>(chants);
     }
+    
+    /**
+     * CLIENT-SIDE ONLY: Register all synced chants with Eidolon's spell system
+     * Called after client receives DatapackSyncPacket
+     */
+    public static void registerClientChantsWithEidolon() {
+        if (!net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            return; // Server-side should use the normal registration method
+        }
+        
+        if (!EidolonUnchainedConfig.COMMON.enableChantSystem.get()) {
+            LOGGER.info("CLIENT: Chant system disabled, skipping Eidolon registration");
+            return;
+        }
+        
+        LOGGER.info("CLIENT: Registering {} synced chants with Eidolon spell system", clientChants.size());
+        
+        for (Map.Entry<ResourceLocation, DatapackChant> entry : clientChants.entrySet()) {
+            ResourceLocation id = entry.getKey();
+            DatapackChant chant = entry.getValue();
+            
+            try {
+                // Convert chant signs to Eidolon Sign objects
+                Sign[] signs = getInstance().convertToSigns(chant.getSignSequence());
+                
+                // Create spell for this chant
+                DatapackChantSpell spell = new DatapackChantSpell(id, chant, signs);
+                
+                // CRITICAL FIX: Set the sign sequence after construction
+                spell.setSigns(new elucent.eidolon.api.spells.SignSequence(signs));
+                
+                // Register the spell with Eidolon's spell system
+                elucent.eidolon.registries.Spells.registerWithFallback(spell);
+                
+                LOGGER.debug("CLIENT: Registered chant spell '{}' with {} signs", id, signs.length);
+                
+            } catch (Exception e) {
+                LOGGER.error("CLIENT: Failed to register chant '{}' with Eidolon: {}", id, e.getMessage());
+                if (EidolonUnchainedConfig.COMMON.enableDebugMode.get()) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        
+        LOGGER.info("CLIENT: Finished registering chants with Eidolon spell system");
+    }
 }
