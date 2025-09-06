@@ -54,6 +54,11 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
     private static final Map<ResourceLocation, CodexEntry> ALL_ENTRIES = new HashMap<>();
     private static final Map<ResourceLocation, ChapterDefinition> CUSTOM_CHAPTERS = new HashMap<>();
     
+    // Client-side storage for synchronized data
+    private static final Map<ResourceLocation, List<CodexEntry>> CLIENT_CHAPTER_EXTENSIONS = new HashMap<>();
+    private static final Map<ResourceLocation, CodexEntry> CLIENT_ALL_ENTRIES = new HashMap<>();
+    private static final Map<ResourceLocation, ChapterDefinition> CLIENT_CUSTOM_CHAPTERS = new HashMap<>();
+    
     private static CodexDataManager INSTANCE;
     
     public CodexDataManager() {
@@ -424,6 +429,10 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
      * Gets all loaded codex entries
      */
     public static Map<ResourceLocation, CodexEntry> getAllEntries() {
+        // Return client data if on client, server data if on server
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient() && !CLIENT_ALL_ENTRIES.isEmpty()) {
+            return new HashMap<>(CLIENT_ALL_ENTRIES);
+        }
         return new HashMap<>(ALL_ENTRIES);
     }
     
@@ -431,6 +440,10 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
      * Gets all chapter extensions
      */
     public static Map<ResourceLocation, List<CodexEntry>> getAllChapterExtensions() {
+        // Return client data if on client, server data if on server
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient() && !CLIENT_CHAPTER_EXTENSIONS.isEmpty()) {
+            return new HashMap<>(CLIENT_CHAPTER_EXTENSIONS);
+        }
         return new HashMap<>(CHAPTER_EXTENSIONS);
     }
     
@@ -438,6 +451,10 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
      * Gets a specific codex entry by ID
      */
     public static CodexEntry getEntry(ResourceLocation id) {
+        // Check client data first if on client side
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient() && CLIENT_ALL_ENTRIES.containsKey(id)) {
+            return CLIENT_ALL_ENTRIES.get(id);
+        }
         return ALL_ENTRIES.get(id);
     }
     
@@ -633,6 +650,35 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
             LOGGER.info("Successfully triggered category scanning");
         } catch (Exception e) {
             LOGGER.error("Failed to trigger category scanning via reflection", e);
+        }
+    }
+    
+    /**
+     * CLIENT-SIDE ONLY: Add codex entry from server synchronization
+     */
+    public static void addClientEntry(ResourceLocation id, CodexEntry entry) {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            CLIENT_ALL_ENTRIES.put(id, entry);
+            
+            // Add to client chapter extensions if applicable
+            ResourceLocation chapterId = entry.getTargetChapter();
+            if (chapterId != null) {
+                CLIENT_CHAPTER_EXTENSIONS.computeIfAbsent(chapterId, k -> new ArrayList<>()).add(entry);
+            }
+            
+            LOGGER.debug("Added client-side codex entry: {}", id);
+        }
+    }
+    
+    /**
+     * CLIENT-SIDE ONLY: Clear all client codex data (for re-sync)
+     */
+    public static void clearClientEntries() {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            CLIENT_ALL_ENTRIES.clear();
+            CLIENT_CHAPTER_EXTENSIONS.clear();
+            CLIENT_CUSTOM_CHAPTERS.clear();
+            LOGGER.debug("Cleared client-side codex entries");
         }
     }
 }

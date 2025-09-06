@@ -57,6 +57,9 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
     // Store loaded chants
     private static final Map<ResourceLocation, DatapackChant> chants = new HashMap<>();
     private static final Map<String, List<DatapackChant>> chantsByCategory = new HashMap<>();
+    // Client-side chant storage for synchronized data
+    private static final Map<ResourceLocation, DatapackChant> clientChants = new HashMap<>();
+    private static final Map<String, List<DatapackChant>> clientChantsByCategory = new HashMap<>();
     
     public DatapackChantManager() {
         super(GSON, "chants");
@@ -172,25 +175,48 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
     // Public API methods
     public static Map<String, DatapackChant> getAllChants() {
         Map<String, DatapackChant> result = new HashMap<>();
-        for (Map.Entry<ResourceLocation, DatapackChant> entry : chants.entrySet()) {
+        
+        // Use client data if available and on client side
+        Map<ResourceLocation, DatapackChant> source = chants;
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient() && !clientChants.isEmpty()) {
+            source = clientChants;
+        }
+        
+        for (Map.Entry<ResourceLocation, DatapackChant> entry : source.entrySet()) {
             result.put(entry.getKey().toString(), entry.getValue());
         }
         return result;
     }
     
     public static Collection<DatapackChant> getAllChantsCollection() {
+        // Use client data if available and on client side
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient() && !clientChants.isEmpty()) {
+            return new ArrayList<>(clientChants.values());
+        }
         return new ArrayList<>(chants.values());
     }
     
     public static Collection<ResourceLocation> getAllChantIds() {
+        // Use client data if available and on client side
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient() && !clientChants.isEmpty()) {
+            return new ArrayList<>(clientChants.keySet());
+        }
         return new ArrayList<>(chants.keySet());
     }
     
     public static DatapackChant getChant(ResourceLocation id) {
+        // Check client data first if on client side
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient() && clientChants.containsKey(id)) {
+            return clientChants.get(id);
+        }
         return chants.get(id);
     }
     
     public static List<DatapackChant> getChantsByCategory(String category) {
+        // Use client data if available and on client side
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient() && !clientChantsByCategory.isEmpty()) {
+            return new ArrayList<>(clientChantsByCategory.getOrDefault(category, new ArrayList<>()));
+        }
         return new ArrayList<>(chantsByCategory.getOrDefault(category, new ArrayList<>()));
     }
     
@@ -351,5 +377,42 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
         spell.setSigns(new elucent.eidolon.api.spells.SignSequence(signs));
         
         return spell;
+    }
+    
+    /**
+     * CLIENT-SIDE ONLY: Add chant from server synchronization
+     */
+    public static void addClientChant(ResourceLocation id, DatapackChant chant) {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            clientChants.put(id, chant);
+            
+            // Add to client category mapping
+            String category = chant.getCategory();
+            clientChantsByCategory.computeIfAbsent(category, k -> new ArrayList<>()).add(chant);
+            
+            LOGGER.debug("Added client-side chant: {}", id);
+        }
+    }
+    
+    /**
+     * CLIENT-SIDE ONLY: Clear all client chants (for re-sync)
+     */
+    public static void clearClientChants() {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            clientChants.clear();
+            clientChantsByCategory.clear();
+            LOGGER.debug("Cleared client-side chants");
+        }
+    }
+    
+    /**
+     * Get all chants as Map<ResourceLocation, DatapackChant> for networking
+     */
+    public static Map<ResourceLocation, DatapackChant> getAllChantsAsMap() {
+        // Return client data if on client, server data if on server
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient() && !clientChants.isEmpty()) {
+            return new HashMap<>(clientChants);
+        }
+        return new HashMap<>(chants);
     }
 }

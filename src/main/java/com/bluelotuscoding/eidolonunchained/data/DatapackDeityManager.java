@@ -45,6 +45,8 @@ public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
     
     // Store loaded deities
     private static final Map<ResourceLocation, DatapackDeity> deities = new HashMap<>();
+    // Client-side deity storage for synchronized data
+    private static final Map<ResourceLocation, DatapackDeity> clientDeities = new HashMap<>();
     
     public DatapackDeityManager() {
         super(GSON, "deities");
@@ -66,15 +68,47 @@ public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
     
     // Static methods for accessing deities
     public static DatapackDeity getDeity(ResourceLocation id) {
+        // Check client-side storage first if we're on client
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient() && clientDeities.containsKey(id)) {
+            return clientDeities.get(id);
+        }
         return deities.get(id);
     }
     
     public static boolean hasDeity(ResourceLocation id) {
+        // Check both server and client storage
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient() && clientDeities.containsKey(id)) {
+            return true;
+        }
         return deities.containsKey(id);
     }
     
     public static Map<ResourceLocation, DatapackDeity> getAllDeities() {
+        // Return client data if on client, server data if on server
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient() && !clientDeities.isEmpty()) {
+            return new HashMap<>(clientDeities);
+        }
         return new HashMap<>(deities);
+    }
+    
+    /**
+     * CLIENT-SIDE ONLY: Add deity from server synchronization
+     */
+    public static void addClientDeity(ResourceLocation id, DatapackDeity deity) {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            clientDeities.put(id, deity);
+            LOGGER.debug("Added client-side deity: {}", id);
+        }
+    }
+    
+    /**
+     * CLIENT-SIDE ONLY: Clear all client deities (for re-sync)
+     */
+    public static void clearClientDeities() {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            clientDeities.clear();
+            LOGGER.debug("Cleared client-side deities");
+        }
     }
     
     @Override

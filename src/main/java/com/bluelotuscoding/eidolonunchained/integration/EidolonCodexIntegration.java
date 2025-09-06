@@ -36,14 +36,13 @@ import java.util.Map;
 
 /**
  * Handles integration with Eidolon's codex system to inject custom entries.
- * Since Eidolon's codex system is client-side only, this entire class is client-only.
+ * Now supports both client and server-side operation for proper synchronization.
  * 
  * ⚠️ NOTE: This class uses REFLECTION only where absolutely necessary.
  * We prefer using the new event-driven system (EidolonCategoryExtension) for new content.
  * This class is kept for compatibility with existing content injection needs.
  */
-@OnlyIn(Dist.CLIENT)
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class EidolonCodexIntegration {
     private static final Logger LOGGER = LogUtils.getLogger();
 

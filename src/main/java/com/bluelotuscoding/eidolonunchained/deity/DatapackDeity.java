@@ -619,4 +619,119 @@ public class DatapackDeity extends Deity {
         
         return "Maximum stage reached";
     }
+    
+    /**
+     * Serialize this deity to JSON for client synchronization
+     */
+    public com.google.gson.JsonObject toJson() {
+        com.google.gson.JsonObject json = new com.google.gson.JsonObject();
+        
+        try {
+            // Basic deity info
+            json.addProperty("id", getId().toString());
+            json.addProperty("name", displayName);
+            json.addProperty("description", description);
+            json.addProperty("max_reputation", maxReputation);
+            
+            // Color info
+            com.google.gson.JsonObject colors = new com.google.gson.JsonObject();
+            colors.addProperty("red", getRed());
+            colors.addProperty("green", getGreen());
+            colors.addProperty("blue", getBlue());
+            json.add("colors", colors);
+            
+            // Stage titles
+            com.google.gson.JsonObject titles = new com.google.gson.JsonObject();
+            stageTitles.forEach(titles::addProperty);
+            json.add("stage_titles", titles);
+            
+            // Stage rewards
+            com.google.gson.JsonObject rewards = new com.google.gson.JsonObject();
+            stageRewards.forEach((stage, rewardList) -> {
+                com.google.gson.JsonArray array = new com.google.gson.JsonArray();
+                rewardList.forEach(array::add);
+                rewards.add(stage, array);
+            });
+            json.add("stage_rewards", rewards);
+            
+            // Prayer types
+            com.google.gson.JsonArray prayerArray = new com.google.gson.JsonArray();
+            prayerTypes.forEach(prayerArray::add);
+            json.add("prayer_types", prayerArray);
+            
+            // Progression stages (from Eidolon's system)
+            com.google.gson.JsonObject progressionJson = new com.google.gson.JsonObject();
+            if (getProgression() != null && getProgression().getSteps() != null) {
+                getProgression().getSteps().forEach((stageLoc, stage) -> {
+                    com.google.gson.JsonObject stageJson = new com.google.gson.JsonObject();
+                    stageJson.addProperty("reputation_required", stage.rep());
+                    progressionJson.add(String.valueOf(stageLoc), stageJson);
+                });
+            }
+            json.add("progression_stages", progressionJson);
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to serialize deity {} to JSON: {}", getId(), e.getMessage());
+        }
+        
+        return json;
+    }
+    
+    /**
+     * Create DatapackDeity from JSON (for client deserialization)
+     */
+    public static DatapackDeity fromJson(com.google.gson.JsonObject json) {
+        try {
+            ResourceLocation id = new ResourceLocation(json.get("id").getAsString());
+            String name = json.get("name").getAsString();
+            String description = json.get("description").getAsString();
+            
+            // Get colors
+            com.google.gson.JsonObject colors = json.getAsJsonObject("colors");
+            int red = colors.get("red").getAsInt();
+            int green = colors.get("green").getAsInt();
+            int blue = colors.get("blue").getAsInt();
+            
+            // Create deity
+            DatapackDeity deity = new DatapackDeity(id, name, description, red, green, blue);
+            
+            // Set max reputation
+            if (json.has("max_reputation")) {
+                deity.maxReputation = json.get("max_reputation").getAsInt();
+            }
+            
+            // Load stage titles
+            if (json.has("stage_titles")) {
+                com.google.gson.JsonObject titles = json.getAsJsonObject("stage_titles");
+                titles.entrySet().forEach(entry -> {
+                    deity.stageTitles.put(entry.getKey(), entry.getValue().getAsString());
+                });
+            }
+            
+            // Load stage rewards
+            if (json.has("stage_rewards")) {
+                com.google.gson.JsonObject rewards = json.getAsJsonObject("stage_rewards");
+                rewards.entrySet().forEach(entry -> {
+                    List<String> rewardList = new ArrayList<>();
+                    entry.getValue().getAsJsonArray().forEach(element -> {
+                        rewardList.add(element.getAsString());
+                    });
+                    deity.stageRewards.put(entry.getKey(), rewardList);
+                });
+            }
+            
+            // Load prayer types
+            if (json.has("prayer_types")) {
+                json.getAsJsonArray("prayer_types").forEach(element -> {
+                    deity.prayerTypes.add(element.getAsString());
+                });
+            }
+            
+            return deity;
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to deserialize deity from JSON: {}", e.getMessage());
+            return null;
+        }
+    }
 }

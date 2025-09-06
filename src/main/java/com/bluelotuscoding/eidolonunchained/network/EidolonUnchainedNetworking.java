@@ -29,9 +29,18 @@ public class EidolonUnchainedNetworking {
     private static int packetId = 0;
     
     public static void register() {
-        // Register deity sync packet for proper client-server synchronization
+        // Register comprehensive datapack sync packet for proper client-server synchronization
         // Only register if both client and server support our protocol
         try {
+            INSTANCE.registerMessage(
+                ++packetId,
+                DatapackSyncPacket.class,
+                DatapackSyncPacket::encode,
+                DatapackSyncPacket::decode,
+                DatapackSyncPacket::handle
+            );
+            
+            // Keep legacy packet for compatibility
             INSTANCE.registerMessage(
                 ++packetId,
                 DeitySyncPacket.class,

@@ -149,6 +149,63 @@ public class CodexEntry {
 
         return json;
     }
+    
+    /**
+     * Create CodexEntry from JSON (for client deserialization)
+     */
+    public static CodexEntry fromJson(JsonObject json) {
+        try {
+            ResourceLocation id = new ResourceLocation(json.get("id").getAsString());
+            Component title = Component.literal(json.get("title").getAsString());
+            Component description = Component.literal(json.get("description").getAsString());
+            ResourceLocation targetChapter = new ResourceLocation(json.get("target_chapter").getAsString());
+            EntryType type = EntryType.valueOf(json.get("type").getAsString().toUpperCase());
+            
+            // Parse icon
+            JsonObject iconData = json.getAsJsonObject("icon");
+            net.minecraft.world.item.Item item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(
+                new ResourceLocation(iconData.get("item").getAsString())
+            );
+            ItemStack icon = new ItemStack(item != null ? item : net.minecraft.world.item.Items.BOOK);
+            if (iconData.has("count")) {
+                icon.setCount(iconData.get("count").getAsInt());
+            }
+            
+            // Parse prerequisites
+            List<ResourceLocation> prerequisites = new ArrayList<>();
+            if (json.has("prerequisites")) {
+                json.getAsJsonArray("prerequisites").forEach(element -> {
+                    prerequisites.add(new ResourceLocation(element.getAsString()));
+                });
+            }
+            
+            // Parse pages
+            List<JsonObject> pages = new ArrayList<>();
+            if (json.has("pages")) {
+                json.getAsJsonArray("pages").forEach(element -> {
+                    pages.add(element.getAsJsonObject());
+                });
+            }
+            
+            // Parse additional data
+            JsonObject additionalData = new JsonObject();
+            json.entrySet().forEach(entry -> {
+                String key = entry.getKey();
+                if (!key.equals("id") && !key.equals("title") && !key.equals("description") && 
+                    !key.equals("target_chapter") && !key.equals("type") && !key.equals("icon") && 
+                    !key.equals("prerequisites") && !key.equals("pages")) {
+                    additionalData.add(key, entry.getValue());
+                }
+            });
+            
+            return new CodexEntry(id, title, description, targetChapter, icon, 
+                                prerequisites, pages, type, additionalData);
+                                
+        } catch (Exception e) {
+            System.err.println("Failed to deserialize CodexEntry from JSON: " + e.getMessage());
+            return null;
+        }
+    }
 
     /**
      * Builder pattern for easier codex entry creation
