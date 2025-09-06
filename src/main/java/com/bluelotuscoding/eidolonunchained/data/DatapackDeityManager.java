@@ -327,6 +327,24 @@ public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
             throw e;
         }
     }
+    
+    // CLIENT-SIDE METHODS FOR MULTIPLAYER SYNC
+    
+    /**
+     * Clears client-side deity data for multiplayer sync
+     */
+    public static void clearClientDeities() {
+        deities.clear();
+        LOGGER.info("Cleared client-side deity data for sync");
+    }
+    
+    /**
+     * Adds a deity to client-side storage during multiplayer sync
+     */
+    public static void addClientDeity(ResourceLocation id, DatapackDeity deity) {
+        deities.put(id, deity);
+        LOGGER.debug("Added client deity: {}", id);
+    }
 }
 
 /**

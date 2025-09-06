@@ -637,4 +637,37 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             default -> "Player {player} prays to you seeking {prayer_type}. Their reputation with you is {reputation}. Respond as befits your divine nature and their standing.";
         };
     }
+    
+    // CLIENT-SIDE METHODS FOR MULTIPLAYER SYNC
+    
+    /**
+     * Clears client-side AI deity data for multiplayer sync
+     */
+    public static void clearClientConfigs() {
+        if (INSTANCE != null) {
+            INSTANCE.aiConfigs.clear();
+            INSTANCE.pendingConfigs.clear();
+            LOGGER.info("Cleared client-side AI deity data for sync");
+        }
+    }
+    
+    /**
+     * Adds an AI deity config to client-side storage during multiplayer sync
+     */
+    public static void addClientConfig(ResourceLocation id, AIDeityConfig config) {
+        if (INSTANCE != null) {
+            INSTANCE.aiConfigs.put(id, config);
+            LOGGER.debug("Added client AI deity config: {}", id);
+        }
+    }
+    
+    /**
+     * Gets all client-safe AI configs (safe for client-side use)
+     */
+    public static java.util.Collection<AIDeityConfig> getAllClientSafeConfigs() {
+        if (INSTANCE != null) {
+            return new java.util.ArrayList<>(INSTANCE.aiConfigs.values());
+        }
+        return new java.util.ArrayList<>();
+    }
 }

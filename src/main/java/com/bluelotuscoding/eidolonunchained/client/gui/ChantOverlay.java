@@ -104,11 +104,24 @@ public class ChantOverlay implements IGuiOverlay {
         // Convert to SignSequence for spell matching
         SignSequence sequence = new SignSequence(activeChant);
         
-        // For individual sign casting, trigger immediately after first sign
-        // For full chants, wait for a complete sequence (3+ signs for now)
-        if (activeChant.size() >= 1) {
+        // Check if current sequence matches any registered spells (Eidolon + our custom ones)
+        boolean foundCompleteSpell = false;
+        
+        // Check against Eidolon spells first
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.level != null && elucent.eidolon.registries.Spells.find(sequence, mc.level) != null) {
+                foundCompleteSpell = true;
+            }
+        } catch (Exception e) {
+            // Ignore errors in spell lookup
+        }
+        
+        // If we found a complete spell, trigger auto-completion
+        if (foundCompleteSpell) {
             triggerAutoComplete();
         }
+        // Otherwise, wait for more signs to be added
     }
     
     /**

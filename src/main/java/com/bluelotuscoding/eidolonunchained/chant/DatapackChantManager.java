@@ -352,4 +352,71 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
         
         return spell;
     }
+
+    // CLIENT-SIDE METHODS FOR MULTIPLAYER SYNC
+    
+    /**
+     * Clears client-side chant data for multiplayer sync
+     * Called when receiving sync packet from server
+     */
+    public static void clearClientChants() {
+        if (chants != null) {
+            chants.clear();
+        }
+        if (chantsByCategory != null) {
+            chantsByCategory.clear();
+        }
+        LOGGER.info("Cleared client-side chant data for sync");
+    }
+    
+    /**
+     * Adds a chant to client-side storage during multiplayer sync
+     */
+    public static void addClientChant(ResourceLocation id, DatapackChant chant) {
+        chants.put(id, chant);
+        
+        String category = chant.getCategory();
+        chantsByCategory.computeIfAbsent(category, k -> new ArrayList<>()).add(chant);
+        
+        LOGGER.debug("Added client chant: {} in category: {}", id, category);
+    }
+    
+    /**
+     * CRITICAL: Register client-side chants with Eidolon's spell system
+     * This ensures that spell resolution works in multiplayer
+     */
+    public static void registerClientChantsWithEidolon() {
+        if (!EidolonUnchainedConfig.COMMON.enableChantSystem.get()) {
+            LOGGER.info("Chant system disabled, skipping client-side spell registration");
+            return;
+        }
+        
+        LOGGER.info("Registering {} client-side chants with Eidolon spell system", chants.size());
+        
+        int registered = 0;
+        for (DatapackChant chant : chants.values()) {
+            try {
+                // Convert chant signs to Eidolon Sign objects
+                Sign[] signs = INSTANCE.convertToSigns(chant.getSignSequence());
+                
+                // Create spell for this chant
+                DatapackChantSpell spell = new DatapackChantSpell(chant.getId(), chant, signs);
+                
+                // CRITICAL: Set the sign sequence after construction
+                spell.setSigns(new elucent.eidolon.api.spells.SignSequence(signs));
+                
+                // Register the spell with Eidolon's spell system
+                // Use registerWithFallback to ensure it's in BOTH spellMap and spells list
+                elucent.eidolon.registries.Spells.registerWithFallback(spell);
+                
+                registered++;
+                LOGGER.info("CLIENT: Successfully registered chant spell: {} with signs: {}", 
+                    chant.getId(), chant.getSignSequence());
+            } catch (Exception e) {
+                LOGGER.error("CLIENT: Failed to register chant {}: {}", chant.getId(), e.getMessage());
+            }
+        }
+        
+        LOGGER.info("CLIENT: Successfully registered {} chant spells with Eidolon", registered);
+    }
 }

@@ -40,6 +40,15 @@ public class EidolonUnchainedNetworking {
                 DeitySyncPacket::handle
             );
             
+            // Register comprehensive datapack sync packet for multiplayer support
+            INSTANCE.registerMessage(
+                ++packetId,
+                DatapackSyncPacket.class,
+                DatapackSyncPacket::encode,
+                DatapackSyncPacket::decode,
+                DatapackSyncPacket::handle
+            );
+            
             // Register chant cast packet for keybind-based casting
             INSTANCE.registerMessage(
                 ++packetId,

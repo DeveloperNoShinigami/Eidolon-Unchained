@@ -635,4 +635,32 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
             LOGGER.error("Failed to trigger category scanning via reflection", e);
         }
     }
+    
+    // CLIENT-SIDE METHODS FOR MULTIPLAYER SYNC
+    
+    /**
+     * Clears client-side codex data for multiplayer sync
+     */
+    public static void clearClientEntries() {
+        ALL_ENTRIES.clear();
+        CHAPTER_EXTENSIONS.clear();
+        CUSTOM_CHAPTERS.clear();
+        LOGGER.info("Cleared client-side codex data for sync");
+    }
+    
+    /**
+     * Adds a codex entry to client-side storage during multiplayer sync
+     */
+    public static void addClientEntry(ResourceLocation id, CodexEntry entry) {
+        ALL_ENTRIES.put(id, entry);
+        LOGGER.debug("Added client codex entry: {}", id);
+    }
+    
+    /**
+     * Adds a codex chapter to client-side storage during multiplayer sync
+     */
+    public static void addClientChapter(ResourceLocation id, ChapterDefinition chapter) {
+        CUSTOM_CHAPTERS.put(id, chapter);
+        LOGGER.debug("Added client codex chapter: {}", id);
+    }
 }

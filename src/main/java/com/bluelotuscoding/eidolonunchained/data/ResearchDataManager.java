@@ -686,6 +686,52 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                    LOADED_RESEARCH_CHAPTERS.size(), LOADED_RESEARCH_ENTRIES.size());
     }
 
+    // CLIENT-SIDE METHODS FOR MULTIPLAYER SYNC
+    
+    /**
+     * Clears client-side research data for multiplayer sync
+     */
+    public static void clearClientResearchData() {
+        LOADED_RESEARCH_CHAPTERS.clear();
+        LOADED_RESEARCH_ENTRIES.clear();
+        RESEARCH_EXTENSIONS.clear();
+        LOGGER.info("Cleared client-side research data for sync");
+    }
+    
+    /**
+     * Adds a research chapter to client-side storage during multiplayer sync
+     */
+    public static void addClientResearchChapter(ResourceLocation id, ResearchChapter chapter) {
+        LOADED_RESEARCH_CHAPTERS.put(id, chapter);
+        LOGGER.debug("Added client research chapter: {}", id);
+    }
+    
+    /**
+     * Adds a research entry to client-side storage during multiplayer sync
+     */
+    public static void addClientResearchEntry(ResourceLocation id, ResearchEntry entry) {
+        LOADED_RESEARCH_ENTRIES.put(id, entry);
+        LOGGER.debug("Added client research entry: {}", id);
+    }
+    
+    /**
+     * CRITICAL: Register client-side research with Eidolon's research system
+     * This ensures that research appears correctly in multiplayer
+     */
+    public static void registerClientResearchWithEidolon() {
+        try {
+            LOGGER.info("Registering {} research chapters and {} research entries with Eidolon", 
+                       LOADED_RESEARCH_CHAPTERS.size(), LOADED_RESEARCH_ENTRIES.size());
+            
+            // Call the integration to inject research into Eidolon
+            com.bluelotuscoding.eidolonunchained.integration.EidolonResearchIntegration.injectCustomResearch();
+            
+            LOGGER.info("CLIENT: Successfully registered research with Eidolon research system");
+        } catch (Exception e) {
+            LOGGER.error("CLIENT: Failed to register research with Eidolon: {}", e.getMessage(), e);
+        }
+    }
+
     /**
      * Converts a CodexDataManager ChapterDefinition to a ResearchChapter
      */
