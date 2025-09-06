@@ -35,30 +35,41 @@ public class ChantSlotActivationPacket {
         this.castingMode = buf.readUtf();
     }
     
-    public static void encode(ChantSlotActivationPacket packet, FriendlyByteBuf buf) {
-        buf.writeInt(packet.slotNumber);
-        buf.writeUtf(packet.castingMode);
+    // Encode method for writing to buffer
+    public void encode(FriendlyByteBuf buf) {
+        buf.writeInt(this.slotNumber);
+        buf.writeUtf(this.castingMode);
     }
     
-    public static ChantSlotActivationPacket decode(FriendlyByteBuf buf) {
-        return new ChantSlotActivationPacket(buf.readInt(), buf.readUtf());
-    }
-    
-    public static void consume(ChantSlotActivationPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
+    // Handle method with correct signature for Forge 1.20.1
+    public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> {
+            // Handle the packet on the main thread
             ServerPlayer player = context.getSender();
             if (player != null) {
-                LOGGER.info("Processing slot activation for player: {} slot: {} mode: {}", 
-                           player.getName().getString(), packet.slotNumber, packet.castingMode);
-                
-                // Get the assignment for this slot and activate with the specified mode
-                boolean success = SlotAssignmentManager.activateSlot(player, packet.slotNumber, packet.castingMode);
-                if (!success) {
-                    player.sendSystemMessage(Component.literal("§cNo assignment in slot " + packet.slotNumber + ". Use /chant assign-sign <slot> <sign> or /chant assign-chant <slot> <chant> to configure."));
-                }
+                handleSlotActivation(player, this.slotNumber, this.castingMode);
             }
         });
         context.setPacketHandled(true);
+    }
+    
+    private void handleSlotActivation(ServerPlayer player, int slotNumber, String castingMode) {
+        LOGGER.info("Processing slot activation for player: {} slot: {} mode: {}", 
+                   player.getName().getString(), slotNumber, castingMode);
+        
+        // Get the assignment for this slot and activate with the specified mode
+        boolean success = SlotAssignmentManager.activateSlot(player, slotNumber, castingMode);
+        if (!success) {
+            player.sendSystemMessage(Component.literal("§cNo assignment in slot " + slotNumber + ". Use /chant assign-sign <slot> <sign> or /chant assign-chant <slot> <chant> to configure."));
+        }
+    }
+    
+    public int getSlotNumber() {
+        return slotNumber;
+    }
+    
+    public String getCastingMode() {
+        return castingMode;
     }
 }

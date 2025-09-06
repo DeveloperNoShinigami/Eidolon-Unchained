@@ -39,44 +39,54 @@ public class ChantInterfacePacket {
     }
     
     public ChantInterfacePacket(FriendlyByteBuf buf) {
-        this.action = Action.values()[buf.readInt()];
-        this.data = buf.readUtf();
+        this.action = buf.readEnum(Action.class);
+        String readData = buf.readUtf();
+        this.data = readData.isEmpty() ? null : readData;
     }
     
-    public static void encode(ChantInterfacePacket packet, FriendlyByteBuf buf) {
-        buf.writeEnum(packet.action);
-        buf.writeUtf(packet.data != null ? packet.data : "");
+    // Encode method for writing to buffer
+    public void encode(FriendlyByteBuf buf) {
+        buf.writeEnum(this.action);
+        buf.writeUtf(this.data != null ? this.data : "");
     }
     
-    public static ChantInterfacePacket decode(FriendlyByteBuf buf) {
-        Action action = buf.readEnum(Action.class);
-        String data = buf.readUtf();
-        return new ChantInterfacePacket(action, data.isEmpty() ? null : data);
-    }
-    
-    public static void consume(ChantInterfacePacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
+    // Handle method with correct signature for Forge 1.20.1
+    public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> {
+            // Handle the packet on the main thread
             ServerPlayer player = context.getSender();
             if (player != null) {
-                LOGGER.info("Processing chant interface packet for player: {} action: {}", 
-                           player.getName().getString(), packet.action);
-                
-                switch (packet.action) {
-                    case OPEN_INTERFACE:
-                        // Send current chant assignments to client
-                        String assignments = ChantSlotManager.getPlayerChantAssignments(player);
-                        ChantInterfacePacket response = new ChantInterfacePacket(Action.SYNC_ASSIGNMENTS, assignments);
-                        // Send response back to client
-                        player.sendSystemMessage(Component.literal("§6Opening chant interface - assignments synced"));
-                        break;
-                        
-                    case SYNC_ASSIGNMENTS:
-                        // Update client with current assignments (handled client-side)
-                        break;
-                }
+                handleChantInterface(player, this.action, this.data);
             }
         });
         context.setPacketHandled(true);
+    }
+    
+    private void handleChantInterface(ServerPlayer player, Action action, String data) {
+        LOGGER.info("Processing chant interface packet for player: {} action: {}", 
+                   player.getName().getString(), action);
+        
+        switch (action) {
+            case OPEN_INTERFACE:
+                // Send current chant assignments to client
+                String assignments = ChantSlotManager.getPlayerChantAssignments(player);
+                ChantInterfacePacket response = new ChantInterfacePacket(Action.SYNC_ASSIGNMENTS, assignments);
+                // Send response back to client
+                player.sendSystemMessage(Component.literal("§6Opening chant interface - assignments synced"));
+                break;
+                
+            case SYNC_ASSIGNMENTS:
+                // Update client with current assignments (handled client-side)
+                break;
+        }
+    }
+    
+    public Action getAction() {
+        return action;
+    }
+    
+    public String getData() {
+        return data;
     }
 }

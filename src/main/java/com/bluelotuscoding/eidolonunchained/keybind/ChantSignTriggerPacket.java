@@ -28,43 +28,51 @@ public class ChantSignTriggerPacket {
         this.signId = signId;
     }
     
+    // Constructor for decoding from buffer
     public ChantSignTriggerPacket(FriendlyByteBuf buf) {
         this.signId = buf.readResourceLocation();
     }
     
-    public static void encode(ChantSignTriggerPacket packet, FriendlyByteBuf buf) {
-        buf.writeResourceLocation(packet.signId);
+    // Encode method for writing to buffer
+    public void encode(FriendlyByteBuf buf) {
+        buf.writeResourceLocation(this.signId);
     }
     
-    public static ChantSignTriggerPacket decode(FriendlyByteBuf buf) {
-        return new ChantSignTriggerPacket(buf.readResourceLocation());
+    // Handle method with correct signature for Forge 1.20.1
+    public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
+        NetworkEvent.Context context = contextSupplier.get();
+        context.enqueueWork(() -> {
+            // Handle the packet on the main thread
+            handleChantSignTrigger(this.signId);
+        });
+        context.setPacketHandled(true);
     }
     
     @OnlyIn(Dist.CLIENT)
-    public static void consume(ChantSignTriggerPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        context.enqueueWork(() -> {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.player == null || mc.level == null) return;
+    private void handleChantSignTrigger(ResourceLocation signId) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) return;
+        
+        LOGGER.debug("Received chant sign trigger packet for sign: {}", signId);
+        
+        // Find the sign
+        Sign sign = Signs.find(signId);
+        if (sign == null) {
+            LOGGER.warn("Sign not found: {}", signId);
+            return;
+        }
+        
+        try {
+            // Add the sign to the chant overlay (new independent system)
+            ChantOverlay.addSignToChant(sign);
             
-            LOGGER.debug("Received chant sign trigger packet for sign: {}", packet.signId);
-            
-            // Find the sign
-            Sign sign = Signs.find(packet.signId);
-            if (sign == null) {
-                LOGGER.warn("Sign not found: {}", packet.signId);
-                return;
-            }
-            
-            try {
-                // Add the sign to the chant overlay (new independent system)
-                ChantOverlay.addSignToChant(sign);
-                
-                LOGGER.debug("Successfully added sign {} to chant overlay", packet.signId);
-            } catch (Exception e) {
-                LOGGER.error("Failed to process sign trigger: {}", e.getMessage(), e);
-            }
-        });
-        context.setPacketHandled(true);
+            LOGGER.debug("Successfully added sign {} to chant overlay", signId);
+        } catch (Exception e) {
+            LOGGER.error("Failed to process sign trigger: {}", e.getMessage(), e);
+        }
+    }
+    
+    public ResourceLocation getSignId() {
+        return signId;
     }
 }

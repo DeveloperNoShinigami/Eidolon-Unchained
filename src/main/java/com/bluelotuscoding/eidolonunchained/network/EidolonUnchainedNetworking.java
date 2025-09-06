@@ -45,8 +45,8 @@ public class EidolonUnchainedNetworking {
                 ++packetId,
                 ChantCastPacket.class,
                 ChantCastPacket::encode,
-                ChantCastPacket::decode,
-                ChantCastPacket::consume
+                ChantCastPacket::new,
+                ChantCastPacket::handle
             );
             
             // Register chant slot activation packet
@@ -54,8 +54,8 @@ public class EidolonUnchainedNetworking {
                 ++packetId,
                 ChantSlotActivationPacket.class,
                 ChantSlotActivationPacket::encode,
-                ChantSlotActivationPacket::decode,
-                ChantSlotActivationPacket::consume
+                ChantSlotActivationPacket::new,
+                ChantSlotActivationPacket::handle
             );
             
             // Register chant interface packet
@@ -63,8 +63,8 @@ public class EidolonUnchainedNetworking {
                 ++packetId,
                 ChantInterfacePacket.class,
                 ChantInterfacePacket::encode,
-                ChantInterfacePacket::decode,
-                ChantInterfacePacket::consume
+                ChantInterfacePacket::new,
+                ChantInterfacePacket::handle
             );
             
             // Register chant sign trigger packet
@@ -72,8 +72,8 @@ public class EidolonUnchainedNetworking {
                 ++packetId,
                 ChantSignTriggerPacket.class,
                 ChantSignTriggerPacket::encode,
-                ChantSignTriggerPacket::decode,
-                ChantSignTriggerPacket::consume
+                ChantSignTriggerPacket::new,
+                ChantSignTriggerPacket::handle
             );
             
             // Add more packets here as needed

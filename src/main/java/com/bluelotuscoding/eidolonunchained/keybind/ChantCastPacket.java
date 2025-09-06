@@ -24,34 +24,42 @@ public class ChantCastPacket {
         this.chantId = chantId;
     }
     
+    // Constructor for decoding from buffer
     public ChantCastPacket(FriendlyByteBuf buf) {
         this.chantId = buf.readResourceLocation();
     }
     
-    public static void encode(ChantCastPacket packet, FriendlyByteBuf buf) {
-        buf.writeResourceLocation(packet.chantId);
+    // Encode method for writing to buffer
+    public void encode(FriendlyByteBuf buf) {
+        buf.writeResourceLocation(this.chantId);
     }
     
-    public static ChantCastPacket decode(FriendlyByteBuf buf) {
-        return new ChantCastPacket(buf.readResourceLocation());
-    }
-    
-    public static void consume(ChantCastPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
+    // Handle method with correct signature for Forge 1.20.1
+    public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> {
+            // Handle the packet on the main thread
             ServerPlayer player = context.getSender();
             if (player != null) {
-                LOGGER.info("Processing chant cast packet for player: {} chant: {}", 
-                           player.getName().getString(), packet.chantId);
-                
-                boolean success = DatapackChantManager.executeChant(packet.chantId, player);
-                if (success) {
-                    player.sendSystemMessage(Component.literal("§6✨ Chant cast successfully via keybind!"));
-                } else {
-                    player.sendSystemMessage(Component.literal("§cFailed to cast chant: " + packet.chantId.getPath()));
-                }
+                handleChantCast(player, this.chantId);
             }
         });
         context.setPacketHandled(true);
+    }
+    
+    private void handleChantCast(ServerPlayer player, ResourceLocation chantId) {
+        LOGGER.info("Processing chant cast packet for player: {} chant: {}", 
+                   player.getName().getString(), chantId);
+        
+        boolean success = DatapackChantManager.executeChant(chantId, player);
+        if (success) {
+            player.sendSystemMessage(Component.literal("§6✨ Chant cast successfully via keybind!"));
+        } else {
+            player.sendSystemMessage(Component.literal("§cFailed to cast chant: " + chantId.getPath()));
+        }
+    }
+    
+    public ResourceLocation getChantId() {
+        return chantId;
     }
 }
