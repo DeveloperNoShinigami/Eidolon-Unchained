@@ -40,9 +40,10 @@ public class ChantSlotActivationPacket {
         buf.writeUtf(this.castingMode);
     }
     
-    public static void consume(ChantSlotActivationPacket packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            ServerPlayer player = ctx.get().getSender();
+    public static boolean handle(ChantSlotActivationPacket packet, Supplier<NetworkEvent.Context> supplier) {
+        NetworkEvent.Context context = supplier.get();
+        context.enqueueWork(() -> {
+            ServerPlayer player = context.getSender();
             if (player != null) {
                 LOGGER.info("Processing slot activation for player: {} slot: {} mode: {}", 
                            player.getName().getString(), packet.slotNumber, packet.castingMode);
@@ -54,6 +55,7 @@ public class ChantSlotActivationPacket {
                 }
             }
         });
-        ctx.get().setPacketHandled(true);
+        context.setPacketHandled(true);
+        return true;
     }
 }

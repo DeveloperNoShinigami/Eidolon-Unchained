@@ -37,7 +37,7 @@ public class EidolonUnchainedNetworking {
                 DeitySyncPacket.class,
                 DeitySyncPacket::encode,
                 DeitySyncPacket::decode,
-                DeitySyncPacket::consume
+                DeitySyncPacket::handle
             );
             
             // Register chant cast packet for keybind-based casting
@@ -46,7 +46,7 @@ public class EidolonUnchainedNetworking {
                 ChantCastPacket.class,
                 ChantCastPacket::toBytes,
                 ChantCastPacket::new,
-                ChantCastPacket::consume
+                ChantCastPacket::handle
             );
             
             // Register chant slot activation packet
@@ -55,7 +55,7 @@ public class EidolonUnchainedNetworking {
                 ChantSlotActivationPacket.class,
                 ChantSlotActivationPacket::toBytes,
                 ChantSlotActivationPacket::new,
-                ChantSlotActivationPacket::consume
+                ChantSlotActivationPacket::handle
             );
             
             // Register chant interface packet
@@ -64,7 +64,7 @@ public class EidolonUnchainedNetworking {
                 ChantInterfacePacket.class,
                 ChantInterfacePacket::toBytes,
                 ChantInterfacePacket::new,
-                ChantInterfacePacket::consume
+                ChantInterfacePacket::handle
             );
             
             // Register chant sign trigger packet
@@ -73,7 +73,7 @@ public class EidolonUnchainedNetworking {
                 ChantSignTriggerPacket.class,
                 ChantSignTriggerPacket::toBytes,
                 ChantSignTriggerPacket::new,
-                ChantSignTriggerPacket::consume
+                ChantSignTriggerPacket::handle
             );
             
             // Add more packets here as needed

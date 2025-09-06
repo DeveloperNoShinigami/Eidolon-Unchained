@@ -1,37 +1,37 @@
-[05Sep2025 20:21:18.003] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgeserver, --fml.forgeVersion, 47.4.0, --fml.mcVersion, 1.20.1, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20230612.114412]
-[05Sep2025 20:21:18.010] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher 10.0.9+10.0.9+main.dcd20f30 starting: java version 17.0.12 by Oracle Corporation; OS Windows 10 arch amd64 version 10.0
-[05Sep2025 20:21:18.208] [main/INFO] [net.minecraftforge.fml.loading.ImmediateWindowHandler/]: ImmediateWindowProvider not loading because launch target is forgeserver
-[05Sep2025 20:21:18.286] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/C:/Users/bluel/OneDrive/Desktop/player2test_server/libraries/org/spongepowered/mixin/0.8.5/mixin-0.8.5.jar%2365!/ Service=ModLauncher Env=SERVER
-[05Sep2025 20:21:18.551] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\OneDrive\Desktop\player2test_server\libraries\net\minecraftforge\fmlcore\1.20.1-47.4.0\fmlcore-1.20.1-47.4.0.jar is missing mods.toml file
-[05Sep2025 20:21:18.557] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\OneDrive\Desktop\player2test_server\libraries\net\minecraftforge\javafmllanguage\1.20.1-47.4.0\javafmllanguage-1.20.1-47.4.0.jar is missing mods.toml file
-[05Sep2025 20:21:18.562] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\OneDrive\Desktop\player2test_server\libraries\net\minecraftforge\lowcodelanguage\1.20.1-47.4.0\lowcodelanguage-1.20.1-47.4.0.jar is missing mods.toml file
-[05Sep2025 20:21:18.568] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\OneDrive\Desktop\player2test_server\libraries\net\minecraftforge\mclanguage\1.20.1-47.4.0\mclanguage-1.20.1-47.4.0.jar is missing mods.toml file
-[05Sep2025 20:21:18.669] [main/INFO] [net.minecraftforge.fml.loading.moddiscovery.JarInJarDependencyLocator/]: No dependencies to load found. Skipping!
-[05Sep2025 20:21:20.553] [main/INFO] [mixin/]: Compatibility level set to JAVA_17
-[05Sep2025 20:21:20.558] [main/INFO] [cpw.mods.modlauncher.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgeserver' with arguments []
-[05Sep2025 20:21:27.367] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.registries.EidolonUnchainedRecipes/]: ? EidolonUnchainedRecipes registry initialized
-[05Sep2025 20:21:27.391] [modloading-worker-0/INFO] [net.minecraftforge.common.ForgeMod/FORGEMOD]: Forge mod loading, version 47.4.0, for MC 1.20.1 with MCP 20230612.114412
-[05Sep2025 20:21:27.392] [modloading-worker-0/INFO] [net.minecraftforge.common.MinecraftForge/FORGE]: MinecraftForge v47.4.0 Initialized
-[05Sep2025 20:21:27.399] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Eidolon Feature Detection Results:
-[05Sep2025 20:21:27.400] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ?? CodexEvents not found - using legacy compatibility mode
-[05Sep2025 20:21:27.403] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    Mode: Legacy - Reflection Required
-[05Sep2025 20:21:27.404] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    CodexEvents: ? Not Available
-[05Sep2025 20:21:27.407] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ?? Enhanced TitlePage constructor not available
-[05Sep2025 20:21:27.407] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    Enhanced TitlePage: ? Not Available
-[05Sep2025 20:21:27.411] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Public Category fields available
-[05Sep2025 20:21:27.412] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    Public Category Fields: ? Not Available
-[05Sep2025 20:21:27.414] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Running in Legacy Mode - using reflection where necessary
-[05Sep2025 20:21:27.415] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Migration Guide: See EIDOLON_VERSION_MIGRATION_GUIDE.md
-[05Sep2025 20:21:27.920] [main/INFO] [com.bluelotuscoding.eidolonunchained.registries.EidolonUnchainedRecipes/]: ? Registering CrucibleCommandRecipe type
-[05Sep2025 20:21:27.936] [main/INFO] [com.bluelotuscoding.eidolonunchained.registries.EidolonUnchainedRecipes/]: ? Registering CrucibleCommandRecipe serializer
-[05Sep2025 20:21:28.109] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Eidolon Unchained is loading!
-[05Sep2025 20:21:28.110] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Expanding the world of Eidolon with new chapters, rituals, and mystical content...
-[05Sep2025 20:21:28.158] [modloading-worker-0/ERROR] [net.minecraftforge.fml.javafmlmod.FMLModContainer/]: Exception caught during firing event: 'boolean com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket.handle(com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket, java.util.function.Supplier)'
+[05Sep2025 20:36:02.778] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgeserver, --fml.forgeVersion, 47.4.0, --fml.mcVersion, 1.20.1, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20230612.114412]
+[05Sep2025 20:36:02.792] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher 10.0.9+10.0.9+main.dcd20f30 starting: java version 17.0.12 by Oracle Corporation; OS Windows 10 arch amd64 version 10.0
+[05Sep2025 20:36:03.142] [main/INFO] [net.minecraftforge.fml.loading.ImmediateWindowHandler/]: ImmediateWindowProvider not loading because launch target is forgeserver
+[05Sep2025 20:36:03.336] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/C:/Users/bluel/OneDrive/Desktop/player2test_server/libraries/org/spongepowered/mixin/0.8.5/mixin-0.8.5.jar%2365!/ Service=ModLauncher Env=SERVER
+[05Sep2025 20:36:03.921] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\OneDrive\Desktop\player2test_server\libraries\net\minecraftforge\fmlcore\1.20.1-47.4.0\fmlcore-1.20.1-47.4.0.jar is missing mods.toml file
+[05Sep2025 20:36:03.926] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\OneDrive\Desktop\player2test_server\libraries\net\minecraftforge\javafmllanguage\1.20.1-47.4.0\javafmllanguage-1.20.1-47.4.0.jar is missing mods.toml file
+[05Sep2025 20:36:03.931] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\OneDrive\Desktop\player2test_server\libraries\net\minecraftforge\lowcodelanguage\1.20.1-47.4.0\lowcodelanguage-1.20.1-47.4.0.jar is missing mods.toml file
+[05Sep2025 20:36:03.935] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\bluel\OneDrive\Desktop\player2test_server\libraries\net\minecraftforge\mclanguage\1.20.1-47.4.0\mclanguage-1.20.1-47.4.0.jar is missing mods.toml file
+[05Sep2025 20:36:04.030] [main/INFO] [net.minecraftforge.fml.loading.moddiscovery.JarInJarDependencyLocator/]: No dependencies to load found. Skipping!
+[05Sep2025 20:36:05.411] [main/INFO] [mixin/]: Compatibility level set to JAVA_17
+[05Sep2025 20:36:05.415] [main/INFO] [cpw.mods.modlauncher.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgeserver' with arguments []
+[05Sep2025 20:36:12.668] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.registries.EidolonUnchainedRecipes/]: ? EidolonUnchainedRecipes registry initialized
+[05Sep2025 20:36:12.703] [modloading-worker-0/INFO] [net.minecraftforge.common.ForgeMod/FORGEMOD]: Forge mod loading, version 47.4.0, for MC 1.20.1 with MCP 20230612.114412
+[05Sep2025 20:36:12.704] [modloading-worker-0/INFO] [net.minecraftforge.common.MinecraftForge/FORGE]: MinecraftForge v47.4.0 Initialized
+[05Sep2025 20:36:12.717] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Eidolon Feature Detection Results:
+[05Sep2025 20:36:12.718] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ?? CodexEvents not found - using legacy compatibility mode
+[05Sep2025 20:36:12.721] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    Mode: Legacy - Reflection Required
+[05Sep2025 20:36:12.721] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    CodexEvents: ? Not Available
+[05Sep2025 20:36:12.726] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ?? Enhanced TitlePage constructor not available
+[05Sep2025 20:36:12.727] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    Enhanced TitlePage: ? Not Available
+[05Sep2025 20:36:12.730] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Public Category fields available
+[05Sep2025 20:36:12.731] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]:    Public Category Fields: ? Not Available
+[05Sep2025 20:36:12.732] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Running in Legacy Mode - using reflection where necessary
+[05Sep2025 20:36:12.732] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection/]: ? Migration Guide: See EIDOLON_VERSION_MIGRATION_GUIDE.md
+[05Sep2025 20:36:13.300] [main/INFO] [com.bluelotuscoding.eidolonunchained.registries.EidolonUnchainedRecipes/]: ? Registering CrucibleCommandRecipe type
+[05Sep2025 20:36:13.316] [main/INFO] [com.bluelotuscoding.eidolonunchained.registries.EidolonUnchainedRecipes/]: ? Registering CrucibleCommandRecipe serializer
+[05Sep2025 20:36:13.493] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Eidolon Unchained is loading!
+[05Sep2025 20:36:13.494] [modloading-worker-0/INFO] [com.bluelotuscoding.eidolonunchained.EidolonUnchained/]: Expanding the world of Eidolon with new chapters, rituals, and mystical content...
+[05Sep2025 20:36:13.533] [modloading-worker-0/ERROR] [net.minecraftforge.fml.javafmlmod.FMLModContainer/]: Exception caught during firing event: 'void com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket.consume(com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket, java.util.function.Supplier)'
 	Index: 1
 	Listeners:
 		0: NORMAL
-		1: net.minecraftforge.eventbus.EventBus$$Lambda$3998/0x0000023a28a57570@7e9db08
-java.lang.NoSuchMethodError: 'boolean com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket.handle(com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket, java.util.function.Supplier)'
+		1: net.minecraftforge.eventbus.EventBus$$Lambda$3998/0x0000024ac8a56f50@16c08388
+java.lang.NoSuchMethodError: 'void com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket.consume(com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket, java.util.function.Supplier)'
 	at TRANSFORMER/eidolonunchained@1.0.0/com.bluelotuscoding.eidolonunchained.network.EidolonUnchainedNetworking.register(EidolonUnchainedNetworking.java:71)
 	at TRANSFORMER/eidolonunchained@1.0.0/com.bluelotuscoding.eidolonunchained.EidolonUnchained.commonSetup(EidolonUnchained.java:88)
 	at MC-BOOTSTRAP/net.minecraftforge.eventbus/net.minecraftforge.eventbus.EventBus.doCastFilter(EventBus.java:260)
@@ -48,8 +48,8 @@ java.lang.NoSuchMethodError: 'boolean com.bluelotuscoding.eidolonunchained.keybi
 	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1622)
 	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:165)
 
-[05Sep2025 20:21:28.166] [modloading-worker-0/ERROR] [net.minecraftforge.fml.javafmlmod.FMLModContainer/LOADING]: Caught exception during event FMLCommonSetupEvent dispatch for modid eidolonunchained
-java.lang.NoSuchMethodError: 'boolean com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket.handle(com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket, java.util.function.Supplier)'
+[05Sep2025 20:36:13.535] [modloading-worker-0/ERROR] [net.minecraftforge.fml.javafmlmod.FMLModContainer/LOADING]: Caught exception during event FMLCommonSetupEvent dispatch for modid eidolonunchained
+java.lang.NoSuchMethodError: 'void com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket.consume(com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket, java.util.function.Supplier)'
 	at com.bluelotuscoding.eidolonunchained.network.EidolonUnchainedNetworking.register(EidolonUnchainedNetworking.java:71) ~[eidolonunchained-1.0.0.jar%23105!/:1.0.0]
 	at com.bluelotuscoding.eidolonunchained.EidolonUnchained.commonSetup(EidolonUnchained.java:88) ~[eidolonunchained-1.0.0.jar%23105!/:1.0.0]
 	at net.minecraftforge.eventbus.EventBus.doCastFilter(EventBus.java:260) ~[eventbus-6.0.5.jar%2352!/:?]
@@ -65,15 +65,15 @@ java.lang.NoSuchMethodError: 'boolean com.bluelotuscoding.eidolonunchained.keybi
 	at java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1655) ~[?:?]
 	at java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1622) ~[?:?]
 	at java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:165) ~[?:?]
-[05Sep2025 20:21:28.261] [main/FATAL] [net.minecraftforge.fml.ModLoader/LOADING]: Failed to complete lifecycle event COMMON_SETUP, 1 errors found
-[05Sep2025 20:21:28.367] [Forge Version Check/INFO] [net.minecraftforge.fml.VersionChecker/]: [forge] Starting version check at https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json
-[05Sep2025 20:21:28.450] [main/FATAL] [net.minecraftforge.common.ForgeMod/]: Preparing crash report with UUID 8543617f-26e8-4277-9d2e-b50f69c0c16d
-[05Sep2025 20:21:28.451] [main/FATAL] [net.minecraftforge.server.loading.ServerModLoader/]: Crash report saved to .\crash-reports\crash-2025-09-05_20.21.28-fml.txt
-[05Sep2025 20:21:28.454] [main/FATAL] [net.minecraftforge.common.ForgeMod/]: Preparing crash report with UUID 40392a9a-9214-4a7b-94c0-efd341585478
-[05Sep2025 20:21:28.461] [main/ERROR] [net.minecraft.server.Main/FATAL]: Failed to start the minecraft server
+[05Sep2025 20:36:13.628] [main/FATAL] [net.minecraftforge.fml.ModLoader/LOADING]: Failed to complete lifecycle event COMMON_SETUP, 1 errors found
+[05Sep2025 20:36:13.779] [Forge Version Check/INFO] [net.minecraftforge.fml.VersionChecker/]: [forge] Starting version check at https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json
+[05Sep2025 20:36:13.891] [main/FATAL] [net.minecraftforge.common.ForgeMod/]: Preparing crash report with UUID 27e50c78-4272-436f-b048-b19e253bd593
+[05Sep2025 20:36:13.893] [main/FATAL] [net.minecraftforge.server.loading.ServerModLoader/]: Crash report saved to .\crash-reports\crash-2025-09-05_20.36.13-fml.txt
+[05Sep2025 20:36:13.896] [main/FATAL] [net.minecraftforge.common.ForgeMod/]: Preparing crash report with UUID b7ab9891-92ab-41f1-b3e3-c99511329fe7
+[05Sep2025 20:36:13.899] [main/ERROR] [net.minecraft.server.Main/FATAL]: Failed to start the minecraft server
 net.minecraftforge.fml.LoadingFailedException: Loading errors encountered: [
 	Eidolon Unchained (eidolonunchained) encountered an error during the common_setup event phase
-§7java.lang.NoSuchMethodError: 'boolean com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket.handle(com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket, java.util.function.Supplier)'
+§7java.lang.NoSuchMethodError: 'void com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket.consume(com.bluelotuscoding.eidolonunchained.keybind.ChantSignTriggerPacket, java.util.function.Supplier)'
 ]
 	at net.minecraftforge.fml.ModLoader.waitForTransition(ModLoader.java:246) ~[fmlcore-1.20.1-47.4.0.jar%23108!/:?]
 	at net.minecraftforge.fml.ModLoader.lambda$dispatchAndHandleError$20(ModLoader.java:210) ~[fmlcore-1.20.1-47.4.0.jar%23108!/:?]

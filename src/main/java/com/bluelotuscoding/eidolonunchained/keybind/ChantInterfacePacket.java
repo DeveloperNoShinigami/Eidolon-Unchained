@@ -48,9 +48,10 @@ public class ChantInterfacePacket {
         buf.writeUtf(this.data);
     }
     
-    public static void consume(ChantInterfacePacket packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            ServerPlayer player = ctx.get().getSender();
+    public static boolean handle(ChantInterfacePacket packet, Supplier<NetworkEvent.Context> supplier) {
+        NetworkEvent.Context context = supplier.get();
+        context.enqueueWork(() -> {
+            ServerPlayer player = context.getSender();
             if (player != null) {
                 LOGGER.info("Processing chant interface packet for player: {} action: {}", 
                            player.getName().getString(), packet.action);
@@ -70,6 +71,7 @@ public class ChantInterfacePacket {
                 }
             }
         });
-        ctx.get().setPacketHandled(true);
+        context.setPacketHandled(true);
+        return true;
     }
 }

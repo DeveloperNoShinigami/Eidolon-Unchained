@@ -37,8 +37,9 @@ public class ChantSignTriggerPacket {
     }
     
     @OnlyIn(Dist.CLIENT)
-    public static void consume(ChantSignTriggerPacket packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
+    public static boolean handle(ChantSignTriggerPacket packet, Supplier<NetworkEvent.Context> supplier) {
+        NetworkEvent.Context context = supplier.get();
+        context.enqueueWork(() -> {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null || mc.level == null) return;
             
@@ -60,6 +61,7 @@ public class ChantSignTriggerPacket {
                 LOGGER.error("Failed to process sign trigger: {}", e.getMessage(), e);
             }
         });
-        ctx.get().setPacketHandled(true);
+        context.setPacketHandled(true);
+        return true;
     }
 }

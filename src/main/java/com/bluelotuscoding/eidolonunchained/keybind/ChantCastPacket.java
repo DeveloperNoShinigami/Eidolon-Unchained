@@ -32,9 +32,10 @@ public class ChantCastPacket {
         buf.writeResourceLocation(this.chantId);
     }
     
-    public static void consume(ChantCastPacket packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            ServerPlayer player = ctx.get().getSender();
+    public static boolean handle(ChantCastPacket packet, Supplier<NetworkEvent.Context> supplier) {
+        NetworkEvent.Context context = supplier.get();
+        context.enqueueWork(() -> {
+            ServerPlayer player = context.getSender();
             if (player != null) {
                 LOGGER.info("Processing chant cast packet for player: {} chant: {}", 
                            player.getName().getString(), packet.chantId);
@@ -47,6 +48,7 @@ public class ChantCastPacket {
                 }
             }
         });
-        ctx.get().setPacketHandled(true);
+        context.setPacketHandled(true);
+        return true;
     }
 }
