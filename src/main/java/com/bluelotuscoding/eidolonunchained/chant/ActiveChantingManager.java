@@ -2,10 +2,7 @@ package com.bluelotuscoding.eidolonunchained.chant;
 
 import com.mojang.logging.LogUtils;
 import elucent.eidolon.api.spells.Sign;
-import elucent.eidolon.api.spells.SignSequence;
 import elucent.eidolon.common.entity.ChantCasterEntity;
-import elucent.eidolon.registries.EidolonEntities;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -13,148 +10,201 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.slf4j.Logger;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.WeakHashMap;
 
 /**
- * Manages active chanting entities that provide real-time visual feedback
- * as players build up spell sequences with keybinds.
+ * Manages active chanting with real-time ChantCasterEntity spawning
+ * This creates the immersive visual chanting experience where entities 
+ * spawn immediately and update as signs are added
  */
 @OnlyIn(Dist.CLIENT)
 public class ActiveChantingManager {
     private static final Logger LOGGER = LogUtils.getLogger();
     
-    // Track active chanting entities per player
-    private static final WeakHashMap<Player, ChantCasterEntity> activeChantingEntities = new WeakHashMap<>();
-    private static final WeakHashMap<Player, List<Sign>> currentSequences = new WeakHashMap<>();
+    private static ChantCasterEntity activeChantingEntity = null;
+    private static List<Sign> currentSigns = new ArrayList<>();
+    private static Player currentCaster = null;
     
     /**
-     * Start or update an active chanting sequence for a player
+     * Start active chanting - spawn ChantCasterEntity immediately
      */
-    public static void addSignToActiveChant(Player player, Sign sign) {
-        if (player == null || sign == null) return;
-        
-        Level level = player.level();
-        if (level == null) return;
-        
-        // Get or create the current sequence for this player
-        List<Sign> sequence = currentSequences.computeIfAbsent(player, k -> new ArrayList<>());
-        sequence.add(sign);
-        
-        LOGGER.debug("Adding sign {} to active chant for player {}. Sequence now: {}", 
-                    sign.getRegistryName(), player.getName().getString(), sequence.size());
-        
-        // Get or create the chanting entity
-        ChantCasterEntity chantingEntity = activeChantingEntities.get(player);
-        
-        if (chantingEntity == null || chantingEntity.isRemoved()) {
-            // Create new chanting entity
-            chantingEntity = createChantingEntity(player, sequence);
-            activeChantingEntities.put(player, chantingEntity);
-            
-            // Spawn the entity in the world
-            level.addFreshEntity(chantingEntity);
-            
-            LOGGER.info("Created new active chanting entity for player {}", player.getName().getString());
-        } else {
-            // Update existing entity with new sign sequence
-            updateChantingEntity(chantingEntity, sequence);
-            
-            LOGGER.debug("Updated existing chanting entity for player {}", player.getName().getString());
+    public static void startActiveChanting(Player player, Sign firstSign) {
+        if (activeChantingEntity != null) {
+            // Clear existing chant first
+            stopActiveChanting();
         }
-    }
-    
-    /**
-     * Create a new ChantCasterEntity for the player with the current sequence
-     */
-    private static ChantCasterEntity createChantingEntity(Player player, List<Sign> sequence) {
-        // Position entity slightly in front of the player
-        Vec3 playerPos = player.position();
-        Vec3 lookDirection = player.getLookAngle();
-        Vec3 entityPos = playerPos.add(lookDirection.scale(1.5));
         
-        // Create the entity
-        ChantCasterEntity entity = new ChantCasterEntity(player.level(), player, sequence, lookDirection);
-        entity.setPos(entityPos.x, entityPos.y + 1.0, entityPos.z);
+        LOGGER.info("Starting active chanting for player {} with sign {}", player.getName().getString(), firstSign.getRegistryName());
         
-        return entity;
-    }
-    
-    /**
-     * Update an existing ChantCasterEntity with a new sign sequence
-     */
-    private static void updateChantingEntity(ChantCasterEntity entity, List<Sign> sequence) {
         try {
-            // Use reflection to access the protected setChantTag method
-            java.lang.reflect.Method setChantTagMethod = ChantCasterEntity.class.getDeclaredMethod("setChantTag", List.class);
-            setChantTagMethod.setAccessible(true);
-            setChantTagMethod.invoke(entity, sequence);
+            // Create initial sign list
+            List<Sign> initialSigns = new ArrayList<>();
+            initialSigns.add(firstSign);
             
-            LOGGER.debug("Updated chanting entity with {} signs", sequence.size());
+            // Get player's look direction
+            Vec3 lookDirection = player.getLookAngle();
+            
+            // Spawn ChantCasterEntity using the correct constructor
+            // Constructor: ChantCasterEntity(Level world, Player caster, List<Sign> runes, Vec3 look)
+            activeChantingEntity = new ChantCasterEntity(player.level(), player, initialSigns, lookDirection);
+            
+            // Position the entity near the player
+            activeChantingEntity.setPos(player.getX(), player.getY() + 0.5, player.getZ());
+            
+            // Add entity to world
+            player.level().addFreshEntity(activeChantingEntity);
+            
+            // Store current signs and caster
+            currentSigns.clear();
+            currentSigns.add(firstSign);
+            currentCaster = player;
+            
+            LOGGER.info("Successfully spawned ChantCasterEntity for active chanting");
+            
         } catch (Exception e) {
-            LOGGER.error("Failed to update chanting entity: {}", e.getMessage(), e);
+            LOGGER.error("Failed to start active chanting: {}", e.getMessage(), e);
+            activeChantingEntity = null;
         }
     }
     
     /**
-     * Complete the active chanting sequence for a player
+     * Add a sign to the active chanting sequence
      */
-    public static void completeActiveChant(Player player) {
-        ChantCasterEntity entity = activeChantingEntities.get(player);
-        if (entity != null && !entity.isRemoved()) {
-            // Let the entity complete its casting naturally
-            // The entity will handle spell resolution and removal
-            LOGGER.info("Completing active chant for player {}", player.getName().getString());
+    public static void addSignToActiveChant(Sign sign) {
+        if (activeChantingEntity == null || currentCaster == null) {
+            LOGGER.warn("Attempted to add sign to non-existent active chant");
+            return;
         }
         
-        // Clean up our tracking
-        clearActiveChant(player);
+        LOGGER.info("Adding sign {} to active chant", sign.getRegistryName());
+        
+        try {
+            // Add sign to our tracking list
+            currentSigns.add(sign);
+            
+            // Update the ChantCasterEntity's sign sequence using reflection
+            updateChantingEntity(currentSigns);
+            
+            LOGGER.info("Successfully added sign to active chant. Total signs: {}", currentSigns.size());
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to add sign to active chant: {}", e.getMessage(), e);
+        }
     }
     
     /**
-     * Clear the active chanting sequence for a player (cancel/timeout)
+     * Update the ChantCasterEntity with new sign sequence
      */
-    public static void clearActiveChant(Player player) {
-        ChantCasterEntity entity = activeChantingEntities.remove(player);
-        if (entity != null && !entity.isRemoved()) {
-            // Remove the entity gracefully
-            entity.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
-            LOGGER.debug("Removed active chanting entity for player {}", player.getName().getString());
+    private static void updateChantingEntity(List<Sign> signs) {
+        if (activeChantingEntity == null) return;
+        
+        try {
+            // Use reflection to access and update the runes field in ChantCasterEntity
+            Field runesField = ChantCasterEntity.class.getDeclaredField("runes");
+            runesField.setAccessible(true);
+            
+            // Create new list for the entity
+            List<Sign> entitySigns = new ArrayList<>(signs);
+            runesField.set(activeChantingEntity, entitySigns);
+            
+            LOGGER.debug("Updated ChantCasterEntity with {} signs", signs.size());
+            
+        } catch (Exception e) {
+            LOGGER.warn("Failed to update ChantCasterEntity signs via reflection: {}", e.getMessage());
+            // Fallback: Try to recreate the entity with updated signs
+            recreateChantingEntity(signs);
+        }
+    }
+    
+    /**
+     * Recreate the chanting entity if reflection fails
+     */
+    private static void recreateChantingEntity(List<Sign> signs) {
+        if (currentCaster == null) return;
+        
+        try {
+            // Remove old entity
+            if (activeChantingEntity != null) {
+                activeChantingEntity.discard();
+            }
+            
+            // Create new entity with updated signs
+            Vec3 lookDirection = currentCaster.getLookAngle();
+            activeChantingEntity = new ChantCasterEntity(currentCaster.level(), currentCaster, new ArrayList<>(signs), lookDirection);
+            
+            // Position and add to world
+            activeChantingEntity.setPos(currentCaster.getX(), currentCaster.getY() + 0.5, currentCaster.getZ());
+            currentCaster.level().addFreshEntity(activeChantingEntity);
+            
+            LOGGER.debug("Recreated ChantCasterEntity with {} signs", signs.size());
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to recreate ChantCasterEntity: {}", e.getMessage(), e);
+            activeChantingEntity = null;
+        }
+    }
+    
+    /**
+     * Complete the active chanting - let the entity finish its casting
+     */
+    public static void completeActiveChanting() {
+        if (activeChantingEntity == null) {
+            LOGGER.warn("Attempted to complete non-existent active chant");
+            return;
         }
         
-        // Clear the sequence
-        currentSequences.remove(player);
-    }
-    
-    /**
-     * Get the current sign sequence for a player
-     */
-    public static List<Sign> getCurrentSequence(Player player) {
-        return currentSequences.getOrDefault(player, new ArrayList<>());
-    }
-    
-    /**
-     * Check if a player has an active chanting sequence
-     */
-    public static boolean hasActiveChant(Player player) {
-        ChantCasterEntity entity = activeChantingEntities.get(player);
-        return entity != null && !entity.isRemoved() && !currentSequences.getOrDefault(player, new ArrayList<>()).isEmpty();
-    }
-    
-    /**
-     * Clean up removed or invalid entities
-     */
-    public static void cleanup() {
-        activeChantingEntities.entrySet().removeIf(entry -> {
-            ChantCasterEntity entity = entry.getValue();
-            return entity == null || entity.isRemoved();
-        });
+        LOGGER.info("Completing active chant with {} signs", currentSigns.size());
         
-        // Also clean up sequences for players that no longer have entities
-        currentSequences.entrySet().removeIf(entry -> {
-            Player player = entry.getKey();
-            return !activeChantingEntities.containsKey(player);
-        });
+        try {
+            // The ChantCasterEntity should handle completion automatically
+            // We just need to let it finish its casting sequence
+            
+            // Clear our tracking but let the entity complete naturally
+            currentSigns.clear();
+            currentCaster = null;
+            activeChantingEntity = null; // It will remove itself when done
+            
+            LOGGER.info("Active chant completion initiated");
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to complete active chant: {}", e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Stop active chanting immediately
+     */
+    public static void stopActiveChanting() {
+        if (activeChantingEntity != null) {
+            LOGGER.info("Stopping active chant");
+            activeChantingEntity.discard();
+            activeChantingEntity = null;
+        }
+        
+        currentSigns.clear();
+        currentCaster = null;
+    }
+    
+    /**
+     * Check if active chanting is in progress
+     */
+    public static boolean isActiveChanting() {
+        return activeChantingEntity != null && !activeChantingEntity.isRemoved();
+    }
+    
+    /**
+     * Get current sign count
+     */
+    public static int getCurrentSignCount() {
+        return currentSigns.size();
+    }
+    
+    /**
+     * Get current signs (read-only)
+     */
+    public static List<Sign> getCurrentSigns() {
+        return new ArrayList<>(currentSigns);
     }
 }
