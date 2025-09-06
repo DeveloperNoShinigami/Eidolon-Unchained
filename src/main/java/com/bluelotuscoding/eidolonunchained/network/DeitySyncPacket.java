@@ -46,7 +46,7 @@ public class DeitySyncPacket {
         return new DeitySyncPacket(deityData);
     }
     
-    public static void handle(DeitySyncPacket packet, Supplier<NetworkEvent.Context> context) {
+    public static void consume(DeitySyncPacket packet, Supplier<NetworkEvent.Context> context) {
         NetworkEvent.Context ctx = context.get();
         ctx.enqueueWork(() -> {
             try {
