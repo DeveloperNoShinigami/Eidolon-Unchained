@@ -46,7 +46,7 @@ public class DeitySyncPacket {
         return new DeitySyncPacket(deityData);
     }
     
-    public static boolean handle(DeitySyncPacket packet, Supplier<NetworkEvent.Context> context) {
+    public static void handle(DeitySyncPacket packet, Supplier<NetworkEvent.Context> context) {
         NetworkEvent.Context ctx = context.get();
         ctx.enqueueWork(() -> {
             try {
@@ -68,7 +68,6 @@ public class DeitySyncPacket {
             }
         });
         ctx.setPacketHandled(true);
-        return true;
     }
     
     /**
