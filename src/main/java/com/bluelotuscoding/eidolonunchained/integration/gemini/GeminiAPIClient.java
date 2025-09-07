@@ -390,8 +390,9 @@ public class GeminiAPIClient {
         
         // Clean up dialogue
         String finalDialogue = dialogue.toString().trim();
+        // CRITICAL FIX: Remove hardcoded acknowledgment - let proper AI provider system handle responses
         if (finalDialogue.isEmpty()) {
-            finalDialogue = "The deity acknowledges your prayer.";
+            finalDialogue = ""; // Return empty string instead of hardcoded message
         }
         
         return new AIResponse(true, finalDialogue, commands);

@@ -3,20 +3,20 @@
   "pages": [
     {
       "type": "title",
-      "text": "eidolonunchained.codex.entry.light_patronage_ritual"
+      "text": "eidolon.codex.entry.light_patronage_ritual"
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.light_patronage_ritual.description"
+      "text": "eidolon.codex.entry.light_patronage_ritual.description"
     },
     {
       "type": "ritual",
-      "text": "eidolonunchained.codex.page.light_patronage_ritual",
+      "text": "eidolon.codex.page.light_patronage_ritual",
       "ritual": "eidolonunchained:light_patronage_ritual"
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.light_patronage_ritual.effects"
+      "text": "eidolon.codex.entry.light_patronage_ritual.effects"
     }
   ]
 }

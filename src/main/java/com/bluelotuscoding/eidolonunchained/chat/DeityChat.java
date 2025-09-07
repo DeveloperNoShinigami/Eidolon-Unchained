@@ -150,7 +150,7 @@ public class DeityChat {
                             }
                             break;
                         case ALLIED:
-                            player.sendSystemMessage(Component.literal("§b" + deity.getName() + " §7acknowledges an ally of the divine."));
+                            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.divine_ally_greeting", deity.getName()));
                             break;
                         case NEUTRAL:
                             player.sendSystemMessage(Component.literal("§7A cautious divine presence observes you..."));
@@ -261,8 +261,21 @@ public class DeityChat {
             List<String> history = conversationHistory.get(playerId);
             history.add("Player: " + message);
             
-            // Add to persistent history
-            ConversationHistoryManager.get().addMessage(player.getUUID(), deityId, "Player", message);
+            // Add to persistent history on main thread to avoid SavedData classloader issues
+            final UUID playerUuid = player.getUUID();
+            final ResourceLocation targetDeityId = deityId;
+            final String messageText = message;
+            
+            MinecraftServer server = player.getServer();
+            if (server != null) {
+                server.execute(() -> {
+                    try {
+                        ConversationHistoryManager.get().addMessage(playerUuid, targetDeityId, "Player", messageText);
+                    } catch (Exception e) {
+                        LOGGER.warn("Failed to save conversation message to persistent storage: {}", e.getMessage());
+                    }
+                });
+            }
             
             // Build conversation prompt with persistent history
             String conversationPrompt = buildConversationPrompt(player, deity, message, deityId);
@@ -376,8 +389,22 @@ public class DeityChat {
                 // Add response to history (using cleaned version)
                 history.add("Deity: " + cleanedResponse);
                 
-                // Add to persistent history
-                ConversationHistoryManager.get().addMessage(player.getUUID(), deityId, deity.getName(), cleanedResponse);
+                // Add to persistent history on main thread to avoid SavedData classloader issues
+                final UUID uuid = player.getUUID();
+                final ResourceLocation deityResourceId = deityId;
+                final String deityDisplayName = deity.getName();
+                final String responseText = cleanedResponse;
+                
+                MinecraftServer mcServer = player.getServer();
+                if (mcServer != null) {
+                    mcServer.execute(() -> {
+                        try {
+                            ConversationHistoryManager.get().addMessage(uuid, deityResourceId, deityDisplayName, responseText);
+                        } catch (Exception e) {
+                            LOGGER.warn("Failed to save deity response to persistent storage: {}", e.getMessage());
+                        }
+                    });
+                }
                 
                 // Check for auto-judgment and additional commands only if no commands were already executed
                 if (commandsExecuted == 0 && aiConfig.prayer_configs.containsKey("conversation")) {
@@ -416,8 +443,8 @@ public class DeityChat {
                     // Trigger immediate title update for reputation change
                     com.bluelotuscoding.eidolonunchained.events.ReputationChangeHandler.forceUpdatePlayer(player);
                     
-                    // Notify player of reputation gain
-                    player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.acknowledges_devotion", 
+                    // Notify player of reputation gain with proper localization
+                    player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.reputation_gained", 
                         deity.getDisplayName(), String.format("%.1f", baseGain)));
                 });
                 

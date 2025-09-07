@@ -3,7 +3,7 @@
   "pages": [
     {
       "type": "title",
-      "text": "eidolonunchained.codex.entry.recipe_example.title"
+      "text": "eidolon.codex.entry.recipe_example.title"
     },
     {
       "type": "recipe",
@@ -11,7 +11,7 @@
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.recipe_example.explanation"
+      "text": "eidolon.codex.entry.recipe_example.explanation"
     }
   ]
 }

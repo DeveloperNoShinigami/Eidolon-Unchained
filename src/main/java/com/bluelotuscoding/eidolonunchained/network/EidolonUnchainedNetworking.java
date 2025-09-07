@@ -49,6 +49,15 @@ public class EidolonUnchainedNetworking {
                 DatapackSyncPacket::handle
             );
             
+            // CRITICAL FIX: Register chunked data sync packet to prevent buffer overflow
+            INSTANCE.registerMessage(
+                ++packetId,
+                ChunkedDataSyncPacket.class,
+                ChunkedDataSyncPacket::encode,
+                ChunkedDataSyncPacket::decode,
+                ChunkedDataSyncPacket::handle
+            );
+            
             // Register chant cast packet for keybind-based casting
             INSTANCE.registerMessage(
                 ++packetId,

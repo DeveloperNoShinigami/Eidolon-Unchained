@@ -218,11 +218,11 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
 
             // Basic fields
             String titleStr = json.has("title") ? json.get("title").getAsString() : location.getPath();
-            Component title = (titleStr.contains(":") || titleStr.contains(".") || titleStr.startsWith("eidolonunchained:"))
+            Component title = (titleStr.contains(":") || titleStr.contains(".") || titleStr.startsWith("eidolonunchained:") || titleStr.startsWith("eidolon."))
                 ? Component.translatable(titleStr)
                 : Component.literal(titleStr);
             String descStr = json.has("description") ? json.get("description").getAsString() : "";
-            Component description = (descStr.contains(":") || descStr.contains(".") || descStr.startsWith("eidolonunchained:"))
+            Component description = (descStr.contains(":") || descStr.contains(".") || descStr.startsWith("eidolonunchained:") || descStr.startsWith("eidolon."))
                 ? Component.translatable(descStr)
                 : Component.literal(descStr);
 

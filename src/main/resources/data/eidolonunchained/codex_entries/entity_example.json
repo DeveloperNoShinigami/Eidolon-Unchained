@@ -3,7 +3,7 @@
   "pages": [
     {
       "type": "title",
-      "text": "eidolonunchained.codex.entry.entity_example"
+      "text": "eidolon.codex.entry.entity_example"
     },
     {
       "type": "entity",
@@ -12,7 +12,7 @@
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.entity_example.description"
+      "text": "eidolon.codex.entry.entity_example.description"
     }
   ]
 }

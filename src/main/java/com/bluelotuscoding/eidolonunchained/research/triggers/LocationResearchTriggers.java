@@ -36,21 +36,32 @@ public class LocationResearchTriggers {
     // Track triggered research per player to prevent infinite loops
     private static final Map<String, Set<String>> PLAYER_TRIGGERED_RESEARCH = new HashMap<>();
     
-    @SubscribeEvent
+        @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer serverPlayer)) {
+        if (event.side.isClient() || event.phase != TickEvent.Phase.END) {
             return;
         }
         
-        UUID playerId = serverPlayer.getUUID();
+        if (!(event.player instanceof ServerPlayer player)) {
+            return;
+        }
+        
+        // CRITICAL DEBUG: Add periodic logging to verify event handler registration
+        UUID playerId = player.getUUID();
         int timer = PLAYER_CHECK_TIMERS.getOrDefault(playerId, 0);
+        timer++;
+        
+        if (timer == 1) { // Log only on first tick to verify registration
+            LOGGER.debug("LocationResearchTriggers: PlayerTickEvent registered and firing for {}", 
+                player.getName().getString());
+        }
         
         if (timer >= CHECK_INTERVAL) {
-            checkLocationTriggers(serverPlayer);
-            PLAYER_CHECK_TIMERS.put(playerId, 0);
-        } else {
-            PLAYER_CHECK_TIMERS.put(playerId, timer + 1);
+            timer = 0;
+            checkLocationTriggers(player);
         }
+        
+        PLAYER_CHECK_TIMERS.put(playerId, timer);
     }
     
     /**

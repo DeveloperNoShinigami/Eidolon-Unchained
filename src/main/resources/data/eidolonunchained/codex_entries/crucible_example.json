@@ -3,11 +3,11 @@
   "pages": [
     {
       "type": "title",
-      "text": "eidolonunchained.codex.entry.crucible_example.title"
+      "text": "eidolon.codex.entry.crucible_example.title"
     },
     {
       "type": "text", 
-      "text": "eidolonunchained.codex.entry.crucible_example.intro"
+      "text": "eidolon.codex.entry.crucible_example.intro"
     },
     {
       "type": "crucible",
@@ -15,7 +15,7 @@
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.crucible_example.shadow_explanation"
+      "text": "eidolon.codex.entry.crucible_example.shadow_explanation"
     },
     {
       "type": "crucible",
@@ -23,7 +23,7 @@
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.crucible_example.nature_explanation"
+      "text": "eidolon.codex.entry.crucible_example.nature_explanation"
     }
   ]
 }

@@ -348,6 +348,58 @@ public class DatapackSyncPacket {
         context.enqueueWork(() -> {
             // CLIENT-SIDE ONLY - populate client data managers
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+        try {
+            System.out.println("CLIENT: Processing datapack sync with " + 
+                             packet.deityData.size() + " deities, " + 
+                             packet.chantData.size() + " chants, " + 
+                             packet.codexData.size() + " codex entries, " +
+                             packet.aiDeityData.size() + " AI configs, " +
+                             packet.researchChapterData.size() + " research chapters, " +
+                             packet.researchEntryData.size() + " research entries");
+            
+            // Process each data type
+            processDeityData(packet.deityData);
+            processChantData(packet.chantData);
+            processCodexData(packet.codexData);
+            processAIConfigData(packet.aiDeityData);
+            processResearchChapterData(packet.researchChapterData);
+            processResearchEntryData(packet.researchEntryData);
+            
+            System.out.println("CLIENT: Datapack synchronization complete!");
+            System.out.println("CLIENT: Final counts - Deities: " + DatapackDeityManager.getAllDeities().size() + 
+                             ", Chants: " + DatapackChantManager.getAllChantsCollection().size() + 
+                             ", Codex: " + CodexDataManager.getAllEntries().size() +
+                             ", AI Configs: " + AIDeityManager.getAllClientSafeConfigs().size() +
+                             ", Research Chapters: " + ResearchDataManager.getLoadedResearchChapters().size() +
+                             ", Research Entries: " + ResearchDataManager.getLoadedResearchEntries().size());
+            
+            // CRITICAL: Register synced data with Eidolon systems for actual functionality
+            System.out.println("CLIENT: Registering synced data with Eidolon systems...");
+            
+            try {
+                // Register chants with Eidolon spell system (essential for keybind execution)
+                DatapackChantManager.registerClientChantsWithEidolon();
+                System.out.println("CLIENT: Registered chants with Eidolon spell system");
+                
+                // Register research with Eidolon research system
+                ResearchDataManager.registerClientResearchWithEidolon();
+                System.out.println("CLIENT: Registered research with Eidolon research system");
+                
+                // CRITICAL: Register codex entries with Eidolon codex system (THIS WAS MISSING!)
+                com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration.attemptIntegrationIfNeeded();
+                System.out.println("CLIENT: Registered codex entries with Eidolon codex system");
+                
+                System.out.println("CLIENT: All Eidolon integrations complete!");
+                
+            } catch (Exception e) {
+                System.err.println("CLIENT: Failed to register with Eidolon systems: " + e.getMessage());
+                e.printStackTrace();
+            }
+            
+        } catch (Exception e) {
+            System.err.println("CLIENT: Failed to handle datapack sync: " + e.getMessage());
+            e.printStackTrace();
+        }
                 handleClientSide(packet);
             });
         });
@@ -523,5 +575,96 @@ public class DatapackSyncPacket {
             e.printStackTrace();
             return null;
         }
+    }
+    
+    // CRITICAL FIX: Static processing methods for chunked sync system
+    public static void processDeityData(Map<ResourceLocation, String> deityData) {
+        deityData.forEach((id, jsonData) -> {
+            try {
+                DatapackDeity deity = GSON.fromJson(jsonData, DatapackDeity.class);
+                if (deity != null) {
+                    DatapackDeityManager.addClientDeity(id, deity);
+                    System.out.println("CLIENT: Added deity " + id);
+                }
+            } catch (Exception e) {
+                System.err.println("CLIENT: Failed to deserialize deity " + id + ": " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+    }
+    
+    public static void processChantData(Map<ResourceLocation, String> chantData) {
+        chantData.forEach((id, jsonData) -> {
+            try {
+                DatapackChant chant = GSON.fromJson(jsonData, DatapackChant.class);
+                if (chant != null) {
+                    DatapackChantManager.addClientChant(id, chant);
+                    System.out.println("CLIENT: Added chant " + id);
+                }
+            } catch (Exception e) {
+                System.err.println("CLIENT: Failed to deserialize chant " + id + ": " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+    }
+    
+    public static void processCodexData(Map<ResourceLocation, String> codexData) {
+        codexData.forEach((id, jsonData) -> {
+            try {
+                CodexEntry entry = GSON.fromJson(jsonData, CodexEntry.class);
+                if (entry != null) {
+                    CodexDataManager.addClientEntry(id, entry);
+                    System.out.println("CLIENT: Added codex entry " + id);
+                }
+            } catch (Exception e) {
+                System.err.println("CLIENT: Failed to deserialize codex entry " + id + ": " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+    }
+    
+    public static void processAIConfigData(Map<ResourceLocation, String> aiDeityData) {
+        aiDeityData.forEach((id, jsonData) -> {
+            try {
+                AIDeityConfig config = GSON.fromJson(jsonData, AIDeityConfig.class);
+                if (config != null) {
+                    AIDeityManager.addClientConfig(id, config);
+                    System.out.println("CLIENT: Added AI deity config " + id);
+                }
+            } catch (Exception e) {
+                System.err.println("CLIENT: Failed to deserialize AI deity config " + id + ": " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+    }
+    
+    public static void processResearchChapterData(Map<ResourceLocation, String> researchChapterData) {
+        researchChapterData.forEach((id, jsonData) -> {
+            try {
+                ResearchChapter chapter = GSON.fromJson(jsonData, ResearchChapter.class);
+                if (chapter != null) {
+                    ResearchDataManager.addClientResearchChapter(id, chapter);
+                    System.out.println("CLIENT: Added research chapter " + id);
+                }
+            } catch (Exception e) {
+                System.err.println("CLIENT: Failed to deserialize research chapter " + id + ": " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+    }
+    
+    public static void processResearchEntryData(Map<ResourceLocation, String> researchEntryData) {
+        researchEntryData.forEach((id, jsonData) -> {
+            try {
+                ResearchEntry entry = GSON.fromJson(jsonData, ResearchEntry.class);
+                if (entry != null) {
+                    ResearchDataManager.addClientResearchEntry(id, entry);
+                    System.out.println("CLIENT: Added research entry " + id);
+                }
+            } catch (Exception e) {
+                System.err.println("CLIENT: Failed to deserialize research entry " + id + ": " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
     }
 }

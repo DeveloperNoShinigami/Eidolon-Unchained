@@ -3,12 +3,12 @@
   "pages": [
 	{
 	  "type": "text",
-	  "text": "eidolonunchained.codex.entry.divine_communion.description"
+	  "text": "eidolon.codex.entry.divine_communion.description"
 	},
 	{
 	  "type": "chant",
 	  "spell": "eidolonunchained:divine_communion",
-	  "text": "eidolonunchained.codex.entry.divine_communion.chant_description"
+	  "text": "eidolon.codex.entry.divine_communion.chant_description"
 	}
   ]
 }

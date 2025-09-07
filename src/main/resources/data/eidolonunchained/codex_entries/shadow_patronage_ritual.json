@@ -3,20 +3,20 @@
   "pages": [
     {
       "type": "title",
-      "text": "eidolonunchained.codex.entry.shadow_patronage_ritual"
+      "text": "eidolon.codex.entry.shadow_patronage_ritual"
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.shadow_patronage_ritual.description"
+      "text": "eidolon.codex.entry.shadow_patronage_ritual.description"
     },
     {
       "type": "ritual",
-      "text": "eidolonunchained.codex.page.shadow_patronage_ritual",
+      "text": "eidolon.codex.page.shadow_patronage_ritual",
       "ritual": "eidolonunchained:shadow_patronage_ritual"
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.shadow_patronage_ritual.effects"
+      "text": "eidolon.codex.entry.shadow_patronage_ritual.effects"
     }
   ]
 }

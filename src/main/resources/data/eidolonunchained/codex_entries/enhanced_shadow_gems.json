@@ -3,11 +3,11 @@
   "pages": [
     {
       "type": "title",
-      "text": "eidolonunchained.codex.entry.enhanced_shadow_gems.title"
+      "text": "eidolon.codex.entry.enhanced_shadow_gems.title"
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.enhanced_shadow_gems.intro"
+      "text": "eidolon.codex.entry.enhanced_shadow_gems.intro"
     },
     {
       "type": "crucible",
@@ -15,7 +15,7 @@
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.enhanced_shadow_gems.warning"
+      "text": "eidolon.codex.entry.enhanced_shadow_gems.warning"
     }
   ]
 }

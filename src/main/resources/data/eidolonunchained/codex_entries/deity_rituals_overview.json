@@ -3,27 +3,27 @@
   "pages": [
     {
       "type": "title",
-      "text": "eidolonunchained.codex.entry.deity_rituals_overview"
+      "text": "eidolon.codex.entry.deity_rituals_overview"
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.deity_rituals_overview.intro"
+      "text": "eidolon.codex.entry.deity_rituals_overview.intro"
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.deity_rituals_overview.nature"
+      "text": "eidolon.codex.entry.deity_rituals_overview.nature"
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.deity_rituals_overview.light"
+      "text": "eidolon.codex.entry.deity_rituals_overview.light"
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.deity_rituals_overview.dark"
+      "text": "eidolon.codex.entry.deity_rituals_overview.dark"
     },
     {
       "type": "text",
-      "text": "eidolonunchained.codex.entry.deity_rituals_overview.tasks"
+      "text": "eidolon.codex.entry.deity_rituals_overview.tasks"
     }
   ]
 }

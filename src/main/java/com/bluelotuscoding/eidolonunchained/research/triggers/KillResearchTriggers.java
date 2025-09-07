@@ -32,6 +32,10 @@ public class KillResearchTriggers {
     
     @SubscribeEvent
     public static void onEntityKilled(LivingDeathEvent event) {
+        // CRITICAL DEBUG: Add logging to verify event handler registration
+        LOGGER.debug("KillResearchTriggers: LivingDeathEvent fired - source: {}", 
+            event.getSource().getEntity() != null ? event.getSource().getEntity().getClass().getSimpleName() : "null");
+        
         if (!(event.getSource().getEntity() instanceof ServerPlayer player)) {
             return;
         }
@@ -41,6 +45,8 @@ public class KillResearchTriggers {
         
         // Check if player has notetaking tools (required for research discovery)
         if (!hasNotetakingTools(player)) {
+            LOGGER.debug("Player {} killed {} but has no notetaking tools", 
+                player.getName().getString(), entityType);
             return; // No tools, no research discovery
         }
         

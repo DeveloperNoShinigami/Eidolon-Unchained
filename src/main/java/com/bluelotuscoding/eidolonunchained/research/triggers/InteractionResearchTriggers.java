@@ -32,12 +32,19 @@ public class InteractionResearchTriggers {
     
     @SubscribeEvent
     public static void onBlockInteraction(PlayerInteractEvent.RightClickBlock event) {
+        // CRITICAL DEBUG: Add logging to verify event handler registration
+        LOGGER.debug("InteractionResearchTriggers: RightClickBlock event fired - player: {}, block: {}", 
+            event.getEntity().getName().getString(), 
+            event.getLevel().getBlockState(event.getPos()).getBlock().getDescriptionId());
+        
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
         
         // Check if player has notetaking tools (required for research discovery)
         if (!hasNotetakingTools(player)) {
+            LOGGER.debug("Player {} interacted with block but has no notetaking tools", 
+                player.getName().getString());
             return; // No tools, no research discovery
         }
         
