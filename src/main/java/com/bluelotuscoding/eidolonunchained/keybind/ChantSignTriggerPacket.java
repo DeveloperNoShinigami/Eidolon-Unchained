@@ -35,17 +35,12 @@ public class ChantSignTriggerPacket {
     }
     
     // Encode method for sending over network
-    public static void encode(ChantSignTriggerPacket packet, FriendlyByteBuf buffer) {
-        buffer.writeResourceLocation(packet.signId);
-    }
-    
-    // Decode method for receiving from network
-    public static ChantSignTriggerPacket decode(FriendlyByteBuf buffer) {
-        return new ChantSignTriggerPacket(buffer);
+    public void toBytes(FriendlyByteBuf buffer) {
+        buffer.writeResourceLocation(this.signId);
     }
     
     // CORRECT HANDLER METHOD - Fixed signature for Forge 1.20.1
-    public static void handle(ChantSignTriggerPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
+    public static boolean handle(ChantSignTriggerPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> {
             // Handle on client side for overlay
@@ -54,6 +49,7 @@ public class ChantSignTriggerPacket {
             }
         });
         context.setPacketHandled(true);
+        return true;
     }
     
     @OnlyIn(Dist.CLIENT)

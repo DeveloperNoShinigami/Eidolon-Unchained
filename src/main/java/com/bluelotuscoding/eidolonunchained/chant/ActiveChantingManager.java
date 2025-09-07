@@ -19,7 +19,6 @@ import java.util.List;
  * This creates the immersive visual chanting experience where entities 
  * spawn immediately and update as signs are added
  */
-@OnlyIn(Dist.CLIENT)
 public class ActiveChantingManager {
     private static final Logger LOGGER = LogUtils.getLogger();
     
@@ -31,6 +30,11 @@ public class ActiveChantingManager {
      * Start active chanting - spawn ChantCasterEntity immediately
      */
     public static void startActiveChanting(Player player, Sign firstSign) {
+        // Only run on client side
+        if (!player.level().isClientSide()) {
+            return;
+        }
+        
         if (activeChantingEntity != null) {
             // Clear existing chant first
             stopActiveChanting();
@@ -75,6 +79,11 @@ public class ActiveChantingManager {
     public static void addSignToActiveChant(Sign sign) {
         if (activeChantingEntity == null || currentCaster == null) {
             LOGGER.warn("Attempted to add sign to non-existent active chant");
+            return;
+        }
+        
+        // Only run on client side
+        if (!currentCaster.level().isClientSide()) {
             return;
         }
         

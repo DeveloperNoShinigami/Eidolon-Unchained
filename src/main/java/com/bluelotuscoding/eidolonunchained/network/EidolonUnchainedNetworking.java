@@ -80,8 +80,8 @@ public class EidolonUnchainedNetworking {
             INSTANCE.registerMessage(
                 ++packetId,
                 ChantSignTriggerPacket.class,
-                ChantSignTriggerPacket::encode,
-                ChantSignTriggerPacket::decode,
+                ChantSignTriggerPacket::toBytes,
+                ChantSignTriggerPacket::new,
                 ChantSignTriggerPacket::handle
             );
             
