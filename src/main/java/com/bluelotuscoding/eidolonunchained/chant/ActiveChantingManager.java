@@ -47,19 +47,23 @@ public class ActiveChantingManager {
             List<Sign> initialSigns = new ArrayList<>();
             initialSigns.add(firstSign);
             
-            // Get player's look direction
+            // REAL-TIME IMPLEMENTATION: Spawn ChantCasterEntity immediately with first sign
+            // This creates the immersive experience you want - entity appears right away
             Vec3 lookDirection = player.getLookAngle();
+            activeChantingEntity = new ChantCasterEntity(player.level(), player, new ArrayList<>(initialSigns), lookDirection);
             
-            // CRITICAL FIX: Don't spawn ChantCasterEntity until we have a complete spell
-            // Instead, just track the signs and provide visual feedback through overlay
-            // ChantCasterEntity expects complete spells and crashes with partial sequences
+            // Position the entity near the player
+            activeChantingEntity.setPos(player.getX(), player.getY() + 0.5, player.getZ());
+            
+            // Add entity to world immediately
+            player.level().addFreshEntity(activeChantingEntity);
             
             // Store current signs and caster for tracking
             currentSigns.clear();
             currentSigns.add(firstSign);
             currentCaster = player;
             
-            LOGGER.info("Started active chant tracking (entity will spawn when spell completes)");
+            LOGGER.info("Successfully spawned ChantCasterEntity immediately with first sign");
             
         } catch (Exception e) {
             LOGGER.error("Failed to start active chanting: {}", e.getMessage(), e);
@@ -87,12 +91,14 @@ public class ActiveChantingManager {
             // Add sign to our tracking list
             currentSigns.add(sign);
             
-            // Check if this sequence matches any complete spell
-            if (isCompleteSpellSequence(currentSigns)) {
-                LOGGER.info("Complete spell sequence detected, spawning ChantCasterEntity");
-                spawnChantingEntityForCompleteSpell();
+            // REAL-TIME UPDATE: Update the ChantCasterEntity immediately with new sign sequence
+            // This creates the visual progression you want - signs appear as they're added
+            if (activeChantingEntity != null && !activeChantingEntity.isRemoved()) {
+                updateChantingEntity(new ArrayList<>(currentSigns));
+                LOGGER.info("Updated ChantCasterEntity with new sign sequence in real-time");
             } else {
-                LOGGER.info("Partial sequence, continuing to track signs");
+                LOGGER.warn("ChantCasterEntity missing, recreating with current signs");
+                recreateChantingEntity(new ArrayList<>(currentSigns));
             }
             
             LOGGER.info("Successfully added sign to active chant. Total signs: {}", currentSigns.size());

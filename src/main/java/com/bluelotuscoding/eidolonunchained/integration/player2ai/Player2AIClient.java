@@ -246,7 +246,14 @@ public class Player2AIClient {
                 
                 return new GeminiAPIClient.AIResponse(false, errorMessage, Collections.emptyList());
             }
-        }, EXECUTOR);
+        }, EXECUTOR)
+        .orTimeout(15, java.util.concurrent.TimeUnit.SECONDS) // Critical: Enforce strict timeout
+        .exceptionally(throwable -> {
+            LOGGER.warn("Player2AI request timed out or failed: {}", throwable.getMessage());
+            return new GeminiAPIClient.AIResponse(false, 
+                "The deity's attention wavers... (Connection timeout - ensure Player2 App is running)", 
+                Collections.emptyList());
+        });
     }
     
     /**
@@ -414,7 +421,7 @@ public class Player2AIClient {
         URL url = URI.create(urlString).toURL();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         
-        // Configure connection
+        // Configure connection with aggressive timeout settings
         connection.setRequestMethod(method);
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setRequestProperty("Accept", "application/json");
@@ -423,8 +430,10 @@ public class Player2AIClient {
         // Set authentication for local instance
         connection.setRequestProperty("player2-game-key", GAME_CLIENT_ID);
         connection.setDoOutput(true);
-        connection.setConnectTimeout(timeoutSeconds * 1000);
-        connection.setReadTimeout(timeoutSeconds * 1000);
+        
+        // CRITICAL: Use much shorter timeouts to prevent server hangs
+        connection.setConnectTimeout(5000); // 5 seconds connect timeout
+        connection.setReadTimeout(10000);   // 10 seconds read timeout
         
         // Send request body
         if (jsonBody != null && !jsonBody.isEmpty()) {
