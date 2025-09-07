@@ -43,6 +43,14 @@ public class KillResearchTriggers {
         LivingEntity killedEntity = event.getEntity();
         ResourceLocation entityType = ForgeRegistries.ENTITY_TYPES.getKey(killedEntity.getType());
         
+        // Get all kill triggers from research files
+        Map<String, List<ResearchTrigger>> allTriggers = ResearchTriggerLoader.getTriggersForAllResearch();
+        
+        // Early exit if no triggers are configured
+        if (allTriggers.isEmpty()) {
+            return;
+        }
+        
         // Check if player has notetaking tools (required for research discovery)
         if (!hasNotetakingTools(player)) {
             LOGGER.debug("Player {} killed {} but has no notetaking tools", 
@@ -51,9 +59,6 @@ public class KillResearchTriggers {
         }
         
         LOGGER.debug("Player {} killed entity: {}", player.getName().getString(), entityType);
-        
-        // Get all kill triggers from research files
-        Map<String, List<ResearchTrigger>> allTriggers = ResearchTriggerLoader.getTriggersForAllResearch();
         LOGGER.debug("Checking {} research entries for kill triggers", allTriggers.size());
         
         String playerKey = player.getUUID().toString();

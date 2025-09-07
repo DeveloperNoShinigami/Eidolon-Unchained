@@ -81,30 +81,30 @@ public class CodexChantIntegration {
         List<Page> pages = new ArrayList<>();
         
         // Add title page
-        pages.add(new TitlePage("eidolonunchained.codex.page." + chantId));
+        pages.add(new TitlePage("eidolon.codex.page." + chantId));
         
         // The key: create a proper ChantPage that shows signs like Eidolon does
         try {
             DatapackChantSpell spell = DatapackChantManager.getSpellForChant(chant.getId());
             if (spell != null) {
                 // ChantPage automatically displays the sign sequence with visual icons!
-                pages.add(new ChantPage("eidolonunchained.codex.page." + chantId + ".chant", spell));
+                pages.add(new ChantPage("eidolon.codex.page." + chantId + ".chant", spell));
             } else {
                 LOGGER.warn("No spell found for chant {}, creating text page instead", chantId);
-                pages.add(new TextPage("eidolonunchained.codex.page." + chantId + ".chant"));
+                pages.add(new TextPage("eidolon.codex.page." + chantId + ".chant"));
             }
         } catch (Exception e) {
             LOGGER.warn("Could not create ChantPage for {}: {}, using text page", chantId, e.getMessage());
-            pages.add(new TextPage("eidolonunchained.codex.page." + chantId + ".chant"));
+            pages.add(new TextPage("eidolon.codex.page." + chantId + ".chant"));
         }
         
         // Add description page if there's extra lore
         if (!chant.getDescription().isEmpty()) {
-            pages.add(new TextPage("eidolonunchained.codex.page." + chantId + ".description"));
+            pages.add(new TextPage("eidolon.codex.page." + chantId + ".description"));
         }
         
         return new Chapter(
-            "eidolonunchained.codex.chapter." + chantId,
+            "eidolon.codex.chapter." + chantId,
             pages.toArray(new Page[0])
         );
     }

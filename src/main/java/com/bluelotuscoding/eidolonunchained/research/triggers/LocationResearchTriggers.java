@@ -68,12 +68,18 @@ public class LocationResearchTriggers {
      * Check all location-based triggers for a player
      */
     private static void checkLocationTriggers(ServerPlayer player) {
+        Map<String, List<ResearchTrigger>> allTriggers = ResearchTriggerLoader.getTriggersForAllResearch();
+        
+        // Early exit if no triggers are configured
+        if (allTriggers.isEmpty()) {
+            return;
+        }
+        
         // Check if player has notetaking tools (required for research discovery)
         if (!hasNotetakingTools(player)) {
             return; // No tools, no research discovery
         }
         
-        Map<String, List<ResearchTrigger>> allTriggers = ResearchTriggerLoader.getTriggersForAllResearch();
         String playerKey = player.getUUID().toString();
         
         for (Map.Entry<String, List<ResearchTrigger>> entry : allTriggers.entrySet()) {

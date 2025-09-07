@@ -177,7 +177,7 @@ public class EidolonCategoryExtension {
                                            ItemStack iconItem) {
         try {
             // Create custom chapter
-            String titleKey = "eidolonunchained.codex.chapter." + chapterTitle.toLowerCase().replace(" ", "_");
+            String titleKey = "eidolon.codex.chapter." + chapterTitle.toLowerCase().replace(" ", "_");
             Chapter customChapter = new Chapter(titleKey);
             
             // No automatic title page - entries will add their own title pages
@@ -254,7 +254,7 @@ public class EidolonCategoryExtension {
     private static void addResearchChapterToCategory(Category category, ResearchChapter researchChapter) {
         try {
             // Create codex chapter from research chapter
-            String titleKey = "eidolonunchained.codex.chapter." + researchChapter.getId().getPath();
+            String titleKey = "eidolon.codex.chapter." + researchChapter.getId().getPath();
             Chapter codexChapter = new Chapter(titleKey);
             
             // No automatic title page - entries will add their own title pages
@@ -402,13 +402,13 @@ public class EidolonCategoryExtension {
         Category moddedCategory = new CustomCategoryBuilder("modded")
             .icon(new ItemStack(Items.COMMAND_BLOCK))
             .color(0xFF9900) // Orange color
-            .addChapter("eidolonunchained.codex.chapter.custom_monsters", 
+            .addChapter("eidolon.codex.chapter.custom_monsters", 
                        "Custom Monsters Guide", 
                        new ItemStack(Items.ZOMBIE_SPAWN_EGG))
-            .addChapter("eidolonunchained.codex.chapter.advanced_techniques", 
+            .addChapter("eidolon.codex.chapter.advanced_techniques", 
                        "Advanced Techniques", 
                        new ItemStack(Items.ENCHANTED_BOOK))
-            .addChapter("eidolonunchained.codex.chapter.datapack_guide", 
+            .addChapter("eidolon.codex.chapter.datapack_guide", 
                        "Datapack Creation Guide", 
                        new ItemStack(Items.WRITABLE_BOOK))
             .build();
@@ -419,10 +419,10 @@ public class EidolonCategoryExtension {
         Category expansionsCategory = new CustomCategoryBuilder("expansions")
             .icon(new ItemStack(Items.END_CRYSTAL))
             .color(0x9966FF) // Purple color
-            .addChapter("eidolonunchained.codex.chapter.new_spells", 
+            .addChapter("eidolon.codex.chapter.new_spells", 
                        "New Spells & Rituals", 
                        new ItemStack(Items.BLAZE_ROD))
-            .addChapter("eidolonunchained.codex.chapter.custom_items", 
+            .addChapter("eidolon.codex.chapter.custom_items", 
                        "Custom Artifacts", 
                        new ItemStack(Items.DIAMOND))
             .build();
@@ -540,7 +540,7 @@ public class EidolonCategoryExtension {
             
             // Create index
             Index categoryIndex = new Index(
-                "eidolonunchained.codex.category." + categoryName,
+                "eidolon.codex.category." + categoryName,
                 indexPage
             );
             

@@ -13,6 +13,12 @@ import com.bluelotuscoding.eidolonunchained.research.ResearchEntry;
 import com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+
+import java.io.IOException;
+import java.util.Optional;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkEvent;
@@ -29,7 +35,48 @@ import java.util.function.Supplier;
  * Professional implementation with full functionality
  */
 public class DatapackSyncPacket {
-    private static final Gson GSON = new GsonBuilder().create();
+    // Custom Gson instance with Optional support to avoid reflection issues
+    private static final Gson GSON = new GsonBuilder()
+        .registerTypeAdapterFactory(new OptionalTypeAdapterFactory())
+        .create();
+
+    /**
+     * Custom type adapter factory to handle Optional fields without reflection
+     */
+    private static class OptionalTypeAdapterFactory implements com.google.gson.TypeAdapterFactory {
+        @Override
+        public <T> TypeAdapter<T> create(Gson gson, com.google.gson.reflect.TypeToken<T> type) {
+            if (!Optional.class.isAssignableFrom(type.getRawType())) {
+                return null;
+            }
+
+            final TypeAdapter<Object> elementAdapter = (TypeAdapter<Object>) gson.getAdapter(
+                com.google.gson.reflect.TypeToken.get(
+                    ((java.lang.reflect.ParameterizedType) type.getType()).getActualTypeArguments()[0]
+                )
+            );
+
+            return (TypeAdapter<T>) new TypeAdapter<Optional<?>>() {
+                @Override
+                public void write(JsonWriter out, Optional<?> value) throws IOException {
+                    if (value == null || !value.isPresent()) {
+                        out.nullValue();
+                    } else {
+                        elementAdapter.write(out, value.get());
+                    }
+                }
+
+                @Override
+                public Optional<?> read(JsonReader in) throws IOException {
+                    if (in.peek() == com.google.gson.stream.JsonToken.NULL) {
+                        in.nextNull();
+                        return Optional.empty();
+                    }
+                    return Optional.ofNullable(elementAdapter.read(in));
+                }
+            };
+        }
+    }
     
     private final Map<ResourceLocation, String> deityData;
     private final Map<ResourceLocation, String> chantData;

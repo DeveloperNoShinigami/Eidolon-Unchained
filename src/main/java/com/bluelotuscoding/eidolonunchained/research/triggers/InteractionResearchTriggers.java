@@ -41,6 +41,14 @@ public class InteractionResearchTriggers {
             return;
         }
         
+        // Get all interaction triggers from research files
+        Map<String, List<ResearchTrigger>> allTriggers = ResearchTriggerLoader.getTriggersForAllResearch();
+        
+        // Early exit if no triggers are configured
+        if (allTriggers.isEmpty()) {
+            return;
+        }
+        
         // Check if player has notetaking tools (required for research discovery)
         if (!hasNotetakingTools(player)) {
             LOGGER.debug("Player {} interacted with block but has no notetaking tools", 
@@ -53,8 +61,8 @@ public class InteractionResearchTriggers {
         String playerKey = player.getUUID().toString();
         Set<String> triggeredResearch = PLAYER_TRIGGERED_RESEARCH.getOrDefault(playerKey, new HashSet<>());
         
-        // Get all interaction triggers from research files
-        for (Map.Entry<String, List<ResearchTrigger>> entry : ResearchTriggerLoader.getTriggersForAllResearch().entrySet()) {
+        // Process all interaction triggers
+        for (Map.Entry<String, List<ResearchTrigger>> entry : allTriggers.entrySet()) {
             String researchId = entry.getKey();
             
             for (ResearchTrigger trigger : entry.getValue()) {

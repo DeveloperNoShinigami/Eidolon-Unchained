@@ -76,19 +76,19 @@ public class DeityProgressionCodexIntegration {
     
     private static Chapter createProgressionChapter(DatapackDeity deity, Deity.Stage stage, int reputation) {
         String stageId = stage.id().getPath();
-        String chapterKey = "eidolonunchained.codex.chapter." + stageId;
+        String chapterKey = "eidolon.codex.chapter." + stageId;
         
         // Create a title page for this progression stage (TitlePage only takes one String)
-        TitlePage titlePage = new TitlePage("eidolonunchained.codex.page." + stageId + ".title");
+        TitlePage titlePage = new TitlePage("eidolon.codex.page." + stageId + ".title");
         
         // Create a text page with stage description
         TextPage descriptionPage = new TextPage(
-            "eidolonunchained.codex.page." + stageId + ".description"
+            "eidolon.codex.page." + stageId + ".description"
         );
         
         // Create a text page with stage rewards/abilities
         TextPage rewardsPage = new TextPage(
-            "eidolonunchained.codex.page." + stageId + ".rewards"
+            "eidolon.codex.page." + stageId + ".rewards"
         );
         
         return new Chapter(chapterKey, titlePage, descriptionPage, rewardsPage);
