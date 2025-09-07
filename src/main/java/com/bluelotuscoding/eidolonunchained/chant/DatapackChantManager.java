@@ -132,8 +132,8 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
         
         for (DatapackChant chant : chants.values()) {
             try {
-                // Convert chant signs to Eidolon Sign objects
-                Sign[] signs = convertToSigns(chant.getSignSequence());
+                // Convert chant signs to Eidolon Sign objects using static method
+                Sign[] signs = convertSignsStatically(chant.getSignSequence());
                 
                 // Create spell for this chant
                 DatapackChantSpell spell = new DatapackChantSpell(chant.getId(), chant, signs);
@@ -149,6 +149,7 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
                     chant.getId(), chant.getSignSequence());
             } catch (Exception e) {
                 LOGGER.error("Failed to register chant {}: {}", chant.getId(), e.getMessage());
+                e.printStackTrace();
             }
         }
     }
@@ -343,8 +344,8 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
         DatapackChant chant = chants.get(chantName);
         if (chant == null) return null;
         
-        // Create a spell instance for this chant
-        Sign[] signs = INSTANCE.convertToSigns(chant.getSignSequence());
+        // Create a spell instance for this chant using static method
+        Sign[] signs = convertSignsStatically(chant.getSignSequence());
         DatapackChantSpell spell = new DatapackChantSpell(chantName, chant, signs);
         
         // CRITICAL FIX: Set the sign sequence after construction
@@ -396,8 +397,8 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
         int registered = 0;
         for (DatapackChant chant : chants.values()) {
             try {
-                // Convert chant signs to Eidolon Sign objects
-                Sign[] signs = INSTANCE.convertToSigns(chant.getSignSequence());
+                // Convert chant signs to Eidolon Sign objects - use static method to avoid INSTANCE dependency
+                Sign[] signs = convertSignsStatically(chant.getSignSequence());
                 
                 // Create spell for this chant
                 DatapackChantSpell spell = new DatapackChantSpell(chant.getId(), chant, signs);
@@ -414,9 +415,33 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
                     chant.getId(), chant.getSignSequence());
             } catch (Exception e) {
                 LOGGER.error("CLIENT: Failed to register chant {}: {}", chant.getId(), e.getMessage());
+                e.printStackTrace();
             }
         }
         
         LOGGER.info("CLIENT: Successfully registered {} chant spells with Eidolon", registered);
+    }
+    
+    /**
+     * Static version of convertToSigns that doesn't depend on INSTANCE
+     * This prevents null pointer exceptions in client-side multiplayer
+     */
+    private static Sign[] convertSignsStatically(List<ResourceLocation> signIds) {
+        Sign[] signs = new Sign[signIds.size()];
+        
+        for (int i = 0; i < signIds.size(); i++) {
+            ResourceLocation signId = signIds.get(i);
+            Sign sign = elucent.eidolon.registries.Signs.find(signId);
+            
+            if (sign == null) {
+                LOGGER.warn("Unknown sign in chant: {}", signId);
+                // Use a default sign as fallback
+                sign = elucent.eidolon.registries.Signs.WICKED_SIGN;
+            }
+            
+            signs[i] = sign;
+        }
+        
+        return signs;
     }
 }

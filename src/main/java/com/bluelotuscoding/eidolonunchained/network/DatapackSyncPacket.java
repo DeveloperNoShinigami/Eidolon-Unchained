@@ -359,15 +359,7 @@ public class DatapackSyncPacket {
      */
     private static void handleClientSide(DatapackSyncPacket packet) {
         try {
-            // CRITICAL: Only run sync in actual multiplayer - NOT in singleplayer/integrated server
-            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-            if (mc.hasSingleplayerServer() || mc.isLocalServer()) {
-                System.out.println("CLIENT: Skipping sync packet - running in singleplayer/integrated server mode");
-                System.out.println("CLIENT: Codex integration handled by normal loading process");
-                return;
-            }
-            
-            System.out.println("CLIENT: Received DatapackSyncPacket - processing for multiplayer...");
+            System.out.println("CLIENT: Received DatapackSyncPacket - processing for client-server sync...");
             System.out.println("CLIENT: Packet contains " + packet.deityData.size() + " deities, " + 
                              packet.chantData.size() + " chants, " + 
                              packet.codexData.size() + " codex entries, " +

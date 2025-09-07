@@ -50,22 +50,16 @@ public class ActiveChantingManager {
             // Get player's look direction
             Vec3 lookDirection = player.getLookAngle();
             
-            // Spawn ChantCasterEntity using the correct constructor
-            // Constructor: ChantCasterEntity(Level world, Player caster, List<Sign> runes, Vec3 look)
-            activeChantingEntity = new ChantCasterEntity(player.level(), player, initialSigns, lookDirection);
+            // CRITICAL FIX: Don't spawn ChantCasterEntity until we have a complete spell
+            // Instead, just track the signs and provide visual feedback through overlay
+            // ChantCasterEntity expects complete spells and crashes with partial sequences
             
-            // Position the entity near the player
-            activeChantingEntity.setPos(player.getX(), player.getY() + 0.5, player.getZ());
-            
-            // Add entity to world
-            player.level().addFreshEntity(activeChantingEntity);
-            
-            // Store current signs and caster
+            // Store current signs and caster for tracking
             currentSigns.clear();
             currentSigns.add(firstSign);
             currentCaster = player;
             
-            LOGGER.info("Successfully spawned ChantCasterEntity for active chanting");
+            LOGGER.info("Started active chant tracking (entity will spawn when spell completes)");
             
         } catch (Exception e) {
             LOGGER.error("Failed to start active chanting: {}", e.getMessage(), e);
@@ -77,7 +71,7 @@ public class ActiveChantingManager {
      * Add a sign to the active chanting sequence
      */
     public static void addSignToActiveChant(Sign sign) {
-        if (activeChantingEntity == null || currentCaster == null) {
+        if (currentCaster == null) {
             LOGGER.warn("Attempted to add sign to non-existent active chant");
             return;
         }
@@ -93,13 +87,59 @@ public class ActiveChantingManager {
             // Add sign to our tracking list
             currentSigns.add(sign);
             
-            // Update the ChantCasterEntity's sign sequence using reflection
-            updateChantingEntity(currentSigns);
+            // Check if this sequence matches any complete spell
+            if (isCompleteSpellSequence(currentSigns)) {
+                LOGGER.info("Complete spell sequence detected, spawning ChantCasterEntity");
+                spawnChantingEntityForCompleteSpell();
+            } else {
+                LOGGER.info("Partial sequence, continuing to track signs");
+            }
             
             LOGGER.info("Successfully added sign to active chant. Total signs: {}", currentSigns.size());
             
         } catch (Exception e) {
             LOGGER.error("Failed to add sign to active chant: {}", e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Check if the current sign sequence represents a complete spell
+     */
+    private static boolean isCompleteSpellSequence(List<Sign> signs) {
+        // Convert signs to ResourceLocations for comparison
+        List<net.minecraft.resources.ResourceLocation> signIds = new ArrayList<>();
+        for (Sign sign : signs) {
+            signIds.add(sign.getRegistryName());
+        }
+        
+        // Check if any chant matches this exact sequence
+        return DatapackChantManager.findChantBySignSequence(signIds) != null;
+    }
+    
+    /**
+     * Spawn ChantCasterEntity only when we have a complete spell
+     */
+    private static void spawnChantingEntityForCompleteSpell() {
+        if (currentCaster == null || currentSigns.isEmpty()) return;
+        
+        try {
+            // Get player's look direction
+            Vec3 lookDirection = currentCaster.getLookAngle();
+            
+            // Create ChantCasterEntity with complete spell sequence
+            activeChantingEntity = new ChantCasterEntity(currentCaster.level(), currentCaster, new ArrayList<>(currentSigns), lookDirection);
+            
+            // Position the entity near the player
+            activeChantingEntity.setPos(currentCaster.getX(), currentCaster.getY() + 0.5, currentCaster.getZ());
+            
+            // Add entity to world
+            currentCaster.level().addFreshEntity(activeChantingEntity);
+            
+            LOGGER.info("Successfully spawned ChantCasterEntity for complete spell with {} signs", currentSigns.size());
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to spawn ChantCasterEntity for complete spell: {}", e.getMessage(), e);
+            activeChantingEntity = null;
         }
     }
     
@@ -159,21 +199,22 @@ public class ActiveChantingManager {
      * Complete the active chanting - let the entity finish its casting
      */
     public static void completeActiveChanting() {
-        if (activeChantingEntity == null) {
-            LOGGER.warn("Attempted to complete non-existent active chant");
-            return;
-        }
-        
         LOGGER.info("Completing active chant with {} signs", currentSigns.size());
         
         try {
-            // The ChantCasterEntity should handle completion automatically
-            // We just need to let it finish its casting sequence
+            // If we have an active entity, let it complete naturally
+            if (activeChantingEntity != null) {
+                LOGGER.info("ChantCasterEntity will complete spell automatically");
+                // The entity will handle completion and remove itself
+            } else {
+                // No entity was spawned (incomplete sequence), just clear tracking
+                LOGGER.info("No casting entity - incomplete sequence cleared");
+            }
             
-            // Clear our tracking but let the entity complete naturally
+            // Clear our tracking
             currentSigns.clear();
             currentCaster = null;
-            activeChantingEntity = null; // It will remove itself when done
+            activeChantingEntity = null; // Entity will remove itself when done
             
             LOGGER.info("Active chant completion initiated");
             
@@ -200,7 +241,7 @@ public class ActiveChantingManager {
      * Check if active chanting is in progress
      */
     public static boolean isActiveChanting() {
-        return activeChantingEntity != null && !activeChantingEntity.isRemoved();
+        return currentCaster != null && !currentSigns.isEmpty();
     }
     
     /**
