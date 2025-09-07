@@ -336,26 +336,9 @@ public class DeityChat {
                 String rawResponse = aiResponse.dialogue;
                 LOGGER.info("🔥 DEBUG: AI Response received: '{}'", rawResponse);
                 
-                // 🔥 HYBRID APPROACH: Check player input first, then AI decision
-                LOGGER.info("🔥 DEBUG: Starting hybrid command extraction...");
-                
-                // Step 1: Check if player explicitly requested something
-                List<String> playerRequestCommands = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
-                    .extractExplicitRequests(message, player);
-                LOGGER.info("🔥 DEBUG: Player explicit requests: {}", playerRequestCommands);
-                
-                // Step 2: If no explicit requests, check if AI wants to give something contextually
-                List<String> aiContextCommands = new ArrayList<>();
-                if (playerRequestCommands.isEmpty()) {
-                    aiContextCommands = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
-                        .extractContextualActions(rawResponse, player, message);
-                    LOGGER.info("🔥 DEBUG: AI contextual actions: {}", aiContextCommands);
-                }
-                
-                // Combine commands (player requests take priority)
-                List<String> extractedCommands = new ArrayList<>();
-                extractedCommands.addAll(playerRequestCommands);
-                extractedCommands.addAll(aiContextCommands);
+                // 🔥 EXTRACT COMMANDS FROM AI RESPONSE (using the working method)
+                List<String> extractedCommands = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
+                    .extractAndConvertCommands(rawResponse, player);
                 
                 LOGGER.info("🔥 DEBUG: Total extracted commands: {}", extractedCommands);
                 
@@ -1280,16 +1263,20 @@ public class DeityChat {
                     double requiredReputation = ((Number) repReqObj).doubleValue();
                     
                     if (reputation >= requiredReputation && requiredReputation > highestQualifyingReputation) {
-                        // Get the actual title from the stage data
+                        // Get the actual title from the stage data (for AI roleplay)
                         Object titleObj = stageDataMap.get("title");
                         if (titleObj instanceof String) {
                             bestStage = (String) titleObj;
+                            highestQualifyingReputation = requiredReputation;
+                        } else {
+                            // Fallback to stage name if no title defined
+                            bestStage = stageName;
                             highestQualifyingReputation = requiredReputation;
                         }
                     }
                 }
                 
-                LOGGER.debug("🎭 JSON progression for {}/{}: {} ({}rep)", 
+                LOGGER.info("🎭 AI progression for {}/{}: {} ({}rep) - using datapack title", 
                     player.getName().getString(), deity.getName(), bestStage, (int)reputation);
                 
                 return bestStage;
@@ -1901,11 +1888,16 @@ public class DeityChat {
             double reputation = deity.getPlayerReputation(player);
             String progressionLevel = getDynamicProgressionLevel(deity, player);
             
+            LOGGER.info("🔥 BLESSING DEBUG: Player {} has {} reputation with {}, tier: {}", 
+                player.getName().getString(), reputation, deity.getName(), progressionLevel);
+            
             // Check if player explicitly requested something
             String lowerMessage = playerMessage.toLowerCase();
             boolean explicitRequest = lowerMessage.contains("give") || lowerMessage.contains("bless") || 
                                     lowerMessage.contains("grant") || lowerMessage.contains("help") ||
                                     lowerMessage.contains("need") || lowerMessage.contains("want");
+            
+            LOGGER.info("🔥 BLESSING DEBUG: Message '{}' contains explicit request: {}", playerMessage, explicitRequest);
             
             // No blessings for non-explicit requests at low levels
             if (!explicitRequest && reputation < 25) {

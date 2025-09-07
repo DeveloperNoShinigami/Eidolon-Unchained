@@ -31,6 +31,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -56,27 +57,50 @@ public class UnifiedCommands {
     // 🎯 SUGGESTION PROVIDERS FOR TAB COMPLETION
     
     /**
-     * Suggests available deity IDs
+     * Suggests available deity IDs with proper quoting and names
      */
     private static final SuggestionProvider<CommandSourceStack> DEITY_SUGGESTIONS = (context, builder) -> {
-        return SharedSuggestionProvider.suggest(
-            DatapackDeityManager.getAllDeities().keySet().stream()
-                .map(ResourceLocation::toString)
-                .collect(Collectors.toList()),
-            builder
-        );
+        List<String> suggestions = new ArrayList<>();
+        
+        // Add deity IDs with quotes to handle colons properly
+        for (Map.Entry<ResourceLocation, com.bluelotuscoding.eidolonunchained.deity.DatapackDeity> entry : 
+             DatapackDeityManager.getAllDeities().entrySet()) {
+            ResourceLocation id = entry.getKey();
+            com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = entry.getValue();
+            
+            // Add quoted ID for exact matching (primary suggestion)
+            suggestions.add("\"" + id.toString() + "\"");
+            
+            // Add deity name as a helpful comment
+            if (deity != null && deity.getName() != null) {
+                suggestions.add("# " + deity.getName() + " = \"" + id.toString() + "\"");
+            }
+        }
+        
+        return SharedSuggestionProvider.suggest(suggestions, builder);
     };
     
     /**
-     * Suggests online player names
+     * Suggests online player names with additional context
      */
     private static final SuggestionProvider<CommandSourceStack> PLAYER_SUGGESTIONS = (context, builder) -> {
-        return SharedSuggestionProvider.suggest(
-            context.getSource().getServer().getPlayerList().getPlayers().stream()
-                .map(player -> player.getName().getString())
-                .collect(Collectors.toList()),
-            builder
-        );
+        List<String> suggestions = new ArrayList<>();
+        
+        // Add currently online players
+        for (ServerPlayer player : context.getSource().getServer().getPlayerList().getPlayers()) {
+            String playerName = player.getName().getString();
+            suggestions.add(playerName);
+            
+            // Add helpful context for the player
+            suggestions.add("# " + playerName + " (online)");
+        }
+        
+        // Add a note about offline players
+        if (suggestions.isEmpty()) {
+            suggestions.add("# No players online - type player name manually");
+        }
+        
+        return SharedSuggestionProvider.suggest(suggestions, builder);
     };
     
     /**
@@ -90,18 +114,26 @@ public class UnifiedCommands {
     };
     
     /**
-     * Suggests available ritual IDs
+     * Suggests available ritual IDs with proper quoting
      */
     private static final SuggestionProvider<CommandSourceStack> RITUAL_SUGGESTIONS = (context, builder) -> {
         var server = context.getSource().getServer();
         var recipeManager = server.getRecipeManager();
+        
+        List<String> suggestions = new ArrayList<>();
         
         var ritualIds = java.util.stream.Stream.concat(
             recipeManager.getAllRecipesFor(elucent.eidolon.registries.EidolonRecipes.COMMAND_RITUAL_TYPE.get()).stream(),
             recipeManager.getAllRecipesFor(elucent.eidolon.registries.EidolonRecipes.RITUAL_TYPE.get()).stream()
         ).map(recipe -> recipe.getId().toString()).collect(Collectors.toList());
         
-        return SharedSuggestionProvider.suggest(ritualIds, builder);
+        // Add quoted ritual IDs to handle colons properly
+        for (String ritualId : ritualIds) {
+            suggestions.add("\"" + ritualId + "\"");
+            suggestions.add("# " + ritualId);
+        }
+        
+        return SharedSuggestionProvider.suggest(suggestions, builder);
     };
     
     /**
@@ -1758,8 +1790,16 @@ public class UnifiedCommands {
                 double requiredReputation = ((Number) repReqObj).doubleValue();
                 
                 if (reputation >= requiredReputation && requiredReputation > highestQualifyingReputation) {
-                    bestStage = stageName;
-                    highestQualifyingReputation = requiredReputation;
+                    // Get the actual title from the stage data (like DeityChat does)
+                    Object titleObj = stageDataMap.get("title");
+                    if (titleObj instanceof String) {
+                        bestStage = (String) titleObj;
+                        highestQualifyingReputation = requiredReputation;
+                    } else {
+                        // Fallback to stage name if no title defined
+                        bestStage = stageName;
+                        highestQualifyingReputation = requiredReputation;
+                    }
                 }
             }
             
