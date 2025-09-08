@@ -272,7 +272,10 @@ public class DeityChat {
             }
             
             // Add message to conversation history
-            List<String> history = conversationHistory.get(playerId);
+            List<String> history = conversationHistory.computeIfAbsent(playerId, k -> {
+                LOGGER.warn("🚨 Conversation history was null for player {}, initializing emergency backup", player.getName().getString());
+                return new ArrayList<>();
+            });
             history.add("Player: " + message);
             
             // Add to persistent history on main thread to avoid SavedData classloader issues
@@ -414,7 +417,11 @@ public class DeityChat {
             String cleanedResponse = cleanModIdLeakage(rawResponse);
             
             // Add response to history (using cleaned version)
-            history.add("Deity: " + cleanedResponse);
+            if (history != null) {
+                history.add("Deity: " + cleanedResponse);
+            } else {
+                LOGGER.warn("🚨 Conversation history is null when adding deity response for player {}", playerId);
+            }
             
             // Add to persistent history on main thread to avoid SavedData classloader issues
             final UUID uuid = playerId;
@@ -1748,7 +1755,9 @@ public class DeityChat {
                 
                 // Start conversation automatically
                 activeConversations.put(player.getUUID(), deity.getId());
-                LOGGER.info("🗣️ Added player {} to active conversations with deity {}", 
+                // 🔥 CRITICAL FIX: Initialize conversation history for tier congratulations
+                conversationHistory.put(player.getUUID(), new ArrayList<>());
+                LOGGER.info("🗣️ Added player {} to active conversations with deity {} (with history initialization)", 
                     player.getName().getString(), deity.getName());
                 
                 // Process the congratulation with callback for rewards execution

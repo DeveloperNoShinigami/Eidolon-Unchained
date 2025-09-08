@@ -102,14 +102,17 @@ public class AIItemExtractor {
             }
             
             if (suggestedItem != null && !suggestedItem.isEmpty()) {
-                LOGGER.info("🤖 AI suggested item: '{}' (pattern: {})", suggestedItem, matchType);
+                // 🔧 SMART CLEANING: Remove common filler words and clean up the item name
+                String cleanedItem = cleanupItemName(suggestedItem);
+                LOGGER.info("🤖 AI suggested item: '{}' → cleaned: '{}' (pattern: {})", 
+                    suggestedItem, cleanedItem, matchType);
             
                 // Get mod context for this deity
                 List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
                     aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
                 
                 // Validate item exists in registry
-                List<ResourceLocation> matches = RegistryContextProvider.findMatchingItemsWithScoring(suggestedItem, modContextIds);
+                List<ResourceLocation> matches = RegistryContextProvider.findMatchingItemsWithScoring(cleanedItem, modContextIds);
                 
                 if (!matches.isEmpty()) {
                     ResourceLocation bestMatch = matches.get(0);
@@ -118,19 +121,36 @@ public class AIItemExtractor {
                     if (deityAllowsItem(bestMatch.toString(), aiConfig, player)) {
                         String command = String.format("give %s %s 1", player.getName().getString(), bestMatch.toString());
                         commands.add(command);
-                        LOGGER.info("🤖 AI suggestion APPROVED: '{}' -> {} (deity: {})", 
-                            suggestedItem, bestMatch, aiConfig.deity_id);
+                        LOGGER.info("🤖 AI suggestion APPROVED: '{}' → {} (deity: {})", 
+                            cleanedItem, bestMatch, aiConfig.deity_id);
                     } else {
-                        LOGGER.info("🚫 AI suggestion DENIED: '{}' -> {} (not allowed by deity)", 
-                            suggestedItem, bestMatch);
+                        LOGGER.info("🚫 AI suggestion DENIED: '{}' → {} (not allowed by deity)", 
+                            cleanedItem, bestMatch);
                     }
                 } else {
-                    LOGGER.warn("🤖 AI suggested unknown item: '{}' (no registry match)", suggestedItem);
+                    LOGGER.info("🤖 AI suggested item '{}' has no valid registry matches - no item will be given", cleanedItem);
+                    // This is GOOD behavior - prevents random items from being given!
                 }
             }
         }
         
         return commands;
+    }
+    
+    /**
+     * 🔧 NEW: Clean up AI-suggested item names by removing filler words
+     */
+    private static String cleanupItemName(String itemName) {
+        // Remove common articles and prepositions at the beginning
+        String cleaned = itemName.replaceFirst("^(the|a|an)\\s+", "");
+        
+        // Remove common filler phrases
+        cleaned = cleaned.replaceAll("\\s+(of|from|with|made of|crafted from)\\s+", " ");
+        
+        // Clean up extra whitespace
+        cleaned = cleaned.trim().replaceAll("\\s+", " ");
+        
+        return cleaned;
     }
     
     /**

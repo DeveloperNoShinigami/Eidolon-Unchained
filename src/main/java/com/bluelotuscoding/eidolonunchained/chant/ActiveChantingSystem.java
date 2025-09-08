@@ -257,14 +257,17 @@ public class ActiveChantingSystem {
             if (chant.entity != null && !chant.entity.isRemoved()) {
                 chant.entity.getEntityData().set(ChantCasterEntity.SUCCEEDED, true);
                 
+                // 🔥 CRITICAL FIX: Capture entity reference before clearing chant
+                final ChantCasterEntity entityToCleanup = chant.entity;
+                
                 // Let the entity stay visible for a moment to show success
                 MinecraftServer server = player.getServer();
                 if (server != null) {
                     // Schedule entity removal after success animation using standard scheduler
                     java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(() -> {
                         server.execute(() -> {
-                            if (!chant.entity.isRemoved()) {
-                                chant.entity.discard();
+                            if (entityToCleanup != null && !entityToCleanup.isRemoved()) {
+                                entityToCleanup.discard();
                             }
                         });
                     }, 2, java.util.concurrent.TimeUnit.SECONDS);

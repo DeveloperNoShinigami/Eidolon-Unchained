@@ -162,22 +162,42 @@ public class RegistryContextProvider {
             String path = itemKey.getPath().toLowerCase();
             int score = calculateItemScore(path, searchWords);
             
-            if (score > 0) {
+            // 🔧 STRICT THRESHOLD: Only include items with meaningful scores
+            // This prevents weak partial matches from being considered
+            int minimumScore = searchWords.length > 1 ? 20 : 50; // Higher threshold for single words
+            
+            if (score >= minimumScore) {
                 scoredItems.add(new ScoredItem(itemKey, score));
+                LOGGER.debug("🔥 SCORING: '{}' → score: {} (threshold: {})", itemKey, score, minimumScore);
+            } else if (score > 0) {
+                LOGGER.debug("🚫 REJECTED: '{}' → score: {} (below threshold: {})", itemKey, score, minimumScore);
             }
         }
         
         // Sort by score (highest first)
         scoredItems.sort((a, b) -> Integer.compare(b.score, a.score));
         
+        // 🔧 DEBUG: Log top scoring items
+        LOGGER.info("🔥 TOP SCORING ITEMS for '{}':", searchTerm);
+        for (int i = 0; i < Math.min(5, scoredItems.size()); i++) {
+            ScoredItem item = scoredItems.get(i);
+            LOGGER.info("  {}. {} (score: {})", i+1, item.resourceLocation, item.score);
+        }
+        
         // Extract ResourceLocations
         List<ResourceLocation> matches = scoredItems.stream()
             .map(item -> item.resourceLocation)
             .collect(Collectors.toList());
         
-        LOGGER.info("🔥 Enhanced search for '{}' found {} items in {} mods. Top matches: {}", 
-            searchTerm, matches.size(), searchMods.size(),
-            matches.subList(0, Math.min(5, matches.size())));
+        LOGGER.info("🔥 Enhanced search for '{}' found {} qualifying items in {} mods", 
+            searchTerm, matches.size(), searchMods.size());
+        
+        if (matches.size() > 0) {
+            LOGGER.info("🎯 Top matches: {}", 
+                matches.subList(0, Math.min(5, matches.size())));
+        } else {
+            LOGGER.info("❌ No items met the strict matching criteria for '{}'", searchTerm);
+        }
         
         return matches;
     }
@@ -198,27 +218,59 @@ public class RegistryContextProvider {
     
     /**
      * Calculate score for an item based on how many search words it contains
-     * Higher score = better match
+     * 🔧 STRICT MATCHING: Only allow items that contain ALL important search words
+     * This prevents giving random items based on single word matches
      */
     private static int calculateItemScore(String itemPath, String[] searchWords) {
-        int score = 0;
+        // 🔥 NEW APPROACH: Require ALL important words to be present
+        List<String> importantWords = new ArrayList<>();
+        List<String> fillerWords = new ArrayList<>();
         
         for (String word : searchWords) {
-            if (itemPath.contains(word)) {
-                // Exact word match gets highest score
-                if (itemPath.equals(word)) {
-                    score += 10;
-                } else if (itemPath.startsWith(word) || itemPath.endsWith(word)) {
-                    // Word at start/end gets high score
-                    score += 5;
-                } else {
-                    // Word anywhere in item gets basic score
-                    score += 2;
-                }
+            if (getWordImportance(word) > 1) {
+                importantWords.add(word);
+            } else {
+                fillerWords.add(word);
             }
         }
         
-        // Bonus for items that contain all search words
+        // If no important words, require exact match of all words
+        if (importantWords.isEmpty()) {
+            // Convert search words to item path format (spaces to underscores)
+            String expectedPath = String.join("_", searchWords);
+            return itemPath.equals(expectedPath) ? 100 : 0;
+        }
+        
+        // 🔧 STRICT RULE: Item MUST contain ALL important words
+        for (String importantWord : importantWords) {
+            if (!itemPath.contains(importantWord)) {
+                return 0; // Reject immediately if any important word is missing
+            }
+        }
+        
+        // Calculate score only if ALL important words are present
+        int score = 0;
+        
+        // Bonus for exact match
+        String expectedPath = String.join("_", searchWords).toLowerCase();
+        if (itemPath.equals(expectedPath)) {
+            score += 100; // Exact match gets highest priority
+        }
+        
+        // Score based on how well words match
+        for (String word : importantWords) {
+            if (itemPath.equals(word)) {
+                score += 50; // Single word exact match
+            } else if (itemPath.startsWith(word + "_") || itemPath.endsWith("_" + word)) {
+                score += 30; // Word at boundary
+            } else if (itemPath.contains("_" + word + "_")) {
+                score += 20; // Word in middle with boundaries
+            } else if (itemPath.contains(word)) {
+                score += 10; // Word anywhere (lowest priority)
+            }
+        }
+        
+        // Bonus for containing all words (including filler words)
         boolean containsAllWords = true;
         for (String word : searchWords) {
             if (!itemPath.contains(word)) {
@@ -228,10 +280,34 @@ public class RegistryContextProvider {
         }
         
         if (containsAllWords) {
-            score += 5; // Bonus for containing all words
+            score += 25; // Bonus for complete match
         }
         
         return score;
+    }
+    
+    /**
+     * 🔧 NEW: Get importance weight for search words
+     * Common/filler words get low weight, meaningful words get high weight
+     */
+    private static int getWordImportance(String word) {
+        // Filler words - very low importance
+        if (word.matches("the|of|a|an|and|or|in|on|at|to|for|with|by")) {
+            return 1;
+        }
+        
+        // Important item category words - high importance  
+        if (word.matches("hat|helmet|sword|armor|scythe|weapon|tool|potion|ring|amulet|cloak|robe|staff|wand|bow|shield|boots|gloves")) {
+            return 10;
+        }
+        
+        // Modifier words - medium importance
+        if (word.matches("dark|light|fire|ice|shadow|divine|holy|cursed|magic|enchanted|iron|gold|diamond|leather|chain|plate")) {
+            return 5;
+        }
+        
+        // Default importance for other words
+        return 3;
     }
     
     /**
