@@ -336,9 +336,26 @@ public class DeityChat {
                 String rawResponse = aiResponse.dialogue;
                 LOGGER.info("🔥 DEBUG: AI Response received: '{}'", rawResponse);
                 
-                // 🔥 EXTRACT COMMANDS FROM AI RESPONSE (using the working method)
-                List<String> extractedCommands = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
-                    .extractAndConvertCommands(rawResponse, player);
+                // 🔥 HYBRID APPROACH: Check player input first, then AI decision
+                LOGGER.info("🔥 DEBUG: Starting hybrid command extraction...");
+                
+                // Step 1: Check if player explicitly requested something
+                List<String> playerRequestCommands = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
+                    .extractExplicitRequests(message, player);
+                LOGGER.info("🔥 DEBUG: Player explicit requests: {}", playerRequestCommands);
+                
+                // Step 2: If no explicit requests, check if AI wants to give something contextually
+                List<String> aiContextCommands = new ArrayList<>();
+                if (playerRequestCommands.isEmpty()) {
+                    aiContextCommands = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
+                        .extractContextualActions(rawResponse, player, message);
+                    LOGGER.info("🔥 DEBUG: AI contextual actions: {}", aiContextCommands);
+                }
+                
+                // Combine commands (player requests take priority)
+                List<String> extractedCommands = new ArrayList<>();
+                extractedCommands.addAll(playerRequestCommands);
+                extractedCommands.addAll(aiContextCommands);
                 
                 LOGGER.info("🔥 DEBUG: Total extracted commands: {}", extractedCommands);
                 
