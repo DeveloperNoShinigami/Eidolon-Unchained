@@ -65,15 +65,28 @@ public class DatapackDeity extends Deity {
     public List<String> getStageRewards(String tierTitle) {
         if (tierTitle == null) return null;
         
-        // Try to find rewards by tier title first
+        // First try to find rewards by tier title directly
         List<String> rewards = stageRewards.get(tierTitle);
         if (rewards != null && !rewards.isEmpty()) {
             return new ArrayList<>(rewards); // Return copy to prevent modification
         }
         
-        // Fallback: try to find by stage ID if title lookup failed
+        // Try to find by stage ID using the stage titles mapping
+        for (Map.Entry<String, String> entry : stageTitles.entrySet()) {
+            if (tierTitle.equals(entry.getValue())) {
+                // Found the stage ID for this title
+                String stageId = entry.getKey();
+                rewards = stageRewards.get(stageId);
+                if (rewards != null && !rewards.isEmpty()) {
+                    return new ArrayList<>(rewards);
+                }
+            }
+        }
+        
+        // Fallback: try to find by loose matching
         for (Map.Entry<String, List<String>> entry : stageRewards.entrySet()) {
-            if (entry.getKey().toLowerCase().contains(tierTitle.toLowerCase())) {
+            if (entry.getKey().toLowerCase().contains(tierTitle.toLowerCase()) ||
+                tierTitle.toLowerCase().contains(entry.getKey().toLowerCase())) {
                 return new ArrayList<>(entry.getValue());
             }
         }
@@ -92,8 +105,13 @@ public class DatapackDeity extends Deity {
     }
     
     public void addStageReward(String stageId, String type, String data) {
-        stageRewards.computeIfAbsent(stageId, k -> new ArrayList<>())
-                   .add(type + ":" + data);
+        if ("command".equals(type)) {
+            // Direct command format - store as-is
+            stageRewards.computeIfAbsent(stageId, k -> new ArrayList<>()).add(data);
+        } else {
+            // Legacy format - combine type and data
+            stageRewards.computeIfAbsent(stageId, k -> new ArrayList<>()).add(type + ":" + data);
+        }
     }
     
     public void addPrayerType(String prayerType) {

@@ -99,18 +99,24 @@ public class ActiveChantingSystem {
         // Get or create active chant for this player
         ActiveChant chant = activeChants.computeIfAbsent(player.getUUID(), k -> new ActiveChant());
         
+        // INSTANT: Spawn entity immediately on FIRST sign if needed
+        if (chant.signs.isEmpty()) {
+            LOGGER.info("FIRST SIGN: Creating initial ChantCasterEntity for player {}", player.getName().getString());
+        }
+        
         // Add the sign to the sequence
         chant.addSign(sign);
         
-        // Update visual representation
+        // Update visual representation (spawn immediately)
         updateChantCasterEntity(player, chant);
         
-        // TODO: Add spell completion detection in future update
+        // Check for spell completion and auto-clear if needed
+        checkForCompleteChant(player, chant);
         
         LOGGER.info("Player {} added sign {} to active chant (sequence: {})", 
             player.getName().getString(), signId, chant.signs.size());
         
-        // Send feedback to player via action bar
+        // Send instant feedback to player via action bar
         String signName = assignment.displayName;
         player.sendSystemMessage(
             Component.literal("§6Added: " + signName + " §7(" + chant.signs.size() + " signs)"), 
@@ -148,22 +154,25 @@ public class ActiveChantingSystem {
             chant.entity.discard();
         }
         
-        // Create new ChantCasterEntity with current sign sequence
+        // Create new ChantCasterEntity with current sign sequence IMMEDIATELY
         Vec3 lookDirection = player.getLookAngle();
         chant.entity = new ChantCasterEntity(level, player, new ArrayList<>(chant.signs), lookDirection);
         
-        // Position near player
+        // Position near player - closer for instant visibility
         chant.entity.setPos(
-            player.getX() + lookDirection.x * 0.5,
-            player.getY() + 1.0,
-            player.getZ() + lookDirection.z * 0.5
+            player.getX() + lookDirection.x * 0.3,
+            player.getY() + 1.2,
+            player.getZ() + lookDirection.z * 0.3
         );
         
-        // Add to world
+        // Force immediate spawn - bypass any delays
         level.addFreshEntity(chant.entity);
         
-        LOGGER.debug("Updated ChantCasterEntity for player {} with {} signs", 
-            player.getName().getString(), chant.signs.size());
+        // Force sync to client immediately  
+        chant.entity.setOnGround(true);
+        
+        LOGGER.info("INSTANT: Spawned ChantCasterEntity for player {} with {} signs at {}", 
+            player.getName().getString(), chant.signs.size(), chant.entity.position());
     }
     
     /**
@@ -172,15 +181,48 @@ public class ActiveChantingSystem {
     private static void checkForCompleteChant(ServerPlayer player, ActiveChant chant) {
         List<ResourceLocation> signIds = chant.getSignIds();
         
-        // Look for matching chant in datapack definitions
+        // Look for exact matching chant in datapack definitions
         DatapackChant matchingChant = DatapackChantManager.findChantBySignSequence(signIds);
         
         if (matchingChant != null) {
             LOGGER.info("Complete chant detected: {} for player {}", 
                 matchingChant.getId(), player.getName().getString());
             
-            // Execute the complete chant using Eidolon's system
+            // Execute the complete chant and auto-clear
             executeCompleteChant(player, chant, matchingChant);
+            clearActiveChant(player);
+            return;
+        }
+        
+        // Check if this sequence is the start of any valid chant (PREFIX CHECK)
+        boolean hasValidPrefix = DatapackChantManager.hasValidChantPrefix(signIds);
+        
+        if (!hasValidPrefix && chant.signs.size() >= 2) {
+            // No valid chant starts with this sequence after 2+ signs - auto-clear
+            // BUT: Only clear if there's definitely no way this could become valid
+            LOGGER.info("Invalid chant sequence detected for player {} after {} signs, auto-clearing", 
+                player.getName().getString(), chant.signs.size());
+            
+            player.sendSystemMessage(
+                Component.literal("§cInvalid spell sequence - clearing chant"), 
+                true // action bar
+            );
+            
+            clearActiveChant(player);
+        } else if (hasValidPrefix && chant.signs.size() > 1) {
+            // Valid prefix - encourage player to continue
+            player.sendSystemMessage(
+                Component.literal("§aContinue building spell... §7(" + chant.signs.size() + " signs)"), 
+                true // action bar
+            );
+        }
+        
+        // For sequences ≥ 6 signs, warn but don't auto-clear (in case of very long spells)
+        if (chant.signs.size() >= 6 && hasValidPrefix) {
+            player.sendSystemMessage(
+                Component.literal("§eLong spell sequence - check your combination"), 
+                true // action bar
+            );
         }
     }
     

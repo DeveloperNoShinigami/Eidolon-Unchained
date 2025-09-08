@@ -221,6 +221,33 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
         return null;
     }
     
+    /**
+     * Check if the given sign sequence is the start of any valid chant
+     */
+    public static boolean hasValidChantPrefix(List<ResourceLocation> signSequence) {
+        if (signSequence.isEmpty()) {
+            return true; // Empty sequence is valid (start of any chant)
+        }
+        
+        for (DatapackChant chant : chants.values()) {
+            List<ResourceLocation> chantSigns = chant.getSignSequence();
+            if (chantSigns.size() >= signSequence.size()) {
+                // Check if this chant starts with the given sequence
+                boolean matches = true;
+                for (int i = 0; i < signSequence.size(); i++) {
+                    if (!chantSigns.get(i).equals(signSequence.get(i))) {
+                        matches = false;
+                        break;
+                    }
+                }
+                if (matches) {
+                    return true; // Found a chant that starts with this sequence
+                }
+            }
+        }
+        return false; // No chant starts with this sequence
+    }
+    
     public static List<DatapackChant> findChantsWithSign(ResourceLocation sign) {
         List<DatapackChant> result = new ArrayList<>();
         for (DatapackChant chant : chants.values()) {

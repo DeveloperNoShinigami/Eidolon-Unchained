@@ -1756,6 +1756,11 @@ public class DeityChat {
             // 🔥 SIMPLIFIED: Use DatapackDeity's existing getStageRewards method
             List<String> tierCommands = deity.getStageRewards(newTier);
             
+            // DEBUG: Check what's available vs what's requested
+            LOGGER.info("🔍 DEBUG - Looking for rewards for tier: '{}' in deity: {}", newTier, deity.getId());
+            LOGGER.info("🔍 DEBUG - Available stage rewards keys: {}", deity.getProgressionStages().keySet());
+            LOGGER.info("🔍 DEBUG - Found tier commands: {}", tierCommands != null ? tierCommands.size() + " commands" : "null");
+            
             if (tierCommands != null && !tierCommands.isEmpty()) {
                 LOGGER.info("🎁 Executing {} JSON-defined tier advancement rewards for player {} (tier: '{}')", 
                     tierCommands.size(), player.getName().getString(), newTier);

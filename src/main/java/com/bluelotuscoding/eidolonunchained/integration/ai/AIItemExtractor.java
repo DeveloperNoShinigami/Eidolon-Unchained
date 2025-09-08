@@ -19,8 +19,10 @@ public class AIItemExtractor {
     private static final Logger LOGGER = LogManager.getLogger();
     
     // Pattern to extract AI-suggested items from AI responses
+    // Supports both intended format [ITEM:...] and actual AI behavior **item** or "take this item"
     private static final Pattern AI_ITEM_SUGGESTION_PATTERN = Pattern.compile(
-        "\\[ITEM:([^\\]]+)\\]", Pattern.CASE_INSENSITIVE
+        "\\[ITEM:([^\\]]+)\\]|\\*\\*([^\\*]+)\\*\\*|(?:take this|receive|here is|behold)\\s+([a-zA-Z\\s]+)(?=\\s*[.!])", 
+        Pattern.CASE_INSENSITIVE
     );
     
     /**
@@ -77,34 +79,54 @@ public class AIItemExtractor {
                                                        com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
         List<String> commands = new ArrayList<>();
         
-        // Extract [ITEM:...] suggestions from AI response
+        // Extract items from AI response using multiple patterns
+        LOGGER.info("🤖 Analyzing AI response for items: '{}'", aiResponse);
         Matcher itemMatcher = AI_ITEM_SUGGESTION_PATTERN.matcher(aiResponse);
         while (itemMatcher.find()) {
-            String suggestedItem = itemMatcher.group(1).trim();
-            LOGGER.info("🤖 AI suggested item: '{}'", suggestedItem);
+            String suggestedItem = null;
+            String matchType = "unknown";
             
-            // Get mod context for this deity
-            List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
-                aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+            // Check which capture group matched
+            if (itemMatcher.group(1) != null) {
+                // [ITEM:...] format
+                suggestedItem = itemMatcher.group(1).trim();
+                matchType = "ITEM_TAG";
+            } else if (itemMatcher.group(2) != null) {
+                // **item** format
+                suggestedItem = itemMatcher.group(2).trim();
+                matchType = "BOLD_FORMAT";
+            } else if (itemMatcher.group(3) != null) {
+                // "take this item" format
+                suggestedItem = itemMatcher.group(3).trim();
+                matchType = "TAKE_THIS_FORMAT";
+            }
             
-            // Validate item exists in registry
-            List<ResourceLocation> matches = RegistryContextProvider.findMatchingItemsWithScoring(suggestedItem, modContextIds);
+            if (suggestedItem != null && !suggestedItem.isEmpty()) {
+                LOGGER.info("🤖 AI suggested item: '{}' (pattern: {})", suggestedItem, matchType);
             
-            if (!matches.isEmpty()) {
-                ResourceLocation bestMatch = matches.get(0);
+                // Get mod context for this deity
+                List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
+                    aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
                 
-                // Check deity permissions
-                if (deityAllowsItem(bestMatch.toString(), aiConfig, player)) {
-                    String command = String.format("give %s %s 1", player.getName().getString(), bestMatch.toString());
-                    commands.add(command);
-                    LOGGER.info("🤖 AI suggestion APPROVED: '{}' -> {} (deity: {})", 
-                        suggestedItem, bestMatch, aiConfig.deity_id);
+                // Validate item exists in registry
+                List<ResourceLocation> matches = RegistryContextProvider.findMatchingItemsWithScoring(suggestedItem, modContextIds);
+                
+                if (!matches.isEmpty()) {
+                    ResourceLocation bestMatch = matches.get(0);
+                    
+                    // Check deity permissions
+                    if (deityAllowsItem(bestMatch.toString(), aiConfig, player)) {
+                        String command = String.format("give %s %s 1", player.getName().getString(), bestMatch.toString());
+                        commands.add(command);
+                        LOGGER.info("🤖 AI suggestion APPROVED: '{}' -> {} (deity: {})", 
+                            suggestedItem, bestMatch, aiConfig.deity_id);
+                    } else {
+                        LOGGER.info("🚫 AI suggestion DENIED: '{}' -> {} (not allowed by deity)", 
+                            suggestedItem, bestMatch);
+                    }
                 } else {
-                    LOGGER.info("🚫 AI suggestion DENIED: '{}' -> {} (not allowed by deity)", 
-                        suggestedItem, bestMatch);
+                    LOGGER.warn("🤖 AI suggested unknown item: '{}' (no registry match)", suggestedItem);
                 }
-            } else {
-                LOGGER.warn("🤖 AI suggested unknown item: '{}' (no registry match)", suggestedItem);
             }
         }
         

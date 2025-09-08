@@ -224,24 +224,31 @@ public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
                 if (stage.has("rewards")) {
                     JsonArray rewards = stage.getAsJsonArray("rewards");
                     for (JsonElement rewardElement : rewards) {
-                        if (!rewardElement.isJsonObject()) continue;
-                        
-                        JsonObject reward = rewardElement.getAsJsonObject();
-                        String type = reward.get("type").getAsString();
-                        String data = reward.get("data").getAsString();
-                        
-                        if ("item".equals(type)) {
-                            int count = reward.has("count") ? reward.get("count").getAsInt() : 1;
-                            deity.addStageReward(stageId, "item", data + ":" + count);
-                            LOGGER.debug("Added item reward for stage {}: {}x{}", stageId, count, data);
-                        } else if ("effect".equals(type)) {
-                            int duration = reward.has("duration") ? reward.get("duration").getAsInt() : 200;
-                            int amplifier = reward.has("amplifier") ? reward.get("amplifier").getAsInt() : 0;
-                            deity.addStageReward(stageId, "effect", data + ":" + duration + ":" + amplifier);
-                            LOGGER.debug("Added effect reward for stage {}: {} {}s level {}", stageId, data, duration/20, amplifier);
-                        } else if ("sign".equals(type)) {
-                            deity.addStageReward(stageId, "sign", data);
-                            LOGGER.debug("Added sign reward for stage {}: {}", stageId, data);
+                        // Handle both formats: objects and direct command strings
+                        if (rewardElement.isJsonObject()) {
+                            // Original object format: {"type": "item", "data": "...", "count": 1}
+                            JsonObject reward = rewardElement.getAsJsonObject();
+                            String type = reward.get("type").getAsString();
+                            String data = reward.get("data").getAsString();
+                            
+                            if ("item".equals(type)) {
+                                int count = reward.has("count") ? reward.get("count").getAsInt() : 1;
+                                deity.addStageReward(stageId, "item", data + ":" + count);
+                                LOGGER.debug("Added item reward for stage {}: {}x{}", stageId, count, data);
+                            } else if ("effect".equals(type)) {
+                                int duration = reward.has("duration") ? reward.get("duration").getAsInt() : 200;
+                                int amplifier = reward.has("amplifier") ? reward.get("amplifier").getAsInt() : 0;
+                                deity.addStageReward(stageId, "effect", data + ":" + duration + ":" + amplifier);
+                                LOGGER.debug("Added effect reward for stage {}: {} {}s level {}", stageId, data, duration/20, amplifier);
+                            } else if ("sign".equals(type)) {
+                                deity.addStageReward(stageId, "sign", data);
+                                LOGGER.debug("Added sign reward for stage {}: {}", stageId, data);
+                            }
+                        } else if (rewardElement.isJsonPrimitive()) {
+                            // New direct command format: "give @s item 1"
+                            String command = rewardElement.getAsString();
+                            deity.addStageReward(stageId, "command", command);
+                            LOGGER.debug("Added command reward for stage {}: {}", stageId, command);
                         }
                     }
                 }

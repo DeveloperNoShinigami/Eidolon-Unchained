@@ -154,7 +154,13 @@ public class ConversationHistoryManager extends SavedData {
             CompoundTag playerTag = new CompoundTag();
             
             for (Map.Entry<ResourceLocation, List<ConversationMessage>> deityEntry : playerEntry.getValue().entrySet()) {
-                String deityIdStr = deityEntry.getKey().toString();
+                ResourceLocation deityId = deityEntry.getKey();
+                if (deityId == null) {
+                    LOGGER.warn("Null deity ID found in conversation history for player {}, skipping", playerEntry.getKey());
+                    continue;
+                }
+                
+                String deityIdStr = deityId.toString();
                 ListTag messagesTag = new ListTag();
                 
                 for (ConversationMessage message : deityEntry.getValue()) {
