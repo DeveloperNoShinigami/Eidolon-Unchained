@@ -343,31 +343,16 @@ public class DeityChat {
                 String rawResponse = aiResponse.dialogue;
                 LOGGER.info("🔥 DEBUG: AI Response received: '{}'", rawResponse);
                 
-                // 🔥 HYBRID APPROACH: Check player input first, then AI decision
-                LOGGER.info("🔥 DEBUG: Starting hybrid command extraction...");
+                // � PURE AI APPROACH: Let AI understand natural language and suggest items
+                LOGGER.info("� Starting AI-driven item extraction...");
                 
-                // Step 1: Check if player explicitly requested something
-                List<String> playerRequestCommands = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
-                    .extractExplicitRequests(message, player);
-                LOGGER.info("🔥 DEBUG: Player explicit requests: {}", playerRequestCommands);
-                
-                // Step 2: If no explicit requests, check if AI wants to give something contextually
-                List<String> aiContextCommands = new ArrayList<>();
-                if (playerRequestCommands.isEmpty()) {
-                    aiContextCommands = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
-                        .extractContextualActions(rawResponse, player, message);
-                    LOGGER.info("🔥 DEBUG: AI contextual actions: {}", aiContextCommands);
-                }
-                
-                // Combine commands (player requests take priority)
-                List<String> extractedCommands = new ArrayList<>();
-                extractedCommands.addAll(playerRequestCommands);
-                extractedCommands.addAll(aiContextCommands);
-                
-                LOGGER.info("🔥 DEBUG: Total extracted commands: {}", extractedCommands);
+                // Use the pure AI extractor
+                List<String> aiCommands = com.bluelotuscoding.eidolonunchained.integration.ai.AIItemExtractor
+                    .extractItemsViaAI(message, player, rawResponse);
+                LOGGER.info("� AI extraction result: {}", aiCommands);
                 
                 int commandsExecuted = 0;
-                if (!extractedCommands.isEmpty()) {
+                if (!aiCommands.isEmpty()) {
                     // 🔥 TIER ENFORCEMENT: Check if player is allowed to receive blessings
                     if (shouldAllowBlessing(player, deity, message)) {
                         // Limit commands based on progression level
@@ -375,119 +360,117 @@ public class DeityChat {
                         int maxCommands = getMaxCommandsForTier(progressionLevel);
                         
                         // Limit the commands to appropriate tier
-                        List<String> limitedCommands = extractedCommands.size() > maxCommands ? 
-                            extractedCommands.subList(0, maxCommands) : extractedCommands;
+                        List<String> limitedCommands = aiCommands.size() > maxCommands ? 
+                            aiCommands.subList(0, maxCommands) : aiCommands;
                         
                         commandsExecuted = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
                             .executeCommands(limitedCommands, player);
                         
-                        LOGGER.info("🔥 Player request fulfilled: executed {} commands for {} (tier: {}, max: {}): {}", 
+                        LOGGER.info("� AI request fulfilled: executed {} commands for {} (tier: {}, max: {}): {}", 
                             commandsExecuted, player.getName().getString(), progressionLevel, maxCommands, limitedCommands);
                     } else {
                         LOGGER.info("🚫 Blessing request denied for {} due to tier restrictions or cooldown", 
                             player.getName().getString());
-                        // Still allow AI to respond, just don't give items
                     }
                 }
                 
-                // Clean response for display (remove any technical mod IDs that leaked through)
-                String cleanedResponse = cleanModIdLeakage(rawResponse);
-                
-                // Add response to history (using cleaned version)
-                history.add("Deity: " + cleanedResponse);
-                
-                // Add to persistent history on main thread to avoid SavedData classloader issues
-                final UUID uuid = player.getUUID();
-                final ResourceLocation deityResourceId = deityId;
-                final String deityDisplayName = deity.getName();
-                final String responseText = cleanedResponse;
-                
-                MinecraftServer mcServer = player.getServer();
-                if (mcServer != null) {
-                    mcServer.execute(() -> {
-                        try {
-                            ConversationHistoryManager.get().addMessage(uuid, deityResourceId, deityDisplayName, responseText);
-                        } catch (Exception e) {
-                            LOGGER.warn("Failed to save deity response to persistent storage: {}", e.getMessage());
-                        }
-                    });
-                }
-                
-                // Check for auto-judgment and additional commands only if no commands were already executed
-                if (commandsExecuted == 0 && aiConfig.prayer_configs.containsKey("conversation")) {
-                    PrayerAIConfig prayerConfig = aiConfig.prayer_configs.get("conversation");
-                    if (prayerConfig.auto_judge_commands) {
-                        List<String> commands = getJudgedCommands(player, deity, prayerConfig);
-                        if (!commands.isEmpty()) {
-                            // Log AI decision for debugging
-                            ConversationHistoryManager.logAIDecisionStatic(player, deityId, "AUTO_JUDGMENT", 
-                                "Reputation: " + (int)deity.getPlayerReputation(player) + ", Health: " + (int)player.getHealth(), commands);
-                            
-                            executeCommands(player, deityId, commands);
-                            cleanedResponse += "\n\n§6[Divine intervention enacted]";
-                        }
-                    }
-                }
-                
-                // Send deity response to player using prominent title/subtitle display
-                sendDeityResponse(player, deity.getName(), cleanedResponse);
-                
-                // Award reputation for meaningful conversations using Eidolon's reputation system
-                player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE).ifPresent(reputation -> {
-                    double currentRep = reputation.getReputation(player.getUUID(), deity.getId());
-                    // Calculate conversation reputation gain (diminishing returns)
-                    double baseGain = 2.0;
-                    if (currentRep > 75) {
-                        baseGain *= 0.3; // Much slower gain at high reputation
-                    } else if (currentRep > 50) {
-                        baseGain *= 0.5; // Slower gain at medium reputation  
-                    } else if (currentRep > 25) {
-                        baseGain *= 0.7; // Slightly slower gain
-                    }
-                    
-                    reputation.addReputation(player.getUUID(), deity.getId(), baseGain);
-                    
-                    // Trigger immediate title update for reputation change
-                    com.bluelotuscoding.eidolonunchained.events.ReputationChangeHandler.forceUpdatePlayer(player);
-                    
-                    // Notify player of reputation gain with proper localization
-                    player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.reputation_gained", 
-                        deity.getDisplayName(), String.format("%.1f", baseGain)));
-                });
-                
-            }).exceptionally(throwable -> {
-                LOGGER.error("🔥 DEBUG: Exception in AI response processing: {}", throwable.getMessage(), throwable);
-                LOGGER.error("Error generating AI response: {}", throwable.getMessage(), throwable);
-                
-                // Enhanced error handling for specific issues
-                String errorMessage = throwable.getMessage();
-                if (errorMessage != null) {
-                    if (errorMessage.toLowerCase().contains("quota") || errorMessage.toLowerCase().contains("limit")) {
-                        player.sendSystemMessage(Component.translatable("eidolonunchained.error.quota_exceeded", deity.getName()));
-                        player.sendSystemMessage(Component.translatable("eidolonunchained.error.quota_exceeded_hint"));
-                        sendDeityResponse(player, deity.getName(), Component.translatable("eidolonunchained.ui.deity.energy_conserve").getString());
-                    } else if (errorMessage.toLowerCase().contains("token")) {
-                        player.sendSystemMessage(Component.translatable("eidolonunchained.error.response_too_long", deity.getName()));
-                        player.sendSystemMessage(Component.translatable("eidolonunchained.error.response_too_long_hint"));
-                        sendDeityResponse(player, deity.getName(), Component.translatable("eidolonunchained.ui.deity.words_exceed").getString());
-                    } else if (errorMessage.toLowerCase().contains("timeout")) {
-                        player.sendSystemMessage(Component.translatable("eidolonunchained.error.api_timeout", deity.getName()));
-                        player.sendSystemMessage(Component.translatable("eidolonunchained.error.api_timeout_hint"));
-                        sendDeityResponse(player, deity.getName(), Component.translatable("eidolonunchained.ui.deity.give_moment").getString());
-                    } else {
-                        sendDeityResponse(player, "Divine Connection", Component.translatable("eidolonunchained.ui.deity.connection_falters").getString());
-                    }
-                } else {
-                    sendDeityResponse(player, "Divine Connection", Component.translatable("eidolonunchained.ui.deity.connection_falters").getString());
-                }
+                // Continue with regular response processing
+                processRegularResponse(player, deity, rawResponse, history, playerId, deityId, commandsExecuted);
+            }).exceptionally(ex -> {
+                // Handle AI generation errors
+                LOGGER.error("Error generating AI response: {}", ex.getMessage());
+                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.no_response"));
                 return null;
             });
             
         } catch (Exception e) {
-            LOGGER.error("Error processing deity conversation for player {} with deity {}: {}", 
-                player.getName().getString(), deityId, e.getMessage(), e);
-            player.sendSystemMessage(Component.translatable("eidolonunchained.chat.connection_falters"));
+            LOGGER.error("Error in deity conversation processing: {}", e.getMessage());
+            player.sendSystemMessage(Component.translatable("eidolonunchained.chat.conversation_error"));
             endConversation(player);
+        }
+    }
+    
+    /**
+     * Process regular response handling (separated for hybrid integration)
+     */
+    private static void processRegularResponse(ServerPlayer player, DatapackDeity deity, String rawResponse, 
+                                             List<String> history, UUID playerId, ResourceLocation deityId, int commandsExecuted) {
+        try {
+            // Get AI config for additional processing
+            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deityId);
+            if (aiConfig == null) {
+                LOGGER.warn("No AI config found for deity {}", deityId);
+                return;
+            }
+            
+            // Clean response for display (remove any technical mod IDs that leaked through)
+            String cleanedResponse = cleanModIdLeakage(rawResponse);
+            
+            // Add response to history (using cleaned version)
+            history.add("Deity: " + cleanedResponse);
+            
+            // Add to persistent history on main thread to avoid SavedData classloader issues
+            final UUID uuid = playerId;
+            final ResourceLocation deityResourceId = deityId;
+            final String deityDisplayName = deity.getName();
+            final String responseText = cleanedResponse;
+            
+            MinecraftServer mcServer = player.getServer();
+            if (mcServer != null) {
+                mcServer.execute(() -> {
+                    try {
+                        ConversationHistoryManager.get().addMessage(uuid, deityResourceId, deityDisplayName, responseText);
+                    } catch (Exception e) {
+                        LOGGER.warn("Failed to save deity response to persistent storage: {}", e.getMessage());
+                    }
+                });
+            }
+            
+            // Check for auto-judgment and additional commands only if no commands were already executed
+            if (commandsExecuted == 0 && aiConfig.prayer_configs != null && aiConfig.prayer_configs.containsKey("conversation")) {
+                PrayerAIConfig prayerConfig = aiConfig.prayer_configs.get("conversation");
+                if (prayerConfig.auto_judge_commands) {
+                    List<String> commands = getJudgedCommands(player, deity, prayerConfig);
+                    if (!commands.isEmpty()) {
+                        // Log AI decision for debugging
+                        ConversationHistoryManager.logAIDecisionStatic(player, deityId, "AUTO_JUDGMENT", 
+                            "Reputation: " + (int)deity.getPlayerReputation(player) + ", Health: " + (int)player.getHealth(), commands);
+                        
+                        executeCommands(player, deityId, commands);
+                        cleanedResponse += "\n\n§6[Divine intervention enacted]";
+                    }
+                }
+            }
+            
+            // Send deity response to player using prominent title/subtitle display
+            sendDeityResponse(player, deity.getName(), cleanedResponse);
+            
+            // Award reputation for meaningful conversations using Eidolon's reputation system
+            player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE).ifPresent(reputation -> {
+                double currentRep = reputation.getReputation(player.getUUID(), deity.getId());
+                // Calculate conversation reputation gain (diminishing returns)
+                double baseGain = 2.0;
+                if (currentRep > 75) {
+                    baseGain *= 0.3; // Much slower gain at high reputation
+                } else if (currentRep > 50) {
+                    baseGain *= 0.5; // Slower gain at medium reputation  
+                } else if (currentRep > 25) {
+                    baseGain *= 0.7; // Slightly slower gain
+                }
+                
+                reputation.addReputation(player.getUUID(), deity.getId(), baseGain);
+                
+                // Trigger immediate title update for reputation change
+                com.bluelotuscoding.eidolonunchained.events.ReputationChangeHandler.forceUpdatePlayer(player);
+                
+                // Notify player of reputation gain with proper localization
+                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.reputation_gained", 
+                    deity.getDisplayName(), String.format("%.1f", baseGain)));
+            });
+            
+        } catch (Exception e) {
+            LOGGER.error("Error in processRegularResponse: {}", e.getMessage(), e);
+            player.sendSystemMessage(Component.translatable("eidolonunchained.chat.connection_falters"));
         }
     }
     
@@ -959,8 +942,9 @@ public class DeityChat {
     }
     
     /**
-     * 🔥 ENHANCED ACTION BAR MESSAGES - Smart wrapping with sequential display
-     * Breaks long messages into action bar-sized chunks and displays them sequentially
+     * 🔥 ENHANCED ACTION BAR MESSAGES - Sentence-based display with typing animation
+     * Breaks messages into complete sentences and displays each sentence sequentially
+     * Starts new action bar lines at sentence endings (periods, exclamation points, question marks)
      */
     private static void startActionBarTypingAnimation(ServerPlayer player, String deityName, String message, 
                                                     int typingSpeed, int sentenceDelay, int fadeDelay, 
@@ -1035,7 +1019,8 @@ public class DeityChat {
         int headerVisibleLength = ("⟦ " + deityName + " ⟧ ").length(); // Length without formatting codes
         int usableWidth = maxWidth - headerVisibleLength;
         
-        // First, split on sentence boundaries
+        // Split on sentence boundaries - periods, exclamation points, question marks
+        // This regex captures the sentence ending punctuation with the sentence
         String[] sentences = message.split("(?<=[.!?])\\s+");
         
         for (String sentence : sentences) {
@@ -1045,16 +1030,21 @@ public class DeityChat {
             // Calculate visible length (without formatting codes)
             int visibleLength = sentence.replaceAll("§.", "").length();
             
-            // If sentence fits in one action bar, add it as is
+            // ALWAYS add complete sentences as separate chunks
+            // This ensures each sentence gets its own action bar line
             if (visibleLength <= usableWidth) {
+                // Sentence fits perfectly - add as complete sentence
                 chunks.add(sentence);
             } else {
-                // Break long sentence into word-wrapped chunks
+                // Sentence is too long for action bar width
+                // Still prioritize sentence completion but handle overflow gracefully
+                
+                // For very long sentences, we'll display what we can but try to break at natural points
                 String[] words = sentence.split("\\s+");
                 StringBuilder currentChunk = new StringBuilder();
                 
                 for (String word : words) {
-                    // Calculate visible length of test chunk
+                    // Test if adding this word would exceed width
                     String testChunk = currentChunk.length() == 0 ? word : currentChunk + " " + word;
                     int testVisibleLength = testChunk.replaceAll("§.", "").length();
                     
@@ -1063,27 +1053,28 @@ public class DeityChat {
                         if (currentChunk.length() > 0) currentChunk.append(" ");
                         currentChunk.append(word);
                     } else {
-                        // Start new chunk with this word
+                        // Word would overflow - save current chunk and start new one
                         if (currentChunk.length() > 0) {
                             chunks.add(currentChunk.toString());
                             currentChunk = new StringBuilder();
                         }
                         
-                        // Handle very long single words
+                        // Check if single word is too long
                         int wordVisibleLength = word.replaceAll("§.", "").length();
                         if (wordVisibleLength > usableWidth) {
-                            // Split the word itself - this is rare but handle it
+                            // Very long word - split it but this is rare
                             String cleanWord = word.replaceAll("§.", "");
                             for (int i = 0; i < cleanWord.length(); i += usableWidth) {
                                 chunks.add(cleanWord.substring(i, Math.min(i + usableWidth, cleanWord.length())));
                             }
                         } else {
+                            // Start new chunk with this word
                             currentChunk.append(word);
                         }
                     }
                 }
                 
-                // Add remaining chunk
+                // Add any remaining content
                 if (currentChunk.length() > 0) {
                     chunks.add(currentChunk.toString());
                 }
@@ -1398,8 +1389,28 @@ public class DeityChat {
             LOGGER.info("🔄 TIER TRACKING for {}: previousTier='{}', highestTierEver='{}', currentTier='{}'", 
                 player.getName().getString(), previousTier, highestTierEver, currentTier);
 
+            // 🎯 SPECIAL CASE: Initial patron selection (no previous tier recorded)
+            if (previousTier == null) {
+                LOGGER.info("🆕 INITIAL TIER ASSIGNMENT: Player {} starting with tier '{}' for deity {} (rep: {})", 
+                    player.getName().getString(), currentTier, deity.getName(), (int)currentReputation);
+                
+                // This is a new player with this deity - give initial tier rewards
+                playerTiers.put(deityId, currentTier);
+                playerHighestTiers.put(deityId, currentTier);
+                
+                // Trigger congratulation for initial tier (e.g., "Shadow Initiate")
+                LOGGER.info("🚀 TRIGGERING INITIAL TIER CONGRATULATION: player={}, deity={}, initialTier='{}'", 
+                    player.getName().getString(), deity.getName(), currentTier);
+                
+                triggerTierCongratulation(player, deity, null, currentTier);
+                
+                LOGGER.info("🏆 INITIAL TIER SET: {} for player {} with deity {}", 
+                    currentTier, player.getName().getString(), deity.getName());
+                return; // Early return for initial setup
+            }
+
             // Check if this is a tier advancement
-            if (previousTier != null && !previousTier.equals(currentTier)) {
+            if (!previousTier.equals(currentTier)) {
                 // Log the tier change for debugging
                 LOGGER.info("🔄 TIER CHANGE detected for player {}: '{}' → '{}' with deity {} (rep: {})", 
                     player.getName().getString(), previousTier, currentTier, deity.getName(), (int)currentReputation);
@@ -1682,18 +1693,17 @@ public class DeityChat {
                 LOGGER.info("🗣️ Added player {} to active conversations with deity {}", 
                     player.getName().getString(), deity.getName());
                 
-                // Process the congratulation
+                // Process the congratulation FIRST (let AI speak)
                 LOGGER.info("🤖 Processing deity conversation with congratulation prompt...");
                 processDeityConversation(player, deity.getId(), congratulationPrompt);
                 
-                // Auto-execute tier advancement rewards
-                LOGGER.info("🎁 Executing tier advancement rewards for tier: {}", newTier);
-                executeTierAdvancementRewards(player, deity, newTier);
-                
-                // Schedule automatic conversation closure after tier advancement
+                // Schedule rewards to happen AFTER the AI message (better timing)
                 java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(() -> {
                     try {
-                        // Send closing message
+                        LOGGER.info("🎁 [DELAYED] Executing tier advancement rewards for tier: {}", newTier);
+                        executeTierAdvancementRewards(player, deity, newTier);
+                        
+                        // Send completion message after rewards
                         player.sendSystemMessage(Component.literal(
                             "§6⟦ " + deity.getName() + " ⟧ §f" +
                             "Your advancement has been acknowledged. Go forth with your new power, " + newTier + "."));
@@ -1705,9 +1715,9 @@ public class DeityChat {
                             player.getName().getString(), deity.getName());
                             
                     } catch (Exception e) {
-                        LOGGER.error("❌ Error auto-closing tier advancement conversation: {}", e.getMessage());
+                        LOGGER.error("❌ Error in delayed tier advancement rewards: {}", e.getMessage());
                     }
-                }, 3, java.util.concurrent.TimeUnit.SECONDS); // 3-second delay to let rewards finish
+                }, 2, java.util.concurrent.TimeUnit.SECONDS); // 2-second delay
                 
             } else {
                 LOGGER.error("❌ AI config not found for deity {}, cannot trigger congratulation", deity.getName());

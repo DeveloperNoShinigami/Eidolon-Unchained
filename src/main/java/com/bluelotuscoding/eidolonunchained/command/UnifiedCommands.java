@@ -287,7 +287,9 @@ public class UnifiedCommands {
                 .then(Commands.literal("clear-cooldown")
                     .then(Commands.argument("player", StringArgumentType.string())
                         .suggests(PLAYER_SUGGESTIONS)
-                        .executes(UnifiedCommands::clearPrayerCooldown))))
+                        .executes(UnifiedCommands::clearPrayerCooldown)))
+                .then(Commands.literal("cooldowns")
+                    .executes(UnifiedCommands::showPlayerCooldowns)))
             
             // Conversation system  
             .then(Commands.literal("conversations")
@@ -714,7 +716,29 @@ public class UnifiedCommands {
             context.getSource().sendFailure(Component.literal("§cPlayer name cannot be empty"));
             return 0;
         }
-        context.getSource().sendSuccess(() -> Component.literal("§aPrayer cooldown cleared for player: " + playerName), false);
+        
+        // Get player UUID and clear their cooldowns
+        ServerPlayer targetPlayer = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+        if (targetPlayer != null) {
+            com.bluelotuscoding.eidolonunchained.prayer.PrayerSystem.clearPlayerCooldowns(targetPlayer.getUUID());
+            context.getSource().sendSuccess(() -> Component.literal("§aPrayer cooldowns cleared for player: " + playerName), false);
+        } else {
+            context.getSource().sendFailure(Component.literal("§cPlayer not found: " + playerName));
+        }
+        return 1;
+    }
+    
+    private static int showPlayerCooldowns(CommandContext<CommandSourceStack> context) {
+        if (context.getSource().getEntity() instanceof ServerPlayer player) {
+            java.util.List<String> cooldownStatus = com.bluelotuscoding.eidolonunchained.prayer.PrayerSystem.getPlayerCooldownStatus(player.getUUID());
+            
+            context.getSource().sendSuccess(() -> Component.literal("§6=== Your Prayer Cooldowns ==="), false);
+            for (String status : cooldownStatus) {
+                context.getSource().sendSuccess(() -> Component.literal(status), false);
+            }
+        } else {
+            context.getSource().sendFailure(Component.literal("§cThis command can only be used by players"));
+        }
         return 1;
     }
     

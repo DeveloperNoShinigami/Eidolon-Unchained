@@ -390,7 +390,8 @@ public class EidolonUnchainedConfig {
                 .comment("Chant casting mode:",
                          "INDIVIDUAL_SIGNS - Cast signs one by one like in codex (default)",
                          "FULL_CHANT - Cast entire chant with one key press",
-                         "HYBRID - Support both approaches")
+                         "HYBRID - Support both approaches",
+                         "ACTIVE_CHANTING - Real-time chant building with visual feedback")
                 .define("chant_casting_mode", "INDIVIDUAL_SIGNS");
             
             individualSignTimeoutMs = builder

@@ -1,7 +1,6 @@
 package com.bluelotuscoding.eidolonunchained.client.gui;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
-import com.bluelotuscoding.eidolonunchained.chant.ActiveChantingManager;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
 import elucent.eidolon.api.spells.Sign;
@@ -76,11 +75,11 @@ public class ChantOverlay implements IGuiOverlay {
             isActive = true;
             activeChant.clear();
             
-            // Start the active chanting system - spawn entity immediately!
-            ActiveChantingManager.startActiveChanting(mc.player, sign);
+            // REMOVED: ActiveChantingManager.startActiveChanting() - was broken bloat code
+            // The visual chanting works fine through Eidolon's existing ChantCasterEntity system
         } else {
-            // Add to existing active chant
-            ActiveChantingManager.addSignToActiveChant(sign);
+            // REMOVED: ActiveChantingManager.addSignToActiveChant() - was broken bloat code
+            // Signs are tracked in activeChant list and handled by regular spell casting
         }
         
         // Add the sign
@@ -146,8 +145,8 @@ public class ChantOverlay implements IGuiOverlay {
      * Clear the active chant and remove floating signs
      */
     public static void clearChant() {
-        // Stop the active chanting system
-        ActiveChantingManager.stopActiveChanting();
+        // REMOVED: ActiveChantingManager.stopActiveChanting() - was broken bloat code
+        // Chant clearing works fine through normal Eidolon systems
         
         activeChant.clear();
         isActive = false;
@@ -332,8 +331,8 @@ public class ChantOverlay implements IGuiOverlay {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         
-        // Complete the active chanting - let the entity finish naturally
-        ActiveChantingManager.completeActiveChanting();
+        // REMOVED: ActiveChantingManager.completeActiveChanting() - was broken bloat code
+        // Spell completion works fine through Eidolon's AttemptCastPacket system
         
         // Play completion sound (experience orb pickup as requested)
         if (mc.player != null) {

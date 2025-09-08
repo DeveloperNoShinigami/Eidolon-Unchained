@@ -1,7 +1,9 @@
 package com.bluelotuscoding.eidolonunchained.keybind;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
+import com.bluelotuscoding.eidolonunchained.chant.ActiveChantingSystem;
 import com.bluelotuscoding.eidolonunchained.config.ChantCastingConfig;
+import com.bluelotuscoding.eidolonunchained.network.ActiveChantSignPacket;
 import com.bluelotuscoding.eidolonunchained.network.EidolonUnchainedNetworking;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
@@ -40,11 +42,16 @@ public class ChantInputHandler {
             } else if (ChantKeybinds.CHANT_SLOT_4.consumeClick()) {
                 chantSlot = 4;
             } else if (ChantKeybinds.OPEN_CHANT_INTERFACE.consumeClick()) {
-                // Open chant management interface
-                LOGGER.info("Opening chant interface");
-                
-                ChantInterfacePacket packet = new ChantInterfacePacket(ChantInterfacePacket.Action.OPEN_INTERFACE);
-                EidolonUnchainedNetworking.INSTANCE.sendToServer(packet);
+                // C key behavior depends on casting mode
+                if (ChantCastingConfig.isActiveChantingMode()) {
+                    // Active chanting mode: Clear active chant
+                    LOGGER.info("Clearing active chant sequence");
+                    ActiveChantSignPacket packet = new ActiveChantSignPacket(0, ActiveChantSignPacket.Action.CLEAR_CHANT);
+                    EidolonUnchainedNetworking.INSTANCE.sendToServer(packet);
+                } else {
+                    // Other modes: Open chant interface (future feature)
+                    LOGGER.info("Opening chant interface (not yet implemented)");
+                }
                 return;
             }
             
@@ -56,14 +63,18 @@ public class ChantInputHandler {
     
     private static void handleChantSlotActivation(int chantSlot) {
         Minecraft mc = Minecraft.getInstance();
-        ChantCastingConfig.CastingMode mode = ChantCastingConfig.getCurrentMode();
         
-        LOGGER.info("Player pressed chant slot: {} (mode: {})", chantSlot, mode);
-        
-        // Remove chat spam - let the visual overlay handle feedback
-        
-        // Send packet to server with casting mode information
-        ChantSlotActivationPacket packet = new ChantSlotActivationPacket(chantSlot, mode.name());
-        EidolonUnchainedNetworking.INSTANCE.sendToServer(packet);
+        if (ChantCastingConfig.isActiveChantingMode()) {
+            // Use Active Chanting System
+            LOGGER.info("Player pressed sign slot: {} (Active Chanting Mode)", chantSlot);
+            ActiveChantSignPacket packet = new ActiveChantSignPacket(chantSlot, ActiveChantSignPacket.Action.ADD_SIGN);
+            EidolonUnchainedNetworking.INSTANCE.sendToServer(packet);
+        } else {
+            // Use existing flexible chant system
+            ChantCastingConfig.CastingMode mode = ChantCastingConfig.getCurrentMode();
+            LOGGER.info("Player pressed chant slot: {} (mode: {})", chantSlot, mode);
+            ChantSlotActivationPacket packet = new ChantSlotActivationPacket(chantSlot, mode.name());
+            EidolonUnchainedNetworking.INSTANCE.sendToServer(packet);
+        }
     }
 }

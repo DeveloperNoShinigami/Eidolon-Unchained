@@ -94,6 +94,15 @@ public class EidolonUnchainedNetworking {
                 ChantSignTriggerPacket::handle
             );
             
+            // Register active chanting sign packet for real-time chanting
+            INSTANCE.registerMessage(
+                ++packetId,
+                ActiveChantSignPacket.class,
+                ActiveChantSignPacket::encode,
+                ActiveChantSignPacket::decode,
+                ActiveChantSignPacket::handle
+            );
+            
             // Add more packets here as needed
         } catch (Exception e) {
             // Log but don't crash - networking is optional for core functionality

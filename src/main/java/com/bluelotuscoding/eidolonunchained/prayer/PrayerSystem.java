@@ -40,6 +40,9 @@ public class PrayerSystem {
     // Cooldown tracking: playerId -> (deityId + prayerType) -> lastUsedTime
     private static final Map<UUID, Map<String, Long>> playerCooldowns = new ConcurrentHashMap<>();
     
+    // Command usage tracking: playerId -> (deityId + prayerType) -> commandsUsed
+    private static final Map<UUID, Map<String, Integer>> playerCommandUsage = new ConcurrentHashMap<>();
+    
     /**
      * Handle effigy interactions - now uses the unified prayer system
      */
@@ -245,11 +248,25 @@ public class PrayerSystem {
                     // Send deity response to player with prominent display
                     sendDeityMessage(player, deity.getDisplayName(), response.dialogue, false);
                     
-                    // Execute commands
-                    executeCommands(player, response.commands, prayerConfig);
+                    // Execute commands and get count
+                    int commandsExecuted = executeCommands(player, response.commands, prayerConfig);
                     
-                    // Set cooldown
-                    setCooldown(player.getUUID(), cooldownKey);
+                    // Track command usage for this prayer type
+                    String usageKey = cooldownKey; // Same key format as cooldown
+                    int totalCommandsUsed = addCommandUsage(player.getUUID(), usageKey, commandsExecuted);
+                    
+                    // Check if max_commands limit reached
+                    if (totalCommandsUsed >= prayerConfig.max_commands) {
+                        // Set cooldown and reset command usage counter
+                        setCooldown(player.getUUID(), cooldownKey);
+                        resetCommandUsage(player.getUUID(), usageKey);
+                        
+                        LOGGER.info("Player {} reached max commands ({}/{}) for prayer type {}, cooldown activated", 
+                            player.getName().getString(), totalCommandsUsed, prayerConfig.max_commands, prayerType);
+                    } else {
+                        LOGGER.info("Player {} used {}/{} commands for prayer type {}, cooldown not yet triggered", 
+                            player.getName().getString(), totalCommandsUsed, prayerConfig.max_commands, prayerType);
+                    }
                     
                     // Award reputation for successful prayer using Eidolon's reputation system
                     player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE).ifPresent(reputation -> {
@@ -516,12 +533,14 @@ public class PrayerSystem {
      * 
      * Executes deity commands with comprehensive logging and debug output.
      * This addresses the issue of "no command triggers in chat logs".
+     * 
+     * @return Number of commands actually executed
      */
-    private static void executeCommands(ServerPlayer player, java.util.List<String> commands, PrayerAIConfig prayerConfig) {
+    private static int executeCommands(ServerPlayer player, java.util.List<String> commands, PrayerAIConfig prayerConfig) {
         MinecraftServer server = player.getServer();
         if (server == null) {
             LOGGER.error("🚨 Cannot execute commands: server is null for player {}", player.getName().getString());
-            return;
+            return 0;
         }
         
         Commands commandManager = server.getCommands();
@@ -589,6 +608,8 @@ public class PrayerSystem {
                 "§6Divine blessings granted: " + commandsExecuted + " intervention" + 
                 (commandsExecuted == 1 ? "" : "s")));
         }
+        
+        return commandsExecuted;
     }
     
     private static boolean isCommandAllowed(String command, java.util.List<String> allowedCommands) {
@@ -647,6 +668,54 @@ public class PrayerSystem {
     }
     
     /**
+     * Clear all cooldowns for a specific player (for debugging/admin use)
+     */
+    public static void clearPlayerCooldowns(UUID playerId) {
+        playerCooldowns.remove(playerId);
+        playerCommandUsage.remove(playerId); // Also clear command usage tracking
+        LOGGER.info("Cleared all prayer cooldowns and command usage for player: {}", playerId);
+    }
+    
+    /**
+     * Get current cooldown status for a player (for debugging)
+     */
+    public static java.util.List<String> getPlayerCooldownStatus(UUID playerId) {
+        java.util.List<String> status = new java.util.ArrayList<>();
+        Map<String, Long> playerCds = playerCooldowns.get(playerId);
+        Map<String, Integer> playerUsage = playerCommandUsage.get(playerId);
+        
+        // Show active cooldowns
+        if (playerCds != null && !playerCds.isEmpty()) {
+            status.add("§6=== Active Cooldowns ===");
+            long currentTime = System.currentTimeMillis();
+            for (Map.Entry<String, Long> entry : playerCds.entrySet()) {
+                String cooldownKey = entry.getKey();
+                long lastUsed = entry.getValue();
+                long timeSinceUse = (currentTime - lastUsed) / (60L * 1000L); // minutes
+                
+                status.add(String.format("§e%s: §7used %d minutes ago", cooldownKey, timeSinceUse));
+            }
+        }
+        
+        // Show command usage progress
+        if (playerUsage != null && !playerUsage.isEmpty()) {
+            status.add("§6=== Command Usage Progress ===");
+            for (Map.Entry<String, Integer> entry : playerUsage.entrySet()) {
+                String usageKey = entry.getKey();
+                int commandsUsed = entry.getValue();
+                
+                status.add(String.format("§e%s: §7%d commands used", usageKey, commandsUsed));
+            }
+        }
+        
+        if ((playerCds == null || playerCds.isEmpty()) && (playerUsage == null || playerUsage.isEmpty())) {
+            status.add("No active cooldowns or command usage");
+        }
+        
+        return status;
+    }
+    
+    /**
      * Send deity message with configurable display mode using improved system
      */
     private static void sendDeityMessage(ServerPlayer player, String deityName, String message, boolean isError) {
@@ -660,5 +729,26 @@ public class PrayerSystem {
         // Use the same improved display system as DeityChat
         com.bluelotuscoding.eidolonunchained.chat.DeityChat.sendDeityResponsePublic(
             player, deityName, message, isError);
+    }
+    
+    /**
+     * Add command usage for a prayer type and return total commands used
+     */
+    private static int addCommandUsage(UUID playerId, String usageKey, int commandsExecuted) {
+        Map<String, Integer> playerUsage = playerCommandUsage.computeIfAbsent(playerId, k -> new HashMap<>());
+        int currentUsage = playerUsage.getOrDefault(usageKey, 0);
+        int newTotal = currentUsage + commandsExecuted;
+        playerUsage.put(usageKey, newTotal);
+        return newTotal;
+    }
+    
+    /**
+     * Reset command usage for a prayer type (when cooldown starts)
+     */
+    private static void resetCommandUsage(UUID playerId, String usageKey) {
+        Map<String, Integer> playerUsage = playerCommandUsage.get(playerId);
+        if (playerUsage != null) {
+            playerUsage.remove(usageKey);
+        }
     }
 }

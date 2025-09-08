@@ -57,6 +57,30 @@ public class DatapackDeity extends Deity {
     public Set<String> getPrayerTypes() { return new HashSet<>(prayerTypes); }
     public int getMaxReputation() { return maxReputation; }
     
+    /**
+     * Get stage rewards for tier progression system
+     * @param tierTitle The tier title (e.g., "Shadow Initiate", "Dark Acolyte")
+     * @return List of reward commands, or null if not found
+     */
+    public List<String> getStageRewards(String tierTitle) {
+        if (tierTitle == null) return null;
+        
+        // Try to find rewards by tier title first
+        List<String> rewards = stageRewards.get(tierTitle);
+        if (rewards != null && !rewards.isEmpty()) {
+            return new ArrayList<>(rewards); // Return copy to prevent modification
+        }
+        
+        // Fallback: try to find by stage ID if title lookup failed
+        for (Map.Entry<String, List<String>> entry : stageRewards.entrySet()) {
+            if (entry.getKey().toLowerCase().contains(tierTitle.toLowerCase())) {
+                return new ArrayList<>(entry.getValue());
+            }
+        }
+        
+        return null; // No rewards found
+    }
+    
     // Configuration methods called by DatapackDeityManager
     public void setMaxReputation(int maxReputation) {
         this.maxReputation = maxReputation;
@@ -160,12 +184,23 @@ public class DatapackDeity extends Deity {
      */
     @Override
     public void onReputationChange(Player player, elucent.eidolon.capability.IReputation rep, double prev, double updated) {
-        // Call parent implementation first to handle Eidolon's stage progression
-        super.onReputationChange(player, rep, prev, updated);
+        // 🚫 DON'T call super() - prevents Eidolon's hardcoded rewards from conflicting with our custom system
+        // super.onReputationChange(player, rep, prev, updated);
         
         // Handle our custom title updates for patron players
         if (player instanceof ServerPlayer serverPlayer) {
             try {
+                // 🎯 SPECIAL CASE: Initial patron selection (0 reputation)
+                if (prev == 0.0 && updated == 0.0) {
+                    // Player just selected this deity as patron - trigger initial tier advancement
+                    LOGGER.info("🎉 INITIAL PATRON SELECTION: Player {} chose {} as patron", 
+                        serverPlayer.getName().getString(), getName());
+                    
+                    // Trigger initial tier progression (should give "Shadow Initiate" etc.)
+                    com.bluelotuscoding.eidolonunchained.chat.DeityChat.checkAndHandleTierProgression(serverPlayer, getId());
+                    return; // Early return for patron selection
+                }
+                
                 // Check if this deity is the player's patron
                 player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
                     .ifPresent(patronData -> {

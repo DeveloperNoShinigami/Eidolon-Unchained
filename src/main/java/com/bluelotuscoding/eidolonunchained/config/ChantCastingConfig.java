@@ -25,7 +25,13 @@ public class ChantCastingConfig {
          * Support both approaches - hold key for full chant, tap for individual signs
          * Tap = individual sign, Hold = full chant
          */
-        HYBRID
+        HYBRID,
+        
+        /**
+         * Real-time active chanting with visual ChantCasterEntity
+         * User builds chant sequences sign by sign with visual feedback and auto-detection
+         */
+        ACTIVE_CHANTING
     }
     
     /**
@@ -69,5 +75,12 @@ public class ChantCastingConfig {
     public static boolean supportsFullChant() {
         CastingMode mode = getCurrentMode();
         return mode == CastingMode.FULL_CHANT || mode == CastingMode.HYBRID;
+    }
+    
+    /**
+     * Check if active chanting mode is enabled
+     */
+    public static boolean isActiveChantingMode() {
+        return getCurrentMode() == CastingMode.ACTIVE_CHANTING;
     }
 }
