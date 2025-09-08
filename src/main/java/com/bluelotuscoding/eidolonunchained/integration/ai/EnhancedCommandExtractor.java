@@ -488,20 +488,127 @@ public class EnhancedCommandExtractor {
         );
         
         Matcher matcher = explicitPattern.matcher(playerInput);
-        while (matcher.find()) {
-            String requestedItem = matcher.group(1).trim();
+        
+        try {
+            // Get active deity to check permissions
+            net.minecraft.resources.ResourceLocation activeDeityId = getActiveDeityForPlayer(player);
+            com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig = null;
             
-            // Filter out common words
-            if (!isCommonWord(requestedItem)) {
-                List<ResourceLocation> matches = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
-                    .findMatchingItemsWithScoring(requestedItem, Arrays.asList("minecraft", "eidolon", "eidolonunchained"));
+            if (activeDeityId != null) {
+                aiConfig = com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance().getAIConfig(activeDeityId);
+            }
+            
+            while (matcher.find()) {
+                String requestedItem = matcher.group(1).trim();
                 
-                if (!matches.isEmpty()) {
-                    String itemId = matches.get(0).toString();
-                    String command = String.format("give %s %s 1", player.getName().getString(), itemId);
-                    commands.add(command);
-                    LOGGER.info("🔥 Player explicit request: '{}' -> {}", matcher.group(0), itemId);
+                // Filter out common words
+                if (!isCommonWord(requestedItem)) {
+                    // Get deity-specific mod context IDs for registry lookup
+                    List<String> modContextIds = Arrays.asList("minecraft", "eidolon", "eidolonunchained"); // default
+                    if (aiConfig != null && aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty()) {
+                        modContextIds = aiConfig.mod_context_ids;
+                        LOGGER.info("🔧 Using deity-specific mod context IDs: {}", modContextIds);
+                    }
+                    
+                    // Step 1: Registry lookup to find the actual item using deity's mod context
+                    List<ResourceLocation> matches = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
+                        .findMatchingItemsWithScoring(requestedItem, modContextIds);
+                    
+                    if (!matches.isEmpty()) {
+                        String itemId = matches.get(0).toString();
+                        
+                        // Step 2: Check if deity allows this specific item
+                        if (deityAllowsItem(itemId, aiConfig, player)) {
+                            String command = String.format("give %s %s 1", player.getName().getString(), itemId);
+                            commands.add(command);
+                            LOGGER.info("🔥 Player request APPROVED: '{}' -> {} (deity: {})", 
+                                matcher.group(0), itemId, activeDeityId);
+                        } else {
+                            LOGGER.info("🚫 Player request DENIED: '{}' -> {} (not allowed by deity: {})", 
+                                matcher.group(0), itemId, activeDeityId);
+                            // TODO: Send denial message to player explaining why
+                        }
+                    } else {
+                        LOGGER.info("🔍 Player request UNKNOWN: '{}' (no registry match found)", requestedItem);
+                    }
                 }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error in explicit request extraction: {}", e.getMessage());
+        }
+        
+        return commands;
+    }
+    
+    /**
+     * 🔥 NEW: Extract contextual actions from AI response (deity-specific approach)
+     */
+    public static List<String> extractContextualActions(String aiResponse, ServerPlayer player, String playerMessage) {
+        List<String> commands = new ArrayList<>();
+        
+        try {
+            // Get the current deity configuration to use THEIR specific commands
+            net.minecraft.resources.ResourceLocation activeDeityId = getActiveDeityForPlayer(player);
+            if (activeDeityId != null) {
+                com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig = 
+                    com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance().getAIConfig(activeDeityId);
+                
+                if (aiConfig != null && aiConfig.prayer_configs != null) {
+                    // Use deity-specific reference commands based on context
+                    commands.addAll(extractDeitySpecificCommands(aiResponse, playerMessage, aiConfig, player));
+                    LOGGER.info("🔥 Using deity-specific commands from {}: {}", activeDeityId, commands);
+                } else {
+                    // Fallback to generic extraction only if no deity config
+                    commands.addAll(extractGenericContextualActions(aiResponse, player, playerMessage));
+                    LOGGER.info("🔥 Fallback to generic commands: {}", commands);
+                }
+            } else {
+                // No active deity conversation - minimal extraction
+                LOGGER.info("🔥 No active deity - minimal command extraction");
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error in contextual action extraction: {}", e.getMessage());
+        }
+        
+        return commands;
+    }
+    
+    /**
+     * Extract commands using deity-specific configurations from JSON
+     */
+    private static List<String> extractDeitySpecificCommands(String aiResponse, String playerMessage, 
+                                                            com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig, 
+                                                            ServerPlayer player) {
+        List<String> commands = new ArrayList<>();
+        
+        // Determine which prayer type this conversation matches
+        String prayerType = determinePrayerType(playerMessage, aiResponse);
+        LOGGER.info("🔥 Determined prayer type: {}", prayerType);
+        
+        if (aiConfig.prayer_configs.containsKey(prayerType)) {
+            com.bluelotuscoding.eidolonunchained.ai.PrayerAIConfig prayerConfig = aiConfig.prayer_configs.get(prayerType);
+            
+            // Check if player meets requirements for this prayer type
+            if (meetsRequirements(player, prayerConfig, aiConfig)) {
+                // Select appropriate commands from reference_commands
+                List<String> referenceCommands = prayerConfig.reference_commands;
+                if (referenceCommands != null && !referenceCommands.isEmpty()) {
+                    // Select 1-2 commands based on max_commands limit
+                    int maxCommands = Math.min(prayerConfig.max_commands, referenceCommands.size());
+                    
+                    for (int i = 0; i < maxCommands && i < referenceCommands.size(); i++) {
+                        String command = referenceCommands.get(i);
+                        // Replace placeholders
+                        command = command.replace("{player}", player.getName().getString());
+                        commands.add(command);
+                    }
+                    
+                    LOGGER.info("🔥 Selected {} deity-specific commands from {} reference commands", 
+                        commands.size(), referenceCommands.size());
+                }
+            } else {
+                LOGGER.info("🔥 Player {} doesn't meet requirements for prayer type {}", 
+                    player.getName().getString(), prayerType);
             }
         }
         
@@ -509,9 +616,78 @@ public class EnhancedCommandExtractor {
     }
     
     /**
-     * 🔥 NEW: Extract contextual actions from AI response (conservative approach)
+     * Determine prayer type based on player message and AI response context
      */
-    public static List<String> extractContextualActions(String aiResponse, ServerPlayer player, String playerMessage) {
+    private static String determinePrayerType(String playerMessage, String aiResponse) {
+        String lowerMessage = playerMessage.toLowerCase();
+        String lowerResponse = aiResponse.toLowerCase();
+        
+        // Check for specific prayer types based on keywords
+        if (lowerMessage.contains("bless") || lowerMessage.contains("help") || lowerMessage.contains("aid")) {
+            if (lowerMessage.contains("protect") || lowerMessage.contains("defense") || lowerMessage.contains("safe")) {
+                return "protection";
+            } else if (lowerMessage.contains("grow") || lowerMessage.contains("plant") || lowerMessage.contains("harvest")) {
+                return "growth";
+            } else if (lowerMessage.contains("curse") || lowerMessage.contains("punish") || lowerMessage.contains("revenge")) {
+                return "curse";
+            } else if (lowerMessage.contains("wisdom") || lowerMessage.contains("knowledge") || lowerMessage.contains("teach")) {
+                return "communion";
+            } else {
+                return "blessing"; // Default blessing type
+            }
+        }
+        
+        // Fallback to conversation if no specific prayer type detected
+        return "conversation";
+    }
+    
+    /**
+     * Check if player meets requirements for this prayer type
+     */
+    private static boolean meetsRequirements(ServerPlayer player, com.bluelotuscoding.eidolonunchained.ai.PrayerAIConfig prayerConfig,
+                                           com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
+        try {
+            // Check reputation requirement
+            if (prayerConfig.reputation_required > 0) {
+                com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = 
+                    com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(aiConfig.deity_id);
+                if (deity != null) {
+                    double reputation = deity.getPlayerReputation(player);
+                    if (reputation < prayerConfig.reputation_required) {
+                        LOGGER.info("🚫 Player {} reputation {} < required {}", 
+                            player.getName().getString(), reputation, prayerConfig.reputation_required);
+                        return false;
+                    }
+                }
+            }
+            
+            // Check cooldown (if implemented)
+            // TODO: Implement cooldown checking based on prayerConfig.cooldown_minutes
+            
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Error checking prayer requirements: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Get the active deity for a player (from conversation context)
+     */
+    private static net.minecraft.resources.ResourceLocation getActiveDeityForPlayer(ServerPlayer player) {
+        // Check if player is in an active conversation
+        try {
+            return com.bluelotuscoding.eidolonunchained.chat.DeityChat.getActiveConversationDeity(player);
+        } catch (Exception e) {
+            LOGGER.debug("No active deity conversation for player {}", player.getName().getString());
+            return null;
+        }
+    }
+    
+    /**
+     * Fallback generic contextual action extraction (original approach)
+     */
+    private static List<String> extractGenericContextualActions(String aiResponse, ServerPlayer player, String playerMessage) {
         List<String> commands = new ArrayList<>();
         
         // Only extract contextual actions if:
@@ -551,5 +727,161 @@ public class EnhancedCommandExtractor {
         }
         
         return commands;
+    }
+    
+    /**
+     * Check if a deity allows a specific item to be given
+     */
+    private static boolean deityAllowsItem(String itemId, com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig, ServerPlayer player) {
+        if (aiConfig == null) {
+            // No deity config - allow basic items only
+            return isBasicItem(itemId);
+        }
+        
+        try {
+            // METHOD 1: Check if item is explicitly in reference_commands (preferred)
+            boolean foundInReference = false;
+            com.bluelotuscoding.eidolonunchained.ai.PrayerAIConfig matchingPrayerConfig = null;
+            
+            for (com.bluelotuscoding.eidolonunchained.ai.PrayerAIConfig prayerConfig : aiConfig.prayer_configs.values()) {
+                if (prayerConfig.reference_commands != null) {
+                    for (String referenceCommand : prayerConfig.reference_commands) {
+                        // Check if this command gives the requested item
+                        if (referenceCommand.contains("give") && referenceCommand.contains(itemId)) {
+                            foundInReference = true;
+                            matchingPrayerConfig = prayerConfig;
+                            break;
+                        }
+                    }
+                    if (foundInReference) break;
+                }
+            }
+            
+            // If found in reference commands, check requirements
+            if (foundInReference && matchingPrayerConfig != null) {
+                if (meetsRequirements(player, matchingPrayerConfig, aiConfig)) {
+                    LOGGER.info("✅ Item {} APPROVED - found in reference commands and player meets requirements", itemId);
+                    return true;
+                } else {
+                    LOGGER.info("🚫 Item {} found in reference but player doesn't meet requirements", itemId);
+                    return false;
+                }
+            }
+            
+            // METHOD 2: If NOT in reference commands OR reference commands are empty, 
+            // check if item fits deity's domain and player meets general requirements
+            LOGGER.info("🔍 Item {} not in reference commands, checking deity domain compatibility...", itemId);
+            
+            if (isItemCompatibleWithDeityDomain(itemId, aiConfig) && 
+                meetsGeneralRequirements(player, aiConfig)) {
+                LOGGER.info("✅ Item {} APPROVED - compatible with deity domain and player meets general requirements", itemId);
+                return true;
+            } else {
+                LOGGER.info("🚫 Item {} DENIED - not compatible with deity domain or player doesn't meet requirements", itemId);
+                return false;
+            }
+            
+        } catch (Exception e) {
+            LOGGER.error("Error checking deity item permissions: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Check if an item is thematically compatible with the deity's domain
+     */
+    private static boolean isItemCompatibleWithDeityDomain(String itemId, com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
+        // Extract deity type from ID to determine thematic compatibility
+        String deityId = aiConfig.deity_id.toString().toLowerCase();
+        String lowerItemId = itemId.toLowerCase();
+        
+        // Dark/Shadow deity compatibility
+        if (deityId.contains("dark") || deityId.contains("shadow")) {
+            return lowerItemId.contains("soul") || lowerItemId.contains("shadow") || lowerItemId.contains("death") ||
+                   lowerItemId.contains("wither") || lowerItemId.contains("skull") || lowerItemId.contains("obsidian") ||
+                   lowerItemId.contains("black") || lowerItemId.contains("void") || lowerItemId.contains("dark") ||
+                   itemId.equals("minecraft:coal") || itemId.equals("minecraft:charcoal") || 
+                   itemId.equals("minecraft:ink_sac") || itemId.equals("minecraft:ender_pearl");
+        }
+        
+        // Nature deity compatibility  
+        if (deityId.contains("nature") || deityId.contains("forest") || deityId.contains("earth")) {
+            return lowerItemId.contains("seed") || lowerItemId.contains("sapling") || lowerItemId.contains("flower") ||
+                   lowerItemId.contains("wood") || lowerItemId.contains("leaf") || lowerItemId.contains("moss") ||
+                   lowerItemId.contains("vine") || lowerItemId.contains("bone_meal") || lowerItemId.contains("wheat") ||
+                   itemId.equals("minecraft:apple") || itemId.equals("minecraft:carrot") || itemId.equals("minecraft:potato");
+        }
+        
+        // Light deity compatibility
+        if (deityId.contains("light") || deityId.contains("sun") || deityId.contains("holy")) {
+            return lowerItemId.contains("gold") || lowerItemId.contains("light") || lowerItemId.contains("torch") ||
+                   lowerItemId.contains("glowstone") || lowerItemId.contains("beacon") || lowerItemId.contains("lantern") ||
+                   itemId.equals("minecraft:golden_apple") || itemId.equals("minecraft:experience_bottle") ||
+                   itemId.equals("minecraft:totem_of_undying");
+        }
+        
+        // Fire deity compatibility
+        if (deityId.contains("fire") || deityId.contains("flame") || deityId.contains("inferno")) {
+            return lowerItemId.contains("fire") || lowerItemId.contains("flame") || lowerItemId.contains("blaze") ||
+                   lowerItemId.contains("magma") || lowerItemId.contains("lava") || lowerItemId.contains("coal") ||
+                   itemId.equals("minecraft:flint_and_steel") || itemId.equals("minecraft:fire_charge");
+        }
+        
+        // Water deity compatibility
+        if (deityId.contains("water") || deityId.contains("ocean") || deityId.contains("sea")) {
+            return lowerItemId.contains("water") || lowerItemId.contains("ice") || lowerItemId.contains("fish") ||
+                   lowerItemId.contains("kelp") || lowerItemId.contains("coral") || lowerItemId.contains("prismarine") ||
+                   itemId.equals("minecraft:bucket") || itemId.equals("minecraft:sponge");
+        }
+        
+        // Default: Allow basic minecraft items that are generally neutral
+        return isNeutralItem(itemId);
+    }
+    
+    /**
+     * Check if player meets general requirements for the deity (not prayer-specific)
+     */
+    private static boolean meetsGeneralRequirements(ServerPlayer player, com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
+        try {
+            // Basic reputation check - need at least some reputation to get items not in reference
+            com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = 
+                com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(aiConfig.deity_id);
+            if (deity != null) {
+                double reputation = deity.getPlayerReputation(player);
+                // Require at least 15 reputation for non-reference items (more restrictive)
+                if (reputation < 15) {
+                    LOGGER.info("🚫 Player {} reputation {} < 15 required for non-reference items", 
+                        player.getName().getString(), reputation);
+                    return false;
+                }
+            }
+            
+            // Could add more general checks here (cooldowns, patron status, etc.)
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Error checking general requirements: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Check if an item is neutral/safe for any deity to give
+     */
+    private static boolean isNeutralItem(String itemId) {
+        return itemId.equals("minecraft:bread") || itemId.equals("minecraft:apple") || 
+               itemId.equals("minecraft:cooked_beef") || itemId.equals("minecraft:cooked_porkchop") ||
+               itemId.equals("minecraft:iron_ingot") || itemId.equals("minecraft:stone") ||
+               itemId.equals("minecraft:cobblestone") || itemId.equals("minecraft:stick");
+    }
+    
+    /**
+     * Check if an item is considered basic/safe to give without deity restrictions
+     */
+    private static boolean isBasicItem(String itemId) {
+        // Only allow very basic survival items when no deity config
+        return itemId.equals("minecraft:bread") || 
+               itemId.equals("minecraft:apple") || 
+               itemId.equals("minecraft:wooden_sword") ||
+               itemId.equals("minecraft:stick");
     }
 }

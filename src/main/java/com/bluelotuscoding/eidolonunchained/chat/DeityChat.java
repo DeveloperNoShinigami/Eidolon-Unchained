@@ -197,6 +197,13 @@ public class DeityChat {
     }
     
     /**
+     * Get the active conversation deity for a player (for command extraction)
+     */
+    public static ResourceLocation getActiveConversationDeity(ServerPlayer player) {
+        return activeConversations.get(player.getUUID());
+    }
+    
+    /**
      * Handle chat events for active conversations
      * SAFE VERSION: Only processes messages for players in active conversations
      */
