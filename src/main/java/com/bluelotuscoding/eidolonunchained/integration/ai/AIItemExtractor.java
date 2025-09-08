@@ -71,8 +71,7 @@ public class AIItemExtractor {
     }
     
     /**
-     * 🎯 NEW: Process player's direct requests for items
-     * Looks for item request patterns in the original player message
+     * 🎯 NEW: Process player's direct requests for items using simplified AI understanding
      */
     private static List<String> processPlayerItemRequests(String playerMessage, ServerPlayer player, 
                                                          com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
@@ -80,6 +79,98 @@ public class AIItemExtractor {
         
         LOGGER.info("🎯 Analyzing PLAYER request for items: '{}'", playerMessage);
         
+        // Check if this looks like an item request
+        if (!playerMessage.toLowerCase().matches(".*(?:can i have|give me|i need|i want|bestow|grant me).*")) {
+            LOGGER.info("🎯 No item request patterns detected in player message");
+            return commands;
+        }
+        
+        // Enhanced pattern matching for better item extraction
+        Pattern playerItemPattern = Pattern.compile(
+            "(?:can i have|give me|i need|i want|bestow|grant me)\\s+(?:a|an|the|some)?\\s*(?:new\\s+)?([a-zA-Z\\s]+?)(?:\\s*[.!?]|$)",
+            Pattern.CASE_INSENSITIVE
+        );
+        
+        Matcher matcher = playerItemPattern.matcher(playerMessage);
+        while (matcher.find()) {
+            String requestedItem = matcher.group(1).trim();
+            
+            if (requestedItem != null && !requestedItem.isEmpty()) {
+                // Clean up the requested item name and remove filler words
+                String cleanedItem = cleanupItemName(requestedItem)
+                    .replaceAll("\\b(?:new|old|fresh|good|nice|strong|powerful)\\b", "") // Remove adjectives
+                    .replaceAll("\\s+", " ") // Normalize whitespace
+                    .trim();
+                    
+                LOGGER.info("🎯 PLAYER requested item: '{}' → cleaned: '{}'", requestedItem, cleanedItem);
+                
+                // Get mod context for this deity
+                List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
+                    aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+                
+                List<ResourceLocation> matches = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
+                    .findMatchingItemsWithScoring(cleanedItem, modContextIds);
+                
+                if (!matches.isEmpty()) {
+                    ResourceLocation bestMatch = matches.get(0);
+                    
+                    // Check deity permissions
+                    if (deityAllowsItem(bestMatch.toString(), aiConfig, player)) {
+                        String command = String.format("/give %s %s 1", player.getName().getString(), bestMatch.toString());
+                        commands.add(command);
+                        LOGGER.info("🔥 PLAYER request: '{}' -> {}", cleanedItem, bestMatch);
+                    } else {
+                        LOGGER.info("🚫 PLAYER request DENIED: '{}' → {} (not allowed by deity)", 
+                            cleanedItem, bestMatch);
+                    }
+                } else {
+                    LOGGER.info("🎯 PLAYER requested item '{}' has no valid registry matches - no item will be given", cleanedItem);
+                }
+            }
+        }
+        
+        return commands;
+    }
+    
+    /**
+     * Process AI's identification of requested items
+     */
+    private static void processAIItemIdentification(String aiResponse, ServerPlayer player, 
+                                                   com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig,
+                                                   List<String> commands) {
+        // Look for [ITEM:...] tags in AI response
+        Pattern itemPattern = Pattern.compile("\\[ITEM:([^\\]]+)\\]", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = itemPattern.matcher(aiResponse);
+        
+        while (matcher.find()) {
+            String requestedItem = matcher.group(1).trim();
+            LOGGER.info("🤖 AI identified requested item: '{}'", requestedItem);
+            
+            // Clean and find matching items
+            String cleanedItem = cleanupItemName(requestedItem);
+            List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
+                aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+                
+            List<ResourceLocation> matches = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
+                .findMatchingItemsWithScoring(cleanedItem, modContextIds);
+            
+            if (!matches.isEmpty()) {
+                String normalizedItem = matches.get(0).toString();
+                String command = String.format("/give %s %s 1", player.getName().getString(), normalizedItem);
+                commands.add(command);
+                LOGGER.info("🎯 AI-identified item '{}' -> {}", requestedItem, normalizedItem);
+            } else {
+                LOGGER.info("🎯 AI-identified item '{}' has no valid registry matches", requestedItem);
+            }
+        }
+    }
+    
+    /**
+     * Fallback pattern matching when AI fails
+     */
+    private static void processPlayerItemRequestsFallback(String playerMessage, ServerPlayer player, 
+                                                         com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig,
+                                                         List<String> commands) {
         // Pattern to detect item requests in player messages
         Pattern playerItemPattern = Pattern.compile(
             "(?:can i have|give me|i need|i want|bestow|grant me)\\s+(?:a|an|the|some)?\\s*([a-zA-Z\\s]+?)(?:\\s*[.!?]|$)",
@@ -93,7 +184,7 @@ public class AIItemExtractor {
             if (requestedItem != null && !requestedItem.isEmpty()) {
                 // Clean up the requested item name
                 String cleanedItem = cleanupItemName(requestedItem);
-                LOGGER.info("🎯 PLAYER requested item: '{}' → cleaned: '{}'", requestedItem, cleanedItem);
+                LOGGER.info("🔄 FALLBACK: Player requested item: '{}' → cleaned: '{}'", requestedItem, cleanedItem);
                 
                 // Get mod context for this deity
                 List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
@@ -120,8 +211,6 @@ public class AIItemExtractor {
                 }
             }
         }
-        
-        return commands;
     }
     
     /**

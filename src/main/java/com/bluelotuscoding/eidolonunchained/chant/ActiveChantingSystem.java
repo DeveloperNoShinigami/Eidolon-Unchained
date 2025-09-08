@@ -5,6 +5,7 @@ import elucent.eidolon.api.spells.Sign;
 import elucent.eidolon.api.spells.SignSequence;
 import elucent.eidolon.registries.Signs;
 import elucent.eidolon.common.entity.ChantCasterEntity;
+import com.bluelotuscoding.eidolonunchained.entity.UpdateableChantCasterEntity;
 import elucent.eidolon.network.AttemptCastPacket;
 import elucent.eidolon.network.Networking;
 import net.minecraft.network.chat.Component;
@@ -48,7 +49,7 @@ public class ActiveChantingSystem {
      */
     private static class ActiveChant {
         final List<Sign> signs = new ArrayList<>();
-        ChantCasterEntity entity = null;
+        UpdateableChantCasterEntity entity = null;
         long lastSignTime = System.currentTimeMillis();
         
         void addSign(Sign sign) {
@@ -142,18 +143,18 @@ public class ActiveChantingSystem {
     
     /**
      * Update the ChantCasterEntity to show current sign sequence
-     * 🔥 FIXED: Entity persists longer for better user experience
+     * 🎯 REAL-TIME: True updates without entity recreation using extended entity
      */
     private static void updateChantCasterEntity(ServerPlayer player, ActiveChant chant) {
         Level level = player.level();
         
-        // Only create new entity if none exists OR if it's been too long
-        if (chant.entity == null || chant.entity.isRemoved()) {
-            // Create new ChantCasterEntity with current sign sequence
+        // Create entity only if none exists
+        if (chant.entity == null || !chant.entity.canBeUpdated()) {
+            // Create new UpdateableChantCasterEntity
             Vec3 lookDirection = player.getLookAngle();
-            chant.entity = new ChantCasterEntity(level, player, new ArrayList<>(chant.signs), lookDirection);
+            chant.entity = new UpdateableChantCasterEntity(level, player, new ArrayList<>(chant.signs), lookDirection);
             
-            // Position near player - closer for instant visibility
+            // Position near player for visibility
             chant.entity.setPos(
                 player.getX() + lookDirection.x * 0.3,
                 player.getY() + 1.2,
@@ -163,34 +164,24 @@ public class ActiveChantingSystem {
             // Spawn entity
             level.addFreshEntity(chant.entity);
             
-            LOGGER.info("NEW ENTITY: Spawned ChantCasterEntity for player {} with {} signs", 
-                player.getName().getString(), chant.signs.size());
+            LOGGER.info("FIRST SIGN: Creating UpdateableChantCasterEntity for player {}", player.getName().getString());
         } else {
-            // 🔥 OPTIMIZED UPDATE: Minimize recreation delay
-            try {
-                // Update position first
-                Vec3 lookDirection = player.getLookAngle();
-                
-                // Quick recreate for sign update (ChantCasterEntity limitation)
-                chant.entity.discard();
-                chant.entity = new ChantCasterEntity(level, player, new ArrayList<>(chant.signs), lookDirection);
-                chant.entity.setPos(
-                    player.getX() + lookDirection.x * 0.3,
-                    player.getY() + 1.2,
-                    player.getZ() + lookDirection.z * 0.3
-                );
-                level.addFreshEntity(chant.entity);
-                
-                LOGGER.info("REAL-TIME UPDATE: Updated ChantCasterEntity for player {} to {} signs", 
-                    player.getName().getString(), chant.signs.size());
-                
-            } catch (Exception e) {
-                LOGGER.error("Error updating ChantCasterEntity: {}", e.getMessage());
-                chant.entity = null; // Reset for next attempt
-            }
+            // 🎯 TRUE REAL-TIME UPDATE: Update existing entity without recreation
+            chant.entity.updateSignSequence(new ArrayList<>(chant.signs));
+            
+            // Update position to follow player
+            Vec3 lookDirection = player.getLookAngle();
+            chant.entity.setPos(
+                player.getX() + lookDirection.x * 0.3,
+                player.getY() + 1.2,
+                player.getZ() + lookDirection.z * 0.3
+            );
+            
+            LOGGER.info("REAL-TIME: Updated existing ChantCasterEntity for player {} to {} signs", 
+                player.getName().getString(), chant.signs.size());
         }
         
-        // 🎯 IMMEDIATE SPELL CHECK: Check for completion right after entity update
+        // 🎯 IMMEDIATE SPELL CHECK: Check for completion right after update
         checkForCompleteChant(player, chant);
     }
     

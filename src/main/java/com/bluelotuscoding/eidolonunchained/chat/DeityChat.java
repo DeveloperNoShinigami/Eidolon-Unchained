@@ -784,7 +784,8 @@ public class DeityChat {
             .withSource(player)  // 🔧 FIX: Use player as source so @s selector works
             .withLevel(player.serverLevel())
             .withPosition(player.position())
-            .withPermission(4); // Admin permission level
+            .withPermission(4) // Admin permission level
+            .withSuppressedOutput(); // 🔥 SILENT: Suppress command output to chat
 
         int successCount = 0;
         for (String command : commands) {
