@@ -349,10 +349,31 @@ public class DatapackDeity extends Deity {
      * Get player's current reputation with this deity
      */
     public double getPlayerReputation(Player player) {
+        // Use the same capability access pattern as the rest of the codebase
+        if (player instanceof ServerPlayer serverPlayer) {
+            IReputation rep = serverPlayer.level().getCapability(IReputation.INSTANCE).orElse(null);
+            if (rep != null) {
+                double reputation = rep.getReputation(player.getUUID(), this.getId());
+                // Debug logging to track reputation calls
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("🔍 REPUTATION DEBUG: Player {} with deity {} has reputation {}", 
+                        player.getName().getString(), this.getId(), reputation);
+                }
+                return reputation;
+            }
+        }
+        
+        // Fallback to player capability if level access fails
         IReputation rep = player.getCapability(IReputation.INSTANCE).orElse(null);
         if (rep != null) {
-            return rep.getReputation(player.getUUID(), this.getId());
+            double reputation = rep.getReputation(player.getUUID(), this.getId());
+            LOGGER.debug("🔍 REPUTATION DEBUG (fallback): Player {} with deity {} has reputation {}", 
+                player.getName().getString(), this.getId(), reputation);
+            return reputation;
         }
+        
+        LOGGER.warn("⚠️ IReputation capability not found for player {} when checking deity {} (tried both level and player access)", 
+            player.getName().getString(), this.getId());
         return 0.0;
     }
     

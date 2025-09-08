@@ -51,7 +51,7 @@ public class PatronSystem {
             }
             
             // Get reputation capability for potential initial grant
-            IReputation reputation = player.getCapability(IReputation.INSTANCE).orElse(null);
+            IReputation reputation = player.level().getCapability(IReputation.INSTANCE).orElse(null);
             
             // Apply patron switch
             patronData.setPatron(player, deityId);
@@ -102,7 +102,7 @@ public class PatronSystem {
             DatapackDeity deity = DatapackDeityManager.getDeity(currentPatron);
             if (deity != null) {
                 // Apply reputation penalty
-                IReputation reputation = player.getCapability(IReputation.INSTANCE).orElse(null);
+                IReputation reputation = player.level().getCapability(IReputation.INSTANCE).orElse(null);
                 if (reputation != null) {
                     double currentRep = reputation.getReputation(player.getUUID(), currentPatron);
                     double penalty = currentRep * PATRON_ABANDON_PENALTY;
@@ -173,7 +173,7 @@ public class PatronSystem {
                 patronData.areOpposingDeities(patronDeity, gainedRepDeity)) {
                 
                 // Apply penalty to patron relationship
-                IReputation reputation = serverPlayer.getCapability(IReputation.INSTANCE).orElse(null);
+                IReputation reputation = serverPlayer.level().getCapability(IReputation.INSTANCE).orElse(null);
                 if (reputation != null) {
                     double penalty = amount * 0.5; // 50% of gained reputation as penalty
                     reputation.subtractReputation(serverPlayer.getUUID(), patronDeity, penalty);

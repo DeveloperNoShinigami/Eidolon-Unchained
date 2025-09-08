@@ -616,28 +616,24 @@ public class EnhancedCommandExtractor {
     }
     
     /**
-     * Determine prayer type based on player message and AI response context
+     * Determine prayer type based on player message and match actual JSON prayer config keys
      */
     private static String determinePrayerType(String playerMessage, String aiResponse) {
         String lowerMessage = playerMessage.toLowerCase();
         String lowerResponse = aiResponse.toLowerCase();
         
-        // Check for specific prayer types based on keywords
-        if (lowerMessage.contains("bless") || lowerMessage.contains("help") || lowerMessage.contains("aid")) {
-            if (lowerMessage.contains("protect") || lowerMessage.contains("defense") || lowerMessage.contains("safe")) {
-                return "protection";
-            } else if (lowerMessage.contains("grow") || lowerMessage.contains("plant") || lowerMessage.contains("harvest")) {
-                return "growth";
-            } else if (lowerMessage.contains("curse") || lowerMessage.contains("punish") || lowerMessage.contains("revenge")) {
-                return "curse";
-            } else if (lowerMessage.contains("wisdom") || lowerMessage.contains("knowledge") || lowerMessage.contains("teach")) {
-                return "communion";
-            } else {
-                return "blessing"; // Default blessing type
-            }
+        // Match the ACTUAL prayer config keys from the JSON files
+        if (lowerMessage.contains("curse") || lowerMessage.contains("punish") || lowerMessage.contains("revenge")) {
+            return "curse";
+        } else if (lowerMessage.contains("wisdom") || lowerMessage.contains("knowledge") || lowerMessage.contains("teach") || 
+                   lowerMessage.contains("guide") || lowerMessage.contains("learn")) {
+            return "guidance";
+        } else if (lowerMessage.contains("bless") || lowerMessage.contains("help") || lowerMessage.contains("aid") ||
+                   lowerMessage.contains("protect") || lowerMessage.contains("heal") || lowerMessage.contains("strength")) {
+            return "blessing";
         }
         
-        // Fallback to conversation if no specific prayer type detected
+        // Default to conversation for general chat
         return "conversation";
     }
     
@@ -843,14 +839,15 @@ public class EnhancedCommandExtractor {
      */
     private static boolean meetsGeneralRequirements(ServerPlayer player, com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
         try {
-            // Basic reputation check - need at least some reputation to get items not in reference
+            // For non-reference items, use a reasonable default requirement
+            // This should be lower than specific prayer requirements since it's fallback
             com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = 
                 com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(aiConfig.deity_id);
             if (deity != null) {
                 double reputation = deity.getPlayerReputation(player);
-                // Require at least 15 reputation for non-reference items (more restrictive)
-                if (reputation < 15) {
-                    LOGGER.info("🚫 Player {} reputation {} < 15 required for non-reference items", 
+                // Use minimal requirement for domain-compatible items (not reference items)
+                if (reputation < 5) {
+                    LOGGER.info("🚫 Player {} reputation {} < 5 required for non-reference domain items", 
                         player.getName().getString(), reputation);
                     return false;
                 }
