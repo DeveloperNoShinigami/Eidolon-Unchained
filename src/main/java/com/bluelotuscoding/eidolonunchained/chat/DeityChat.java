@@ -305,7 +305,8 @@ public class DeityChat {
                     deityProvider = globalProvider;
                     apiKey = globalApiKey;
                 } else {
-                    LOGGER.error("No {} API key configured. Please set up API key using /eidolon-unchained api set {} YOUR_KEY", deityProvider, deityProvider);
+                    LOGGER.error("No API key configured for provider '{}'. Please set up API key using /eidolon-unchained api set {} YOUR_KEY", 
+                        deityProvider, deityProvider);
                     player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.api_key_required"));
                     player.sendSystemMessage(Component.translatable("eidolonunchained.chat.api_key_instruction", deityProvider));
                     endConversation(player);
@@ -316,6 +317,9 @@ public class DeityChat {
             // Create AI provider based on effective provider (deity-specific or fallback)
             com.bluelotuscoding.eidolonunchained.ai.AIProviderFactory.AIProvider provider = 
                 com.bluelotuscoding.eidolonunchained.ai.AIProviderFactory.createProvider(deityProvider, aiConfig.model);
+            
+            LOGGER.info("🤖 Using AI provider '{}' for deity {} conversation with player {}", 
+                deityProvider, deity.getName(), player.getName().getString());
             
             if (!provider.isAvailable()) {
                 LOGGER.error("AI provider {} is not available", provider.getProviderName());
@@ -1675,15 +1679,17 @@ public class DeityChat {
             // Trigger AI conversation with congratulation context
             AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deity.getId());
             if (aiConfig != null) {
-                LOGGER.info("✅ AI config found for deity {}, starting congratulation conversation", deity.getName());
+                LOGGER.info("✅ AI config found for deity {}, starting congratulation conversation with provider '{}'", 
+                    deity.getName(), aiConfig.ai_provider != null ? aiConfig.ai_provider : "default");
                 
                 // Start conversation automatically
                 activeConversations.put(player.getUUID(), deity.getId());
                 LOGGER.info("🗣️ Added player {} to active conversations with deity {}", 
                     player.getName().getString(), deity.getName());
                 
-                // Process the congratulation
-                LOGGER.info("🤖 Processing deity conversation with congratulation prompt...");
+                // Process the congratulation using configured AI provider
+                LOGGER.info("🤖 Processing deity conversation with congratulation prompt using provider '{}'...", 
+                    aiConfig.ai_provider != null ? aiConfig.ai_provider : "default");
                 processDeityConversation(player, deity.getId(), congratulationPrompt);
                 
                 // Auto-execute tier advancement rewards
@@ -1725,6 +1731,7 @@ public class DeityChat {
     
     /**
      * Execute tier-specific advancement rewards with proper tracking to prevent duplicates
+     * 🔥 FIXED: Now reads rewards from JSON progression stages instead of using hardcoded fallbacks
      */
     private static void executeTierAdvancementRewards(ServerPlayer player, DatapackDeity deity, String newTier) {
         try {
@@ -1742,73 +1749,28 @@ public class DeityChat {
                 return;
             }
             
-            // Get tier-specific commands from AI config
-            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deity.getId());
-            if (aiConfig == null) {
-                LOGGER.warn("No AI config found for deity {} - using fallback rewards", deityId);
-                executeFallbackTierRewards(player, newTier);
-                givenRewards.add(newTier);
-                return;
-            }
+            // 🔥 SIMPLIFIED: Use DatapackDeity's existing getStageRewards method
+            List<String> tierCommands = deity.getStageRewards(newTier);
             
-            List<String> tierCommands = new ArrayList<>();
-            
-            // Check for tier advancement rewards in prayer configs
-            if (aiConfig.prayer_configs.containsKey("tier_advancement")) {
-                PrayerAIConfig tierConfig = aiConfig.prayer_configs.get("tier_advancement");
-                tierCommands.addAll(tierConfig.allowed_commands);
-            }
-            
-            // Get current reputation to determine reward level
-            double reputation = deity.getPlayerReputation(player);
-            
-            // Use AI config reputation thresholds to determine reward tier
-            Map<Integer, String> reputationBehaviors = aiConfig.getReputationBehaviors();
-            int currentThreshold = -1;
-            
-            for (int threshold : reputationBehaviors.keySet()) {
-                if (reputation >= threshold && threshold > currentThreshold) {
-                    currentThreshold = threshold;
-                }
-            }
-            
-            // Add reputation-based rewards based on current threshold
-            if (currentThreshold >= 100) {
-                // Highest tier rewards
-                tierCommands.add("give {player} minecraft:experience_bottle 10");
-                tierCommands.add("give {player} minecraft:golden_apple 2");
-                tierCommands.add("give {player} minecraft:diamond 1");
-                tierCommands.add("effect give {player} minecraft:strength 600 1");
-            } else if (currentThreshold >= 75) {
-                // High tier rewards
-                tierCommands.add("give {player} minecraft:experience_bottle 7");
-                tierCommands.add("give {player} minecraft:golden_apple 1");
-                tierCommands.add("effect give {player} minecraft:strength 300 0");
-            } else if (currentThreshold >= 50) {
-                // Mid tier rewards
-                tierCommands.add("give {player} minecraft:experience_bottle 5");
-                tierCommands.add("give {player} minecraft:golden_apple 1");
-                tierCommands.add("effect give {player} minecraft:regeneration 300 0");
-            } else if (currentThreshold >= 25) {
-                // Low tier rewards
-                tierCommands.add("give {player} minecraft:experience_bottle 3");
-            } else if (currentThreshold >= 0) {
-                // Entry tier rewards
-                tierCommands.add("give {player} minecraft:experience_bottle 1");
-            }
-            
-            if (!tierCommands.isEmpty()) {
-                LOGGER.info("🎁 Executing {} tier advancement rewards for player {} (tier: {}, rep: {}, threshold: {})", 
-                    tierCommands.size(), player.getName().getString(), newTier, (int)reputation, currentThreshold);
+            if (tierCommands != null && !tierCommands.isEmpty()) {
+                LOGGER.info("🎁 Executing {} JSON-defined tier advancement rewards for player {} (tier: '{}')", 
+                    tierCommands.size(), player.getName().getString(), newTier);
+                
+                // Commands are now in proper Minecraft format, execute directly
                 executeCommands(player, deity.getId(), tierCommands);
                 
                 // Mark this tier's rewards as given
                 givenRewards.add(newTier);
                 
-                LOGGER.info("✅ Tier rewards marked as given for player {} tier '{}'", 
+                LOGGER.info("✅ JSON tier rewards marked as given for player {} tier '{}'", 
                     player.getName().getString(), newTier);
+                    
+                // Send player notification about tier advancement
+                player.sendSystemMessage(Component.literal("§6✨ " + deity.getName() + 
+                    " grants you advancement rewards for reaching " + newTier + "! ✨"));
+                    
             } else {
-                LOGGER.info("ℹ️ No specific tier rewards configured for tier '{}' - using fallback", newTier);
+                LOGGER.warn("❌ No rewards found in JSON for tier '{}' - using fallback", newTier);
                 executeFallbackTierRewards(player, newTier);
                 givenRewards.add(newTier);
             }

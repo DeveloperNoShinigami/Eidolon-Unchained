@@ -17,10 +17,10 @@
         "title": "Light Initiate",
         "description": "A soul touched by divine radiance",
         "rewards": [
-          "command:give {player} minecraft:golden_apple 1",
-          "command:effect give {player} minecraft:regeneration 300 0",
-          "command:title {player} subtitle {\"text\":\"The light embraces you...\",\"color\":\"yellow\"}",
-          "command:playsound minecraft:block.beacon.ambient master {player} ~ ~ ~ 0.3 1.2"
+          "give @s minecraft:golden_apple 1",
+          "effect give @s minecraft:regeneration 300 0",
+          "title @s subtitle {\"text\":\"The light embraces you...\",\"color\":\"yellow\"}",
+          "playsound minecraft:block.beacon.ambient master @s ~ ~ ~ 0.3 1.2"
         ]
       },
       {
@@ -30,12 +30,12 @@
         "title": "Light Acolyte",
         "description": "Faithful servant of the sacred light",
         "rewards": [
-          "command:give {player} eidolon:gold_inlay 3",
-          "command:give {player} eidolon:holy_symbol 1",
-          "command:effect give {player} minecraft:resistance 600 0",
-          "command:effect give {player} minecraft:glowing 1200 0",
-          "command:title {player} title {\"text\":\"Light Acolyte\",\"color\":\"yellow\"}",
-          "command:playsound minecraft:block.beacon.power_select master {player} ~ ~ ~ 0.7 1.0"
+          "give @s eidolon:gold_inlay 3",
+          "give @s eidolon:holy_symbol 1",
+          "effect give @s minecraft:resistance 600 0",
+          "effect give @s minecraft:glowing 1200 0",
+          "title @s title {\"text\":\"Light Acolyte\",\"color\":\"yellow\"}",
+          "playsound minecraft:block.beacon.power_select master @s ~ ~ ~ 0.7 1.0"
         ]
       },
       {
@@ -45,15 +45,15 @@
         "title": "Priest of Light",
         "description": "Ordained minister of divine radiance",
         "rewards": [
-          "command:give {player} eidolon:divine_shard 2",
-          "command:give {player} eidolon:sanctum_compass 1",
-          "command:give {player} minecraft:diamond 3",
-          "command:effect give {player} minecraft:absorption 1800 1",
-          "command:effect give {player} minecraft:glowing 2400 0",
-          "command:title {player} title {\"text\":\"Priest of Light\",\"color\":\"gold\"}",
-          "command:title {player} subtitle {\"text\":\"Divine ordination achieved\",\"color\":\"yellow\"}",
-          "command:playsound minecraft:ui.toast.challenge_complete master {player} ~ ~ ~ 1.0 1.0",
-          "command:say {player} has been ordained as a Priest of Light! The heavens shine upon them."
+          "give @s eidolon:divine_shard 2",
+          "give @s eidolon:sanctum_compass 1",
+          "give @s minecraft:diamond 3",
+          "effect give @s minecraft:absorption 1800 1",
+          "effect give @s minecraft:glowing 2400 0",
+          "title @s title {\"text\":\"Priest of Light\",\"color\":\"gold\"}",
+          "title @s subtitle {\"text\":\"Divine ordination achieved\",\"color\":\"yellow\"}",
+          "playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1.0 1.0",
+          "say A new Priest of Light has been ordained! The heavens shine upon them."
         ]
       },
       {
@@ -63,16 +63,16 @@
         "title": "High Priest of Light",
         "description": "Elevated servant of the divine radiance",
         "rewards": [
-          "command:give {player} eidolon:celestial_staff 1",
-          "command:give {player} eidolon:blessed_bone 5",
-          "command:give {player} minecraft:totem_of_undying 1",
-          "command:effect give {player} minecraft:health_boost 3600 2",
-          "command:effect give {player} minecraft:glowing 3600 0",
-          "command:effect give {player} minecraft:hero_of_the_village 6000 2",
-          "command:title {player} title {\"text\":\"High Priest of Light\",\"color\":\"gold\"}",
-          "command:title {player} subtitle {\"text\":\"Blessed by divine grace\",\"color\":\"white\"}",
-          "command:playsound minecraft:entity.player.levelup master {player} ~ ~ ~ 1.0 1.5",
-          "command:say The divine light blesses {player} as High Priest! Their radiance illuminates the land."
+          "give @s eidolon:celestial_staff 1",
+          "give @s eidolon:blessed_bone 5",
+          "give @s minecraft:totem_of_undying 1",
+          "effect give @s minecraft:health_boost 3600 2",
+          "effect give @s minecraft:glowing 3600 0",
+          "effect give @s minecraft:hero_of_the_village 6000 2",
+          "title @s title {\"text\":\"High Priest of Light\",\"color\":\"gold\"}",
+          "title @s subtitle {\"text\":\"Blessed by divine grace\",\"color\":\"white\"}",
+          "playsound minecraft:entity.player.levelup master @s ~ ~ ~ 1.0 1.5",
+          "say The divine light blesses a new High Priest! Their radiance illuminates the land."
         ]
       },
       {
@@ -82,19 +82,19 @@
         "title": "Champion of Light",
         "description": "Ultimate warrior of divine radiance",
         "rewards": [
-          "command:give {player} eidolon:radiant_blade 1",
-          "command:give {player} eidolon:divine_armor 1",
-          "command:give {player} eidolon:holy_grail 1",
-          "command:give {player} minecraft:netherite_block 3",
-          "command:effect give {player} minecraft:health_boost 7200 4",
-          "command:effect give {player} minecraft:strength 7200 2",
-          "command:effect give {player} minecraft:resistance 7200 2",
-          "command:effect give {player} minecraft:glowing 7200 0",
-          "command:effect give {player} minecraft:hero_of_the_village 12000 3",
-          "command:title {player} title {\"text\":\"Champion of Light\",\"color\":\"gold\",\"bold\":true}",
-          "command:title {player} subtitle {\"text\":\"Divine champion ascendant\",\"color\":\"yellow\"}",
-          "command:playsound minecraft:ui.toast.challenge_complete master @a ~ ~ ~ 2.0 1.2",
-          "command:say BEHOLD! {player} has ascended as Champion of Light! The divine radiance flows through them!"
+          "give @s eidolon:radiant_blade 1",
+          "give @s eidolon:divine_armor 1",
+          "give @s eidolon:holy_grail 1",
+          "give @s minecraft:netherite_block 3",
+          "effect give @s minecraft:health_boost 7200 4",
+          "effect give @s minecraft:strength 7200 2",
+          "effect give @s minecraft:resistance 7200 2",
+          "effect give @s minecraft:glowing 7200 0",
+          "effect give @s minecraft:hero_of_the_village 12000 3",
+          "title @s title {\"text\":\"Champion of Light\",\"color\":\"gold\",\"bold\":true}",
+          "title @s subtitle {\"text\":\"Divine champion ascendant\",\"color\":\"yellow\"}",
+          "playsound minecraft:ui.toast.challenge_complete master @a ~ ~ ~ 2.0 1.2",
+          "say BEHOLD! A Champion of Light has ascended! The divine radiance flows through them!"
         ]
       }
     ]

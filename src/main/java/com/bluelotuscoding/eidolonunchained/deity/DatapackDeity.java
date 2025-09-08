@@ -72,6 +72,28 @@ public class DatapackDeity extends Deity {
                    .add(type + ":" + data);
     }
     
+    /**
+     * Get rewards for a specific stage/tier
+     * Used by tier progression system to execute JSON-defined rewards
+     */
+    public List<String> getStageRewards(String stageId) {
+        // Try exact stage ID first
+        List<String> rewards = stageRewards.get(stageId);
+        if (rewards != null && !rewards.isEmpty()) {
+            return new ArrayList<>(rewards); // Return copy to prevent modification
+        }
+        
+        // Try with deity namespace prefix if not found
+        String namespacedStageId = getId().getNamespace() + ":" + stageId;
+        rewards = stageRewards.get(namespacedStageId);
+        if (rewards != null && !rewards.isEmpty()) {
+            return new ArrayList<>(rewards);
+        }
+        
+        // No rewards found
+        return new ArrayList<>();
+    }
+    
     public void addPrayerType(String prayerType) {
         this.prayerTypes.add(prayerType);
     }
