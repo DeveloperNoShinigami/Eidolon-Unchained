@@ -479,6 +479,7 @@ public class EnhancedCommandExtractor {
      * 🔥 NEW: Extract only explicit player requests like "give me", "I need", "can I have"
      */
     public static List<String> extractExplicitRequests(String playerInput, ServerPlayer player) {
+        LOGGER.info("🔥 Starting explicit request extraction for input: '{}'", playerInput);
         List<String> commands = new ArrayList<>();
         
         // Pattern for explicit requests from player
@@ -488,6 +489,7 @@ public class EnhancedCommandExtractor {
         );
         
         Matcher matcher = explicitPattern.matcher(playerInput);
+        LOGGER.info("🔥 Compiled regex pattern for explicit requests");
         
         try {
             // Get active deity to check permissions
@@ -496,45 +498,71 @@ public class EnhancedCommandExtractor {
             
             if (activeDeityId != null) {
                 aiConfig = com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance().getAIConfig(activeDeityId);
+                LOGGER.info("🔥 Found active deity: {} with config: {}", activeDeityId, aiConfig != null);
+            } else {
+                LOGGER.info("🔥 No active deity found for player");
             }
             
+            int matchCount = 0;
             while (matcher.find()) {
+                matchCount++;
+                String fullMatch = matcher.group(0);
                 String requestedItem = matcher.group(1).trim();
                 
-                // Filter out common words
+                LOGGER.info("🔥 Match {}: Full='{}', Item='{}' (length: {})", 
+                    matchCount, fullMatch, requestedItem, requestedItem.length());
+                
+                // Filter out common words with detailed logging
                 if (!isCommonWord(requestedItem)) {
+                    LOGGER.info("🔥 Item '{}' passed common word filter", requestedItem);
+                    
                     // Get deity-specific mod context IDs for registry lookup
                     List<String> modContextIds = Arrays.asList("minecraft", "eidolon", "eidolonunchained"); // default
                     if (aiConfig != null && aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty()) {
                         modContextIds = aiConfig.mod_context_ids;
                         LOGGER.info("🔧 Using deity-specific mod context IDs: {}", modContextIds);
+                    } else {
+                        LOGGER.info("🔧 Using default mod context IDs: {}", modContextIds);
                     }
                     
                     // Step 1: Registry lookup to find the actual item using deity's mod context
+                    LOGGER.info("🔍 Searching registry for item: '{}' with contexts: {}", requestedItem, modContextIds);
                     List<ResourceLocation> matches = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
                         .findMatchingItemsWithScoring(requestedItem, modContextIds);
                     
+                    LOGGER.info("🔍 Registry search returned {} matches: {}", matches.size(), matches);
+                    
                     if (!matches.isEmpty()) {
                         String itemId = matches.get(0).toString();
+                        LOGGER.info("🔍 Best match: '{}'", itemId);
                         
                         // Step 2: Check if deity allows this specific item
-                        if (deityAllowsItem(itemId, aiConfig, player)) {
+                        boolean allowed = deityAllowsItem(itemId, aiConfig, player);
+                        LOGGER.info("🔐 Deity permission check: {} -> {}", itemId, allowed ? "ALLOWED" : "DENIED");
+                        
+                        if (allowed) {
                             String command = String.format("give %s %s 1", player.getName().getString(), itemId);
                             commands.add(command);
                             LOGGER.info("🔥 Player request APPROVED: '{}' -> {} (deity: {})", 
-                                matcher.group(0), itemId, activeDeityId);
+                                fullMatch, itemId, activeDeityId);
                         } else {
                             LOGGER.info("🚫 Player request DENIED: '{}' -> {} (not allowed by deity: {})", 
-                                matcher.group(0), itemId, activeDeityId);
+                                fullMatch, itemId, activeDeityId);
                             // TODO: Send denial message to player explaining why
                         }
                     } else {
                         LOGGER.info("🔍 Player request UNKNOWN: '{}' (no registry match found)", requestedItem);
                     }
+                } else {
+                    LOGGER.info("🚫 Item '{}' filtered out as common word", requestedItem);
                 }
             }
+            
+            LOGGER.info("🔥 Explicit request extraction complete. Found {} matches, generated {} commands: {}", 
+                matchCount, commands.size(), commands);
+                
         } catch (Exception e) {
-            LOGGER.error("Error in explicit request extraction: {}", e.getMessage());
+            LOGGER.error("🔥 Error in explicit request extraction: {}", e.getMessage(), e);
         }
         
         return commands;
@@ -590,29 +618,236 @@ public class EnhancedCommandExtractor {
             
             // Check if player meets requirements for this prayer type
             if (meetsRequirements(player, prayerConfig, aiConfig)) {
-                // Select appropriate commands from reference_commands
-                List<String> referenceCommands = prayerConfig.reference_commands;
-                if (referenceCommands != null && !referenceCommands.isEmpty()) {
-                    // Select 1-2 commands based on max_commands limit
-                    int maxCommands = Math.min(prayerConfig.max_commands, referenceCommands.size());
-                    
-                    for (int i = 0; i < maxCommands && i < referenceCommands.size(); i++) {
-                        String command = referenceCommands.get(i);
-                        // Replace placeholders
-                        command = command.replace("{player}", player.getName().getString());
-                        commands.add(command);
-                    }
-                    
-                    LOGGER.info("🔥 Selected {} deity-specific commands from {} reference commands", 
-                        commands.size(), referenceCommands.size());
-                }
+                // 🔥 NEW: Use reputation-based command selection like the JSON intended
+                commands.addAll(selectReputationBasedCommands(player, prayerConfig, aiConfig));
+                
+                LOGGER.info("🔥 Selected {} reputation-based commands for prayer type {} (player rep: {})", 
+                    commands.size(), prayerType, getPlayerReputation(player, aiConfig));
             } else {
                 LOGGER.info("🔥 Player {} doesn't meet requirements for prayer type {}", 
                     player.getName().getString(), prayerType);
             }
+        } else {
+            LOGGER.warn("🔥 Prayer type '{}' not found in deity config. Available types: {}", 
+                prayerType, aiConfig.prayer_configs.keySet());
         }
         
         return commands;
+    }
+    
+    /**
+     * 🔥 NEW: Select commands based on player reputation using JSON logic
+     * This implements the reputation-based blessing system described in the JSON base_prompts
+     */
+    private static List<String> selectReputationBasedCommands(ServerPlayer player, 
+                                                             com.bluelotuscoding.eidolonunchained.ai.PrayerAIConfig prayerConfig,
+                                                             com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
+        List<String> commands = new ArrayList<>();
+        
+        try {
+            double reputation = getPlayerReputation(player, aiConfig);
+            List<String> referenceCommands = prayerConfig.reference_commands;
+            
+            if (referenceCommands == null || referenceCommands.isEmpty()) {
+                LOGGER.warn("🔥 No reference commands available for prayer config");
+                return commands;
+            }
+            
+            // Determine progression level based on reputation (matching JSON base_prompts)
+            String progressionLevel = determineProgressionLevel(reputation);
+            int commandCount = determineCommandCount(reputation, prayerConfig.max_commands);
+            
+            LOGGER.info("🔥 Player reputation: {}, progression: {}, command count: {}", 
+                reputation, progressionLevel, commandCount);
+            
+            // Select appropriate commands based on progression level
+            List<String> selectedCommands = selectCommandsForProgression(
+                referenceCommands, progressionLevel, reputation, commandCount);
+            
+            // Replace placeholders and add to final list
+            for (String command : selectedCommands) {
+                String processedCommand = command.replace("{player}", player.getName().getString());
+                commands.add(processedCommand);
+            }
+            
+            LOGGER.info("🔥 Final selected commands: {}", commands);
+            
+        } catch (Exception e) {
+            LOGGER.error("🔥 Error in reputation-based command selection: {}", e.getMessage());
+        }
+        
+        return commands;
+    }
+    
+    /**
+     * Get player reputation for the current deity
+     */
+    private static double getPlayerReputation(ServerPlayer player, com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
+        try {
+            com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = 
+                com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(aiConfig.deity_id);
+            if (deity != null) {
+                return deity.getPlayerReputation(player);
+            }
+        } catch (Exception e) {
+            LOGGER.error("🔥 Error getting player reputation: {}", e.getMessage());
+        }
+        return 0.0;
+    }
+    
+    /**
+     * Determine progression level based on reputation (matching JSON base_prompts)
+     */
+    private static String determineProgressionLevel(double reputation) {
+        if (reputation >= 100) return "champion";           // 100+ rep
+        if (reputation >= 75) return "high_priest";         // 75-99 rep  
+        if (reputation >= 50) return "priest";              // 50-74 rep
+        if (reputation >= 25) return "acolyte";             // 25-49 rep
+        if (reputation >= 0) return "initiate";             // 0-24 rep
+        return "unknown";                                    // Negative rep
+    }
+    
+    /**
+     * Determine how many commands to execute based on reputation and config
+     */
+    private static int determineCommandCount(double reputation, int maxCommands) {
+        if (reputation >= 75) return Math.min(2, maxCommands);  // High tier: 2 commands
+        if (reputation >= 25) return Math.min(2, maxCommands);  // Mid tier: 1-2 commands  
+        return Math.min(1, maxCommands);                        // Low tier: 1 command
+    }
+    
+    /**
+     * Select appropriate commands for the player's progression level
+     */
+    private static List<String> selectCommandsForProgression(List<String> referenceCommands, 
+                                                            String progressionLevel, 
+                                                            double reputation,
+                                                            int commandCount) {
+        List<String> selected = new ArrayList<>();
+        
+        // Categorize commands by type for intelligent selection
+        List<String> giveCommands = new ArrayList<>();
+        List<String> effectCommands = new ArrayList<>();
+        List<String> messageCommands = new ArrayList<>();
+        
+        for (String command : referenceCommands) {
+            String lower = command.toLowerCase();
+            if (lower.startsWith("give")) {
+                giveCommands.add(command);
+            } else if (lower.startsWith("effect")) {
+                effectCommands.add(command);
+            } else if (lower.startsWith("tellraw")) {
+                messageCommands.add(command);
+            }
+        }
+        
+        // Select commands based on progression level
+        switch (progressionLevel) {
+            case "champion":
+                // High tier: Best items + strong effects
+                addBestCommands(selected, giveCommands, 1);
+                addBestCommands(selected, effectCommands, 1);
+                break;
+                
+            case "high_priest":
+                // High-mid tier: Good items + effects
+                addMidTierCommands(selected, giveCommands, 1);
+                addMidTierCommands(selected, effectCommands, 1);
+                break;
+                
+            case "priest":
+                // Mid tier: Moderate items OR effects
+                if (commandCount >= 2) {
+                    addMidTierCommands(selected, giveCommands, 1);
+                    addBasicCommands(selected, effectCommands, 1);
+                } else {
+                    addMidTierCommands(selected, giveCommands, 1);
+                }
+                break;
+                
+            case "acolyte":
+                // Low-mid tier: Basic items + weak effects
+                addBasicCommands(selected, giveCommands, 1);
+                if (commandCount >= 2) {
+                    addBasicCommands(selected, effectCommands, 1);
+                }
+                break;
+                
+            case "initiate":
+            default:
+                // Low tier: Very basic items only
+                addBasicCommands(selected, giveCommands, 1);
+                break;
+        }
+        
+        // Limit to requested command count
+        if (selected.size() > commandCount) {
+            selected = selected.subList(0, commandCount);
+        }
+        
+        LOGGER.info("🔥 Selected commands for {}: {}", progressionLevel, selected);
+        return selected;
+    }
+    
+    /**
+     * Add best/highest tier commands (for champions)
+     */
+    private static void addBestCommands(List<String> selected, List<String> commands, int count) {
+        // Look for premium items: enchanted, golden, rare
+        List<String> premium = commands.stream()
+            .filter(cmd -> cmd.toLowerCase().contains("enchanted") || 
+                          cmd.toLowerCase().contains("golden") ||
+                          cmd.toLowerCase().contains("totem") ||
+                          cmd.toLowerCase().contains("diamond"))
+            .limit(count)
+            .toList();
+        selected.addAll(premium);
+        
+        // Fallback to any available if no premium found
+        if (premium.isEmpty() && !commands.isEmpty()) {
+            selected.addAll(commands.stream().limit(count).toList());
+        }
+    }
+    
+    /**
+     * Add mid-tier commands (for priests)
+     */
+    private static void addMidTierCommands(List<String> selected, List<String> commands, int count) {
+        // Look for moderate items: gold, iron, useful but not premium
+        List<String> midTier = commands.stream()
+            .filter(cmd -> !cmd.toLowerCase().contains("enchanted") && 
+                          (cmd.toLowerCase().contains("golden") ||
+                           cmd.toLowerCase().contains("iron") ||
+                           cmd.toLowerCase().contains("apple")))
+            .limit(count)
+            .toList();
+        selected.addAll(midTier);
+        
+        // Fallback to basic commands if no mid-tier found
+        if (midTier.isEmpty()) {
+            addBasicCommands(selected, commands, count);
+        }
+    }
+    
+    /**
+     * Add basic/low tier commands (for initiates)
+     */
+    private static void addBasicCommands(List<String> selected, List<String> commands, int count) {
+        // Look for basic items: wood, stone, food, basic effects
+        List<String> basic = commands.stream()
+            .filter(cmd -> cmd.toLowerCase().contains("sapling") ||
+                          cmd.toLowerCase().contains("bone_meal") ||
+                          cmd.toLowerCase().contains("bread") ||
+                          cmd.toLowerCase().contains("regeneration") ||
+                          cmd.toLowerCase().contains("resistance"))
+            .limit(count)
+            .toList();
+        selected.addAll(basic);
+        
+        // Ultimate fallback: just take first available
+        if (basic.isEmpty() && !commands.isEmpty()) {
+            selected.addAll(commands.stream().limit(count).toList());
+        }
     }
     
     /**
@@ -623,14 +858,22 @@ public class EnhancedCommandExtractor {
         String lowerResponse = aiResponse.toLowerCase();
         
         // Match the ACTUAL prayer config keys from the JSON files
+        // Note: Fixed to match actual JSON keys, not made-up ones
         if (lowerMessage.contains("curse") || lowerMessage.contains("punish") || lowerMessage.contains("revenge")) {
             return "curse";
         } else if (lowerMessage.contains("wisdom") || lowerMessage.contains("knowledge") || lowerMessage.contains("teach") || 
-                   lowerMessage.contains("guide") || lowerMessage.contains("learn")) {
-            return "guidance";
+                   lowerMessage.contains("guide") || lowerMessage.contains("learn") || lowerMessage.contains("communion")) {
+            return "communion";  // Changed from "guidance" to match JSON
+        } else if (lowerMessage.contains("protect") || lowerMessage.contains("shield") || lowerMessage.contains("defense") ||
+                   lowerMessage.contains("resist") || lowerMessage.contains("absorb")) {
+            return "protection";  // New - matches JSON
+        } else if (lowerMessage.contains("grow") || lowerMessage.contains("fertility") || lowerMessage.contains("harvest") ||
+                   lowerMessage.contains("plant") || lowerMessage.contains("abundance") || lowerMessage.contains("bone meal")) {
+            return "growth";      // New - matches JSON
         } else if (lowerMessage.contains("bless") || lowerMessage.contains("help") || lowerMessage.contains("aid") ||
-                   lowerMessage.contains("protect") || lowerMessage.contains("heal") || lowerMessage.contains("strength")) {
-            return "blessing";
+                   lowerMessage.contains("heal") || lowerMessage.contains("strength")) {
+            // This could be conversation with blessing context
+            return "conversation";
         }
         
         // Default to conversation for general chat
