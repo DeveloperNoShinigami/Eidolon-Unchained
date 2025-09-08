@@ -5,7 +5,6 @@ import elucent.eidolon.api.spells.Sign;
 import elucent.eidolon.api.spells.SignSequence;
 import elucent.eidolon.registries.Signs;
 import elucent.eidolon.common.entity.ChantCasterEntity;
-import com.bluelotuscoding.eidolonunchained.entity.UpdateableChantCasterEntity;
 import elucent.eidolon.network.AttemptCastPacket;
 import elucent.eidolon.network.Networking;
 import net.minecraft.network.chat.Component;
@@ -49,7 +48,7 @@ public class ActiveChantingSystem {
      */
     private static class ActiveChant {
         final List<Sign> signs = new ArrayList<>();
-        UpdateableChantCasterEntity entity = null;
+        ChantCasterEntity entity = null;
         long lastSignTime = System.currentTimeMillis();
         
         void addSign(Sign sign) {
@@ -149,10 +148,10 @@ public class ActiveChantingSystem {
         Level level = player.level();
         
         // Create entity only if none exists
-        if (chant.entity == null || !chant.entity.canBeUpdated()) {
-            // Create new UpdateableChantCasterEntity
+        if (chant.entity == null || !chant.entity.isAlive()) {
+            // Create new ChantCasterEntity
             Vec3 lookDirection = player.getLookAngle();
-            chant.entity = new UpdateableChantCasterEntity(level, player, new ArrayList<>(chant.signs), lookDirection);
+            chant.entity = new ChantCasterEntity(level, player, new ArrayList<>(chant.signs), lookDirection);
             
             // Position near player for visibility
             chant.entity.setPos(
@@ -164,10 +163,29 @@ public class ActiveChantingSystem {
             // Spawn entity
             level.addFreshEntity(chant.entity);
             
-            LOGGER.info("FIRST SIGN: Creating UpdateableChantCasterEntity for player {}", player.getName().getString());
+            LOGGER.info("FIRST SIGN: Creating ChantCasterEntity for player {}", player.getName().getString());
         } else {
-            // 🎯 TRUE REAL-TIME UPDATE: Update existing entity without recreation
-            chant.entity.updateSignSequence(new ArrayList<>(chant.signs));
+            // 🎯 TRUE REAL-TIME UPDATE: Update existing entity's sign sequence WITHOUT recreation
+            try {
+                // Update the entity's SIGNS data directly using the public field
+                SignSequence newSequence = new SignSequence();
+                for (Sign sign : chant.signs) {
+                    newSequence.addRight(sign);
+                }
+                
+                // Update the entity data - this is what the client sees
+                chant.entity.getEntityData().set(ChantCasterEntity.SIGNS, newSequence.serializeNbt());
+                
+                LOGGER.info("REAL-TIME: Updated entity sequence with {} signs", chant.signs.size());
+                
+            } catch (Exception e) {
+                LOGGER.warn("Failed to update existing chant entity sequence: {}", e.getMessage());
+                // Fallback: recreate entity if update fails
+                chant.entity.discard();
+                chant.entity = null;
+                updateChantCasterEntity(player, chant); // Recursive call to create new entity
+                return;
+            }
             
             // Update position to follow player
             Vec3 lookDirection = player.getLookAngle();
@@ -177,7 +195,7 @@ public class ActiveChantingSystem {
                 player.getZ() + lookDirection.z * 0.3
             );
             
-            LOGGER.info("REAL-TIME: Updated existing UpdateableChantCasterEntity for player {} to {} signs", 
+            LOGGER.info("REAL-TIME: Updated existing ChantCasterEntity for player {} to {} signs", 
                 player.getName().getString(), chant.signs.size());
         }
         
