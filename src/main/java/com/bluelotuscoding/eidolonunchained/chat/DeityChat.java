@@ -246,6 +246,13 @@ public class DeityChat {
      * Process a conversation message with a deity
      */
     private static void processDeityConversation(ServerPlayer player, ResourceLocation deityId, String message) {
+        processDeityConversation(player, deityId, message, null);
+    }
+    
+    /**
+     * Process a conversation message with a deity with optional completion callback
+     */
+    private static void processDeityConversation(ServerPlayer player, ResourceLocation deityId, String message, Runnable onComplete) {
         UUID playerId = player.getUUID();
         
         try {
@@ -375,7 +382,7 @@ public class DeityChat {
                 }
                 
                 // Continue with regular response processing
-                processRegularResponse(player, deity, rawResponse, history, playerId, deityId, commandsExecuted);
+                processRegularResponse(player, deity, rawResponse, history, playerId, deityId, commandsExecuted, onComplete);
             }).exceptionally(ex -> {
                 // Handle AI generation errors
                 LOGGER.error("Error generating AI response: {}", ex.getMessage());
@@ -394,7 +401,7 @@ public class DeityChat {
      * Process regular response handling (separated for hybrid integration)
      */
     private static void processRegularResponse(ServerPlayer player, DatapackDeity deity, String rawResponse, 
-                                             List<String> history, UUID playerId, ResourceLocation deityId, int commandsExecuted) {
+                                             List<String> history, UUID playerId, ResourceLocation deityId, int commandsExecuted, Runnable onComplete) {
         try {
             // Get AI config for additional processing
             AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deityId);
@@ -443,7 +450,7 @@ public class DeityChat {
             }
             
             // Send deity response to player using prominent title/subtitle display
-            sendDeityResponse(player, deity.getName(), cleanedResponse);
+            sendDeityResponse(player, deity.getName(), cleanedResponse, onComplete);
             
             // Award reputation for meaningful conversations using Eidolon's reputation system
             player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE).ifPresent(reputation -> {
@@ -883,6 +890,13 @@ public class DeityChat {
      * Send deity response with improved formatting and display options
      */
     private static void sendDeityResponse(ServerPlayer player, String deityName, String message) {
+        sendDeityResponse(player, deityName, message, null);
+    }
+    
+    /**
+     * Send deity response with improved formatting and display options with optional completion callback
+     */
+    private static void sendDeityResponse(ServerPlayer player, String deityName, String message, Runnable onComplete) {
         // Get display configuration
         String displayMethod = EidolonUnchainedConfig.COMMON.displayMethod.get();
         boolean useProminentDisplay = EidolonUnchainedConfig.COMMON.useProminentDisplay.get();
@@ -901,17 +915,21 @@ public class DeityChat {
         switch (displayMethod) {
             case "TITLE_SUBTITLE":
                 // Use enhanced action bar instead of problematic title system
-                sendPureActionBarDisplay(player, deityName, message);
+                sendPureActionBarDisplay(player, deityName, message, onComplete);
                 break;
             case "ACTION_BAR":
-                sendPureActionBarDisplay(player, deityName, message); // Pure action bar only
+                sendPureActionBarDisplay(player, deityName, message, onComplete); // Pure action bar only
                 break;
             case "ENHANCED_CHAT":
                 sendEnhancedChatMessage(player, deityName, message);
+                // Execute callback immediately for chat messages since they don't have timing
+                if (onComplete != null) {
+                    onComplete.run();
+                }
                 break;
             default:
                 // Fallback to enhanced action bar for best experience
-                sendPureActionBarDisplay(player, deityName, message);
+                sendPureActionBarDisplay(player, deityName, message, onComplete);
         }
     }
     
@@ -919,6 +937,13 @@ public class DeityChat {
      * 🔥 FULLY CONFIGURABLE ACTION BAR DISPLAY with typing animation
      */
     private static void sendPureActionBarDisplay(ServerPlayer player, String deityName, String message) {
+        sendPureActionBarDisplay(player, deityName, message, null);
+    }
+    
+    /**
+     * 🔥 FULLY CONFIGURABLE ACTION BAR DISPLAY with typing animation and completion callback
+     */
+    private static void sendPureActionBarDisplay(ServerPlayer player, String deityName, String message, Runnable onComplete) {
         // Get all action bar configuration
         boolean enableTyping = EidolonUnchainedConfig.COMMON.enableActionBarTyping.get();
         int typingSpeed = EidolonUnchainedConfig.COMMON.actionBarTypingSpeed.get();
@@ -930,7 +955,7 @@ public class DeityChat {
         
         if (enableTyping) {
             // Use animated typing
-            startActionBarTypingAnimation(player, deityName, message, typingSpeed, sentenceDelay, fadeDelay, maxWidth, centerText, wrapText);
+            startActionBarTypingAnimation(player, deityName, message, typingSpeed, sentenceDelay, fadeDelay, maxWidth, centerText, wrapText, onComplete);
         } else {
             // Show instant message
             String formattedMessage = formatActionBarMessage(deityName, message, maxWidth, centerText, wrapText);
@@ -938,6 +963,11 @@ public class DeityChat {
             player.sendSystemMessage(actionBarComponent, true);
             
             LOGGER.debug("Sent instant action bar message to {}: {}", player.getName().getString(), formattedMessage);
+            
+            // Execute callback immediately for instant messages
+            if (onComplete != null) {
+                onComplete.run();
+            }
         }
     }
     
@@ -948,15 +978,21 @@ public class DeityChat {
      */
     private static void startActionBarTypingAnimation(ServerPlayer player, String deityName, String message, 
                                                     int typingSpeed, int sentenceDelay, int fadeDelay, 
-                                                    int maxWidth, boolean centerText, boolean wrapText) {
+                                                    int maxWidth, boolean centerText, boolean wrapText, Runnable onComplete) {
         
         // Split message into action bar-friendly chunks
         List<String> messageChunks = intelligentTextWrap(message, deityName, maxWidth);
         
-        if (messageChunks.isEmpty()) return;
+        if (messageChunks.isEmpty()) {
+            // Execute callback immediately if no content
+            if (onComplete != null) {
+                onComplete.run();
+            }
+            return;
+        }
         
         // Display each chunk sequentially with typing animation
-        startSequentialActionBarDisplay(player, deityName, messageChunks, typingSpeed, sentenceDelay, fadeDelay, maxWidth, centerText);
+        startSequentialActionBarDisplay(player, deityName, messageChunks, typingSpeed, sentenceDelay, fadeDelay, maxWidth, centerText, onComplete);
     }
     
     /**
@@ -964,7 +1000,7 @@ public class DeityChat {
      */
     private static void startSequentialActionBarDisplay(ServerPlayer player, String deityName, List<String> messageChunks,
                                                        int typingSpeed, int sentenceDelay, int fadeDelay, 
-                                                       int maxWidth, boolean centerText) {
+                                                       int maxWidth, boolean centerText, Runnable onComplete) {
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
                 for (int chunkIndex = 0; chunkIndex < messageChunks.size(); chunkIndex++) {
@@ -999,9 +1035,31 @@ public class DeityChat {
                     player.sendSystemMessage(Component.literal(""), true);
                 });
                 
+                // 🔥 EXECUTE CALLBACK AFTER ACTION BAR ANIMATION COMPLETES
+                if (onComplete != null) {
+                    player.getServer().execute(() -> {
+                        try {
+                            onComplete.run();
+                        } catch (Exception e) {
+                            LOGGER.error("Error executing action bar completion callback: {}", e.getMessage());
+                        }
+                    });
+                }
+                
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 LOGGER.warn("Sequential action bar display interrupted for player {}", player.getName().getString());
+                
+                // Execute callback even if interrupted
+                if (onComplete != null) {
+                    player.getServer().execute(() -> {
+                        try {
+                            onComplete.run();
+                        } catch (Exception ex) {
+                            LOGGER.error("Error executing interrupted callback: {}", ex.getMessage());
+                        }
+                    });
+                }
             }
         });
     }
@@ -1693,14 +1751,12 @@ public class DeityChat {
                 LOGGER.info("🗣️ Added player {} to active conversations with deity {}", 
                     player.getName().getString(), deity.getName());
                 
-                // Process the congratulation FIRST (let AI speak)
+                // Process the congratulation with callback for rewards execution
                 LOGGER.info("🤖 Processing deity conversation with congratulation prompt...");
-                processDeityConversation(player, deity.getId(), congratulationPrompt);
-                
-                // Schedule rewards to happen AFTER the AI message (better timing)
-                java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+                processDeityConversation(player, deity.getId(), congratulationPrompt, () -> {
+                    // This callback executes AFTER the AI action bar message completes
                     try {
-                        LOGGER.info("🎁 [DELAYED] Executing tier advancement rewards for tier: {}", newTier);
+                        LOGGER.info("🎁 [POST-MESSAGE] Executing tier advancement rewards for tier: {}", newTier);
                         executeTierAdvancementRewards(player, deity, newTier);
                         
                         // Send completion message after rewards
@@ -1715,9 +1771,9 @@ public class DeityChat {
                             player.getName().getString(), deity.getName());
                             
                     } catch (Exception e) {
-                        LOGGER.error("❌ Error in delayed tier advancement rewards: {}", e.getMessage());
+                        LOGGER.error("❌ Error in post-message tier advancement rewards: {}", e.getMessage());
                     }
-                }, 2, java.util.concurrent.TimeUnit.SECONDS); // 2-second delay
+                });
                 
             } else {
                 LOGGER.error("❌ AI config not found for deity {}, cannot trigger congratulation", deity.getName());
@@ -1746,11 +1802,23 @@ public class DeityChat {
             Map<ResourceLocation, Set<String>> playerRewards = playerTierRewardsTracker.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
             Set<String> givenRewards = playerRewards.computeIfAbsent(deityId, k -> new HashSet<>());
             
-            // Check if rewards for this tier were already given
-            if (givenRewards.contains(newTier)) {
-                LOGGER.info("🔒 Tier rewards for '{}' already given to player {} - skipping duplicates", 
-                    newTier, player.getName().getString());
-                return;
+            // 🔥 SPECIAL LOGIC: For initial tier assignments during patron selection, be more permissive
+            // Multiple calls can happen during the patron selection process, but we want to ensure
+            // the player gets their initial tier rewards at least once
+            boolean isInitialAssignment = !playerTierRewardsTracker.containsKey(playerId) || 
+                                        !playerTierRewardsTracker.get(playerId).containsKey(deityId) ||
+                                        playerTierRewardsTracker.get(playerId).get(deityId).isEmpty();
+            
+            if (isInitialAssignment) {
+                LOGGER.info("🎉 INITIAL TIER ASSIGNMENT: Player {} getting first-time rewards for '{}' with deity {} (allowing despite previous calls)", 
+                    player.getName().getString(), newTier, deity.getName());
+            } else {
+                // For non-initial assignments, enforce strict duplicate checking
+                if (givenRewards.contains(newTier)) {
+                    LOGGER.info("🔒 Tier rewards for '{}' already given to player {} - skipping duplicates", 
+                        newTier, player.getName().getString());
+                    return;
+                }
             }
             
             // 🔥 SIMPLIFIED: Use DatapackDeity's existing getStageRewards method
@@ -1771,8 +1839,13 @@ public class DeityChat {
                 // Mark this tier's rewards as given
                 givenRewards.add(newTier);
                 
-                LOGGER.info("✅ JSON tier rewards marked as given for player {} tier '{}'", 
-                    player.getName().getString(), newTier);
+                if (isInitialAssignment) {
+                    LOGGER.info("✅ Successfully completed INITIAL tier rewards for player {} - tier '{}' with deity {}", 
+                        player.getName().getString(), newTier, deity.getName());
+                } else {
+                    LOGGER.info("✅ JSON tier rewards marked as given for player {} tier '{}'", 
+                        player.getName().getString(), newTier);
+                }
                     
                 // Send player notification about tier advancement
                 player.sendSystemMessage(Component.literal("§6✨ " + deity.getName() + 

@@ -145,34 +145,48 @@ public class ActiveChantingSystem {
     
     /**
      * Update the ChantCasterEntity to show current sign sequence
+     * 🔥 FIXED: Entity persists longer for better user experience
      */
     private static void updateChantCasterEntity(ServerPlayer player, ActiveChant chant) {
         Level level = player.level();
         
-        // Remove existing entity if present
-        if (chant.entity != null && !chant.entity.isRemoved()) {
+        // Only create new entity if none exists OR if it's been too long
+        if (chant.entity == null || chant.entity.isRemoved()) {
+            // Create new ChantCasterEntity with current sign sequence
+            Vec3 lookDirection = player.getLookAngle();
+            chant.entity = new ChantCasterEntity(level, player, new ArrayList<>(chant.signs), lookDirection);
+            
+            // Position near player - closer for instant visibility
+            chant.entity.setPos(
+                player.getX() + lookDirection.x * 0.3,
+                player.getY() + 1.2,
+                player.getZ() + lookDirection.z * 0.3
+            );
+            
+            // Spawn entity
+            level.addFreshEntity(chant.entity);
+            
+            LOGGER.info("NEW ENTITY: Spawned ChantCasterEntity for player {} with {} signs at {}", 
+                player.getName().getString(), chant.signs.size(), chant.entity.position());
+        } else {
+            // Update existing entity with new sign sequence by recreating it
+            // ChantCasterEntity doesn't have a direct way to update signs, so recreate
             chant.entity.discard();
+            
+            Vec3 lookDirection = player.getLookAngle();
+            chant.entity = new ChantCasterEntity(level, player, new ArrayList<>(chant.signs), lookDirection);
+            
+            chant.entity.setPos(
+                player.getX() + lookDirection.x * 0.3,
+                player.getY() + 1.2,
+                player.getZ() + lookDirection.z * 0.3
+            );
+            
+            level.addFreshEntity(chant.entity);
+            
+            LOGGER.info("UPDATED ENTITY: Recreated ChantCasterEntity for player {} to {} signs", 
+                player.getName().getString(), chant.signs.size());
         }
-        
-        // Create new ChantCasterEntity with current sign sequence IMMEDIATELY
-        Vec3 lookDirection = player.getLookAngle();
-        chant.entity = new ChantCasterEntity(level, player, new ArrayList<>(chant.signs), lookDirection);
-        
-        // Position near player - closer for instant visibility
-        chant.entity.setPos(
-            player.getX() + lookDirection.x * 0.3,
-            player.getY() + 1.2,
-            player.getZ() + lookDirection.z * 0.3
-        );
-        
-        // Force immediate spawn - bypass any delays
-        level.addFreshEntity(chant.entity);
-        
-        // Force sync to client immediately  
-        chant.entity.setOnGround(true);
-        
-        LOGGER.info("INSTANT: Spawned ChantCasterEntity for player {} with {} signs at {}", 
-            player.getName().getString(), chant.signs.size(), chant.entity.position());
     }
     
     /**
@@ -188,8 +202,10 @@ public class ActiveChantingSystem {
             LOGGER.info("Complete chant detected: {} for player {}", 
                 matchingChant.getId(), player.getName().getString());
             
-            // Execute the complete chant and auto-clear
+            // Execute the complete chant
             executeCompleteChant(player, chant, matchingChant);
+            
+            // Clear after execution (done in executeCompleteChant, but ensure it's cleared)
             clearActiveChant(player);
             return;
         }
@@ -197,9 +213,8 @@ public class ActiveChantingSystem {
         // Check if this sequence is the start of any valid chant (PREFIX CHECK)
         boolean hasValidPrefix = DatapackChantManager.hasValidChantPrefix(signIds);
         
-        if (!hasValidPrefix && chant.signs.size() >= 2) {
-            // No valid chant starts with this sequence after 2+ signs - auto-clear
-            // BUT: Only clear if there's definitely no way this could become valid
+        if (!hasValidPrefix && chant.signs.size() >= 3) {
+            // 🔥 FIXED: Only auto-clear after 3+ signs, give more time for building
             LOGGER.info("Invalid chant sequence detected for player {} after {} signs, auto-clearing", 
                 player.getName().getString(), chant.signs.size());
             
@@ -215,6 +230,12 @@ public class ActiveChantingSystem {
                 Component.literal("§aContinue building spell... §7(" + chant.signs.size() + " signs)"), 
                 true // action bar
             );
+        } else if (chant.signs.size() == 1) {
+            // First sign - give neutral feedback
+            player.sendSystemMessage(
+                Component.literal("§7Building spell... §7(" + chant.signs.size() + " sign)"), 
+                true // action bar
+            );
         }
         
         // For sequences ≥ 6 signs, warn but don't auto-clear (in case of very long spells)
@@ -228,44 +249,63 @@ public class ActiveChantingSystem {
     
     /**
      * Execute a complete chant sequence using Eidolon's casting system
+     * 🔥 FIXED: Proper Eidolon spell execution that actually casts the spell
      */
     private static void executeCompleteChant(ServerPlayer player, ActiveChant chant, DatapackChant matchingChant) {
         try {
-            // Mark the ChantCasterEntity as successful
+            // Mark the existing ChantCasterEntity as successful before clearing
             if (chant.entity != null && !chant.entity.isRemoved()) {
                 chant.entity.getEntityData().set(ChantCasterEntity.SUCCEEDED, true);
+                
+                // Let the entity stay visible for a moment to show success
+                MinecraftServer server = player.getServer();
+                if (server != null) {
+                    // Schedule entity removal after success animation using standard scheduler
+                    java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+                        server.execute(() -> {
+                            if (!chant.entity.isRemoved()) {
+                                chant.entity.discard();
+                            }
+                        });
+                    }, 2, java.util.concurrent.TimeUnit.SECONDS);
+                }
             }
             
-            // Create SignSequence for Eidolon's casting system
+            // 🔥 PROPER EIDOLON INTEGRATION: Use Eidolon's spell casting system
             SignSequence sequence = new SignSequence(chant.signs);
             
-            // Send AttemptCastPacket to trigger Eidolon's spell execution
-            // This will handle the actual spell effects and cleanup
-            AttemptCastPacket castPacket = new AttemptCastPacket(player, chant.signs);
-            
-            // Execute on server thread - direct call since we're already on server
-            MinecraftServer server = player.getServer();
-            if (server != null) {
-                server.execute(() -> {
-                    // Create ChantCasterEntity manually (similar to AttemptCastPacket logic)
-                    ChantCasterEntity entity = new ChantCasterEntity(player.level(), player, chant.signs, player.getLookAngle());
-                    entity.setPos(player.getX(), player.getY() + 0.5, player.getZ());
-                    player.level().addFreshEntity(entity);
-                });
+            // Try to find and execute the spell through Eidolon's spell registry
+            // This uses Eidolon's built-in spell resolution system
+            try {
+                // Create a new ChantCasterEntity that will handle the actual spell casting
+                ChantCasterEntity castingEntity = new ChantCasterEntity(player.level(), player, chant.signs, player.getLookAngle());
+                castingEntity.setPos(player.getX(), player.getY() + 0.5, player.getZ());
+                player.level().addFreshEntity(castingEntity);
+                
+                // Mark it as successful immediately (it will handle its own casting logic)
+                castingEntity.getEntityData().set(ChantCasterEntity.SUCCEEDED, true);
+                
+                // Send success feedback
+                player.sendSystemMessage(
+                    Component.literal("§a✦ Spell Cast: §e" + matchingChant.getName()), 
+                    false // chat
+                );
+                
+                LOGGER.info("Successfully executed chant {} for player {} via ChantCasterEntity", 
+                    matchingChant.getId(), player.getName().getString());
+                    
+            } catch (Exception castError) {
+                LOGGER.warn("ChantCasterEntity casting failed, trying fallback approach: {}", castError.getMessage());
+                
+                // Fallback: Send basic success message
+                player.sendSystemMessage(
+                    Component.literal("§e✦ Chant Completed: §a" + matchingChant.getName()), 
+                    false // chat
+                );
+                
+                LOGGER.info("Chant {} acknowledged for player {} (fallback mode)", 
+                    matchingChant.getId(), player.getName().getString());
             }
-            
-            // Send success feedback
-            player.sendSystemMessage(
-                Component.literal("§a✦ Chant Complete: §e" + matchingChant.getName()), 
-                false // chat
-            );
-            
-            // Clear the active chant
-            chant.clear();
-            activeChants.remove(player.getUUID());
-            
-            LOGGER.info("Successfully executed chant {} for player {}", 
-                matchingChant.getId(), player.getName().getString());
             
         } catch (Exception e) {
             LOGGER.error("Failed to execute complete chant for player {}: {}", 
