@@ -781,7 +781,7 @@ public class DeityChat {
         }
 
         CommandSourceStack commandSource = server.createCommandSourceStack()
-            .withSource(CommandSource.NULL)
+            .withSource(player)  // 🔧 FIX: Use player as source so @s selector works
             .withLevel(player.serverLevel())
             .withPosition(player.position())
             .withPermission(4); // Admin permission level
@@ -801,7 +801,7 @@ public class DeityChat {
                     .replace("{y}", String.valueOf((int) player.getY()))
                     .replace("{z}", String.valueOf((int) player.getZ()));
 
-                LOGGER.info("Executing deity command for {}: {}", player.getName().getString(), processedCommand);
+                LOGGER.info("🔧 Executing deity command for {}: {}", player.getName().getString(), processedCommand);
                 
                 // Execute command and check result
                 int result = server.getCommands().performPrefixedCommand(commandSource, processedCommand);
@@ -812,9 +812,24 @@ public class DeityChat {
                         player.getName().getString(), processedCommand, result);
                     ConversationHistoryManager.logCommandExecutionStatic(player, deityId, processedCommand, true, "Command executed successfully");
                 } else {
-                    LOGGER.warn("❌ Command executed but returned 0 result for {}: {}", 
-                        player.getName().getString(), processedCommand);
-                    ConversationHistoryManager.logCommandExecutionStatic(player, deityId, processedCommand, false, "Command returned 0 result");
+                    // 🔧 FALLBACK: If @s selector failed, try with explicit player name
+                    if (processedCommand.contains("@s")) {
+                        String fallbackCommand = processedCommand.replace("@s", player.getName().getString());
+                        LOGGER.info("🔄 Retrying command with explicit player name: {}", fallbackCommand);
+                        
+                        int fallbackResult = server.getCommands().performPrefixedCommand(commandSource, fallbackCommand);
+                        if (fallbackResult > 0) {
+                            successCount++;
+                            LOGGER.info("✅ Fallback command succeeded: {} (result: {})", fallbackCommand, fallbackResult);
+                            ConversationHistoryManager.logCommandExecutionStatic(player, deityId, fallbackCommand, true, "Command succeeded with fallback");
+                        } else {
+                            LOGGER.warn("❌ Both @s and explicit name failed for command: {}", processedCommand);
+                            ConversationHistoryManager.logCommandExecutionStatic(player, deityId, processedCommand, false, "Command failed even with @s fallback");
+                        }
+                    } else {
+                        LOGGER.warn("❌ Command returned 0 result: {} (No @s selector to retry)", processedCommand);
+                        ConversationHistoryManager.logCommandExecutionStatic(player, deityId, processedCommand, false, "Command returned 0 result - no fallback available");
+                    }
                 }
 
             } catch (Exception e) {

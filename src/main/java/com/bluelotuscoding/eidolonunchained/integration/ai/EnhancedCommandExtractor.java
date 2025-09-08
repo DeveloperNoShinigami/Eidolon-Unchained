@@ -431,7 +431,7 @@ public class EnhancedCommandExtractor {
         }
         
         CommandSourceStack commandSource = server.createCommandSourceStack()
-            .withSource(CommandSource.NULL)
+            .withSource(player)  // 🔧 FIX: Use player as source so @s selector works
             .withLevel(player.serverLevel())
             .withPosition(player.position())
             .withPermission(4); // Admin permission level
@@ -449,14 +449,28 @@ public class EnhancedCommandExtractor {
                 // Remove leading slash for execution
                 String execCommand = cleanCommand.startsWith("/") ? cleanCommand.substring(1) : cleanCommand;
                 
-                LOGGER.info("Executing deity command for {}: {}", player.getName().getString(), cleanCommand);
+                LOGGER.info("🔧 Executing deity command for {}: {}", player.getName().getString(), cleanCommand);
                 int result = server.getCommands().performPrefixedCommand(commandSource, execCommand);
                 
                 if (result > 0) {
                     successCount++;
-                    LOGGER.debug("Command executed successfully: {}", cleanCommand);
+                    LOGGER.info("✅ Command executed successfully: {} (result: {})", cleanCommand, result);
                 } else {
-                    LOGGER.warn("Command returned 0 result: {}", cleanCommand);
+                    // 🔧 FALLBACK: If @s selector failed, try with explicit player name
+                    if (execCommand.contains("@s")) {
+                        String fallbackCommand = execCommand.replace("@s", player.getName().getString());
+                        LOGGER.info("🔄 Retrying command with explicit player name: {}", fallbackCommand);
+                        
+                        int fallbackResult = server.getCommands().performPrefixedCommand(commandSource, fallbackCommand);
+                        if (fallbackResult > 0) {
+                            successCount++;
+                            LOGGER.info("✅ Fallback command succeeded: {} (result: {})", fallbackCommand, fallbackResult);
+                        } else {
+                            LOGGER.warn("❌ Both @s and explicit name failed for command: {}", cleanCommand);
+                        }
+                    } else {
+                        LOGGER.warn("❌ Command returned 0 result: {} (No @s selector to retry)", cleanCommand);
+                    }
                 }
                 
             } catch (Exception e) {
