@@ -85,13 +85,31 @@ public class AIItemExtractor {
             return commands;
         }
         
-        // Enhanced pattern matching for better item extraction
+        // Enhanced pattern matching for better item extraction  
+        // Pattern: "i need a new zombie heart, for a ritual" → should capture "zombie heart"
         Pattern playerItemPattern = Pattern.compile(
-            "(?:can i have|give me|i need|i want|bestow|grant me)\\s+(?:a|an|the|some)?\\s*(?:new\\s+)?([a-zA-Z\\s]+?)(?:\\s*[.!?]|$)",
+            "(?:can i have|give me|i need|i want|bestow|grant me)\\s+(?:a|an|the|some)?\\s*(?:new|old|fresh|good|nice|strong|powerful)?\\s*([a-zA-Z][a-zA-Z\\s]*?)(?:\\s*[,.!?]|\\s+for|\\s+to|$)",
             Pattern.CASE_INSENSITIVE
         );
         
+        LOGGER.info("🔍 Testing regex pattern against: '{}'", playerMessage);
         Matcher matcher = playerItemPattern.matcher(playerMessage);
+        if (!matcher.find()) {
+            LOGGER.warn("🔍 Regex pattern failed to match. Trying simpler patterns...");
+            // Try simpler pattern as fallback that just looks for "i need X"
+            Pattern simplePattern = Pattern.compile("i need.*?(?:a|an|the|some)?\\s*(?:new|old|fresh|good|nice|strong|powerful)?\\s*([a-zA-Z][a-zA-Z\\s]*?)(?:\\s*[,.!?]|\\s+for|\\s+to|$)", Pattern.CASE_INSENSITIVE);
+            matcher = simplePattern.matcher(playerMessage);
+            if (matcher.find()) {
+                LOGGER.info("🔍 Simple pattern matched!");
+            } else {
+                LOGGER.warn("🔍 Even simple pattern failed!");
+            }
+        } else {
+            LOGGER.info("🔍 Main pattern matched!");
+        }
+        
+        // Reset matcher for the do-while loop
+        matcher.reset();
         while (matcher.find()) {
             String requestedItem = matcher.group(1).trim();
             
@@ -283,14 +301,19 @@ public class AIItemExtractor {
      * 🔧 NEW: Clean up AI-suggested item names by removing filler words
      */
     private static String cleanupItemName(String itemName) {
+        LOGGER.info("🔍 Cleaning item name: '{}'", itemName);
+        
         // Remove common articles and prepositions at the beginning
         String cleaned = itemName.replaceFirst("^(the|a|an)\\s+", "");
+        LOGGER.info("🔍 After removing articles: '{}'", cleaned);
         
         // Remove common filler phrases
         cleaned = cleaned.replaceAll("\\s+(of|from|with|made of|crafted from)\\s+", " ");
+        LOGGER.info("🔍 After removing prepositions: '{}'", cleaned);
         
         // Clean up extra whitespace
         cleaned = cleaned.trim().replaceAll("\\s+", " ");
+        LOGGER.info("🔍 Final cleaned item name: '{}'", cleaned);
         
         return cleaned;
     }
