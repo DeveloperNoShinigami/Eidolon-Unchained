@@ -1028,9 +1028,19 @@ public class DeityChat {
                         Thread.sleep(typingSpeed);
                     }
                     
-                    // Pause between chunks (except for last chunk)
+                    // 🔥 SMART PAUSING: Longer pause at sentence endings
                     if (chunkIndex < messageChunks.size() - 1) {
-                        Thread.sleep(sentenceDelay);
+                        String currentChunk = messageChunks.get(chunkIndex);
+                        
+                        // Check if this chunk ends with sentence punctuation
+                        if (currentChunk.trim().matches(".*[.!?]\\s*$")) {
+                            // This is a complete sentence - use longer pause
+                            Thread.sleep(sentenceDelay * 2); // Double pause for sentence endings
+                            LOGGER.debug("🔥 SENTENCE END: Extended pause after '{}'", currentChunk.trim());
+                        } else {
+                            // Regular chunk break - shorter pause
+                            Thread.sleep(sentenceDelay);
+                        }
                     }
                 }
                 

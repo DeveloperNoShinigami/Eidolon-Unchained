@@ -26,26 +26,24 @@ public class AIItemExtractor {
     );
     
     /**
-     * Pure AI-driven approach: Ask AI to identify what the player wants
+     * 🔧 FIXED: Process player's original request, NOT AI's interpretation
+     * This prevents confusion from AI creativity and focuses on what player actually wants
      */
     public static List<String> extractItemsViaAI(String playerMessage, ServerPlayer player, String aiResponse) {
         List<String> commands = new ArrayList<>();
         
         try {
-            // Step 1: Ask AI to analyze the player's request and suggest items
-            String itemAnalysisPrompt = buildItemAnalysisPrompt(playerMessage, player);
-            
-            // Step 2: Get AI to process the request
             ResourceLocation activeDeityId = com.bluelotuscoding.eidolonunchained.chat.DeityChat.getActiveConversationDeity(player);
             if (activeDeityId != null) {
                 var aiConfig = com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance().getAIConfig(activeDeityId);
                 if (aiConfig != null) {
-                    commands.addAll(processAIItemSuggestions(aiResponse, player, aiConfig));
+                    // 🎯 KEY CHANGE: Process PLAYER message for items, not AI response
+                    commands.addAll(processPlayerItemRequests(playerMessage, player, aiConfig));
                 }
             }
             
         } catch (Exception e) {
-            LOGGER.error("🤖 Error in AI-driven item extraction: {}", e.getMessage());
+            LOGGER.error("🤖 Error in player item extraction: {}", e.getMessage());
         }
         
         return commands;
@@ -73,7 +71,62 @@ public class AIItemExtractor {
     }
     
     /**
+     * 🎯 NEW: Process player's direct requests for items
+     * Looks for item request patterns in the original player message
+     */
+    private static List<String> processPlayerItemRequests(String playerMessage, ServerPlayer player, 
+                                                         com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
+        List<String> commands = new ArrayList<>();
+        
+        LOGGER.info("🎯 Analyzing PLAYER request for items: '{}'", playerMessage);
+        
+        // Pattern to detect item requests in player messages
+        Pattern playerItemPattern = Pattern.compile(
+            "(?:can i have|give me|i need|i want|bestow|grant me)\\s+(?:a|an|the|some)?\\s*([a-zA-Z\\s]+?)(?:\\s*[.!?]|$)",
+            Pattern.CASE_INSENSITIVE
+        );
+        
+        Matcher matcher = playerItemPattern.matcher(playerMessage);
+        while (matcher.find()) {
+            String requestedItem = matcher.group(1).trim();
+            
+            if (requestedItem != null && !requestedItem.isEmpty()) {
+                // Clean up the requested item name
+                String cleanedItem = cleanupItemName(requestedItem);
+                LOGGER.info("🎯 PLAYER requested item: '{}' → cleaned: '{}'", requestedItem, cleanedItem);
+                
+                // Get mod context for this deity
+                List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
+                    aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+                
+                // Find matching items using strict matching
+                List<ResourceLocation> matches = RegistryContextProvider.findMatchingItemsWithScoring(cleanedItem, modContextIds);
+                
+                if (!matches.isEmpty()) {
+                    ResourceLocation bestMatch = matches.get(0);
+                    
+                    // Check deity permissions
+                    if (deityAllowsItem(bestMatch.toString(), aiConfig, player)) {
+                        String command = String.format("give %s %s 1", player.getName().getString(), bestMatch.toString());
+                        commands.add(command);
+                        LOGGER.info("🎯 PLAYER request APPROVED: '{}' → {} (deity: {})", 
+                            cleanedItem, bestMatch, aiConfig.deity_id);
+                    } else {
+                        LOGGER.info("🚫 PLAYER request DENIED: '{}' → {} (not allowed by deity)", 
+                            cleanedItem, bestMatch);
+                    }
+                } else {
+                    LOGGER.info("🎯 PLAYER requested item '{}' has no valid registry matches - no item will be given", cleanedItem);
+                }
+            }
+        }
+        
+        return commands;
+    }
+    
+    /**
      * Process AI suggestions and validate them against registry
+     * 🔧 DEPRECATED: Keeping for fallback, but player requests take priority
      */
     private static List<String> processAIItemSuggestions(String aiResponse, ServerPlayer player, 
                                                        com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {

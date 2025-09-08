@@ -107,11 +107,8 @@ public class ActiveChantingSystem {
         // Add the sign to the sequence
         chant.addSign(sign);
         
-        // Update visual representation (spawn immediately)
+        // Update visual representation and check for completion immediately
         updateChantCasterEntity(player, chant);
-        
-        // Check for spell completion and auto-clear if needed
-        checkForCompleteChant(player, chant);
         
         LOGGER.info("Player {} added sign {} to active chant (sequence: {})", 
             player.getName().getString(), signId, chant.signs.size());
@@ -166,27 +163,35 @@ public class ActiveChantingSystem {
             // Spawn entity
             level.addFreshEntity(chant.entity);
             
-            LOGGER.info("NEW ENTITY: Spawned ChantCasterEntity for player {} with {} signs at {}", 
-                player.getName().getString(), chant.signs.size(), chant.entity.position());
-        } else {
-            // Update existing entity with new sign sequence by recreating it
-            // ChantCasterEntity doesn't have a direct way to update signs, so recreate
-            chant.entity.discard();
-            
-            Vec3 lookDirection = player.getLookAngle();
-            chant.entity = new ChantCasterEntity(level, player, new ArrayList<>(chant.signs), lookDirection);
-            
-            chant.entity.setPos(
-                player.getX() + lookDirection.x * 0.3,
-                player.getY() + 1.2,
-                player.getZ() + lookDirection.z * 0.3
-            );
-            
-            level.addFreshEntity(chant.entity);
-            
-            LOGGER.info("UPDATED ENTITY: Recreated ChantCasterEntity for player {} to {} signs", 
+            LOGGER.info("NEW ENTITY: Spawned ChantCasterEntity for player {} with {} signs", 
                 player.getName().getString(), chant.signs.size());
+        } else {
+            // 🔥 OPTIMIZED UPDATE: Minimize recreation delay
+            try {
+                // Update position first
+                Vec3 lookDirection = player.getLookAngle();
+                
+                // Quick recreate for sign update (ChantCasterEntity limitation)
+                chant.entity.discard();
+                chant.entity = new ChantCasterEntity(level, player, new ArrayList<>(chant.signs), lookDirection);
+                chant.entity.setPos(
+                    player.getX() + lookDirection.x * 0.3,
+                    player.getY() + 1.2,
+                    player.getZ() + lookDirection.z * 0.3
+                );
+                level.addFreshEntity(chant.entity);
+                
+                LOGGER.info("REAL-TIME UPDATE: Updated ChantCasterEntity for player {} to {} signs", 
+                    player.getName().getString(), chant.signs.size());
+                
+            } catch (Exception e) {
+                LOGGER.error("Error updating ChantCasterEntity: {}", e.getMessage());
+                chant.entity = null; // Reset for next attempt
+            }
         }
+        
+        // 🎯 IMMEDIATE SPELL CHECK: Check for completion right after entity update
+        checkForCompleteChant(player, chant);
     }
     
     /**
