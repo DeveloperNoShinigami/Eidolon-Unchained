@@ -305,8 +305,7 @@ public class DeityChat {
                     deityProvider = globalProvider;
                     apiKey = globalApiKey;
                 } else {
-                    LOGGER.error("No API key configured for provider '{}'. Please set up API key using /eidolon-unchained api set {} YOUR_KEY", 
-                        deityProvider, deityProvider);
+                    LOGGER.error("No {} API key configured. Please set up API key using /eidolon-unchained api set {} YOUR_KEY", deityProvider, deityProvider);
                     player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.api_key_required"));
                     player.sendSystemMessage(Component.translatable("eidolonunchained.chat.api_key_instruction", deityProvider));
                     endConversation(player);
@@ -317,9 +316,6 @@ public class DeityChat {
             // Create AI provider based on effective provider (deity-specific or fallback)
             com.bluelotuscoding.eidolonunchained.ai.AIProviderFactory.AIProvider provider = 
                 com.bluelotuscoding.eidolonunchained.ai.AIProviderFactory.createProvider(deityProvider, aiConfig.model);
-            
-            LOGGER.info("🤖 Using AI provider '{}' for deity {} conversation with player {}", 
-                deityProvider, deity.getName(), player.getName().getString());
             
             if (!provider.isAvailable()) {
                 LOGGER.error("AI provider {} is not available", provider.getProviderName());
@@ -1679,17 +1675,15 @@ public class DeityChat {
             // Trigger AI conversation with congratulation context
             AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deity.getId());
             if (aiConfig != null) {
-                LOGGER.info("✅ AI config found for deity {}, starting congratulation conversation with provider '{}'", 
-                    deity.getName(), aiConfig.ai_provider != null ? aiConfig.ai_provider : "default");
+                LOGGER.info("✅ AI config found for deity {}, starting congratulation conversation", deity.getName());
                 
                 // Start conversation automatically
                 activeConversations.put(player.getUUID(), deity.getId());
                 LOGGER.info("🗣️ Added player {} to active conversations with deity {}", 
                     player.getName().getString(), deity.getName());
                 
-                // Process the congratulation using configured AI provider
-                LOGGER.info("🤖 Processing deity conversation with congratulation prompt using provider '{}'...", 
-                    aiConfig.ai_provider != null ? aiConfig.ai_provider : "default");
+                // Process the congratulation
+                LOGGER.info("🤖 Processing deity conversation with congratulation prompt...");
                 processDeityConversation(player, deity.getId(), congratulationPrompt);
                 
                 // Auto-execute tier advancement rewards
