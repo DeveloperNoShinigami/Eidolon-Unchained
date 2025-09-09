@@ -1,0 +1,29 @@
+{
+  "name": "eidolonunchained.chant.test_blessing_request.name",
+  "description": "eidolonunchained.chant.test_blessing_request.description",
+  "category": "examples",
+  "codex_icon": "minecraft:golden_apple",
+  "difficulty": 1,
+  "mana_cost": 15,
+  "cooldown": 30,
+  "show_in_codex": true,
+  "linked_deity": "eidolonunchained:light_deity",
+  "prayer_effect_type": "blessing",
+  "signs": [
+    "eidolon:sacred",
+    "eidolon:harmony"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:glowing",
+      "duration": 100,
+      "amplifier": 0
+    },
+    {
+      "type": "send_message",
+      "message": "§eYou call upon the light for divine blessing..."
+    }
+  ]
+}
