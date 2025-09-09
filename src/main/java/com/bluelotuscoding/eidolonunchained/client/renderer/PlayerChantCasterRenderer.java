@@ -41,7 +41,8 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
     
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+        // Try AFTER_ENTITIES stage like many other mod renderers
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
             return;
         }
         
@@ -51,7 +52,15 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
         
         // Get current chant signs for this player
         List<Sign> signs = PlayerChantingSystem.getPlayerChantSigns(player.getUUID());
+        
+        // DEBUG: Log when we're checking for signs
+        if (mc.level.getGameTime() % 20 == 0) { // Every second
+            System.out.println("DEBUG: PlayerChantCasterRenderer checking for signs. Found: " + signs.size());
+        }
+        
         if (signs.isEmpty()) return;
+        
+        System.out.println("DEBUG: Rendering " + signs.size() + " chant signs for player");
         
         // Render using Eidolon's ChantCasterRenderer logic
         renderPlayerChantSigns(event.getPoseStack(), event.getPartialTick(), player, signs);
@@ -66,12 +75,17 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
         
         mStack.pushPose();
         
+        // Get camera position for proper world-to-screen rendering
+        Minecraft mc = Minecraft.getInstance();
+        Vec3 cameraPos = mc.gameRenderer.getMainCamera().getPosition();
+        
         // Player position with interpolation
         double px = Mth.lerp(partialTick, player.xOld, player.getX());
         double py = Mth.lerp(partialTick, player.yOld, player.getY()) + 1.5; // Above player
         double pz = Mth.lerp(partialTick, player.zOld, player.getZ());
         
-        mStack.translate(px, py, pz);
+        // Translate relative to camera (like entity rendering)
+        mStack.translate(px - cameraPos.x, py - cameraPos.y, pz - cameraPos.z);
         
         // Player's look direction (like ChantCasterRenderer)
         Vec3 look = player.getLookAngle();
