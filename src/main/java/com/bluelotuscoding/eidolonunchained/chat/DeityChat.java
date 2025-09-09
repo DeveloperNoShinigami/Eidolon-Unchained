@@ -572,6 +572,7 @@ public class DeityChat {
                     
                     if (title != null && !title.isEmpty()) {
                         prompt.append("Player Title: ").append(title).append("\n");
+                        prompt.append("IMPORTANT: Acknowledge this player's title (").append(title).append(") in your greeting - they have earned recognition!\n");
                     } else {
                         prompt.append("Player has no special title.\n");
                     }

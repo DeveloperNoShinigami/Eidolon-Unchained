@@ -181,42 +181,42 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
         }
         
         // RING RENDERING (the missing visual element!)
-        // Scale up dx/dy for ring (exactly like ChantCasterRenderer)
-        dx.mul(1.75f);
-        dy.mul(1.75f);
+        // Create copies of dx/dy for ring rendering so we don't modify originals
+        Vector3f ringDx = new Vector3f(dx).mul(1.75f);
+        Vector3f ringDy = new Vector3f(dy).mul(1.75f);
         
         // Front ring face
-        sb.vertex(mStack.last().pose(), o.x() - dx.x() + dy.x(), o.y() - dx.y() + dy.y(), o.z() - dx.z() + dy.z())
+        sb.vertex(mStack.last().pose(), o.x() - ringDx.x() + ringDy.x(), o.y() - ringDx.y() + ringDy.y(), o.z() - ringDx.z() + ringDy.z())
             .uv(ring.getU1(), ring.getV1())
             .color(sign.getRed(), sign.getGreen(), sign.getBlue(), alphaMod * 0.5f)
             .uv2(0).endVertex();
-        sb.vertex(mStack.last().pose(), o.x() - dx.x() - dy.x(), o.y() - dx.y() - dy.y(), o.z() - dx.z() - dy.z())
+        sb.vertex(mStack.last().pose(), o.x() - ringDx.x() - ringDy.x(), o.y() - ringDx.y() - ringDy.y(), o.z() - ringDx.z() - ringDy.z())
             .uv(ring.getU1(), ring.getV0())
             .color(sign.getRed(), sign.getGreen(), sign.getBlue(), alphaMod * 0.5f)
             .uv2(0).endVertex();
-        sb.vertex(mStack.last().pose(), o.x() + dx.x() - dy.x(), o.y() + dx.y() - dy.y(), o.z() + dx.z() - dy.z())
+        sb.vertex(mStack.last().pose(), o.x() + ringDx.x() - ringDy.x(), o.y() + ringDx.y() - ringDy.y(), o.z() + ringDx.z() - ringDy.z())
             .uv(ring.getU0(), ring.getV0())
             .color(sign.getRed(), sign.getGreen(), sign.getBlue(), alphaMod * 0.5f)
             .uv2(0).endVertex();
-        sb.vertex(mStack.last().pose(), o.x() + dx.x() + dy.x(), o.y() + dx.y() + dy.y(), o.z() + dx.z() + dy.z())
+        sb.vertex(mStack.last().pose(), o.x() + ringDx.x() + ringDy.x(), o.y() + ringDx.y() + ringDy.y(), o.z() + ringDx.z() + ringDy.z())
             .uv(ring.getU0(), ring.getV1())
             .color(sign.getRed(), sign.getGreen(), sign.getBlue(), alphaMod * 0.5f)
             .uv2(0).endVertex();
 
         // Back ring face
-        sb.vertex(mStack.last().pose(), o.x() + dx.x() + dy.x(), o.y() + dx.y() + dy.y(), o.z() + dx.z() + dy.z())
+        sb.vertex(mStack.last().pose(), o.x() + ringDx.x() + ringDy.x(), o.y() + ringDx.y() + ringDy.y(), o.z() + ringDx.z() + ringDy.z())
             .uv(ring.getU1(), ring.getV1())
             .color(sign.getRed(), sign.getGreen(), sign.getBlue(), alphaMod * 0.5f)
             .uv2(0).endVertex();
-        sb.vertex(mStack.last().pose(), o.x() + dx.x() - dy.x(), o.y() + dx.y() - dy.y(), o.z() + dx.z() - dy.z())
+        sb.vertex(mStack.last().pose(), o.x() + ringDx.x() - ringDy.x(), o.y() + ringDx.y() - ringDy.y(), o.z() + ringDx.z() - ringDy.z())
             .uv(ring.getU1(), ring.getV0())
             .color(sign.getRed(), sign.getGreen(), sign.getBlue(), alphaMod * 0.5f)
             .uv2(0).endVertex();
-        sb.vertex(mStack.last().pose(), o.x() - dx.x() - dy.x(), o.y() - dx.y() - dy.y(), o.z() - dx.z() - dy.z())
+        sb.vertex(mStack.last().pose(), o.x() - ringDx.x() - ringDy.x(), o.y() - ringDx.y() - ringDy.y(), o.z() - ringDx.z() - ringDy.z())
             .uv(ring.getU0(), ring.getV0())
             .color(sign.getRed(), sign.getGreen(), sign.getBlue(), alphaMod * 0.5f)
             .uv2(0).endVertex();
-        sb.vertex(mStack.last().pose(), o.x() - dx.x() + dy.x(), o.y() - dx.y() + dy.y(), o.z() - dx.z() + dy.z())
+        sb.vertex(mStack.last().pose(), o.x() - ringDx.x() + ringDy.x(), o.y() - ringDx.y() + ringDy.y(), o.z() - ringDx.z() + ringDy.z())
             .uv(ring.getU0(), ring.getV1())
             .color(sign.getRed(), sign.getGreen(), sign.getBlue(), alphaMod * 0.5f)
             .uv2(0).endVertex();
