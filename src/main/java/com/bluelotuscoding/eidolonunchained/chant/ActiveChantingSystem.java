@@ -113,12 +113,12 @@ public class ActiveChantingSystem {
         LOGGER.info("Player {} added sign {} to active chant (sequence: {})", 
             player.getName().getString(), signId, chant.signs.size());
         
-        // Send instant feedback to player via action bar
-        String signName = assignment.displayName;
-        player.sendSystemMessage(
-            Component.literal("§6Added: " + signName + " §7(" + chant.signs.size() + " signs)"), 
-            true // action bar
-        );
+        // 🔧 DEBUGGING: Removed action bar feedback - keeping only logs for debug tracking
+        // String signName = assignment.displayName;
+        // player.sendSystemMessage(
+        //     Component.literal("§6Added: " + signName + " §7(" + chant.signs.size() + " signs)"), 
+        //     true // action bar
+        // );
     }
     
     /**
@@ -219,8 +219,10 @@ public class ActiveChantingSystem {
             // Execute the complete chant
             executeCompleteChant(player, chant, matchingChant);
             
-            // Clear after execution (done in executeCompleteChant, but ensure it's cleared)
-            clearActiveChant(player);
+            // 🎯 FIXED: Don't clear immediately - let entity persist for visual feedback
+            // Clear signs but keep entity for a few seconds
+            chant.signs.clear();
+            LOGGER.info("Spell executed - signs cleared but entity persists for player {}", player.getName().getString());
             return;
         }
         

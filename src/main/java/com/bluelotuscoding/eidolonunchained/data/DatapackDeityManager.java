@@ -151,6 +151,11 @@ public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
             loadPrayerTypes(deity, json.getAsJsonArray("prayer_types"));
         }
         
+        // Load abandon configuration
+        if (json.has("abandon")) {
+            loadAbandonConfiguration(deity, json.getAsJsonObject("abandon"));
+        }
+        
         // Extract and register AI configuration if present
         if (json.has("ai_configuration")) {
             try {
@@ -308,6 +313,23 @@ public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
             String prayerType = typeElement.getAsString();
             deity.addPrayerType(prayerType);
         }
+    }
+    
+    private void loadAbandonConfiguration(DatapackDeity deity, JsonObject abandon) {
+        double penalty = abandon.has("reputation_penalty") ? 
+            abandon.get("reputation_penalty").getAsDouble() : 1.0; // Default: lose all
+        
+        boolean resetReputation = abandon.has("reset_reputation") ? 
+            abandon.get("reset_reputation").getAsBoolean() : true; // Default: reset to 0
+        
+        String message = abandon.has("message") ? 
+            abandon.get("message").getAsString() : 
+            "You have abandoned your patron and lost all divine favor.";
+        
+        deity.setAbandonConfiguration(penalty, resetReputation, message);
+        
+        LOGGER.debug("Loaded abandon configuration for {}: penalty={}, reset={}, message='{}'", 
+            deity.getId(), penalty, resetReputation, message);
     }
     
     /**

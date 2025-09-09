@@ -7,7 +7,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,7 +79,7 @@ public class AIItemExtractor {
                                                          com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
         List<String> commands = new ArrayList<>();
         
-        LOGGER.info("🎯 Analyzing PLAYER request for items: '{}'", playerMessage);
+        LOGGER.info("🎯 HYBRID ANALYSIS: Analyzing PLAYER request for items: '{}'", playerMessage);
         
         // Check if this looks like an item request
         if (!playerMessage.toLowerCase().matches(".*(?:can i have|give me|i need|i want|bestow|grant me).*")) {
@@ -85,67 +87,89 @@ public class AIItemExtractor {
             return commands;
         }
         
-        // Enhanced pattern matching for better item extraction  
-        // Pattern: "i need a new zombie heart, for a ritual" → should capture "zombie heart"
+        Set<String> foundItems = new HashSet<>(); // Track items to avoid duplicates
+        List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
+            aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+        
+        // METHOD 1: Enhanced pattern matching for immediate extraction
         Pattern playerItemPattern = Pattern.compile(
             "(?:can i have|give me|i need|i want|bestow|grant me)\\s+(?:a|an|the|some)?\\s*(?:new|old|fresh|good|nice|strong|powerful)?\\s*([a-zA-Z][a-zA-Z\\s]*?)(?:\\s*[,.!?]|\\s+for|\\s+to|$)",
             Pattern.CASE_INSENSITIVE
         );
         
-        LOGGER.info("🔍 Testing regex pattern against: '{}'", playerMessage);
+        LOGGER.info("🔍 METHOD 1 - Testing regex pattern against: '{}'", playerMessage);
         Matcher matcher = playerItemPattern.matcher(playerMessage);
-        if (!matcher.find()) {
-            LOGGER.warn("🔍 Regex pattern failed to match. Trying simpler patterns...");
-            // Try simpler pattern as fallback that just looks for "i need X"
-            Pattern simplePattern = Pattern.compile("i need.*?(?:a|an|the|some)?\\s*(?:new|old|fresh|good|nice|strong|powerful)?\\s*([a-zA-Z][a-zA-Z\\s]*?)(?:\\s*[,.!?]|\\s+for|\\s+to|$)", Pattern.CASE_INSENSITIVE);
-            matcher = simplePattern.matcher(playerMessage);
-            if (matcher.find()) {
-                LOGGER.info("🔍 Simple pattern matched!");
-            } else {
-                LOGGER.warn("🔍 Even simple pattern failed!");
-            }
-        } else {
-            LOGGER.info("🔍 Main pattern matched!");
-        }
         
-        // Reset matcher for the do-while loop
-        matcher.reset();
         while (matcher.find()) {
             String requestedItem = matcher.group(1).trim();
             
             if (requestedItem != null && !requestedItem.isEmpty()) {
-                // Clean up the requested item name and remove filler words
                 String cleanedItem = cleanupItemName(requestedItem)
                     .replaceAll("\\b(?:new|old|fresh|good|nice|strong|powerful)\\b", "") // Remove adjectives
                     .replaceAll("\\s+", " ") // Normalize whitespace
                     .trim();
                     
-                LOGGER.info("🎯 PLAYER requested item: '{}' → cleaned: '{}'", requestedItem, cleanedItem);
-                
-                // Get mod context for this deity
-                List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
-                    aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
-                
-                List<ResourceLocation> matches = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
-                    .findMatchingItemsWithScoring(cleanedItem, modContextIds);
-                
-                if (!matches.isEmpty()) {
-                    ResourceLocation bestMatch = matches.get(0);
-                    
-                    // Check deity permissions
-                    if (deityAllowsItem(bestMatch.toString(), aiConfig, player)) {
-                        String command = String.format("/give %s %s 1", player.getName().getString(), bestMatch.toString());
-                        commands.add(command);
-                        LOGGER.info("🔥 PLAYER request: '{}' -> {}", cleanedItem, bestMatch);
-                    } else {
-                        LOGGER.info("🚫 PLAYER request DENIED: '{}' → {} (not allowed by deity)", 
-                            cleanedItem, bestMatch);
-                    }
-                } else {
-                    LOGGER.info("🎯 PLAYER requested item '{}' has no valid registry matches - no item will be given", cleanedItem);
-                }
+                LOGGER.info("🎯 METHOD 1 - PLAYER requested item: '{}' → cleaned: '{}'", requestedItem, cleanedItem);
+                foundItems.add(cleanedItem);
             }
         }
+        
+        // METHOD 2: Word-matching approach for items missed by regex
+        LOGGER.info("🔍 METHOD 2 - Starting word-matching analysis on: '{}'", playerMessage);
+        List<ResourceLocation> availableItems = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
+            .getAllItemsForMods(modContextIds);
+        
+        // Look for item names in the message using word matching
+        String[] words = playerMessage.toLowerCase().split("\\s+");
+        for (ResourceLocation item : availableItems) {
+            String itemName = item.getPath().replace("_", " ");
+            String[] itemWords = itemName.split("\\s+");
+            
+            // Check if all item words appear in the message
+            boolean allWordsFound = true;
+            for (String itemWord : itemWords) {
+                boolean wordFound = false;
+                for (String messageWord : words) {
+                    if (messageWord.contains(itemWord) || itemWord.contains(messageWord)) {
+                        wordFound = true;
+                        break;
+                    }
+                }
+                if (!wordFound) {
+                    allWordsFound = false;
+                    break;
+                }
+            }
+            
+            if (allWordsFound && itemWords.length > 1) { // Only multi-word items for specificity
+                LOGGER.info("🔍 METHOD 2 - Found word match: '{}' → {}", itemName, item);
+                foundItems.add(itemName);
+            }
+        }
+        
+        // Process all found items (from both methods)
+        for (String itemName : foundItems) {
+            List<ResourceLocation> matches = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
+                .findMatchingItemsWithScoring(itemName, modContextIds);
+            
+            if (!matches.isEmpty()) {
+                ResourceLocation bestMatch = matches.get(0);
+                
+                // Check deity permissions
+                if (deityAllowsItem(bestMatch.toString(), aiConfig, player)) {
+                    String command = String.format("/give %s %s 1", player.getName().getString(), bestMatch.toString());
+                    commands.add(command);
+                    LOGGER.info("🔥 HYBRID SUCCESS: '{}' -> {}", itemName, bestMatch);
+                } else {
+                    LOGGER.info("🚫 HYBRID DENIED: '{}' → {} (not allowed by deity)", 
+                        itemName, bestMatch);
+                }
+            } else {
+                LOGGER.info("🎯 HYBRID: Item '{}' has no valid registry matches", itemName);
+            }
+        }
+        
+        LOGGER.info("🎯 HYBRID COMPLETE: Found {} total item commands", commands.size());
         
         return commands;
     }

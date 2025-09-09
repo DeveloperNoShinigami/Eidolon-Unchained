@@ -11,17 +11,14 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
 /**
- * Simplified Patron System that works with existing IPatronData interface
+ * Dynamic Patron System that uses deity-specific configuration from JSON
+ * All values come from deity configuration - NO HARDCODING
  */
 public class PatronSystem {
     private static final org.slf4j.Logger LOGGER = LogUtils.getLogger();
     
-    // Configuration constants
-    private static final double MIN_REPUTATION_FOR_PATRON = 25.0;
-    private static final double PATRON_ABANDON_PENALTY = 0.3; // 30% reputation loss
-    
     /**
-     * Attempts to set a player's patron deity.
+     * Attempts to set a player's patron deity using deity-specific minimum reputation.
      */
     public static boolean choosePatron(ServerPlayer player, ResourceLocation deityId) {
         try {
@@ -32,16 +29,12 @@ public class PatronSystem {
                 return false;
             }
             
-            // Validate deity exists in base configuration (not AI config)
+            // Validate deity exists in base configuration
             DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
             if (deity == null) {
                 sendError(player, "Unknown deity: " + deityId);
                 return false;
             }
-            
-            // 🎯 REMOVED AI CONFIG DEPENDENCY - Use base deity progression instead
-            // The patron system should work with base deity data, not AI configurations
-            // AI configs are for personality/conversation behavior only
             
             // Check if already patron of this deity
             ResourceLocation currentPatron = patronData.getPatron(player);
@@ -56,18 +49,22 @@ public class PatronSystem {
             // Apply patron switch
             patronData.setPatron(player, deityId);
             
-            // 🎁 GRANT INITIAL REPUTATION IF PLAYER HAS NONE
-            // This ensures new players can immediately become patrons and get starting rewards
+            // 🎁 DYNAMIC INITIAL REPUTATION - Use deity's minimum requirement
             if (reputation != null) {
                 double currentRep = reputation.getReputation(player.getUUID(), deityId);
-                if (currentRep < MIN_REPUTATION_FOR_PATRON) {
+                double minimumRequired = deity.getMinimumPatronReputation();
+                
+                if (currentRep < minimumRequired) {
                     // Grant minimum reputation to unlock first stage
-                    reputation.setReputation(player.getUUID(), deityId, MIN_REPUTATION_FOR_PATRON);
-                    LOGGER.info("🎁 Granted initial reputation {} to new patron {} for deity {}", 
-                        MIN_REPUTATION_FOR_PATRON, player.getName().getString(), deityId);
+                    reputation.setReputation(player.getUUID(), deityId, minimumRequired);
+                    LOGGER.info("🎁 Granted initial reputation {} to new patron {} for deity {} (minimum: {})", 
+                        minimumRequired, player.getName().getString(), deityId, minimumRequired);
                     
                     // This will trigger onReputationChange and unlock the first stage rewards
                     sendSuccess(player, "You gain divine favor as you pledge yourself to " + deity.getDisplayName());
+                } else {
+                    LOGGER.info("🎯 Player {} already has sufficient reputation ({}) for deity {} (minimum: {})", 
+                        player.getName().getString(), currentRep, deityId, minimumRequired);
                 }
             }
             
@@ -83,7 +80,7 @@ public class PatronSystem {
     }
     
     /**
-     * Removes a player's patron.
+     * Removes a player's patron using deity-specific abandon configuration.
      */
     public static boolean abandonPatron(ServerPlayer player) {
         try {
@@ -101,18 +98,32 @@ public class PatronSystem {
             
             DatapackDeity deity = DatapackDeityManager.getDeity(currentPatron);
             if (deity != null) {
-                // Apply reputation penalty
+                // 🎯 DYNAMIC ABANDON BEHAVIOR - Use deity configuration
                 IReputation reputation = player.level().getCapability(IReputation.INSTANCE).orElse(null);
                 if (reputation != null) {
                     double currentRep = reputation.getReputation(player.getUUID(), currentPatron);
-                    double penalty = currentRep * PATRON_ABANDON_PENALTY;
-                    reputation.subtractReputation(player.getUUID(), currentPatron, penalty);
-                    sendWarning(player, "Lost " + (int)penalty + " reputation with " + deity.getDisplayName());
+                    
+                    if (deity.shouldResetReputationOnAbandon()) {
+                        // Complete reputation reset
+                        reputation.setReputation(player.getUUID(), currentPatron, 0.0);
+                        LOGGER.info("🔄 Reset reputation to 0 for {} abandoning deity {}", 
+                            player.getName().getString(), currentPatron);
+                        sendWarning(player, "All reputation with " + deity.getDisplayName() + " has been lost");
+                    } else {
+                        // Apply penalty percentage
+                        double penalty = currentRep * deity.getAbandonPenalty();
+                        reputation.subtractReputation(player.getUUID(), currentPatron, penalty);
+                        LOGGER.info("🔻 Applied {} penalty ({} lost) for {} abandoning deity {}", 
+                            deity.getAbandonPenalty(), penalty, player.getName().getString(), currentPatron);
+                        sendWarning(player, "Lost " + (int)penalty + " reputation with " + deity.getDisplayName());
+                    }
                 }
+                
+                // Show deity-specific abandon message
+                sendError(player, deity.getAbandonMessage());
             }
             
             patronData.setPatron(player, null);
-            sendInfo(player, "You have abandoned your patron");
             
             return true;
             

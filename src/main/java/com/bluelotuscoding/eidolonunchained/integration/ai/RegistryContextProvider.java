@@ -101,6 +101,21 @@ public class RegistryContextProvider {
     }
     
     /**
+     * Get all available items for specified mods (used for word matching)
+     */
+    public static List<ResourceLocation> getAllItemsForMods(List<String> modIds) {
+        List<ResourceLocation> items = new ArrayList<>();
+        
+        for (ResourceLocation itemKey : BuiltInRegistries.ITEM.keySet()) {
+            if (modIds.contains(itemKey.getNamespace())) {
+                items.add(itemKey);
+            }
+        }
+        
+        return items;
+    }
+    
+    /**
      * Find items that match a search term across all specified mods
      * This is used for dynamic AI command generation
      */

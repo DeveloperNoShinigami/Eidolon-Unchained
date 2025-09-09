@@ -95,5 +95,10 @@
       }
     ]
   },
+  "abandon": {
+    "reputation_penalty": 1.0,
+    "reset_reputation": true,
+    "message": "§4Nyxathel's wrath is absolute. §cYou have betrayed the Shadow Lord and are cast into the abyss. §8All progress is lost forever."
+  },
   "prayer_types": ["conversation", "blessing", "knowledge", "curse"]
 }

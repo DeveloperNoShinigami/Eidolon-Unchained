@@ -99,5 +99,10 @@
       }
     ]
   },
+  "abandon": {
+    "reputation_penalty": 0.5,
+    "reset_reputation": false,
+    "message": "§6Verdania's spirit dims as you turn away from nature's embrace. The forest remembers your abandonment, but forgiveness may yet bloom."
+  },
   "prayer_types": ["conversation", "blessing", "knowledge", "balance"]
 }

@@ -38,6 +38,11 @@ public class DatapackDeity extends Deity {
     private final Set<String> prayerTypes = new HashSet<>();
     private int maxReputation = 100;
     
+    // 🎯 ABANDON CONFIGURATION - Loaded from deity JSON
+    private double abandonPenalty = 1.0; // Default: lose all progress (100%)
+    private boolean abandonResetsReputation = true; // Default: clear all reputation
+    private String abandonMessage = "You have abandoned your patron and lost all divine favor.";
+    
     // 🎯 REWARD TRACKING SYSTEM - Prevents duplicate rewards
     private final Map<UUID, Set<String>> playerRewardHistory = new HashMap<>();
     
@@ -48,6 +53,51 @@ public class DatapackDeity extends Deity {
         super(id, red, green, blue);
         this.displayName = name;
         this.description = description;
+    }
+    
+    /**
+     * Get the minimum reputation required to become a patron (first progression stage)
+     */
+    public double getMinimumPatronReputation() {
+        if (this.progression.getSteps().isEmpty()) {
+            return 0.0; // No progression stages, start at 0
+        }
+        
+        // Find the lowest reputation requirement
+        return this.progression.getSteps().values().stream()
+            .mapToDouble(stage -> stage.rep())
+            .min()
+            .orElse(0.0);
+    }
+    
+    /**
+     * Get abandon penalty (0.0 to 1.0, where 1.0 = lose all reputation)
+     */
+    public double getAbandonPenalty() {
+        return abandonPenalty;
+    }
+    
+    /**
+     * Whether abandoning this deity resets reputation to 0
+     */
+    public boolean shouldResetReputationOnAbandon() {
+        return abandonResetsReputation;
+    }
+    
+    /**
+     * Get the message to show when abandoning this deity
+     */
+    public String getAbandonMessage() {
+        return abandonMessage;
+    }
+    
+    /**
+     * Set abandon configuration from JSON data
+     */
+    public void setAbandonConfiguration(double penalty, boolean resetReputation, String message) {
+        this.abandonPenalty = Math.max(0.0, Math.min(1.0, penalty)); // Clamp to 0-1
+        this.abandonResetsReputation = resetReputation;
+        this.abandonMessage = message != null ? message : "You have abandoned your patron.";
     }
     
     // Getters
@@ -208,13 +258,14 @@ public class DatapackDeity extends Deity {
         // Handle our custom title updates for patron players
         if (player instanceof ServerPlayer serverPlayer) {
             try {
-                // 🎯 SPECIAL CASE: Initial patron selection (0 reputation)
-                if (prev == 0.0 && updated == 0.0) {
+                // 🎯 DYNAMIC PATRON SELECTION DETECTION - Use deity's minimum reputation
+                double minimumRequired = getMinimumPatronReputation();
+                if (prev == 0.0 && updated == minimumRequired) {
                     // Player just selected this deity as patron - trigger initial tier advancement
-                    LOGGER.info("🎉 INITIAL PATRON SELECTION: Player {} chose {} as patron", 
-                        serverPlayer.getName().getString(), getName());
+                    LOGGER.info("🎉 INITIAL PATRON SELECTION: Player {} chose {} as patron with initial reputation {} (minimum: {})", 
+                        serverPlayer.getName().getString(), getName(), updated, minimumRequired);
                     
-                    // Trigger initial tier progression (should give "Shadow Initiate" etc.)
+                    // Trigger initial tier progression (should give appropriate starting rewards)
                     com.bluelotuscoding.eidolonunchained.chat.DeityChat.checkAndHandleTierProgression(serverPlayer, getId());
                     return; // Early return for patron selection
                 }
