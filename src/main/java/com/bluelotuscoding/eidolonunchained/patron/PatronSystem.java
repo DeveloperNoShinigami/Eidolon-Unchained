@@ -22,8 +22,8 @@ public class PatronSystem {
      */
     public static boolean choosePatron(ServerPlayer player, ResourceLocation deityId) {
         try {
-            // Get player's patron data
-            IPatronData patronData = player.getCapability(IPatronData.PATRON_DATA).orElse(null);
+            // Get player's patron data from level capability (like other systems)
+            IPatronData patronData = player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY).orElse(null);
             if (patronData == null) {
                 sendError(player, "Failed to access patron data");
                 return false;
@@ -84,7 +84,7 @@ public class PatronSystem {
      */
     public static boolean abandonPatron(ServerPlayer player) {
         try {
-            IPatronData patronData = player.getCapability(IPatronData.PATRON_DATA).orElse(null);
+            IPatronData patronData = player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY).orElse(null);
             if (patronData == null) {
                 sendError(player, "Failed to access patron data");
                 return false;
@@ -139,7 +139,7 @@ public class PatronSystem {
      */
     public static void getPatronStatus(ServerPlayer player) {
         try {
-            IPatronData patronData = player.getCapability(IPatronData.PATRON_DATA).orElse(null);
+            IPatronData patronData = player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY).orElse(null);
             if (patronData == null) {
                 sendError(player, "Failed to access patron data");
                 return;
@@ -173,7 +173,7 @@ public class PatronSystem {
         if (!(player instanceof ServerPlayer serverPlayer)) return;
         
         try {
-            IPatronData patronData = serverPlayer.getCapability(IPatronData.PATRON_DATA).orElse(null);
+            IPatronData patronData = serverPlayer.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY).orElse(null);
             if (patronData == null) return;
             
             ResourceLocation patronDeity = patronData.getPatron(serverPlayer);

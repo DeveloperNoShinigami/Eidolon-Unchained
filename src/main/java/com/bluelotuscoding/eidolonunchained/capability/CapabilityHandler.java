@@ -23,8 +23,8 @@ import javax.annotation.Nullable;
 @Mod.EventBusSubscriber(modid = "eidolonunchained")
 public class CapabilityHandler {
     
-    public static final Capability<IPatronData> PATRON_DATA_CAPABILITY = 
-        CapabilityManager.get(new CapabilityToken<>() {});
+    // Use the same capability instance as IPatronData to avoid conflicts
+    public static final Capability<IPatronData> PATRON_DATA_CAPABILITY = IPatronData.PATRON_DATA;
     
     private static final ResourceLocation PATRON_DATA_ID = 
         new ResourceLocation("eidolonunchained", "patron_data");
