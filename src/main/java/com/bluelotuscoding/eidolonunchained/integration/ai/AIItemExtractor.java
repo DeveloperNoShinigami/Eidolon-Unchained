@@ -28,9 +28,8 @@ public class AIItemExtractor {
     );
     
     /**
-     * 🔧 FIXED: Process player's original request, NOT AI's interpretation
-     * This prevents confusion from AI creativity and focuses on what player actually wants
-     * HYBRID APPROACH: AI extraction first, then scoring validation
+     * 🎯 SIMPLIFIED: Let AI handle item extraction directly through chat
+     * The AI is good at understanding requests - just let it generate commands
      */
     public static List<String> extractItemsViaAI(String playerMessage, ServerPlayer player, String aiResponse) {
         List<String> commands = new ArrayList<>();
@@ -40,65 +39,116 @@ public class AIItemExtractor {
             if (activeDeityId != null) {
                 var aiConfig = com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance().getAIConfig(activeDeityId);
                 if (aiConfig != null) {
-                    // 🎯 HYBRID STEP 1: AI-based extraction from player message
-                    Set<String> aiExtractedItems = extractItemsWithAI(playerMessage, player, aiConfig);
-                    
-                    // 🎯 HYBRID STEP 2: Validate AI extractions with scoring system
-                    commands.addAll(validateExtractedItemsWithScoring(aiExtractedItems, player, aiConfig));
+                    // 🎯 SIMPLE: Process player message with AI to generate commands
+                    commands.addAll(processPlayerMessageWithAI(playerMessage, player, aiConfig));
                 }
             }
             
         } catch (Exception e) {
-            LOGGER.error("🤖 Error in hybrid AI item extraction: {}", e.getMessage());
+            LOGGER.error("🤖 Error in AI item extraction: {}", e.getMessage());
         }
         
         return commands;
     }
     
     /**
-     * 🎯 HYBRID STEP 1: AI-based item extraction using natural language understanding
+     * 🎯 SIMPLE: Let AI understand player request and generate appropriate commands
      */
-    private static Set<String> extractItemsWithAI(String playerMessage, ServerPlayer player, 
-                                                 com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
-        Set<String> extractedItems = new HashSet<>();
+    private static List<String> processPlayerMessageWithAI(String playerMessage, ServerPlayer player, 
+                                                          com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
+        List<String> commands = new ArrayList<>();
         
-        LOGGER.info("🤖 HYBRID STEP 1: AI extraction from player message: '{}'", playerMessage);
+        LOGGER.info("🤖 AI processing player request: '{}'", playerMessage);
         
-        // Check if this looks like an item request using AI-like understanding
+        // Check if this looks like an item request
         if (!isItemRequest(playerMessage)) {
-            LOGGER.info("🤖 AI analysis: No item request patterns detected");
-            return extractedItems;
+            LOGGER.info("🤖 No item request detected in message");
+            return commands;
         }
         
-        // AI METHOD 1: Enhanced pattern matching for natural language
-        Pattern naturalLanguagePattern = Pattern.compile(
-            "(?:can i have|give me|i need|i want|bestow|grant me|i would like|may i have|could you give me)\\s+" +
-            "(?:a|an|the|some)?\\s*" +
-            "(?:new|old|fresh|good|nice|strong|powerful|magical|enchanted|blessed|divine)?\\s*" +
-            "([a-zA-Z][a-zA-Z\\s]*?)(?:\\s*[,.!?]|\\s+(?:for|to|please|now)|$)",
+        try {
+            // 🎯 MAKE AI API CALL to understand and generate commands
+            String itemAnalysisPrompt = buildItemRequestPrompt(playerMessage, player);
+            
+            // TODO: Make actual AI API call here
+            // For now, fall back to pattern matching
+            commands.addAll(processWithPatternMatching(playerMessage, player, aiConfig));
+            
+        } catch (Exception e) {
+            LOGGER.error("🤖 AI processing failed, using fallback: {}", e.getMessage());
+            commands.addAll(processWithPatternMatching(playerMessage, player, aiConfig));
+        }
+        
+        return commands;
+    }
+    
+    /**
+     * Build prompt for AI to understand item requests
+     */
+    private static String buildItemRequestPrompt(String playerMessage, ServerPlayer player) {
+        StringBuilder prompt = new StringBuilder();
+        
+        prompt.append("PLAYER ITEM REQUEST ANALYSIS:\n");
+        prompt.append("Player Message: \"").append(playerMessage).append("\"\n\n");
+        prompt.append("TASK: Generate Minecraft give commands for requested items.\n");
+        prompt.append("FORMAT: If player wants items, respond with commands like:\n");
+        prompt.append("/give ").append(player.getName().getString()).append(" minecraft:iron_sword 1\n");
+        prompt.append("/give ").append(player.getName().getString()).append(" eidolon:shadow_cloak 1\n\n");
+        prompt.append("RULES:\n");
+        prompt.append("- Only generate commands for clearly requested items\n");
+        prompt.append("- Use exact mod:item_id format\n");
+        prompt.append("- If no specific items requested, respond with 'NO_ITEMS'\n");
+        
+        return prompt.toString();
+    }
+    
+    /**
+     * 🎯 SIMPLE: Pattern matching fallback when AI API not available
+     */
+    private static List<String> processWithPatternMatching(String playerMessage, ServerPlayer player,
+                                                          com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
+        List<String> commands = new ArrayList<>();
+        
+        // Simple pattern to extract item requests
+        Pattern itemPattern = Pattern.compile(
+            "(?:give me|i need|i want|can i have)\\s+(?:a|an|the|some)?\\s*([a-zA-Z\\s]+?)(?:\\s*[.!?]|$)",
             Pattern.CASE_INSENSITIVE
         );
         
-        Matcher matcher = naturalLanguagePattern.matcher(playerMessage);
+        Matcher matcher = itemPattern.matcher(playerMessage);
         while (matcher.find()) {
-            String extractedItem = matcher.group(1).trim();
-            if (extractedItem != null && !extractedItem.isEmpty()) {
-                String cleanedItem = cleanupItemName(extractedItem);
-                LOGGER.info("🤖 AI EXTRACTION (Pattern): '{}' → '{}'", extractedItem, cleanedItem);
-                extractedItems.add(cleanedItem);
+            String requestedItem = matcher.group(1).trim();
+            if (requestedItem != null && !requestedItem.isEmpty()) {
+                String cleanedItem = cleanupItemName(requestedItem);
+                LOGGER.info("🎯 Pattern matched item request: '{}'", cleanedItem);
+                
+                // Find matching items using scoring
+                List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
+                    aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+                
+                List<ResourceLocation> matches = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
+                    .findMatchingItemsWithScoring(cleanedItem, modContextIds);
+                
+                if (!matches.isEmpty()) {
+                    ResourceLocation bestMatch = matches.get(0);
+                    if (deityAllowsItem(bestMatch.toString(), aiConfig, player)) {
+                        String command = String.format("/give %s %s 1", player.getName().getString(), bestMatch.toString());
+                        commands.add(command);
+                        LOGGER.info("🎯 Generated command: {}", command);
+                    }
+                }
             }
         }
         
-        // AI METHOD 2: Semantic word analysis for complex requests
-        extractedItems.addAll(performSemanticItemAnalysis(playerMessage, aiConfig));
-        
-        // AI METHOD 3: Context-aware multi-word extraction
-        extractedItems.addAll(performContextAwareExtraction(playerMessage, aiConfig));
-        
-        LOGGER.info("🤖 HYBRID STEP 1 COMPLETE: AI extracted {} unique items: {}", 
-            extractedItems.size(), extractedItems);
-        
-        return extractedItems;
+        return commands;
+    }
+    
+    /**
+     * AI helper: Determine if message contains item requests
+     */
+    private static boolean isItemRequest(String message) {
+        String lowerMessage = message.toLowerCase();
+        return lowerMessage.matches(".*(?:can i have|give me|i need|i want|bestow|grant me).*");
     }
     
     /**
@@ -140,14 +190,6 @@ public class AIItemExtractor {
         
         LOGGER.info("🎯 HYBRID STEP 2 COMPLETE: {} final commands generated", commands.size());
         return commands;
-    }
-    
-    /**
-     * AI helper: Determine if message contains item requests
-     */
-    private static boolean isItemRequest(String message) {
-        String lowerMessage = message.toLowerCase();
-        return lowerMessage.matches(".*(?:can i have|give me|i need|i want|bestow|grant me|i would like|may i have|could you give me).*");
     }
     
     /**

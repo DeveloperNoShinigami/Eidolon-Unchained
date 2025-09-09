@@ -212,6 +212,9 @@ public class DeityChat {
         ServerPlayer player = event.getPlayer();
         UUID playerId = player.getUUID();
         
+        // 🎯 PERIODIC CLEANUP: Check for completed chants and cleanup (like ribbon system)
+        com.bluelotuscoding.eidolonunchained.chant.ActiveChantingSystem.cleanupOldChants();
+        
         // SAFETY CHECK: Only process if player is actually in a conversation
         if (!activeConversations.containsKey(playerId)) {
             return; // Not in a conversation - let normal chat proceed

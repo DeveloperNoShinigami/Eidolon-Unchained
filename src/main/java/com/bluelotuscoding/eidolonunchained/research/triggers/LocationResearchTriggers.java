@@ -2,6 +2,7 @@ package com.bluelotuscoding.eidolonunchained.research.triggers;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.research.triggers.data.ResearchTrigger;
+import com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -12,9 +13,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.structure.Structure;
-import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import org.slf4j.Logger;
 
 import java.util.HashMap;
@@ -26,42 +28,53 @@ import java.util.UUID;
 
 /**
  * Handles location-based research triggers (dimension, biome, structure) loaded from JSON
+ * SMART: Uses AI system's existing biome tracking to avoid duplicate ticking!
  */
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class LocationResearchTriggers {
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final Map<UUID, Integer> PLAYER_CHECK_TIMERS = new HashMap<>();
-    private static final int CHECK_INTERVAL = 60; // Check every 3 seconds (60 ticks)
     
     // Track triggered research per player to prevent infinite loops
     private static final Map<String, Set<String>> PLAYER_TRIGGERED_RESEARCH = new HashMap<>();
+
+    /**
+     * SMART: Register with AI system's biome tracking to avoid duplicate ticking
+     */
+    @SubscribeEvent
+    public static void onCommonSetup(FMLCommonSetupEvent event) {
+        // Register our biome change listener with the AI system
+        PlayerContextTracker.addBiomeChangeListener(LocationResearchTriggers::onBiomeChange);
+        LOGGER.info("LocationResearchTriggers: Registered biome change listener with AI system");
+    }
+
+    /**
+     * Called by AI system when player biome changes (no ticking needed!)
+     */
+    private static void onBiomeChange(ServerPlayer player, String newBiome) {
+        LOGGER.debug("Player {} biome changed to: {} (via AI callback)", player.getName().getString(), newBiome);
+        checkBiomeTriggersForPlayer(player, newBiome);
+    }
     
-        @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.side.isClient() || event.phase != TickEvent.Phase.END) {
-            return;
-        }
+            /**
+     * Handle dimension changes - still needed for proper event-driven approach
+     */
+    @SubscribeEvent
+    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
         
-        if (!(event.player instanceof ServerPlayer player)) {
-            return;
-        }
+        LOGGER.debug("Player {} changed dimension to: {}", player.getName().getString(), event.getTo());
+        checkLocationTriggers(player);
+    }
+
+    /**
+     * Handle player login - check all triggers on login
+     */
+    @SubscribeEvent
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
         
-        // CRITICAL DEBUG: Add periodic logging to verify event handler registration
-        UUID playerId = player.getUUID();
-        int timer = PLAYER_CHECK_TIMERS.getOrDefault(playerId, 0);
-        timer++;
-        
-        if (timer == 1) { // Log only on first tick to verify registration
-            LOGGER.debug("LocationResearchTriggers: PlayerTickEvent registered and firing for {}", 
-                player.getName().getString());
-        }
-        
-        if (timer >= CHECK_INTERVAL) {
-            timer = 0;
-            checkLocationTriggers(player);
-        }
-        
-        PLAYER_CHECK_TIMERS.put(playerId, timer);
+        LOGGER.debug("Player {} logged in, checking location triggers", player.getName().getString());
+        checkLocationTriggers(player);
     }
     
     /**
@@ -253,6 +266,56 @@ public class LocationResearchTriggers {
         }
     }
     
+    /**
+     * Check biome triggers for a specific player (called by AI callback)
+     */
+    private static void checkBiomeTriggersForPlayer(ServerPlayer player, String currentBiome) {
+        Map<String, List<ResearchTrigger>> allTriggers = ResearchTriggerLoader.getTriggersForAllResearch();
+        
+        if (allTriggers.isEmpty() || !hasNotetakingTools(player)) {
+            return;
+        }
+        
+        LOGGER.debug("Player {} checking biome triggers for: {}", player.getName().getString(), currentBiome);
+        
+        String playerKey = player.getUUID().toString();
+        
+        for (Map.Entry<String, List<ResearchTrigger>> entry : allTriggers.entrySet()) {
+            String researchId = entry.getKey();
+            Set<String> triggeredResearch = PLAYER_TRIGGERED_RESEARCH.getOrDefault(playerKey, new HashSet<>());
+            
+            for (ResearchTrigger trigger : entry.getValue()) {
+                // Check if this is a biome trigger that matches the current biome
+                if (trigger.getBiome() != null && 
+                    trigger.getBiome().toString().equals(currentBiome)) {
+                    
+                    // Check max_found limit
+                    String trackingPrefix = researchId + ":";
+                    long currentCount = triggeredResearch.stream()
+                        .filter(key -> key.contains(trackingPrefix))
+                        .count();
+                    
+                    if (currentCount < trigger.getMaxFound()) {
+                        // Consume notetaking tool before giving research
+                        if (consumeNotetakingTool(player)) {
+                            giveResearchNote(player, researchId);
+                            
+                            // Track this trigger
+                            triggeredResearch.add(researchId + ":" + System.currentTimeMillis());
+                            PLAYER_TRIGGERED_RESEARCH.put(playerKey, triggeredResearch);
+                            
+                            LOGGER.debug("Player {} triggered biome research '{}' in {} ({}/{} times)", 
+                                player.getName().getString(), researchId, currentBiome, currentCount + 1, trigger.getMaxFound());
+                        } else {
+                            LOGGER.warn("Failed to consume notetaking tool for player {}, biome research discovery cancelled", 
+                                player.getName().getString());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Check if player has notetaking tools required for research discovery
      */

@@ -11,6 +11,7 @@ import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 /**
  * Tracks comprehensive player context for AI deity interactions including:
@@ -24,6 +25,9 @@ public class PlayerContextTracker {
     
     // In-memory tracking for active sessions
     private static final Map<UUID, EnhancedPlayerContext> playerContexts = new ConcurrentHashMap<>();
+    
+    // SMART: Biome change listener system (avoids duplicate ticking)
+    private static final List<BiConsumer<ServerPlayer, String>> biomeChangeListeners = new ArrayList<>();
     
     // NBT keys for persistence
     private static final String NBT_RITUAL_HISTORY = "ritual_history";
@@ -322,7 +326,33 @@ public class PlayerContextTracker {
                 if (!currentBiome.equals(context.currentBiome)) {
                     context.currentBiome = currentBiome;
                     context.addAction("entered " + currentBiome);
+                    
+                    // SMART: Notify research triggers about biome change (avoid duplicate ticking!)
+                    notifyBiomeChangeListeners(player, currentBiome);
                 }
+            }
+        }
+    }
+    
+    // ===== BIOME CHANGE LISTENER SYSTEM =====
+    
+    /**
+     * Register a listener for biome changes (avoids duplicate ticking)
+     */
+    public static void addBiomeChangeListener(BiConsumer<ServerPlayer, String> listener) {
+        biomeChangeListeners.add(listener);
+    }
+    
+    /**
+     * Notify all registered listeners about biome changes
+     */
+    private static void notifyBiomeChangeListeners(ServerPlayer player, String newBiome) {
+        for (BiConsumer<ServerPlayer, String> listener : biomeChangeListeners) {
+            try {
+                listener.accept(player, newBiome);
+            } catch (Exception e) {
+                // Don't let listener errors break the AI system
+                System.err.println("Error in biome change listener: " + e.getMessage());
             }
         }
     }

@@ -226,8 +226,8 @@ public class ActiveChantingSystem {
                 player.getName().getString(), chant.signs.size());
         }
         
-        // 🎯 IMMEDIATE SPELL CHECK: Check for completion right after update
-        checkForCompleteChant(player, chant);
+        // 🎯 REMOVED: Don't check for completion immediately - let player build the chant!
+        // checkForCompleteChant will be called by cleanup system after pause
     }
     
     /**
@@ -381,21 +381,36 @@ public class ActiveChantingSystem {
     }
     
     /**
-     * Clean up old/abandoned chant sequences and handle spell resolution timing (like ribbon system)
+     * Clean up old/abandoned chant sequences and handle spell checking after pause (like ribbon system)
      */
     public static void cleanupOldChants() {
         long currentTime = System.currentTimeMillis();
         long timeout = 30000; // 30 seconds
+        long pauseThreshold = 2000; // 2 seconds pause before checking spells (like ribbon)
         
         activeChants.entrySet().removeIf(entry -> {
             ActiveChant chant = entry.getValue();
             UUID playerId = entry.getKey();
             
-            // Handle spell resolution after delay (like ribbon system)
+            // Check for spell completion after pause (LIKE RIBBON SYSTEM)
+            long timeSinceLastSign = currentTime - chant.lastSignTime;
+            if (!chant.validSpellDetected && timeSinceLastSign >= pauseThreshold && !chant.isEmpty()) {
+                // Player stopped adding signs - check for valid spell
+                LOGGER.info("Player {} paused chanting for {}ms - checking for spell completion", playerId, timeSinceLastSign);
+                
+                MinecraftServer server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
+                if (server != null) {
+                    ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+                    if (player != null) {
+                        checkForCompleteChant(player, chant);
+                    }
+                }
+            }
+            
+            // Handle spell resolution after delay (after spell detected)
             if (chant.shouldResolveSpell()) {
                 LOGGER.info("Resolving spell after delay for player {}", playerId);
                 
-                // Find the player and execute the spell
                 MinecraftServer server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
                 if (server != null) {
                     ServerPlayer player = server.getPlayerList().getPlayer(playerId);
@@ -412,7 +427,7 @@ public class ActiveChantingSystem {
             }
             
             // Only remove abandoned chants (no signs and old timeout)
-            if (chant.isEmpty() && currentTime - chant.lastSignTime > timeout) {
+            if (chant.isEmpty() && timeSinceLastSign > timeout) {
                 LOGGER.debug("Cleaning up abandoned chant for player {}", playerId);
                 chant.clear();
                 return true;
