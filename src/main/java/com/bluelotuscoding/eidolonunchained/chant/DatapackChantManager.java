@@ -412,6 +412,7 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
     /**
      * CRITICAL: Register client-side chants with Eidolon's spell system
      * This ensures that spell resolution works in multiplayer
+     * Uses client-safe registration to avoid config conflicts
      */
     public static void registerClientChantsWithEidolon() {
         if (!EidolonUnchainedConfig.COMMON.enableChantSystem.get()) {
@@ -433,15 +434,19 @@ public class DatapackChantManager extends SimpleJsonResourceReloadListener {
                 // CRITICAL: Set the sign sequence after construction
                 spell.setSigns(new elucent.eidolon.api.spells.SignSequence(signs));
                 
-                // Register the spell with Eidolon's spell system
-                // Use registerWithFallback to ensure it's in BOTH spellMap and spells list
-                elucent.eidolon.registries.Spells.registerWithFallback(spell);
+                // CLIENT-SAFE REGISTRATION: Add directly to collections without config creation
+                // This avoids "config file conflict" errors since server already created configs
+                elucent.eidolon.registries.Spells.getSpellMap().put(spell.getRegistryName(), spell);
+                elucent.eidolon.registries.Spells.getSpells().add(spell);
                 
                 registered++;
                 LOGGER.info("CLIENT: Successfully registered chant spell: {} with signs: {}", 
                     chant.getId(), chant.getSignSequence());
             } catch (Exception e) {
                 LOGGER.error("CLIENT: Failed to register chant {}: {}", chant.getId(), e.getMessage());
+                if (e.getMessage().contains("Config conflict detected")) {
+                    LOGGER.error("CLIENT: Skipping config creation for client-side spell registration");
+                }
                 e.printStackTrace();
             }
         }
