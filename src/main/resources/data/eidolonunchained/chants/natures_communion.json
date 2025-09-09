@@ -8,6 +8,7 @@
   "cooldown": 45,
   "show_in_codex": true,
   "linked_deity": "eidolonunchained:nature_deity",
+  "prayer_effect_type": "growth",
   "signs": [
     "eidolon:harmony",
     "eidolon:soul",

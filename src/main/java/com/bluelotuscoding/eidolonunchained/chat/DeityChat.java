@@ -369,19 +369,23 @@ public class DeityChat {
                 if (!aiCommands.isEmpty()) {
                     // 🔥 TIER ENFORCEMENT: Check if player is allowed to receive blessings
                     if (shouldAllowBlessing(player, deity, message)) {
-                        // Limit commands based on progression level
-                        String progressionLevel = getDynamicProgressionLevel(deity, player);
-                        int maxCommands = getMaxCommandsForTier(progressionLevel);
+                        // Determine prayer type (blessing, curse, conversation, etc.)
+                        // Use the existing aiConfig from outer scope for proper prayer type detection
+                        String prayerType = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
+                            .determinePrayerTypeForDeity(message, rawResponse, aiConfig);
                         
-                        // Limit the commands to appropriate tier
+                        // Get max commands from AI deity config for this specific prayer type
+                        int maxCommands = getMaxCommandsForPrayerType(deityId, prayerType);
+                        
+                        // Limit the commands to the configured amount for this prayer type
                         List<String> limitedCommands = aiCommands.size() > maxCommands ? 
                             aiCommands.subList(0, maxCommands) : aiCommands;
                         
                         commandsExecuted = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
                             .executeCommands(limitedCommands, player);
                         
-                        LOGGER.info("� AI request fulfilled: executed {} commands for {} (tier: {}, max: {}): {}", 
-                            commandsExecuted, player.getName().getString(), progressionLevel, maxCommands, limitedCommands);
+                        LOGGER.info("🔥 AI request fulfilled: executed {} commands for {} (prayer type: {}, configured max: {}): {}", 
+                            commandsExecuted, player.getName().getString(), prayerType, maxCommands, limitedCommands);
                     } else {
                         LOGGER.info("🚫 Blessing request denied for {} due to tier restrictions or cooldown", 
                             player.getName().getString());
@@ -2070,8 +2074,42 @@ public class DeityChat {
     }
     
     /**
-     * Get maximum commands allowed per tier to prevent over-blessing
+     * Get maximum commands allowed based on AI deity config, NOT hardcoded values
+     * This respects the JSON configuration for each prayer type
      */
+    private static int getMaxCommandsForPrayerType(ResourceLocation deityId, String prayerType) {
+        try {
+            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deityId);
+            if (aiConfig == null) {
+                LOGGER.warn("No AI config found for deity {}, using default limit", deityId);
+                return 1; // Safe fallback
+            }
+            
+            // Get the specific prayer config for this type
+            PrayerAIConfig prayerConfig = aiConfig.getPrayerConfig(prayerType);
+            if (prayerConfig != null) {
+                // Use the configured max_commands from JSON
+                int configuredMax = com.bluelotuscoding.eidolonunchained.ai.EffectiveAIConfig
+                    .getMaxCommands(deityId, prayerType, prayerConfig);
+                
+                LOGGER.debug("Using configured max commands for {}/{}: {}", 
+                    deityId, prayerType, configuredMax);
+                return configuredMax;
+            }
+            
+            LOGGER.warn("No prayer config found for {}/{}, using fallback", deityId, prayerType);
+            return 1; // Safe fallback
+            
+        } catch (Exception e) {
+            LOGGER.error("Error getting max commands for {}/{}: {}", deityId, prayerType, e.getMessage());
+            return 1; // Safe fallback
+        }
+    }
+    
+    /**
+     * @deprecated Use getMaxCommandsForPrayerType() instead to respect JSON configuration
+     */
+    @Deprecated
     private static int getMaxCommandsForTier(String progressionLevel) {
         String lowerLevel = progressionLevel.toLowerCase();
         

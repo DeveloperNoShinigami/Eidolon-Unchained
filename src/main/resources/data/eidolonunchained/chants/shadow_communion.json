@@ -8,6 +8,7 @@
   "cooldown": 1,
   "show_in_codex": true,
   "linked_deity": "eidolonunchained:dark_deity",
+  "prayer_effect_type": "conversation",
   "signs": [
     "eidolon:wicked",
     "eidolon:wicked",

@@ -8,6 +8,7 @@
   "difficulty": 5,
   "show_in_codex": true,
   "linked_deity": "eidolonunchained:dark_deity",
+  "prayer_effect_type": "guidance",
   "signs": [
     "eidolon:wicked",
     "eidolon:soul",

@@ -102,6 +102,32 @@ public class PlayerChantingSystem {
             }, CompletableFuture.delayedExecutor(SPELL_RESOLUTION_DELAY, TimeUnit.MILLISECONDS));
         }
         
+        void scheduleEidolonSpellExecution(elucent.eidolon.api.spells.Spell eidolonSpell, ServerPlayer player, SignSequence sequence) {
+            // Cancel any existing scheduled execution
+            if (spellExecutionTask != null && !spellExecutionTask.isDone()) {
+                spellExecutionTask.cancel(false);
+            }
+            
+            // Schedule NATIVE EIDOLON spell execution after delay
+            spellExecutionTask = CompletableFuture.runAsync(() -> {
+                try {
+                    // Execute native Eidolon spell using their casting system
+                    BlockPos playerPos = player.blockPosition();
+                    eidolonSpell.cast(player.level(), playerPos, player, sequence);
+                    
+                    LOGGER.info("Successfully cast Eidolon spell {} for player {}", 
+                        eidolonSpell.getRegistryName(), player.getName().getString());
+                        
+                } catch (Exception e) {
+                    LOGGER.error("Error executing Eidolon spell {} for player {}: {}", 
+                        eidolonSpell.getRegistryName(), player.getName().getString(), e.getMessage());
+                } finally {
+                    // Clear the chant after execution (success or failure)
+                    PlayerChantingSystem.clearPlayerChant(player);
+                }
+            }, CompletableFuture.delayedExecutor(SPELL_RESOLUTION_DELAY, TimeUnit.MILLISECONDS));
+        }
+        
         void clear() {
             signs.clear();
             if (spellExecutionTask != null && !spellExecutionTask.isDone()) {
@@ -144,7 +170,7 @@ public class PlayerChantingSystem {
     }
     
     /**
-     * Check if current sequence matches any complete datapack chant
+     * Check if current sequence matches any complete datapack chant OR Eidolon spell
      * IMMEDIATE execution like ribbon system - no polling needed!
      */
     private static void checkAndHandleSpellCompletion(ServerPlayer player, PlayerChant chant) {
@@ -156,7 +182,47 @@ public class PlayerChantingSystem {
             signIds.add(sign.getRegistryName());
         }
         
-        // Look for matching datapack chants
+        // FIRST: Check for Eidolon native spells
+        try {
+            SignSequence eidolonSequence = new SignSequence(chant.signs);
+            elucent.eidolon.api.spells.Spell eidolonSpell = elucent.eidolon.registries.Spells.find(eidolonSequence, player.level());
+            
+            if (eidolonSpell != null) {
+                // Found Eidolon spell! Execute it using Eidolon's system
+                
+                // Enhanced completion particles
+                spawnCompletionParticles(player);
+                
+                // Play completion sound
+                player.level().playSound(
+                    null,
+                    player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.PLAYER_LEVELUP,
+                    SoundSource.PLAYERS,
+                    0.5f, 1.2f
+                );
+                
+                // Show casting message
+                String spellName = eidolonSpell.getRegistryName().getPath().replace("_", " ");
+                spellName = spellName.substring(0, 1).toUpperCase() + spellName.substring(1);
+                
+                player.sendSystemMessage(
+                    Component.literal("§d✓ " + spellName + " §7(Eidolon spell - casting in 1s...)"), 
+                    true
+                );
+                
+                // Schedule EIDOLON spell execution after delay
+                chant.scheduleEidolonSpellExecution(eidolonSpell, player, eidolonSequence);
+                
+                LOGGER.info("Player {} completed Eidolon spell: {} - scheduled for execution", 
+                    player.getName().getString(), eidolonSpell.getRegistryName());
+                return; // Found match, done
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Error checking Eidolon spells: {}", e.getMessage());
+        }
+        
+        // SECOND: Look for matching datapack chants  
         for (DatapackChant datapackChant : DatapackChantManager.getAllChantsCollection()) {
             if (datapackChant.getSignSequence().equals(signIds)) {
                 // Found exact match! Schedule execution after delay (like ribbon)

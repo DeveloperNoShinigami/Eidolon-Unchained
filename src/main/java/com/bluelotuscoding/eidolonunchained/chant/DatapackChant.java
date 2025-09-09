@@ -28,12 +28,13 @@ public class DatapackChant {
     private final List<String> requirements;
     private final boolean showInCodex;
     private final ResourceLocation linkedDeity; // Optional deity connection
+    private final String prayerEffectType; // Prayer type for AI deity interactions
     
     public DatapackChant(ResourceLocation id, String name, String description, 
                         List<ResourceLocation> signSequence, String category, ResourceLocation codexIcon,
                         int difficulty, int manaCost, int cooldown, List<ChantEffect> effects,
                         List<String> requirements, boolean showInCodex, 
-                        ResourceLocation linkedDeity) {
+                        ResourceLocation linkedDeity, String prayerEffectType) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -47,6 +48,7 @@ public class DatapackChant {
         this.requirements = new ArrayList<>(requirements);
         this.showInCodex = showInCodex;
         this.linkedDeity = linkedDeity;
+        this.prayerEffectType = prayerEffectType;
     }
     
     public ResourceLocation getId() { return id; }
@@ -63,6 +65,7 @@ public class DatapackChant {
     public boolean shouldShowInCodex() { return showInCodex; }
     public ResourceLocation getLinkedDeity() { return linkedDeity; }
     public boolean hasLinkedDeity() { return linkedDeity != null; }
+    public String getPrayerEffectType() { return prayerEffectType; }
     
     /**
      * Check if player meets requirements to perform this chant
@@ -228,6 +231,12 @@ public class DatapackChant {
             linkedDeity = new ResourceLocation(json.get("linked_deity").getAsString());
         }
         
+        // Parse optional prayer effect type (for AI deity integration)
+        String prayerEffectType = null;
+        if (json.has("prayer_effect_type")) {
+            prayerEffectType = json.get("prayer_effect_type").getAsString();
+        }
+        
         // Parse sign sequence
         List<ResourceLocation> signSequence = new ArrayList<>();
         if (json.has("signs")) {
@@ -256,7 +265,7 @@ public class DatapackChant {
         }
         
         return new DatapackChant(id, name, description, signSequence, category, codexIcon,
-                               difficulty, manaCost, cooldown, effects, requirements, showInCodex, linkedDeity);
+                               difficulty, manaCost, cooldown, effects, requirements, showInCodex, linkedDeity, prayerEffectType);
     }
     
     /**
@@ -273,6 +282,11 @@ public class DatapackChant {
         // Add optional linked deity
         if (linkedDeity != null) {
             json.addProperty("linked_deity", linkedDeity.toString());
+        }
+        
+        // Add optional prayer effect type
+        if (prayerEffectType != null && !prayerEffectType.isEmpty()) {
+            json.addProperty("prayer_effect_type", prayerEffectType);
         }
         
         // Add sign sequence

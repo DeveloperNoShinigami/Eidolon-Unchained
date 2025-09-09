@@ -8,6 +8,7 @@
   "difficulty": 4,
   "show_in_codex": true,
   "linked_deity": "eidolonunchained:nature_deity",
+  "prayer_effect_type": "curse",
   "signs": [
     "eidolon:harmony",
     "eidolon:warding",

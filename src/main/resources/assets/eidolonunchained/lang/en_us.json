@@ -225,6 +225,7 @@
   "eidolonunchained.ui.chant.system_disabled": "Chant system is disabled",
   "eidolonunchained.ui.chant.success": "✨ %s completed successfully!",
   "eidolonunchained.ui.chant.deity_listening": "✨ %s completed! The deity is listening...",
+  "eidolonunchained.ui.chant.deity_acknowledgment": "✨ %s completed! The deity acknowledges your reverence.",
   "eidolonunchained.ui.chant.effect_failed": "Chant effect failed to execute",
   
   "eidolonunchained.ui.deity.api_key_required": "The divine connection requires an API key. Please contact server administrator.",

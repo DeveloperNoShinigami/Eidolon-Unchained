@@ -99,8 +99,9 @@ public class DatapackChantSpell extends PrayerSpell {
             LOGGER.warn("Failed to record chant for AI context: {}", e.getMessage());
         }
         
-        // Check if this chant is linked to a deity
-        if (chantData.hasLinkedDeity()) {
+        // 🔥 NEW: Only trigger deity conversation if prayer_effect_type is specified
+        // This allows chants to be linked to deities for lore/context without auto-triggering conversations
+        if (chantData.hasLinkedDeity() && chantData.getPrayerEffectType() != null && !chantData.getPrayerEffectType().isEmpty()) {
             // Import the necessary classes for deity interaction
             try {
                 var aiDeityManager = com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance();
@@ -117,7 +118,11 @@ public class DatapackChantSpell extends PrayerSpell {
                 // Execute chant effects first
                 executeChantEffects(serverPlayer, world, pos);
                 
-                // Then trigger deity conversation
+                // 🔥 Store this chant for prayer type detection
+                com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
+                    .setLastPerformedChant(serverPlayer, chantData);
+                
+                // Then trigger deity conversation using the prayer_effect_type
                 java.lang.reflect.Method startConversation = deityChat.getDeclaredMethod("startConversation", 
                     ServerPlayer.class, net.minecraft.resources.ResourceLocation.class);
                 startConversation.invoke(null, serverPlayer, chantData.getLinkedDeity());
@@ -130,6 +135,12 @@ public class DatapackChantSpell extends PrayerSpell {
                 executeChantEffects(serverPlayer, world, pos);
                 serverPlayer.sendSystemMessage(Component.translatable("eidolonunchained.ui.chant.success", chantData.getName()));
             }
+        } else if (chantData.hasLinkedDeity()) {
+            // Chant is linked to deity but no prayer_effect_type - just execute effects and show lore
+            executeChantEffects(serverPlayer, world, pos);
+            serverPlayer.sendSystemMessage(Component.translatable("eidolonunchained.ui.chant.deity_acknowledgment", chantData.getName()));
+            LOGGER.info("Chant {} linked to deity {} but no prayer_effect_type - no conversation triggered", 
+                chantData.getId(), chantData.getLinkedDeity());
         } else {
             // Execute normal chant effects
             executeChantEffects(serverPlayer, world, pos);
