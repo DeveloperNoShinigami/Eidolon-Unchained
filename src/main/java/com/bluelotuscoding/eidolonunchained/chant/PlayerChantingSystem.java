@@ -99,12 +99,12 @@ public class PlayerChantingSystem {
                     LOGGER.info("Successfully executed spell {} for player {}", 
                         spell.getName(), player.getName().getString());
                         
-                    // Clear the chant after successful execution
-                    clearPlayerChant(player);
-                    
                 } catch (Exception e) {
                     LOGGER.error("Error executing spell {} for player {}: {}", 
                         spell.getName(), player.getName().getString(), e.getMessage());
+                } finally {
+                    // Clear the chant after execution (success or failure)
+                    PlayerChantingSystem.clearPlayerChant(player);
                 }
             }, CompletableFuture.delayedExecutor(SPELL_RESOLUTION_DELAY, TimeUnit.MILLISECONDS));
         }
