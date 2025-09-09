@@ -41,8 +41,8 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
     
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
-        // Use AFTER_TRANSLUCENT_BLOCKS for better depth handling (like ChantCasterRenderer)
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+        // Try AFTER_ENTITIES stage like many other mod renderers
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
             return;
         }
         
@@ -53,7 +53,14 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
         // Get current chant signs for this player
         List<Sign> signs = PlayerChantingSystem.getPlayerChantSigns(player.getUUID());
         
+        // DEBUG: Log when we're checking for signs
+        if (mc.level.getGameTime() % 20 == 0) { // Every second
+            System.out.println("DEBUG: PlayerChantCasterRenderer checking for signs. Found: " + signs.size());
+        }
+        
         if (signs.isEmpty()) return;
+        
+        System.out.println("DEBUG: Rendering " + signs.size() + " chant signs for player");
         
         // Render using Eidolon's ChantCasterRenderer logic
         renderPlayerChantSigns(event.getPoseStack(), event.getPartialTick(), player, signs);
@@ -76,9 +83,9 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
         TextureAtlasSprite ring = mc.getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
             .apply(new ResourceLocation("eidolon", "particle/ring"));
         
-        // Player position with interpolation - HIGHER for better visibility
+        // Player position with interpolation
         double px = Mth.lerp(partialTick, player.xOld, player.getX());
-        double py = Mth.lerp(partialTick, player.yOld, player.getY()) + 1.8; // Higher to avoid ground clipping
+        double py = Mth.lerp(partialTick, player.yOld, player.getY()) + 0.5; // Eye level, not above
         double pz = Mth.lerp(partialTick, player.zOld, player.getZ());
         
         // Translate relative to camera (like entity rendering)
@@ -92,11 +99,11 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
         
         float time = player.tickCount + partialTick;
         
-        // Setup circle parameters (like ChantCasterRenderer) - FURTHER AWAY to avoid clipping
+        // Setup circle parameters (like ChantCasterRenderer)
         int sz = Math.max(0, signs.size() - 1);
         float r = Mth.sqrt(sz) / 4f;
         if (sz > 0) r = Math.max(0.3f, r);
-        Vec3 center = look.scale(1.5).add(0, -0.3f, 0); // Forward 1.5 blocks, down slightly
+        Vec3 center = look.add(0, 0.5f, 0);
         
         // Render each sign in a circle (exact ChantCasterRenderer logic)
         for (int i = 0; i < signs.size(); i++) {
