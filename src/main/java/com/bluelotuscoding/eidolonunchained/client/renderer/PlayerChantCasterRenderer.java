@@ -75,7 +75,7 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
         
         mStack.pushPose();
         
-        // Get camera position - needed for RenderLevelStageEvent world rendering
+        // Get camera position for proper world-to-screen rendering
         Minecraft mc = Minecraft.getInstance();
         Vec3 cameraPos = mc.gameRenderer.getMainCamera().getPosition();
         
@@ -83,12 +83,12 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
         TextureAtlasSprite ring = mc.getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
             .apply(new ResourceLocation("eidolon", "particle/ring"));
         
-        // Player interpolated position
+        // Player position with interpolation
         double px = Mth.lerp(partialTick, player.xOld, player.getX());
-        double py = Mth.lerp(partialTick, player.yOld, player.getY());
+        double py = Mth.lerp(partialTick, player.yOld, player.getY()) + 0.5; // Eye level, not above
         double pz = Mth.lerp(partialTick, player.zOld, player.getZ());
         
-        // Translate relative to camera for RenderLevelStageEvent (this is correct for world rendering)
+        // Translate relative to camera (like entity rendering)
         mStack.translate(px - cameraPos.x, py - cameraPos.y, pz - cameraPos.z);
         
         // Player's look direction (like ChantCasterRenderer)

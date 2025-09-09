@@ -10,6 +10,7 @@ import com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiAPIClient;
 import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.bluelotuscoding.eidolonunchained.chant.PlayerChantingSystem;
+import com.bluelotuscoding.eidolonunchained.util.CommandStringUtils;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -421,8 +422,8 @@ public class DeityChat {
                 return;
             }
             
-            // Clean response for display (remove any technical mod IDs that leaked through)
-            String cleanedResponse = cleanModIdLeakage(rawResponse);
+            // Clean response for display (remove commands and technical mod IDs)
+            String cleanedResponse = CommandStringUtils.safeChatDisplay(cleanModIdLeakage(rawResponse));
             
             // Add response to history (using cleaned version)
             if (history != null) {

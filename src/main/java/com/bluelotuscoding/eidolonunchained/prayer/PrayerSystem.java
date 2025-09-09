@@ -8,6 +8,7 @@ import com.bluelotuscoding.eidolonunchained.ai.PrayerAIConfig;
 import com.bluelotuscoding.eidolonunchained.ai.PlayerContext;
 import com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiAPIClient;
 import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
+import com.bluelotuscoding.eidolonunchained.util.CommandStringUtils;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
@@ -245,8 +246,11 @@ public class PrayerSystem {
         client.generateResponse(prompt, personality, aiConfig.api_settings.generationConfig, aiConfig.api_settings.safetySettings)
             .thenAccept(response -> {
                 if (response.success) {
+                    // Clean dialogue of commands before showing to player
+                    String cleanDialogue = CommandStringUtils.safeChatDisplay(response.dialogue);
+                    
                     // Send deity response to player with prominent display
-                    sendDeityMessage(player, deity.getDisplayName(), response.dialogue, false);
+                    sendDeityMessage(player, deity.getDisplayName(), cleanDialogue, false);
                     
                     // Execute commands and get count
                     int commandsExecuted = executeCommands(player, response.commands, prayerConfig);
