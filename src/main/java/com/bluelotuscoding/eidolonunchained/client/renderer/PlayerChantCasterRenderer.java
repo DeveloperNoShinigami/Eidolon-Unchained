@@ -79,9 +79,13 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
         Minecraft mc = Minecraft.getInstance();
         Vec3 cameraPos = mc.gameRenderer.getMainCamera().getPosition();
         
+        // Get the ring texture like ChantCasterRenderer
+        TextureAtlasSprite ring = mc.getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
+            .apply(new ResourceLocation("eidolon", "particle/ring"));
+        
         // Player position with interpolation
         double px = Mth.lerp(partialTick, player.xOld, player.getX());
-        double py = Mth.lerp(partialTick, player.yOld, player.getY()) + 1.5; // Above player
+        double py = Mth.lerp(partialTick, player.yOld, player.getY()) + 0.5; // Eye level, not above
         double pz = Mth.lerp(partialTick, player.zOld, player.getZ());
         
         // Translate relative to camera (like entity rendering)
@@ -126,7 +130,7 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
             float alphaMod = 1.0f;
             
             // Render sign sprite using exact ChantCasterRenderer vertex calls
-            renderSignSprite(mStack, sb, spr, o, dx, dy, sign, brightMod, alphaMod);
+            renderSignSprite(mStack, sb, spr, ring, o, dx, dy, sign, brightMod, alphaMod);
         }
         
         mStack.popPose();
@@ -136,8 +140,8 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
      * Render sign sprite using exact ChantCasterRenderer logic
      */
     private static void renderSignSprite(PoseStack mStack, VertexConsumer sb, TextureAtlasSprite spr, 
-                                        Vector3f o, Vector3f dx, Vector3f dy, Sign sign, 
-                                        float brightMod, float alphaMod) {
+                                        TextureAtlasSprite ring, Vector3f o, Vector3f dx, Vector3f dy, 
+                                        Sign sign, float brightMod, float alphaMod) {
         // Front and back faces (exactly like ChantCasterRenderer)
         for (int j = 0; j < 2; j++) {
             sb.vertex(mStack.last().pose(), o.x() - dx.x() + dy.x(), o.y() - dx.y() + dy.y(), o.z() - dx.z() + dy.z())
@@ -175,6 +179,47 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
                 .color(sign.getRed(), sign.getGreen(), sign.getBlue(), brightMod * alphaMod)
                 .uv2(0).endVertex();
         }
+        
+        // RING RENDERING (the missing visual element!)
+        // Scale up dx/dy for ring (exactly like ChantCasterRenderer)
+        dx.mul(1.75f);
+        dy.mul(1.75f);
+        
+        // Front ring face
+        sb.vertex(mStack.last().pose(), o.x() - dx.x() + dy.x(), o.y() - dx.y() + dy.y(), o.z() - dx.z() + dy.z())
+            .uv(ring.getU1(), ring.getV1())
+            .color(sign.getRed(), sign.getGreen(), sign.getBlue(), alphaMod * 0.5f)
+            .uv2(0).endVertex();
+        sb.vertex(mStack.last().pose(), o.x() - dx.x() - dy.x(), o.y() - dx.y() - dy.y(), o.z() - dx.z() - dy.z())
+            .uv(ring.getU1(), ring.getV0())
+            .color(sign.getRed(), sign.getGreen(), sign.getBlue(), alphaMod * 0.5f)
+            .uv2(0).endVertex();
+        sb.vertex(mStack.last().pose(), o.x() + dx.x() - dy.x(), o.y() + dx.y() - dy.y(), o.z() + dx.z() - dy.z())
+            .uv(ring.getU0(), ring.getV0())
+            .color(sign.getRed(), sign.getGreen(), sign.getBlue(), alphaMod * 0.5f)
+            .uv2(0).endVertex();
+        sb.vertex(mStack.last().pose(), o.x() + dx.x() + dy.x(), o.y() + dx.y() + dy.y(), o.z() + dx.z() + dy.z())
+            .uv(ring.getU0(), ring.getV1())
+            .color(sign.getRed(), sign.getGreen(), sign.getBlue(), alphaMod * 0.5f)
+            .uv2(0).endVertex();
+
+        // Back ring face
+        sb.vertex(mStack.last().pose(), o.x() + dx.x() + dy.x(), o.y() + dx.y() + dy.y(), o.z() + dx.z() + dy.z())
+            .uv(ring.getU1(), ring.getV1())
+            .color(sign.getRed(), sign.getGreen(), sign.getBlue(), alphaMod * 0.5f)
+            .uv2(0).endVertex();
+        sb.vertex(mStack.last().pose(), o.x() + dx.x() - dy.x(), o.y() + dx.y() - dy.y(), o.z() + dx.z() - dy.z())
+            .uv(ring.getU1(), ring.getV0())
+            .color(sign.getRed(), sign.getGreen(), sign.getBlue(), alphaMod * 0.5f)
+            .uv2(0).endVertex();
+        sb.vertex(mStack.last().pose(), o.x() - dx.x() - dy.x(), o.y() - dx.y() - dy.y(), o.z() - dx.z() - dy.z())
+            .uv(ring.getU0(), ring.getV0())
+            .color(sign.getRed(), sign.getGreen(), sign.getBlue(), alphaMod * 0.5f)
+            .uv2(0).endVertex();
+        sb.vertex(mStack.last().pose(), o.x() - dx.x() + dy.x(), o.y() - dx.y() + dy.y(), o.z() - dx.z() + dy.z())
+            .uv(ring.getU0(), ring.getV1())
+            .color(sign.getRed(), sign.getGreen(), sign.getBlue(), alphaMod * 0.5f)
+            .uv2(0).endVertex();
     }    /**
      * Render individual sign sprite (copied from ChantCasterRenderer)
      */
