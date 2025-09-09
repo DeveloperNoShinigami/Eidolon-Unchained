@@ -8,7 +8,6 @@ import elucent.eidolon.api.spells.Sign;
 import elucent.eidolon.event.ClientEvents;
 import elucent.eidolon.util.RenderUtil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -50,119 +49,107 @@ public class PlayerChantRenderer {
         renderFloatingSignsAroundPlayer(event.getPoseStack(), 
             player, signs, event.getPartialTick());
     }
-    
+
     /**
      * Render floating signs in a circle around the player, emulating ChantCasterRenderer
      */
-    private static void renderFloatingSignsAroundPlayer(PoseStack poseStack, 
+    private static void renderFloatingSignsAroundPlayer(PoseStack mStack, 
                                                        Player player, List<Sign> signs, float partialTick) {
         
         Minecraft mc = Minecraft.getInstance();
-        VertexConsumer buffer = ClientEvents.getDelayedRender().getBuffer(RenderUtil.GLOWING_BLOCK_PARTICLE);
+        VertexConsumer sb = ClientEvents.getDelayedRender().getBuffer(RenderUtil.GLOWING_SPRITE);
         
-        poseStack.pushPose();
+        mStack.pushPose();
         
-        // Calculate player position with interpolation
+        // Calculate player position with interpolation (like entity renderer)
         double px = Mth.lerp(partialTick, player.xOld, player.getX());
         double py = Mth.lerp(partialTick, player.yOld, player.getY());
         double pz = Mth.lerp(partialTick, player.zOld, player.getZ());
         
-        // Camera position for relative rendering
-        Vec3 cameraPos = mc.gameRenderer.getMainCamera().getPosition();
-        poseStack.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
+        // Don't translate by camera - work in world coordinates
+        // (ChantCasterRenderer doesn't translate by camera either)
         
-        // Circle configuration (like ChantCasterEntity)
-        int signCount = signs.size();
-        float radius = Math.max(0.3f, Mth.sqrt(signCount) / 4f);
-        
-        // Player's look direction (use camera look for consistency)
-        Vec3 lookDirection = player.getLookAngle();
-        double yaw = Mth.atan2(lookDirection.x, lookDirection.z);
+        // Player's look direction (like ChantCasterEntity)
+        Vec3 look = player.getLookAngle();
+        double yaw = Mth.atan2(look.x, look.z);
         Vec3 left = new Vec3(Math.cos(yaw), 0, -Math.sin(yaw));
-        Vec3 up = left.cross(lookDirection);
+        Vec3 up = left.cross(look);
         
-        // Center point for the sign circle (above player's head)
-        Vec3 center = new Vec3(px, py + 2.2, pz).add(lookDirection.scale(1.5));
+        // Circle configuration (exactly like ChantCasterEntity)
+        int sz = Math.max(0, signs.size() - 1);
+        float r = Mth.sqrt(sz) / 4f;
+        if (sz > 0) r = Math.max(0.3f, r);
+        
+        // Center point for the sign circle (like ChantCasterEntity: look + 0.5 up)
+        Vec3 center = new Vec3(px, py, pz).add(look).add(0, 0.5f, 0);
         
         // Render each sign in the circle
-        for (int i = 0; i < signCount; i++) {
-            Sign sign = signs.get(i);
+        for (int i = 0; i < signs.size(); i++) {
+            Sign s = signs.get(i);
             
-            // Calculate position in circle
-            float angle = -Mth.PI / 2 - i * 2 * Mth.PI / signCount;
-            float sinA = Mth.sin(angle);
-            float cosA = Mth.cos(angle);
+            // Calculate position in circle (exactly like ChantCasterEntity)
+            float a = -Mth.PI / 2 - i * 2 * Mth.PI / signs.size();
+            float sa = Mth.sin(a), ca = Mth.cos(a);
             
-            Vec3 signPos = center.add(left.scale(radius * cosA)).add(up.scale(radius * sinA));
-            Vec3 dx = left.scale(0.175);
-            Vec3 dy = up.scale(0.175);
+            Vec3 od = center.add(left.scale(r * ca)).add(up.scale(r * sa));
+            Vec3 dxd = left.scale(0.175), dyd = up.scale(0.175);
+            Vector3f o = new Vector3f((float)od.x, (float)od.y, (float)od.z);
+            Vector3f dx = new Vector3f((float)dxd.x, (float)dxd.y, (float)dxd.z);
+            Vector3f dy = new Vector3f((float)dyd.x, (float)dyd.y, (float)dyd.z);
             
-            Vector3f pos = new Vector3f((float)signPos.x, (float)signPos.y, (float)signPos.z);
-            Vector3f dxVec = new Vector3f((float)dx.x, (float)dx.y, (float)dx.z);
-            Vector3f dyVec = new Vector3f((float)dy.x, (float)dy.y, (float)dy.z);
+            // Get sign texture (like ChantCasterEntity)
+            TextureAtlasSprite spr = mc.getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(s.getSprite());
             
-            // Get sign texture
-            TextureAtlasSprite sprite = mc.getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(sign.getSprite());
-            
-            // Brightness modulation (pulsing effect)
-            float brightMod = Mth.clamp(Mth.sin(angle + Mth.TWO_PI * mc.level.getGameTime() / 20), 0, 1);
+            // Brightness modulation with pulsing effect (like ChantCasterEntity)
+            float brightMod = Mth.clamp(Mth.sin(a + Mth.TWO_PI * mc.level.getGameTime() / 20), 0, 1);
             brightMod *= brightMod;
             brightMod = 0.6f + 0.4f * brightMod;
             
-            // Render sign quad (front and back faces)
-            renderSignQuad(buffer, poseStack, pos, dxVec, dyVec, sprite, sign, brightMod);
+            // Render sign quad (front and back faces, like ChantCasterEntity)
+            for (int j = 0; j < 2; j++) {
+                sb.vertex(mStack.last().pose(), o.x() - dx.x() + dy.x(), o.y() - dx.y() + dy.y(), o.z() - dx.z() + dy.z())
+                    .uv(spr.getU1(), spr.getV1())
+                    .color(s.getRed(), s.getGreen(), s.getBlue(), brightMod)
+                    .uv2(0).endVertex();
+                    
+                sb.vertex(mStack.last().pose(), o.x() - dx.x() - dy.x(), o.y() - dx.y() - dy.y(), o.z() - dx.z() - dy.z())
+                    .uv(spr.getU1(), spr.getV0())
+                    .color(s.getRed(), s.getGreen(), s.getBlue(), brightMod)
+                    .uv2(0).endVertex();
+                    
+                sb.vertex(mStack.last().pose(), o.x() + dx.x() - dy.x(), o.y() + dx.y() - dy.y(), o.z() + dx.z() - dy.z())
+                    .uv(spr.getU0(), spr.getV0())
+                    .color(s.getRed(), s.getGreen(), s.getBlue(), brightMod)
+                    .uv2(0).endVertex();
+                    
+                sb.vertex(mStack.last().pose(), o.x() + dx.x() + dy.x(), o.y() + dx.y() + dy.y(), o.z() + dx.z() + dy.z())
+                    .uv(spr.getU0(), spr.getV1())
+                    .color(s.getRed(), s.getGreen(), s.getBlue(), brightMod)
+                    .uv2(0).endVertex();
+                
+                // Back face
+                sb.vertex(mStack.last().pose(), o.x() + dx.x() + dy.x(), o.y() + dx.y() + dy.y(), o.z() + dx.z() + dy.z())
+                    .uv(spr.getU1(), spr.getV1())
+                    .color(s.getRed(), s.getGreen(), s.getBlue(), brightMod)
+                    .uv2(0).endVertex();
+                    
+                sb.vertex(mStack.last().pose(), o.x() + dx.x() - dy.x(), o.y() + dx.y() - dy.y(), o.z() + dx.z() - dy.z())
+                    .uv(spr.getU1(), spr.getV0())
+                    .color(s.getRed(), s.getGreen(), s.getBlue(), brightMod)
+                    .uv2(0).endVertex();
+                    
+                sb.vertex(mStack.last().pose(), o.x() - dx.x() - dy.x(), o.y() - dx.y() - dy.y(), o.z() - dx.z() - dy.z())
+                    .uv(spr.getU0(), spr.getV0())
+                    .color(s.getRed(), s.getGreen(), s.getBlue(), brightMod)
+                    .uv2(0).endVertex();
+                    
+                sb.vertex(mStack.last().pose(), o.x() - dx.x() + dy.x(), o.y() - dx.y() + dy.y(), o.z() - dx.z() + dy.z())
+                    .uv(spr.getU0(), spr.getV1())
+                    .color(s.getRed(), s.getGreen(), s.getBlue(), brightMod)
+                    .uv2(0).endVertex();
+            }
         }
         
-        poseStack.popPose();
-    }
-    
-    /**
-     * Render a single sign quad with proper UV mapping and colors
-     */
-    private static void renderSignQuad(VertexConsumer buffer, PoseStack poseStack, 
-                                     Vector3f pos, Vector3f dx, Vector3f dy, 
-                                     TextureAtlasSprite sprite, Sign sign, float brightness) {
-        
-        // Front face
-        buffer.vertex(poseStack.last().pose(), pos.x() - dx.x() + dy.x(), pos.y() - dx.y() + dy.y(), pos.z() - dx.z() + dy.z())
-            .uv(sprite.getU1(), sprite.getV1())
-            .color(sign.getRed(), sign.getGreen(), sign.getBlue(), brightness)
-            .uv2(0).endVertex();
-            
-        buffer.vertex(poseStack.last().pose(), pos.x() - dx.x() - dy.x(), pos.y() - dx.y() - dy.y(), pos.z() - dx.z() - dy.z())
-            .uv(sprite.getU1(), sprite.getV0())
-            .color(sign.getRed(), sign.getGreen(), sign.getBlue(), brightness)
-            .uv2(0).endVertex();
-            
-        buffer.vertex(poseStack.last().pose(), pos.x() + dx.x() - dy.x(), pos.y() + dx.y() - dy.y(), pos.z() + dx.z() - dy.z())
-            .uv(sprite.getU0(), sprite.getV0())
-            .color(sign.getRed(), sign.getGreen(), sign.getBlue(), brightness)
-            .uv2(0).endVertex();
-            
-        buffer.vertex(poseStack.last().pose(), pos.x() + dx.x() + dy.x(), pos.y() + dx.y() + dy.y(), pos.z() + dx.z() + dy.z())
-            .uv(sprite.getU0(), sprite.getV1())
-            .color(sign.getRed(), sign.getGreen(), sign.getBlue(), brightness)
-            .uv2(0).endVertex();
-        
-        // Back face (for visibility from all angles)
-        buffer.vertex(poseStack.last().pose(), pos.x() + dx.x() + dy.x(), pos.y() + dx.y() + dy.y(), pos.z() + dx.z() + dy.z())
-            .uv(sprite.getU1(), sprite.getV1())
-            .color(sign.getRed(), sign.getGreen(), sign.getBlue(), brightness)
-            .uv2(0).endVertex();
-            
-        buffer.vertex(poseStack.last().pose(), pos.x() + dx.x() - dy.x(), pos.y() + dx.y() - dy.y(), pos.z() + dx.z() - dy.z())
-            .uv(sprite.getU1(), sprite.getV0())
-            .color(sign.getRed(), sign.getGreen(), sign.getBlue(), brightness)
-            .uv2(0).endVertex();
-            
-        buffer.vertex(poseStack.last().pose(), pos.x() - dx.x() - dy.x(), pos.y() - dx.y() - dy.y(), pos.z() - dx.z() - dy.z())
-            .uv(sprite.getU0(), sprite.getV0())
-            .color(sign.getRed(), sign.getGreen(), sign.getBlue(), brightness)
-            .uv2(0).endVertex();
-            
-        buffer.vertex(poseStack.last().pose(), pos.x() - dx.x() + dy.x(), pos.y() - dx.y() + dy.y(), pos.z() - dx.z() + dy.z())
-            .uv(sprite.getU0(), sprite.getV1())
-            .color(sign.getRed(), sign.getGreen(), sign.getBlue(), brightness)
-            .uv2(0).endVertex();
+        mStack.popPose();
     }
 }

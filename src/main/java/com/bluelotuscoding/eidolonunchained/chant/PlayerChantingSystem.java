@@ -78,8 +78,9 @@ public class PlayerChantingSystem {
                     // Execute the datapack chant effects
                     spell.execute(player);
                     
-                    // Send success message
-                    player.sendSystemMessage(Component.literal("§a✨ " + spell.getName() + " §acompleted!"));
+                    // Send success message with proper translation
+                    Component translatedName = Component.translatable(spell.getName());
+                    player.sendSystemMessage(Component.literal("§a✨ ").append(translatedName).append(Component.literal(" §acompleted!")));
                     
                     // Try to also trigger Eidolon spell casting
                     SignSequence sequence = new SignSequence(signs);
@@ -181,7 +182,7 @@ public class PlayerChantingSystem {
                 );
                 
                 player.sendSystemMessage(
-                    Component.literal("§a✓ " + datapackChant.getName() + " §7(casting in 1s...)"), 
+                    Component.literal("§a✓ ").append(Component.translatable(datapackChant.getName())).append(Component.literal(" §7(casting in 1s...)")), 
                     true
                 );
                 
