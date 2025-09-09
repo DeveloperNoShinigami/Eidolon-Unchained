@@ -1288,32 +1288,18 @@ public class UnifiedCommands {
                 return 0;
             }
             
-            // Check if deity exists
-            if (DatapackDeityManager.getDeity(deityId) == null) {
-                context.getSource().sendFailure(Component.literal("§cDeity not found: " + deityIdString));
-                return 0;
-            }
+            // 🎯 FIXED: Use PatronSystem.choosePatron() which handles reputation triggers properly
+            boolean success = com.bluelotuscoding.eidolonunchained.patron.PatronSystem.choosePatron(player, deityId);
             
-            // Set patron using the capability system
-            player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
-                .ifPresent(patronData -> {
-                    ResourceLocation currentPatron = patronData.getPatron(player);
-                    if (currentPatron != null && currentPatron.equals(deityId)) {
-                        context.getSource().sendSuccess(
-                            () -> Component.literal("§e" + deityIdString + " is already your patron deity"), 
-                            false
-                        );
-                    } else {
-                        patronData.setPatron(player, deityId);
-                        context.getSource().sendSuccess(
-                            () -> Component.literal("§6You have chosen " + deityIdString + " as your patron deity"), 
-                            false
-                        );
-                    }
-                });
-            
-            if (!player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY).isPresent()) {
-                context.getSource().sendFailure(Component.literal("§cFailed to access patron data"));
+            if (success) {
+                // 🎯 TRIGGER REPUTATION CHECK - Same as devotion command
+                com.bluelotuscoding.eidolonunchained.chat.DeityChat.checkAndHandleTierProgression(player, deityId);
+                context.getSource().sendSuccess(
+                    () -> Component.literal("§6Patron selection completed with reputation checks"), 
+                    false
+                );
+            } else {
+                context.getSource().sendFailure(Component.literal("§cFailed to set patron"));
                 return 0;
             }
             

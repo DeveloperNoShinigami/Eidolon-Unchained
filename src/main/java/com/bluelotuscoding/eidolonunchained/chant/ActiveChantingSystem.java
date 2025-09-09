@@ -50,10 +50,35 @@ public class ActiveChantingSystem {
         final List<Sign> signs = new ArrayList<>();
         ChantCasterEntity entity = null;
         long lastSignTime = System.currentTimeMillis();
+        private boolean validSpellDetected = false;
+        private long spellValidationTime = 0;
+        private DatapackChant pendingSpell = null;
+        private static final long SPELL_RESOLUTION_DELAY = 1000; // 1 second like ribbon
         
         void addSign(Sign sign) {
             signs.add(sign);
             lastSignTime = System.currentTimeMillis();
+            // Reset validation when adding new signs (still building)
+            validSpellDetected = false;
+            pendingSpell = null;
+        }
+        
+        void markValidSpellDetected(DatapackChant spell) {
+            validSpellDetected = true;
+            spellValidationTime = System.currentTimeMillis();
+            pendingSpell = spell;
+        }
+        
+        boolean shouldResolveSpell() {
+            if (!validSpellDetected || pendingSpell == null) return false;
+            
+            // Resolve after delay (like ribbon system)
+            long timeSinceValidation = System.currentTimeMillis() - spellValidationTime;
+            return timeSinceValidation >= SPELL_RESOLUTION_DELAY;
+        }
+        
+        DatapackChant getPendingSpell() {
+            return pendingSpell;
         }
         
         void clear() {
@@ -62,6 +87,8 @@ public class ActiveChantingSystem {
                 entity.discard();
             }
             entity = null;
+            validSpellDetected = false;
+            pendingSpell = null;
         }
         
         boolean isEmpty() {
@@ -204,7 +231,7 @@ public class ActiveChantingSystem {
     }
     
     /**
-     * Check if current sequence matches any complete datapack chant
+     * Check if current sequence matches any complete datapack chant (like ribbon validation)
      */
     private static void checkForCompleteChant(ServerPlayer player, ActiveChant chant) {
         List<ResourceLocation> signIds = chant.getSignIds();
@@ -213,16 +240,14 @@ public class ActiveChantingSystem {
         DatapackChant matchingChant = DatapackChantManager.findChantBySignSequence(signIds);
         
         if (matchingChant != null) {
-            LOGGER.info("Complete chant detected: {} for player {}", 
+            LOGGER.info("Valid spell detected: {} for player {} - starting resolution delay", 
                 matchingChant.getId(), player.getName().getString());
             
-            // Execute the complete chant
-            executeCompleteChant(player, chant, matchingChant);
+            // 🎯 RIBBON PATTERN: Mark valid spell detected, start delay
+            chant.markValidSpellDetected(matchingChant);
             
-            // 🎯 FIXED: Don't clear immediately - let entity persist for visual feedback
-            // Clear signs but keep entity for a few seconds
-            chant.signs.clear();
-            LOGGER.info("Spell executed - signs cleared but entity persists for player {}", player.getName().getString());
+            // Entity stays visible during delay (like ribbon)
+            LOGGER.info("Entity will resolve spell after 1 second delay (like ribbon system)");
             return;
         }
         
@@ -356,7 +381,7 @@ public class ActiveChantingSystem {
     }
     
     /**
-     * Clean up old/abandoned chant sequences (called periodically)
+     * Clean up old/abandoned chant sequences and handle spell resolution timing (like ribbon system)
      */
     public static void cleanupOldChants() {
         long currentTime = System.currentTimeMillis();
@@ -364,11 +389,35 @@ public class ActiveChantingSystem {
         
         activeChants.entrySet().removeIf(entry -> {
             ActiveChant chant = entry.getValue();
-            if (currentTime - chant.lastSignTime > timeout) {
-                LOGGER.debug("Cleaning up abandoned chant for player {}", entry.getKey());
+            UUID playerId = entry.getKey();
+            
+            // Handle spell resolution after delay (like ribbon system)
+            if (chant.shouldResolveSpell()) {
+                LOGGER.info("Resolving spell after delay for player {}", playerId);
+                
+                // Find the player and execute the spell
+                MinecraftServer server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
+                if (server != null) {
+                    ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+                    if (player != null) {
+                        DatapackChant spell = chant.getPendingSpell();
+                        executeCompleteChant(player, chant, spell);
+                        
+                        // Clear everything after resolution (like ribbon)
+                        chant.clear();
+                        LOGGER.info("Spell resolved and entity cleared for player {}", playerId);
+                        return true; // Remove from active chants
+                    }
+                }
+            }
+            
+            // Only remove abandoned chants (no signs and old timeout)
+            if (chant.isEmpty() && currentTime - chant.lastSignTime > timeout) {
+                LOGGER.debug("Cleaning up abandoned chant for player {}", playerId);
                 chant.clear();
                 return true;
             }
+            
             return false;
         });
     }

@@ -30,6 +30,7 @@ public class AIItemExtractor {
     /**
      * 🔧 FIXED: Process player's original request, NOT AI's interpretation
      * This prevents confusion from AI creativity and focuses on what player actually wants
+     * HYBRID APPROACH: AI extraction first, then scoring validation
      */
     public static List<String> extractItemsViaAI(String playerMessage, ServerPlayer player, String aiResponse) {
         List<String> commands = new ArrayList<>();
@@ -39,37 +40,238 @@ public class AIItemExtractor {
             if (activeDeityId != null) {
                 var aiConfig = com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance().getAIConfig(activeDeityId);
                 if (aiConfig != null) {
-                    // 🎯 KEY CHANGE: Process PLAYER message for items, not AI response
-                    commands.addAll(processPlayerItemRequests(playerMessage, player, aiConfig));
+                    // 🎯 HYBRID STEP 1: AI-based extraction from player message
+                    Set<String> aiExtractedItems = extractItemsWithAI(playerMessage, player, aiConfig);
+                    
+                    // 🎯 HYBRID STEP 2: Validate AI extractions with scoring system
+                    commands.addAll(validateExtractedItemsWithScoring(aiExtractedItems, player, aiConfig));
                 }
             }
             
         } catch (Exception e) {
-            LOGGER.error("🤖 Error in player item extraction: {}", e.getMessage());
+            LOGGER.error("🤖 Error in hybrid AI item extraction: {}", e.getMessage());
         }
         
         return commands;
     }
     
     /**
-     * Build a specific prompt asking AI to identify requested items
+     * 🎯 HYBRID STEP 1: AI-based item extraction using natural language understanding
      */
-    private static String buildItemAnalysisPrompt(String playerMessage, ServerPlayer player) {
-        StringBuilder prompt = new StringBuilder();
+    private static Set<String> extractItemsWithAI(String playerMessage, ServerPlayer player, 
+                                                 com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
+        Set<String> extractedItems = new HashSet<>();
         
-        prompt.append("ITEM REQUEST ANALYSIS:\n");
-        prompt.append("Player Message: \"").append(playerMessage).append("\"\n\n");
-        prompt.append("INSTRUCTIONS:\n");
-        prompt.append("- If the player is requesting a specific item, respond with [ITEM:item_name]\n");
-        prompt.append("- Use natural language understanding to identify what they want\n");
-        prompt.append("- Examples:\n");
-        prompt.append("  * \"give me a sword\" → [ITEM:sword]\n");
-        prompt.append("  * \"I need the raven cloak\" → [ITEM:raven cloak]\n");
-        prompt.append("  * \"bestow upon me dark armor\" → [ITEM:dark armor]\n");
-        prompt.append("- If no specific item is requested, don't include [ITEM:...] tags\n");
-        prompt.append("- Be conversational and immersive in your response\n\n");
+        LOGGER.info("🤖 HYBRID STEP 1: AI extraction from player message: '{}'", playerMessage);
         
-        return prompt.toString();
+        // Check if this looks like an item request using AI-like understanding
+        if (!isItemRequest(playerMessage)) {
+            LOGGER.info("🤖 AI analysis: No item request patterns detected");
+            return extractedItems;
+        }
+        
+        // AI METHOD 1: Enhanced pattern matching for natural language
+        Pattern naturalLanguagePattern = Pattern.compile(
+            "(?:can i have|give me|i need|i want|bestow|grant me|i would like|may i have|could you give me)\\s+" +
+            "(?:a|an|the|some)?\\s*" +
+            "(?:new|old|fresh|good|nice|strong|powerful|magical|enchanted|blessed|divine)?\\s*" +
+            "([a-zA-Z][a-zA-Z\\s]*?)(?:\\s*[,.!?]|\\s+(?:for|to|please|now)|$)",
+            Pattern.CASE_INSENSITIVE
+        );
+        
+        Matcher matcher = naturalLanguagePattern.matcher(playerMessage);
+        while (matcher.find()) {
+            String extractedItem = matcher.group(1).trim();
+            if (extractedItem != null && !extractedItem.isEmpty()) {
+                String cleanedItem = cleanupItemName(extractedItem);
+                LOGGER.info("🤖 AI EXTRACTION (Pattern): '{}' → '{}'", extractedItem, cleanedItem);
+                extractedItems.add(cleanedItem);
+            }
+        }
+        
+        // AI METHOD 2: Semantic word analysis for complex requests
+        extractedItems.addAll(performSemanticItemAnalysis(playerMessage, aiConfig));
+        
+        // AI METHOD 3: Context-aware multi-word extraction
+        extractedItems.addAll(performContextAwareExtraction(playerMessage, aiConfig));
+        
+        LOGGER.info("🤖 HYBRID STEP 1 COMPLETE: AI extracted {} unique items: {}", 
+            extractedItems.size(), extractedItems);
+        
+        return extractedItems;
+    }
+    
+    /**
+     * 🎯 HYBRID STEP 2: Validate AI extractions using scoring system
+     */
+    private static List<String> validateExtractedItemsWithScoring(Set<String> extractedItems, ServerPlayer player,
+                                                                 com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
+        List<String> commands = new ArrayList<>();
+        
+        LOGGER.info("🎯 HYBRID STEP 2: Validating {} AI-extracted items with scoring system", extractedItems.size());
+        
+        List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
+            aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+        
+        for (String extractedItem : extractedItems) {
+            LOGGER.info("🎯 SCORING VALIDATION: Testing '{}'", extractedItem);
+            
+            // Use scoring system to find best matches
+            List<ResourceLocation> scoredMatches = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
+                .findMatchingItemsWithScoring(extractedItem, modContextIds);
+            
+            if (!scoredMatches.isEmpty()) {
+                ResourceLocation bestMatch = scoredMatches.get(0);
+                
+                // Check deity permissions
+                if (deityAllowsItem(bestMatch.toString(), aiConfig, player)) {
+                    String command = String.format("/give %s %s 1", player.getName().getString(), bestMatch.toString());
+                    commands.add(command);
+                    LOGGER.info("🔥 HYBRID SUCCESS: AI extracted '{}' → SCORING validated '{}' → APPROVED", 
+                        extractedItem, bestMatch);
+                } else {
+                    LOGGER.info("🚫 HYBRID BLOCKED: AI extracted '{}' → SCORING validated '{}' → DEITY DENIED", 
+                        extractedItem, bestMatch);
+                }
+            } else {
+                LOGGER.info("🎯 HYBRID FAILED: AI extracted '{}' → SCORING found no matches", extractedItem);
+            }
+        }
+        
+        LOGGER.info("🎯 HYBRID STEP 2 COMPLETE: {} final commands generated", commands.size());
+        return commands;
+    }
+    
+    /**
+     * AI helper: Determine if message contains item requests
+     */
+    private static boolean isItemRequest(String message) {
+        String lowerMessage = message.toLowerCase();
+        return lowerMessage.matches(".*(?:can i have|give me|i need|i want|bestow|grant me|i would like|may i have|could you give me).*");
+    }
+    
+    /**
+     * AI helper: Semantic analysis for complex item descriptions
+     */
+    private static Set<String> performSemanticItemAnalysis(String playerMessage, 
+                                                          com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
+        Set<String> semanticItems = new HashSet<>();
+        
+        LOGGER.info("🧠 SEMANTIC ANALYSIS: Analyzing '{}'", playerMessage);
+        
+        // Look for item-related keywords and their context
+        String[] itemCategories = {"sword", "armor", "cloak", "staff", "wand", "ring", "amulet", "potion", 
+                                 "scroll", "book", "crystal", "gem", "robe", "helmet", "boots", "gloves"};
+        
+        String lowerMessage = playerMessage.toLowerCase();
+        for (String category : itemCategories) {
+            if (lowerMessage.contains(category)) {
+                // Look for modifiers around the category
+                Pattern contextPattern = Pattern.compile(
+                    "(?:(?:dark|light|shadow|divine|magical|enchanted|blessed|cursed|ancient|powerful)\\s+)?" +
+                    category + 
+                    "(?:\\s+(?:of|with)\\s+(?:power|magic|strength|protection|the|darkness|light))?",
+                    Pattern.CASE_INSENSITIVE
+                );
+                
+                Matcher contextMatcher = contextPattern.matcher(playerMessage);
+                if (contextMatcher.find()) {
+                    String semanticExtraction = contextMatcher.group().trim();
+                    LOGGER.info("🧠 SEMANTIC MATCH: '{}'", semanticExtraction);
+                    semanticItems.add(cleanupItemName(semanticExtraction));
+                }
+            }
+        }
+        
+        return semanticItems;
+    }
+    
+    /**
+     * AI helper: Context-aware extraction for multi-word items
+     */
+    private static Set<String> performContextAwareExtraction(String playerMessage,
+                                                           com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
+        Set<String> contextItems = new HashSet<>();
+        
+        LOGGER.info("🎯 CONTEXT-AWARE EXTRACTION: Analyzing '{}'", playerMessage);
+        
+        // Get available items for context matching
+        List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
+            aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+        
+        List<ResourceLocation> availableItems = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
+            .getAllItemsForMods(modContextIds);
+        
+        String[] messageWords = playerMessage.toLowerCase().split("\\s+");
+        
+        // Look for multi-word item matches in the message
+        for (ResourceLocation item : availableItems) {
+            String itemName = item.getPath().replace("_", " ");
+            String[] itemWords = itemName.split("\\s+");
+            
+            if (itemWords.length > 1) { // Focus on multi-word items
+                int matchedWords = 0;
+                int totalWords = itemWords.length;
+                
+                for (String itemWord : itemWords) {
+                    for (String messageWord : messageWords) {
+                        // Fuzzy matching with edit distance tolerance
+                        if (calculateSimilarity(itemWord, messageWord) > 0.7) {
+                            matchedWords++;
+                            break;
+                        }
+                    }
+                }
+                
+                // If most words match, consider it a context match
+                double matchRatio = (double) matchedWords / totalWords;
+                if (matchRatio >= 0.6) { // 60% word match threshold
+                    LOGGER.info("🎯 CONTEXT MATCH: '{}' ({}% word match)", itemName, Math.round(matchRatio * 100));
+                    contextItems.add(itemName);
+                }
+            }
+        }
+        
+        return contextItems;
+    }
+    
+    /**
+     * Calculate similarity between two strings (0.0 = no match, 1.0 = perfect match)
+     */
+    private static double calculateSimilarity(String s1, String s2) {
+        if (s1.equals(s2)) return 1.0;
+        if (s1.contains(s2) || s2.contains(s1)) return 0.8;
+        
+        // Simple Levenshtein-based similarity
+        int maxLength = Math.max(s1.length(), s2.length());
+        if (maxLength == 0) return 1.0;
+        
+        int editDistance = getLevenshteinDistance(s1, s2);
+        return 1.0 - (double) editDistance / maxLength;
+    }
+    
+    /**
+     * Calculate Levenshtein distance between two strings
+     */
+    private static int getLevenshteinDistance(String s1, String s2) {
+        int[][] dp = new int[s1.length() + 1][s2.length() + 1];
+        
+        for (int i = 0; i <= s1.length(); i++) {
+            for (int j = 0; j <= s2.length(); j++) {
+                if (i == 0) {
+                    dp[i][j] = j;
+                } else if (j == 0) {
+                    dp[i][j] = i;
+                } else {
+                    dp[i][j] = Math.min(
+                        Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1),
+                        dp[i - 1][j - 1] + (s1.charAt(i - 1) == s2.charAt(j - 1) ? 0 : 1)
+                    );
+                }
+            }
+        }
+        
+        return dp[s1.length()][s2.length()];
     }
     
     /**
