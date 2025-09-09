@@ -28,7 +28,7 @@ import java.util.List;
  * during active chanting, emulating Eidolon's ChantCasterEntity renderer.
  */
 @OnlyIn(Dist.CLIENT)
-@Mod.EventBusSubscriber(modid = "eidolonunchained", value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = "eidolonunchained", value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class PlayerChantRenderer {
     
     @SubscribeEvent

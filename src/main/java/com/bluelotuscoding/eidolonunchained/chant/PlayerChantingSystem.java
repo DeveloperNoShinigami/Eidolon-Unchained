@@ -75,21 +75,10 @@ public class PlayerChantingSystem {
             // Schedule execution after delay (like ribbon system)
             spellExecutionTask = CompletableFuture.runAsync(() -> {
                 try {
-                    // Execute ONLY the datapack chant effects (not both!)
+                    // Execute ONLY the datapack chant effects (DatapackChantSpell handles proper messaging)
                     spell.execute(player);
                     
-                    // Send success message with proper translation (Component.literal for now)
-                    String translatedName = spell.getName(); // TODO: Fix translation
-                    if (translatedName.startsWith("eidolonunchained.chant.")) {
-                        // For now, extract the spell name from the key
-                        String[] parts = translatedName.split("\\.");
-                        if (parts.length >= 3) {
-                            translatedName = parts[2].replace("_", " ");
-                            translatedName = translatedName.substring(0, 1).toUpperCase() + translatedName.substring(1);
-                        }
-                    }
-                    player.sendSystemMessage(Component.literal("§a✨ " + translatedName + " §acompleted!"));
-                    
+                    // DON'T send our own completion message - DatapackChantSpell handles this
                     // DON'T try to trigger Eidolon spell - that causes double execution
                     // The DatapackChantSpell registration handles Eidolon integration
                     
