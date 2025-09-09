@@ -123,8 +123,25 @@ public class ActiveChantingSystem {
             return;
         }
         
-        // Use new player-centered system for visual effects and chant management
+        // OPTION 1: CURRENT - Use PlayerChantingSystem (player-centered with custom renderer)
         PlayerChantingSystem.addSignToActiveChant(player, sign, assignment.displayName);
+        
+        /* OPTION 2: REVERT TO ENTITY-BASED - Uncomment this block and comment out PlayerChantingSystem call above
+        // Original entity-based approach using ChantCasterEntity
+        ActiveChant chant = activeChants.computeIfAbsent(player.getUUID(), k -> new ActiveChant());
+        chant.addSign(sign);
+        
+        // Update ChantCasterEntity to show current sequence
+        updateChantCasterEntity(player, chant);
+        
+        // Check for complete chant after adding sign
+        checkForCompleteChant(player, chant);
+        
+        player.sendSystemMessage(
+            Component.literal("§6" + assignment.displayName + " §7(" + chant.signs.size() + " signs)"), 
+            true // action bar
+        );
+        */
         
         LOGGER.info("Player {} added sign {} using player-centered chanting system", 
             player.getName().getString(), signId);
@@ -134,6 +151,10 @@ public class ActiveChantingSystem {
      * Clear the player's active chant sequence
      */
     public static void clearActiveChant(ServerPlayer player) {
+        // OPTION 1: CURRENT - Use PlayerChantingSystem
+        PlayerChantingSystem.clearPlayerChant(player);
+        
+        /* OPTION 2: REVERT TO ENTITY-BASED - Uncomment this block and comment out PlayerChantingSystem call above
         ActiveChant chant = activeChants.get(player.getUUID());
         if (chant != null) {
             LOGGER.info("Clearing active chant for player {} ({} signs)", 
@@ -147,45 +168,62 @@ public class ActiveChantingSystem {
                 true // action bar
             );
         }
+        */
     }
+
+    /* 
+    // ===== ENTITY-BASED CHANTING METHODS (COMMENTED OUT FOR OPTION 1) =====
+    // REVERT INSTRUCTIONS: To go back to entity-based chanting:
+    // 1. Uncomment this entire block
+    // 2. Comment out PlayerChantingSystem calls in addSignToChant() and clearActiveChant() 
+    // 3. Uncomment the ActiveChant usage in addSignToChant()
+    // 4. Delete/disable PlayerChantCasterRenderer
     
     /**
      * Update the ChantCasterEntity to show current sign sequence
-     * 🎯 FIXED: Always recreate entity to avoid lifecycle conflicts
-     */
+     * 🎯 FIXED: Update existing entity instead of constantly recreating it
+     *//*
     private static void updateChantCasterEntity(ServerPlayer player, ActiveChant chant) {
         Level level = player.level();
-        
-        // Always recreate entity - ChantCasterEntity has automatic progression that conflicts with real-time building
-        if (chant.entity != null && !chant.entity.isRemoved()) {
-            chant.entity.discard();
-            chant.entity = null;
-        }
-        
-        // Create new ChantCasterEntity with current sequence
         Vec3 lookDirection = player.getLookAngle();
-        chant.entity = new ChantCasterEntity(level, player, new ArrayList<>(chant.signs), lookDirection);
         
-        // Position near player for visibility
-        chant.entity.setPos(
-            player.getX() + lookDirection.x * 0.3,
-            player.getY() + 1.2,
-            player.getZ() + lookDirection.z * 0.3
-        );
-        
-        // Spawn entity
-        level.addFreshEntity(chant.entity);
-        
-        LOGGER.info("ENTITY: Created ChantCasterEntity for player {} with {} signs", 
-            player.getName().getString(), chant.signs.size());
-        
-        // 🎯 REMOVED: Don't check for completion immediately - let player build the chant!
-        // checkForCompleteChant will be called by cleanup system after pause
-    }
+        if (chant.entity == null || chant.entity.isRemoved()) {
+            // Create new ChantCasterEntity only if we don't have one
+            chant.entity = new ChantCasterEntity(level, player, new ArrayList<>(chant.signs), lookDirection);
+            
+            // Position near player for visibility
+            chant.entity.setPos(
+                player.getX() + lookDirection.x * 0.3,
+                player.getY() + 1.2,
+                player.getZ() + lookDirection.z * 0.3
+            );
+            
+            // Spawn entity
+            level.addFreshEntity(chant.entity);
+            
+            LOGGER.info("ENTITY: Created new ChantCasterEntity for player {} with {} signs", 
+                player.getName().getString(), chant.signs.size());
+        } else {
+            // Update existing entity with new sign sequence
+            chant.entity.setChantTag(new ArrayList<>(chant.signs));
+            
+            // Update position to follow player
+            chant.entity.setPos(
+                player.getX() + lookDirection.x * 0.3,
+                player.getY() + 1.2,
+                player.getZ() + lookDirection.z * 0.3
+            );
+            
+            LOGGER.info("ENTITY: Updated existing ChantCasterEntity for player {} with {} signs", 
+                player.getName().getString(), chant.signs.size());
+        }
+    }*/
     
+    /*
     /**
      * Check if current sequence matches any complete datapack chant (like ribbon validation)
-     */
+     * COMMENTED OUT FOR OPTION 1 - PlayerChantingSystem handles this
+     *//*
     private static void checkForCompleteChant(ServerPlayer player, ActiveChant chant) {
         List<ResourceLocation> signIds = chant.getSignIds();
         
@@ -239,14 +277,15 @@ public class ActiveChantingSystem {
                 true // action bar
             );
         }
-    }
+    }*/
     
-    /**
-     * Execute a complete chant sequence using Eidolon's casting system
-     * 🔥 FIXED: Proper Eidolon spell execution that actually casts the spell
-     */
+    /*
+    // OPTION 2: Entity-Based Execution (Commented for testing Option 1 - Player-Centered)
+    // Execute a complete chant sequence using Eidolon's casting system
+    // 🔥 FIXED: Proper Eidolon spell execution that actually casts the spell
+    */
     private static void executeCompleteChant(ServerPlayer player, ActiveChant chant, DatapackChant matchingChant) {
-        try {
+        /*try {
             // Mark the existing ChantCasterEntity as successful before clearing
             if (chant.entity != null && !chant.entity.isRemoved()) {
                 chant.entity.getEntityData().set(ChantCasterEntity.SUCCEEDED, true);
@@ -312,7 +351,14 @@ public class ActiveChantingSystem {
                 Component.literal("§cChant execution failed"), 
                 true // action bar
             );
-        }
+        }*/
+        
+        // OPTION 1: Player-Centered Execution (Current Active Implementation)
+        // Use PlayerChantingSystem for actual spell execution with proper AI deity communication
+        PlayerChantingSystem.executeChantFromSequence(player, matchingChant.getSignSequence());
+        
+        // Clear the active chant after delegation to PlayerChantingSystem
+        clearActiveChant(player);
     }
     
     /**

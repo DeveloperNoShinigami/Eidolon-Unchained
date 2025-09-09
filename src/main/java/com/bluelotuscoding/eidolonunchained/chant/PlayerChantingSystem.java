@@ -15,6 +15,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.core.BlockPos;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -75,15 +76,21 @@ public class PlayerChantingSystem {
             // Schedule execution after delay (like ribbon system)
             spellExecutionTask = CompletableFuture.runAsync(() -> {
                 try {
-                    // Execute ONLY the datapack chant effects (DatapackChantSpell handles proper messaging)
-                    spell.execute(player);
-                    
-                    // DON'T send our own completion message - DatapackChantSpell handles this
-                    // DON'T try to trigger Eidolon spell - that causes double execution
-                    // The DatapackChantSpell registration handles Eidolon integration
-                    
-                    LOGGER.info("Successfully executed spell {} for player {}", 
-                        spell.getName(), player.getName().getString());
+                    // CRITICAL FIX: Call the Eidolon spell's cast() method, not DatapackChant.execute()!
+                    // The cast() method contains the AI deity communication logic
+                    DatapackChantSpell eidolonSpell = DatapackChantManager.getSpellForChant(spell.getId());
+                    if (eidolonSpell != null) {
+                        // Call the spell's cast method with player's position
+                        BlockPos playerPos = player.blockPosition();
+                        eidolonSpell.cast(player.level(), playerPos, player);
+                        
+                        LOGGER.info("Successfully cast spell {} for player {} with AI deity communication", 
+                            spell.getName(), player.getName().getString());
+                    } else {
+                        LOGGER.warn("No Eidolon spell found for chant {}, falling back to direct execution", spell.getId());
+                        // Fallback to direct execution if spell not found
+                        spell.execute(player);
+                    }
                         
                 } catch (Exception e) {
                     LOGGER.error("Error executing spell {} for player {}: {}", 
@@ -347,6 +354,48 @@ public class PlayerChantingSystem {
             System.out.println("DEBUG: getPlayerChantSigns returning " + result.size() + " signs for player " + playerId);
         }
         return result;
+    }
+    
+    /**
+     * Check if a player has an active chant sequence
+     */
+    public static boolean hasActiveChant(UUID playerId) {
+        PlayerChant chant = activeChants.get(playerId);
+        return chant != null && !chant.isEmpty();
+    }
+    
+    /**
+     * Get the current chant status for a player (for debugging)
+     */
+    public static String getChantStatus(UUID playerId) {
+        PlayerChant chant = activeChants.get(playerId);
+        if (chant == null || chant.isEmpty()) {
+            return "No active chant";
+        }
+        return chant.signs.size() + " signs in sequence";
+    }
+    
+    /**
+     * Execute a complete chant sequence by adding signs and auto-completing
+     * Used when ActiveChantingSystem delegates to PlayerChantingSystem
+     */
+    public static void executeChantFromSequence(ServerPlayer player, List<ResourceLocation> signSequence) {
+        // Clear any existing chant first
+        clearPlayerChant(player);
+        
+        // Convert ResourceLocations to Sign objects and add them
+        for (ResourceLocation signRL : signSequence) {
+            Sign sign = Signs.find(signRL);
+            if (sign != null) {
+                // Add each sign - this will automatically trigger completion checking
+                addSignToActiveChant(player, sign, sign.getRegistryName().getPath());
+            } else {
+                LOGGER.warn("Could not find sign for ResourceLocation: {}", signRL);
+            }
+        }
+        
+        LOGGER.info("Executed complete chant sequence for player {} with {} signs", 
+            player.getName().getString(), signSequence.size());
     }
     
     /**
