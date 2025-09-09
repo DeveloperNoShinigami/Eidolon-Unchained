@@ -75,27 +75,23 @@ public class PlayerChantingSystem {
             // Schedule execution after delay (like ribbon system)
             spellExecutionTask = CompletableFuture.runAsync(() -> {
                 try {
-                    // Execute the datapack chant effects
+                    // Execute ONLY the datapack chant effects (not both!)
                     spell.execute(player);
                     
-                    // Send success message with proper translation
-                    Component translatedName = Component.translatable(spell.getName());
-                    player.sendSystemMessage(Component.literal("§a✨ ").append(translatedName).append(Component.literal(" §acompleted!")));
-                    
-                    // Try to also trigger Eidolon spell casting
-                    SignSequence sequence = new SignSequence(signs);
-                    try {
-                        Level level = player.level();
-                        elucent.eidolon.api.spells.Spell eidolonSpell = elucent.eidolon.registries.Spells.find(sequence, level);
-                        if (eidolonSpell != null) {
-                            // Use player's position for spell casting
-                            net.minecraft.core.BlockPos playerPos = player.blockPosition();
-                            eidolonSpell.cast(level, playerPos, player, sequence);
-                            LOGGER.info("Also triggered Eidolon spell: {}", eidolonSpell.getRegistryName());
+                    // Send success message with proper translation (Component.literal for now)
+                    String translatedName = spell.getName(); // TODO: Fix translation
+                    if (translatedName.startsWith("eidolonunchained.chant.")) {
+                        // For now, extract the spell name from the key
+                        String[] parts = translatedName.split("\\.");
+                        if (parts.length >= 3) {
+                            translatedName = parts[2].replace("_", " ");
+                            translatedName = translatedName.substring(0, 1).toUpperCase() + translatedName.substring(1);
                         }
-                    } catch (Exception e) {
-                        LOGGER.debug("No matching Eidolon spell found or error casting: {}", e.getMessage());
                     }
+                    player.sendSystemMessage(Component.literal("§a✨ " + translatedName + " §acompleted!"));
+                    
+                    // DON'T try to trigger Eidolon spell - that causes double execution
+                    // The DatapackChantSpell registration handles Eidolon integration
                     
                     LOGGER.info("Successfully executed spell {} for player {}", 
                         spell.getName(), player.getName().getString());
@@ -181,8 +177,18 @@ public class PlayerChantingSystem {
                     0.5f, 1.2f
                 );
                 
+                // Show casting message with fixed translation
+                String translatedName = datapackChant.getName();
+                if (translatedName.startsWith("eidolonunchained.chant.")) {
+                    // Extract readable name from translation key  
+                    String[] parts = translatedName.split("\\.");
+                    if (parts.length >= 3) {
+                        translatedName = parts[2].replace("_", " ");
+                        translatedName = translatedName.substring(0, 1).toUpperCase() + translatedName.substring(1);
+                    }
+                }
                 player.sendSystemMessage(
-                    Component.literal("§a✓ ").append(Component.translatable(datapackChant.getName())).append(Component.literal(" §7(casting in 1s...)")), 
+                    Component.literal("§a✓ " + translatedName + " §7(casting in 1s...)"), 
                     true
                 );
                 
@@ -347,7 +353,11 @@ public class PlayerChantingSystem {
      */
     public static List<Sign> getPlayerChantSigns(UUID playerId) {
         PlayerChant chant = activeChants.get(playerId);
-        return chant != null ? new ArrayList<>(chant.signs) : new ArrayList<>();
+        List<Sign> result = chant != null ? new ArrayList<>(chant.signs) : new ArrayList<>();
+        if (!result.isEmpty()) {
+            System.out.println("DEBUG: getPlayerChantSigns returning " + result.size() + " signs for player " + playerId);
+        }
+        return result;
     }
     
     /**

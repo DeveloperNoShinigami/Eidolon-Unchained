@@ -28,7 +28,7 @@ import java.util.List;
  * during active chanting, emulating Eidolon's ChantCasterEntity renderer.
  */
 @OnlyIn(Dist.CLIENT)
-@Mod.EventBusSubscriber(modid = "eidolonunchained", bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = "eidolonunchained", value = Dist.CLIENT)
 public class PlayerChantRenderer {
     
     @SubscribeEvent
@@ -44,6 +44,9 @@ public class PlayerChantRenderer {
         // Get current chant signs for this player
         List<Sign> signs = PlayerChantingSystem.getPlayerChantSigns(player.getUUID());
         if (signs.isEmpty()) return;
+        
+        // DEBUG: Log that we're rendering
+        System.out.println("DEBUG: PlayerChantRenderer rendering " + signs.size() + " signs for player");
         
         // Render floating signs around player (like ChantCasterEntity)
         renderFloatingSignsAroundPlayer(event.getPoseStack(), 
