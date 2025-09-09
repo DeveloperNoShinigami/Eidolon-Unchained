@@ -99,5 +99,10 @@
       }
     ]
   },
+  "abandon": {
+    "reputation_penalty": 0.75,
+    "reset_reputation": false,
+    "message": "§eLumina's radiance fades from your soul. §6The divine light mourns your departure, but the path to redemption remains open to the faithful."
+  },
   "prayer_types": ["conversation", "blessing", "knowledge", "balance"]
 }
