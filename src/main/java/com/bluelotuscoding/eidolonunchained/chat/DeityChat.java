@@ -9,6 +9,7 @@ import com.bluelotuscoding.eidolonunchained.ai.PlayerContext;
 import com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiAPIClient;
 import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
+import com.bluelotuscoding.eidolonunchained.chant.PlayerChantingSystem;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -212,8 +213,8 @@ public class DeityChat {
         ServerPlayer player = event.getPlayer();
         UUID playerId = player.getUUID();
         
-        // 🎯 PERIODIC CLEANUP: Check for completed chants and cleanup (like ribbon system)
-        com.bluelotuscoding.eidolonunchained.chant.ActiveChantingSystem.cleanupOldChants();
+        // 🎯 NO TICKING NEEDED: Player-centered system uses event-driven execution like ribbon
+        // PlayerChantingSystem uses scheduled tasks for spell delays, not polling!
         
         // SAFETY CHECK: Only process if player is actually in a conversation
         if (!activeConversations.containsKey(playerId)) {

@@ -105,7 +105,7 @@ public class ActiveChantingSystem {
     }
     
     /**
-     * Add a sign to the player's active chant sequence
+     * Add a sign to the player's active chant sequence using player-centered approach
      */
     public static void addSignToChant(ServerPlayer player, int slot) {
         // Get the player's assigned sign for this slot
@@ -123,29 +123,11 @@ public class ActiveChantingSystem {
             return;
         }
         
-        // Get or create active chant for this player
-        ActiveChant chant = activeChants.computeIfAbsent(player.getUUID(), k -> new ActiveChant());
+        // Use new player-centered system for visual effects and chant management
+        PlayerChantingSystem.addSignToActiveChant(player, sign, assignment.displayName);
         
-        // INSTANT: Spawn entity immediately on FIRST sign if needed
-        if (chant.signs.isEmpty()) {
-            LOGGER.info("FIRST SIGN: Creating initial ChantCasterEntity for player {}", player.getName().getString());
-        }
-        
-        // Add the sign to the sequence
-        chant.addSign(sign);
-        
-        // Update visual representation and check for completion immediately
-        updateChantCasterEntity(player, chant);
-        
-        LOGGER.info("Player {} added sign {} to active chant (sequence: {})", 
-            player.getName().getString(), signId, chant.signs.size());
-        
-        // 🔧 DEBUGGING: Removed action bar feedback - keeping only logs for debug tracking
-        // String signName = assignment.displayName;
-        // player.sendSystemMessage(
-        //     Component.literal("§6Added: " + signName + " §7(" + chant.signs.size() + " signs)"), 
-        //     true // action bar
-        // );
+        LOGGER.info("Player {} added sign {} using player-centered chanting system", 
+            player.getName().getString(), signId);
     }
     
     /**
@@ -169,62 +151,33 @@ public class ActiveChantingSystem {
     
     /**
      * Update the ChantCasterEntity to show current sign sequence
-     * 🎯 REAL-TIME: True updates without entity recreation using extended entity
+     * 🎯 FIXED: Always recreate entity to avoid lifecycle conflicts
      */
     private static void updateChantCasterEntity(ServerPlayer player, ActiveChant chant) {
         Level level = player.level();
         
-        // Create entity only if none exists
-        if (chant.entity == null || !chant.entity.isAlive()) {
-            // Create new ChantCasterEntity
-            Vec3 lookDirection = player.getLookAngle();
-            chant.entity = new ChantCasterEntity(level, player, new ArrayList<>(chant.signs), lookDirection);
-            
-            // Position near player for visibility
-            chant.entity.setPos(
-                player.getX() + lookDirection.x * 0.3,
-                player.getY() + 1.2,
-                player.getZ() + lookDirection.z * 0.3
-            );
-            
-            // Spawn entity
-            level.addFreshEntity(chant.entity);
-            
-            LOGGER.info("FIRST SIGN: Creating ChantCasterEntity for player {}", player.getName().getString());
-        } else {
-            // 🎯 TRUE REAL-TIME UPDATE: Update existing entity's sign sequence WITHOUT recreation
-            try {
-                // Update the entity's SIGNS data directly using the public field
-                SignSequence newSequence = new SignSequence();
-                for (Sign sign : chant.signs) {
-                    newSequence.addRight(sign);
-                }
-                
-                // Update the entity data - this is what the client sees
-                chant.entity.getEntityData().set(ChantCasterEntity.SIGNS, newSequence.serializeNbt());
-                
-                LOGGER.info("REAL-TIME: Updated entity sequence with {} signs", chant.signs.size());
-                
-            } catch (Exception e) {
-                LOGGER.warn("Failed to update existing chant entity sequence: {}", e.getMessage());
-                // Fallback: recreate entity if update fails
-                chant.entity.discard();
-                chant.entity = null;
-                updateChantCasterEntity(player, chant); // Recursive call to create new entity
-                return;
-            }
-            
-            // Update position to follow player
-            Vec3 lookDirection = player.getLookAngle();
-            chant.entity.setPos(
-                player.getX() + lookDirection.x * 0.3,
-                player.getY() + 1.2,
-                player.getZ() + lookDirection.z * 0.3
-            );
-            
-            LOGGER.info("REAL-TIME: Updated existing ChantCasterEntity for player {} to {} signs", 
-                player.getName().getString(), chant.signs.size());
+        // Always recreate entity - ChantCasterEntity has automatic progression that conflicts with real-time building
+        if (chant.entity != null && !chant.entity.isRemoved()) {
+            chant.entity.discard();
+            chant.entity = null;
         }
+        
+        // Create new ChantCasterEntity with current sequence
+        Vec3 lookDirection = player.getLookAngle();
+        chant.entity = new ChantCasterEntity(level, player, new ArrayList<>(chant.signs), lookDirection);
+        
+        // Position near player for visibility
+        chant.entity.setPos(
+            player.getX() + lookDirection.x * 0.3,
+            player.getY() + 1.2,
+            player.getZ() + lookDirection.z * 0.3
+        );
+        
+        // Spawn entity
+        level.addFreshEntity(chant.entity);
+        
+        LOGGER.info("ENTITY: Created ChantCasterEntity for player {} with {} signs", 
+            player.getName().getString(), chant.signs.size());
         
         // 🎯 REMOVED: Don't check for completion immediately - let player build the chant!
         // checkForCompleteChant will be called by cleanup system after pause
@@ -381,63 +334,41 @@ public class ActiveChantingSystem {
     }
     
     /**
-     * Clean up old/abandoned chant sequences and handle spell checking after pause (like ribbon system)
+     * Clean up old/abandoned chant sequences and handle spell checking using player-centered system
      */
-    public static void cleanupOldChants() {
-        long currentTime = System.currentTimeMillis();
-        long timeout = 30000; // 30 seconds
-        long pauseThreshold = 2000; // 2 seconds pause before checking spells (like ribbon)
+    public static void tick(MinecraftServer server) {
+        // NO TICKING NEEDED: Delegate to player-centered system which uses event-driven execution
+        // PlayerChantingSystem uses CompletableFuture.delayedExecutor for spell delays like ribbon system
         
-        activeChants.entrySet().removeIf(entry -> {
-            ActiveChant chant = entry.getValue();
+        // Legacy cleanup for any remaining ActiveChant entries (transition period)
+        long currentTime = System.currentTimeMillis();
+        
+        if (currentTime - lastCleanupTime < CLEANUP_INTERVAL) {
+            return; // Too early for cleanup cycle
+        }
+        lastCleanupTime = currentTime;
+        
+        List<UUID> playersToRemove = new ArrayList<>();
+        
+        for (Map.Entry<UUID, ActiveChant> entry : activeChants.entrySet()) {
             UUID playerId = entry.getKey();
+            ActiveChant chant = entry.getValue();
             
-            // Check for spell completion after pause (LIKE RIBBON SYSTEM)
-            long timeSinceLastSign = currentTime - chant.lastSignTime;
-            if (!chant.validSpellDetected && timeSinceLastSign >= pauseThreshold && !chant.isEmpty()) {
-                // Player stopped adding signs - check for valid spell
-                LOGGER.info("Player {} paused chanting for {}ms - checking for spell completion", playerId, timeSinceLastSign);
-                
-                MinecraftServer server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
-                if (server != null) {
-                    ServerPlayer player = server.getPlayerList().getPlayer(playerId);
-                    if (player != null) {
-                        checkForCompleteChant(player, chant);
-                    }
-                }
+            // Clean up old entries - player-centered system handles active chanting now
+            if (currentTime - chant.lastSignTime > 30000) { // 30 second timeout
+                playersToRemove.add(playerId);
             }
-            
-            // Handle spell resolution after delay (after spell detected)
-            if (chant.shouldResolveSpell()) {
-                LOGGER.info("Resolving spell after delay for player {}", playerId);
-                
-                MinecraftServer server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
-                if (server != null) {
-                    ServerPlayer player = server.getPlayerList().getPlayer(playerId);
-                    if (player != null) {
-                        DatapackChant spell = chant.getPendingSpell();
-                        executeCompleteChant(player, chant, spell);
-                        
-                        // Clear everything after resolution (like ribbon)
-                        chant.clear();
-                        LOGGER.info("Spell resolved and entity cleared for player {}", playerId);
-                        return true; // Remove from active chants
-                    }
-                }
+        }
+        
+        // Clean up legacy entries
+        for (UUID playerId : playersToRemove) {
+            ActiveChant chant = activeChants.remove(playerId);
+            if (chant != null) {
+                chant.clear(); // Clean up any remaining entities
+                LOGGER.info("Cleaned up legacy ActiveChant for player {}", playerId);
             }
-            
-            // Only remove abandoned chants (no signs and old timeout)
-            if (chant.isEmpty() && timeSinceLastSign > timeout) {
-                LOGGER.debug("Cleaning up abandoned chant for player {}", playerId);
-                chant.clear();
-                return true;
-            }
-            
-            return false;
-        });
-    }
-    
-    /**
+        }
+    }    /**
      * Get configured sign for a slot (for UI display)
      */
     public static Sign getSignForSlot(ServerPlayer player, int slotNumber) {
@@ -449,10 +380,38 @@ public class ActiveChantingSystem {
     }
     
     /**
-     * Check if player has an active chant in progress
+     * Check if player has an active chant in progress (updated for player-centered system)
      */
     public static boolean hasActiveChant(Player player) {
+        // Check new system first
+        List<Sign> signs = PlayerChantingSystem.getPlayerChantSigns(player.getUUID());
+        if (!signs.isEmpty()) {
+            return true;
+        }
+        
+        // Check legacy system as fallback
         ActiveChant chant = activeChants.get(player.getUUID());
         return chant != null && !chant.isEmpty();
+    }
+    
+    /**
+     * Clear a player's active chant sequence (delegated to player-centered system)
+     */
+    public static void clearPlayerChant(ServerPlayer player) {
+        PlayerChantingSystem.clearPlayerChant(player);
+        
+        // Also clear legacy system if present
+        ActiveChant legacyChant = activeChants.remove(player.getUUID());
+        if (legacyChant != null) {
+            legacyChant.clear();
+            LOGGER.info("Cleared legacy chant for player {}", player.getName().getString());
+        }
+    }
+    
+    /**
+     * Get current chant signs for a player (for UI display)
+     */
+    public static List<Sign> getPlayerChantSigns(UUID playerId) {
+        return PlayerChantingSystem.getPlayerChantSigns(playerId);
     }
 }

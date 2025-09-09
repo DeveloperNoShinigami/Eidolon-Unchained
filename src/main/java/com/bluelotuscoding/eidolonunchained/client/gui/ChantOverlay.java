@@ -31,9 +31,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Independent chant overlay system that integrates with Eidolon's ChantCasterEntity
- * to show the actual spell casting animations with floating signs in the air.
- * Provides immersive casting with the authentic Eidolon visual effects.
+ * Player-centered chant overlay system that shows visual feedback during spell casting.
+ * Works with PlayerChantingSystem to provide immersive casting with particles, sounds,
+ * and the authentic Eidolon ribbon UI without the complexity of entity management.
  */
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
