@@ -61,8 +61,8 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
      * Render floating signs around player using ChantCasterRenderer's exact logic
      */
     private static void renderPlayerChantSigns(PoseStack mStack, float partialTick, Player player, List<Sign> signs) {
-        // This is copied from ChantCasterRenderer.render() but adapted for player positioning
-        VertexConsumer sb = ClientEvents.getDelayedRender().getBuffer(RenderUtil.GLOWING_SPRITE);
+        // Use the same buffer as ChantCasterRenderer
+        VertexConsumer sb = ClientEvents.getDelayedRender().getBuffer(RenderUtil.GLOWING_BLOCK_PARTICLE);
         
         mStack.pushPose();
         
@@ -73,7 +73,7 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
         
         mStack.translate(px, py, pz);
         
-        // Player's look direction
+        // Player's look direction (like ChantCasterRenderer)
         Vec3 look = player.getLookAngle();
         double yaw = Mth.atan2(look.x, look.z);
         Vec3 left = new Vec3(Math.cos(yaw), 0, -Math.sin(yaw));
@@ -81,40 +81,87 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
         
         float time = player.tickCount + partialTick;
         
+        // Setup circle parameters (like ChantCasterRenderer)
+        int sz = Math.max(0, signs.size() - 1);
+        float r = Mth.sqrt(sz) / 4f;
+        if (sz > 0) r = Math.max(0.3f, r);
+        Vec3 center = look.add(0, 0.5f, 0);
+        
         // Render each sign in a circle (exact ChantCasterRenderer logic)
         for (int i = 0; i < signs.size(); i++) {
             Sign sign = signs.get(i);
             
-            mStack.pushPose();
+            // Position calculation like ChantCasterRenderer
+            float a = -Mth.PI / 2 - i * 2 * Mth.PI / signs.size();
+            float sa = Mth.sin(a), ca = Mth.cos(a);
             
-            // Circular positioning
-            float angle = (float)(i * 2 * Math.PI / Math.max(3, signs.size()));
-            float radius = 1.5f;
-            float x = Mth.cos(angle + time * 0.05f) * radius;
-            float z = Mth.sin(angle + time * 0.05f) * radius;
-            float y = Mth.sin(time * 0.1f + i) * 0.2f;
+            Vec3 od = center.add(left.scale(r * ca)).add(up.scale(r * sa));
+            Vec3 dxd = left.scale(0.175), dyd = up.scale(0.175);
+            Vector3f o = new Vector3f((float)od.x, (float)od.y, (float)od.z);
+            Vector3f dx = new Vector3f((float)dxd.x, (float)dxd.y, (float)dxd.z);
+            Vector3f dy = new Vector3f((float)dyd.x, (float)dyd.y, (float)dyd.z);
             
-            mStack.translate(x, y, z);
+            // Get sign sprite (exactly like ChantCasterRenderer)
+            TextureAtlasSprite spr = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
+                .apply(sign.getSprite());
             
-            // Billboard to face camera (like ChantCasterRenderer)
-            mStack.mulPose(Minecraft.getInstance().gameRenderer.getMainCamera().rotation());
+            // Brightness calculation (like ChantCasterRenderer)
+            float brightMod = Mth.clamp(Mth.sin(a + Mth.TWO_PI * player.tickCount / 20), 0, 1);
+            brightMod *= brightMod;
+            brightMod = 0.6f + 0.4f * brightMod;
+            float alphaMod = 1.0f;
             
-            // Get sign sprite
-            TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
-                .apply(new ResourceLocation("eidolon", "block/sign_" + sign.getRegistryName().getPath()));
-            
-            if (sprite != null) {
-                // Render sign sprite (exact ChantCasterRenderer method)
-                renderSignSprite(mStack, sb, sprite, time, i);
-            }
-            
-            mStack.popPose();
+            // Render sign sprite using exact ChantCasterRenderer vertex calls
+            renderSignSprite(mStack, sb, spr, o, dx, dy, sign, brightMod, alphaMod);
         }
         
         mStack.popPose();
     }
     
     /**
+     * Render sign sprite using exact ChantCasterRenderer logic
+     */
+    private static void renderSignSprite(PoseStack mStack, VertexConsumer sb, TextureAtlasSprite spr, 
+                                        Vector3f o, Vector3f dx, Vector3f dy, Sign sign, 
+                                        float brightMod, float alphaMod) {
+        // Front and back faces (exactly like ChantCasterRenderer)
+        for (int j = 0; j < 2; j++) {
+            sb.vertex(mStack.last().pose(), o.x() - dx.x() + dy.x(), o.y() - dx.y() + dy.y(), o.z() - dx.z() + dy.z())
+                .uv(spr.getU1(), spr.getV1())
+                .color(sign.getRed(), sign.getGreen(), sign.getBlue(), brightMod * alphaMod)
+                .uv2(0).endVertex();
+            sb.vertex(mStack.last().pose(), o.x() - dx.x() - dy.x(), o.y() - dx.y() - dy.y(), o.z() - dx.z() - dy.z())
+                .uv(spr.getU1(), spr.getV0())
+                .color(sign.getRed(), sign.getGreen(), sign.getBlue(), brightMod * alphaMod)
+                .uv2(0).endVertex();
+            sb.vertex(mStack.last().pose(), o.x() + dx.x() - dy.x(), o.y() + dx.y() - dy.y(), o.z() + dx.z() - dy.z())
+                .uv(spr.getU0(), spr.getV0())
+                .color(sign.getRed(), sign.getGreen(), sign.getBlue(), brightMod * alphaMod)
+                .uv2(0).endVertex();
+            sb.vertex(mStack.last().pose(), o.x() + dx.x() + dy.x(), o.y() + dx.y() + dy.y(), o.z() + dx.z() + dy.z())
+                .uv(spr.getU0(), spr.getV1())
+                .color(sign.getRed(), sign.getGreen(), sign.getBlue(), brightMod * alphaMod)
+                .uv2(0).endVertex();
+
+            // Second face (reverse winding)
+            sb.vertex(mStack.last().pose(), o.x() + dx.x() + dy.x(), o.y() + dx.y() + dy.y(), o.z() + dx.z() + dy.z())
+                .uv(spr.getU1(), spr.getV1())
+                .color(sign.getRed(), sign.getGreen(), sign.getBlue(), brightMod * alphaMod)
+                .uv2(0).endVertex();
+            sb.vertex(mStack.last().pose(), o.x() + dx.x() - dy.x(), o.y() + dx.y() - dy.y(), o.z() + dx.z() - dy.z())
+                .uv(spr.getU1(), spr.getV0())
+                .color(sign.getRed(), sign.getGreen(), sign.getBlue(), brightMod * alphaMod)
+                .uv2(0).endVertex();
+            sb.vertex(mStack.last().pose(), o.x() - dx.x() - dy.x(), o.y() - dx.y() - dy.y(), o.z() - dx.z() - dy.z())
+                .uv(spr.getU0(), spr.getV0())
+                .color(sign.getRed(), sign.getGreen(), sign.getBlue(), brightMod * alphaMod)
+                .uv2(0).endVertex();
+            sb.vertex(mStack.last().pose(), o.x() - dx.x() + dy.x(), o.y() - dx.y() + dy.y(), o.z() - dx.z() + dy.z())
+                .uv(spr.getU0(), spr.getV1())
+                .color(sign.getRed(), sign.getGreen(), sign.getBlue(), brightMod * alphaMod)
+                .uv2(0).endVertex();
+        }
+    }    /**
      * Render individual sign sprite (copied from ChantCasterRenderer)
      */
     private static void renderSignSprite(PoseStack mStack, VertexConsumer sb, TextureAtlasSprite sprite, float time, int index) {
