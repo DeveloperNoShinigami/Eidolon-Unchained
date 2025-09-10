@@ -30,6 +30,22 @@ public class AIItemExtractor {
     );
     
     /**
+     * 🔧 UTILITY: Get mod context IDs from AI config, respecting JSON configuration
+     * NO FALLBACKS - if config is missing, something is wrong and we should know about it
+     */
+    private static List<String> getModContextIds(com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
+        if (aiConfig.mod_context_ids == null || aiConfig.mod_context_ids.isEmpty()) {
+            LOGGER.error("❌ CONFIGURATION ERROR: mod_context_ids is null or empty in AI deity config!");
+            LOGGER.error("   This means the JSON configuration is not loaded properly.");
+            LOGGER.error("   Check that ai_deities/*.json files contain 'mod_context_ids' field.");
+            throw new IllegalStateException("AI deity configuration missing mod_context_ids - check JSON files");
+        }
+        
+        LOGGER.info("🔧 Using configured mod context IDs: {}", aiConfig.mod_context_ids);
+        return aiConfig.mod_context_ids;
+    }
+    
+    /**
      * 🎯 SIMPLIFIED: Let AI handle item extraction directly through chat
      * The AI is good at understanding requests - just let it generate commands
      */
@@ -130,8 +146,7 @@ public class AIItemExtractor {
                 LOGGER.info("🎯 Pattern matched item request: '{}'", cleanedItem);
                 
                 // Find matching items using scoring
-                List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
-                    aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+                List<String> modContextIds = getModContextIds(aiConfig);
                 
                 List<ResourceLocation> matches = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
                     .findMatchingItemsWithScoring(cleanedItem, modContextIds);
@@ -167,8 +182,7 @@ public class AIItemExtractor {
         
         LOGGER.info("🎯 HYBRID STEP 2: Validating {} AI-extracted items with scoring system", extractedItems.size());
         
-        List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
-            aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+        List<String> modContextIds = getModContextIds(aiConfig);
         
         for (String extractedItem : extractedItems) {
             LOGGER.info("🎯 SCORING VALIDATION: Testing '{}'", extractedItem);
@@ -245,8 +259,7 @@ public class AIItemExtractor {
         LOGGER.info("🎯 CONTEXT-AWARE EXTRACTION: Analyzing '{}'", playerMessage);
         
         // Get available items for context matching
-        List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
-            aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+        List<String> modContextIds = getModContextIds(aiConfig);
         
         List<ResourceLocation> availableItems = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
             .getAllItemsForMods(modContextIds);
@@ -339,8 +352,7 @@ public class AIItemExtractor {
         }
         
         Set<String> foundItems = new HashSet<>(); // Track items to avoid duplicates
-        List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
-            aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+        List<String> modContextIds = getModContextIds(aiConfig);
         
         // METHOD 1: Enhanced pattern matching for immediate extraction
         Pattern playerItemPattern = Pattern.compile(
@@ -441,8 +453,7 @@ public class AIItemExtractor {
             
             // Clean and find matching items
             String cleanedItem = cleanupItemName(requestedItem);
-            List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
-                aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+            List<String> modContextIds = getModContextIds(aiConfig);
                 
             List<ResourceLocation> matches = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
                 .findMatchingItemsWithScoring(cleanedItem, modContextIds);
@@ -480,8 +491,7 @@ public class AIItemExtractor {
                 LOGGER.info("🔄 FALLBACK: Player requested item: '{}' → cleaned: '{}'", requestedItem, cleanedItem);
                 
                 // Get mod context for this deity
-                List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
-                    aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+                List<String> modContextIds = getModContextIds(aiConfig);
                 
                 // Find matching items using strict matching
                 List<ResourceLocation> matches = RegistryContextProvider.findMatchingItemsWithScoring(cleanedItem, modContextIds);
@@ -543,8 +553,7 @@ public class AIItemExtractor {
                     suggestedItem, cleanedItem, matchType);
             
                 // Get mod context for this deity
-                List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
-                    aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+                List<String> modContextIds = getModContextIds(aiConfig);
                 
                 // Validate item exists in registry
                 List<ResourceLocation> matches = RegistryContextProvider.findMatchingItemsWithScoring(cleanedItem, modContextIds);
@@ -677,8 +686,7 @@ public class AIItemExtractor {
         List<String> commands = new ArrayList<>();
         Set<String> foundItems = new HashSet<>();
         
-        List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
-            aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+        List<String> modContextIds = getModContextIds(aiConfig);
         
         List<ResourceLocation> availableItems = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
             .getAllItemsForMods(modContextIds);
@@ -742,8 +750,7 @@ public class AIItemExtractor {
                                                             com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
         List<String> commands = new ArrayList<>();
         
-        List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
-            aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+        List<String> modContextIds = getModContextIds(aiConfig);
         
         for (String itemName : foundItems) {
             List<ResourceLocation> matches = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider

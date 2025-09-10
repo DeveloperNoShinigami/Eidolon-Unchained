@@ -150,7 +150,8 @@ public class RegistryContextProvider {
     
     /**
      * Enhanced multi-word item matching with scoring system
-     * Handles searches like "zombie heart" or "bone paladin helm"
+     * 🔥 FIXED: Searches for items containing ANY of the individual words
+     * "bone paladin helm" → finds items with "bone" OR "paladin" OR "helm"
      */
     public static List<ResourceLocation> findMatchingItemsWithScoring(String searchTerm, List<String> modIds) {
         // Split search term into individual words
@@ -162,30 +163,22 @@ public class RegistryContextProvider {
             return findMatchingItems(searchTerm, modIds);
         }
         
-        // For multi-word search, expand to all loaded mods if only default mods specified
+        // 🔥 FIXED: Always respect the provided mod_context_ids from configuration
         List<String> searchMods = modIds;
-        if (modIds.size() <= 3 && modIds.contains("minecraft") && modIds.contains("eidolon")) {
-            searchMods = getAllLoadedModIds();
-            LOGGER.info("🔥 Multi-word search '{}' expanded to all {} loaded mods", searchTerm, searchMods.size());
-        }
+        LOGGER.info("🔍 DEBUG: Using configured mod IDs from AI deity config: {}", searchMods);
         
-        // Multi-word search: score items based on how many words they contain
+        // 🔥 NEW APPROACH: Search for items that contain ANY of the search words
         for (ResourceLocation itemKey : BuiltInRegistries.ITEM.keySet()) {
             // Only search in specified mod namespaces
             if (!searchMods.contains(itemKey.getNamespace())) continue;
             
             String path = itemKey.getPath().toLowerCase();
-            int score = calculateItemScore(path, searchWords);
+            int score = calculateIndividualWordScore(path, searchWords);
             
-            // 🔧 STRICT THRESHOLD: Only include items with meaningful scores
-            // This prevents weak partial matches from being considered
-            int minimumScore = searchWords.length > 1 ? 20 : 50; // Higher threshold for single words
-            
-            if (score >= minimumScore) {
+            // Lower threshold - we want to find items with any matching words
+            if (score > 0) {
                 scoredItems.add(new ScoredItem(itemKey, score));
-                LOGGER.debug("🔥 SCORING: '{}' → score: {} (threshold: {})", itemKey, score, minimumScore);
-            } else if (score > 0) {
-                LOGGER.debug("🚫 REJECTED: '{}' → score: {} (below threshold: {})", itemKey, score, minimumScore);
+                LOGGER.debug("🔥 WORD MATCH: '{}' contains words from '{}' → score: {}", itemKey, searchTerm, score);
             }
         }
         
@@ -193,8 +186,8 @@ public class RegistryContextProvider {
         scoredItems.sort((a, b) -> Integer.compare(b.score, a.score));
         
         // 🔧 DEBUG: Log top scoring items
-        LOGGER.info("🔥 TOP SCORING ITEMS for '{}':", searchTerm);
-        for (int i = 0; i < Math.min(5, scoredItems.size()); i++) {
+        LOGGER.info("🔥 INDIVIDUAL WORD MATCHES for '{}':", searchTerm);
+        for (int i = 0; i < Math.min(10, scoredItems.size()); i++) {
             ScoredItem item = scoredItems.get(i);
             LOGGER.info("  {}. {} (score: {})", i+1, item.resourceLocation, item.score);
         }
@@ -204,15 +197,8 @@ public class RegistryContextProvider {
             .map(item -> item.resourceLocation)
             .collect(Collectors.toList());
         
-        LOGGER.info("🔥 Enhanced search for '{}' found {} qualifying items in {} mods", 
+        LOGGER.info("🔥 Individual word search for '{}' found {} items in {} mods", 
             searchTerm, matches.size(), searchMods.size());
-        
-        if (matches.size() > 0) {
-            LOGGER.info("🎯 Top matches: {}", 
-                matches.subList(0, Math.min(5, matches.size())));
-        } else {
-            LOGGER.info("❌ No items met the strict matching criteria for '{}'", searchTerm);
-        }
         
         return matches;
     }
@@ -231,6 +217,42 @@ public class RegistryContextProvider {
         return new ArrayList<>(modIds);
     }
     
+    /**
+     * 🔥 NEW: Calculate score for items that contain ANY of the search words
+     * "bone paladin helm" → items with "bone" OR "paladin" OR "helm" get points
+     */
+    private static int calculateIndividualWordScore(String itemPath, String[] searchWords) {
+        int score = 0;
+        
+        for (String word : searchWords) {
+            // Skip very short or common words
+            if (word.length() < 2 || word.matches("the|of|a|an|and|or|in|on|at|to|for|with|by")) {
+                continue;
+            }
+            
+            if (itemPath.equals(word)) {
+                score += 100; // Exact single word match
+                LOGGER.debug("  EXACT MATCH: '{}' contains '{}'", itemPath, word);
+            } else if (itemPath.startsWith(word + "_") || itemPath.endsWith("_" + word)) {
+                score += 50; // Word at boundary
+                LOGGER.debug("  BOUNDARY MATCH: '{}' contains '{}' at boundary", itemPath, word);
+            } else if (itemPath.contains("_" + word + "_")) {
+                score += 40; // Word in middle with boundaries
+                LOGGER.debug("  MIDDLE MATCH: '{}' contains '{}' in middle", itemPath, word);
+            } else if (itemPath.contains(word)) {
+                score += 20; // Word anywhere
+                LOGGER.debug("  PARTIAL MATCH: '{}' contains '{}'", itemPath, word);
+            }
+            
+            // Special bonus for important item words
+            if (word.matches("helm|helmet|sword|armor|weapon|tool|ring|amulet|cloak|robe|staff|wand|bow|shield|boots|gloves")) {
+                score += 10; // Bonus for equipment words
+            }
+        }
+        
+        return score;
+    }
+
     /**
      * Calculate score for an item based on how many search words it contains
      * 🔧 STRICT MATCHING: Only allow items that contain ALL important search words
