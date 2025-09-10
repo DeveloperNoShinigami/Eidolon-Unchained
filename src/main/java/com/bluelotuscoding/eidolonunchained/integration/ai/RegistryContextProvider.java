@@ -167,6 +167,15 @@ public class RegistryContextProvider {
         List<String> searchMods = modIds;
         LOGGER.info("🔍 DEBUG: Using configured mod IDs from AI deity config: {}", searchMods);
         
+        // 🔍 DEBUG: Show what items are actually available in each mod
+        for (String modId : searchMods) {
+            List<String> modItems = getRegistryEntriesForMod(BuiltInRegistries.ITEM.keySet(), modId);
+            LOGGER.info("🔍 Available items in '{}' mod: {} items", modId, modItems.size());
+            if (modItems.size() > 0) {
+                LOGGER.info("  Sample items: {}", modItems.subList(0, Math.min(10, modItems.size())));
+            }
+        }
+        
         // 🔥 NEW APPROACH: Search for items that contain ANY of the search words
         for (ResourceLocation itemKey : BuiltInRegistries.ITEM.keySet()) {
             // Only search in specified mod namespaces
@@ -223,6 +232,7 @@ public class RegistryContextProvider {
      */
     private static int calculateIndividualWordScore(String itemPath, String[] searchWords) {
         int score = 0;
+        List<String> matchedWords = new ArrayList<>();
         
         for (String word : searchWords) {
             // Skip very short or common words
@@ -232,22 +242,27 @@ public class RegistryContextProvider {
             
             if (itemPath.equals(word)) {
                 score += 100; // Exact single word match
-                LOGGER.debug("  EXACT MATCH: '{}' contains '{}'", itemPath, word);
+                matchedWords.add(word + "(exact)");
             } else if (itemPath.startsWith(word + "_") || itemPath.endsWith("_" + word)) {
                 score += 50; // Word at boundary
-                LOGGER.debug("  BOUNDARY MATCH: '{}' contains '{}' at boundary", itemPath, word);
+                matchedWords.add(word + "(boundary)");
             } else if (itemPath.contains("_" + word + "_")) {
                 score += 40; // Word in middle with boundaries
-                LOGGER.debug("  MIDDLE MATCH: '{}' contains '{}' in middle", itemPath, word);
+                matchedWords.add(word + "(middle)");
             } else if (itemPath.contains(word)) {
                 score += 20; // Word anywhere
-                LOGGER.debug("  PARTIAL MATCH: '{}' contains '{}'", itemPath, word);
+                matchedWords.add(word + "(partial)");
             }
             
             // Special bonus for important item words
             if (word.matches("helm|helmet|sword|armor|weapon|tool|ring|amulet|cloak|robe|staff|wand|bow|shield|boots|gloves")) {
                 score += 10; // Bonus for equipment words
             }
+        }
+        
+        // 🔍 DEBUG: Log matches for debugging
+        if (score > 0) {
+            LOGGER.debug("  📋 ITEM MATCH: '{}' matched words: {} → total score: {}", itemPath, matchedWords, score);
         }
         
         return score;
