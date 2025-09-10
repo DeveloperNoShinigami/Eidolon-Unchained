@@ -4,6 +4,7 @@
   "category": "examples",
   "mana_cost": 50,
   "cooldown": 600,
+  "requires_effigy": true,
   "codex_icon": "minecraft:netherite_scrap",
   "difficulty": 5,
   "show_in_codex": true,

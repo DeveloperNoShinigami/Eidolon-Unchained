@@ -9,6 +9,7 @@
   "show_in_codex": true,
   "linked_deity": "eidolonunchained:light_deity",
   "prayer_effect_type": "blessing",
+  "requires_effigy": true,
   "signs": [
     "eidolon:sacred",
     "eidolon:harmony"

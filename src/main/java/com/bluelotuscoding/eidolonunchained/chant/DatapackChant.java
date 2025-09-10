@@ -29,12 +29,13 @@ public class DatapackChant {
     private final boolean showInCodex;
     private final ResourceLocation linkedDeity; // Optional deity connection
     private final String prayerEffectType; // Prayer type for AI deity interactions
+    private final boolean requiresEffigy; // Whether this chant requires an effigy nearby (like Eidolon prayers)
     
     public DatapackChant(ResourceLocation id, String name, String description, 
                         List<ResourceLocation> signSequence, String category, ResourceLocation codexIcon,
                         int difficulty, int manaCost, int cooldown, List<ChantEffect> effects,
                         List<String> requirements, boolean showInCodex, 
-                        ResourceLocation linkedDeity, String prayerEffectType) {
+                        ResourceLocation linkedDeity, String prayerEffectType, boolean requiresEffigy) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -49,6 +50,7 @@ public class DatapackChant {
         this.showInCodex = showInCodex;
         this.linkedDeity = linkedDeity;
         this.prayerEffectType = prayerEffectType;
+        this.requiresEffigy = requiresEffigy;
     }
     
     public ResourceLocation getId() { return id; }
@@ -66,6 +68,7 @@ public class DatapackChant {
     public ResourceLocation getLinkedDeity() { return linkedDeity; }
     public boolean hasLinkedDeity() { return linkedDeity != null; }
     public String getPrayerEffectType() { return prayerEffectType; }
+    public boolean requiresEffigy() { return requiresEffigy; }
     
     /**
      * Check if player meets requirements to perform this chant
@@ -237,6 +240,11 @@ public class DatapackChant {
             prayerEffectType = json.get("prayer_effect_type").getAsString();
         }
         
+        // Parse effigy requirement (default true for deity-linked chants, false otherwise)
+        boolean requiresEffigy = json.has("requires_effigy") ? 
+            json.get("requires_effigy").getAsBoolean() : 
+            (linkedDeity != null); // Default: require effigy if linked to deity
+        
         // Parse sign sequence
         List<ResourceLocation> signSequence = new ArrayList<>();
         if (json.has("signs")) {
@@ -265,7 +273,7 @@ public class DatapackChant {
         }
         
         return new DatapackChant(id, name, description, signSequence, category, codexIcon,
-                               difficulty, manaCost, cooldown, effects, requirements, showInCodex, linkedDeity, prayerEffectType);
+                               difficulty, manaCost, cooldown, effects, requirements, showInCodex, linkedDeity, prayerEffectType, requiresEffigy);
     }
     
     /**

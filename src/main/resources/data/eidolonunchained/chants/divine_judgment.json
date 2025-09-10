@@ -4,6 +4,7 @@
   "category": "examples",
   "mana_cost": 40,
   "cooldown": 300,
+  "requires_effigy": true,
   "codex_icon": "minecraft:golden_sword",
   "difficulty": 4,
   "show_in_codex": true,

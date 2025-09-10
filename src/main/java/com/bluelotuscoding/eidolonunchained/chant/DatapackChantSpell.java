@@ -16,9 +16,13 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import elucent.eidolon.common.tile.EffigyTileEntity;
+import elucent.eidolon.api.ritual.Ritual;
+import net.minecraft.world.phys.AABB;
 import org.slf4j.Logger;
 
 import java.util.List;
+import java.util.Comparator;
 
 /**
  * A custom spell that represents a datapack-defined chant.
@@ -77,19 +81,28 @@ public class DatapackChantSpell extends PrayerSpell {
     
     @Override
     public boolean canCast(Level world, BlockPos pos, Player player) {
-        // First check the parent's conditions
-        if (!super.canCast(world, pos, player)) {
-            return false;
-        }
-        
-        // Check cooldown
+        // Check cooldown first
         if (!ChantCooldownManager.canCastChant(player, chantData)) {
             int remainingCooldown = ChantCooldownManager.getRemainingCooldown(player, chantData);
             player.sendSystemMessage(Component.translatable("eidolonunchained.ui.chant.cooldown", remainingCooldown));
             return false;
         }
         
-        return true;
+        // 🔥 NEW: Check effigy requirement (like Eidolon's PrayerSpell)
+        if (chantData.requiresEffigy()) {
+            elucent.eidolon.common.tile.EffigyTileEntity effigy = getEffigy(world, pos);
+            if (effigy == null) {
+                player.sendSystemMessage(Component.literal("§cThis chant requires an effigy nearby."));
+                return false;
+            }
+            if (!effigy.ready()) {
+                player.sendSystemMessage(Component.literal("§cThe effigy is not ready. Wait for the cooldown to end."));
+                return false;
+            }
+        }
+        
+        // Check parent conditions (basic spell requirements)
+        return super.canCast(world, pos, player);
     }
     
     @Override
@@ -165,6 +178,16 @@ public class DatapackChantSpell extends PrayerSpell {
         // Set cooldown after successful cast
         ChantCooldownManager.setCooldown(serverPlayer, chantData);
         
+        // 🔥 NEW: If chant requires effigy, trigger Eidolon's effigy mechanics
+        if (chantData.requiresEffigy()) {
+            EffigyTileEntity effigy = getEffigy(world, pos);
+            if (effigy != null) {
+                // Trigger effigy cooldown (like Eidolon's PrayerSpell does)
+                effigy.pray();
+                LOGGER.info("🔮 Triggered effigy cooldown for chant: {}", chantData.getId());
+            }
+        }
+        
         // Manually trigger effigy visual effects like Eidolon does
         triggerEffigyEffects(world, pos, serverPlayer);
         
@@ -172,6 +195,21 @@ public class DatapackChantSpell extends PrayerSpell {
                    serverPlayer.getName().getString(), chantData.getId());
     }
     
+    /**
+     * Get nearby effigy (same logic as Eidolon's PrayerSpell)
+     */
+    protected static EffigyTileEntity getEffigy(Level world, BlockPos pos) {
+        try {
+            List<EffigyTileEntity> effigies = Ritual.getTilesWithinAABB(EffigyTileEntity.class, world, 
+                new AABB(pos.offset(-4, -4, -4), pos.offset(5, 5, 5)));
+            if (effigies.isEmpty()) return null;
+            return effigies.stream().min(Comparator.comparingDouble((e) -> e.getBlockPos().distSqr(pos))).get();
+        } catch (Exception e) {
+            LOGGER.warn("Failed to find effigy: {}", e.getMessage());
+            return null;
+        }
+    }
+
     private void triggerEffigyEffects(Level world, BlockPos pos, ServerPlayer player) {
         // Effigy effects - to be implemented later if needed
         LOGGER.info("Chant completed successfully at {}", pos);
