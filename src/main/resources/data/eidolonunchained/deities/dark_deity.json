@@ -18,7 +18,7 @@
         "description": "A new soul embraced by the shadows",
         "rewards": [
           "give @s eidolon:soul_shard 3",
-          "title @s subtitle {\"text\":\"The shadows welcome you...\",\"color\":\"dark_purple\"}",
+          "title @s title {\"text\":\"The shadows welcome you...\",\"color\":\"dark_purple\"}",
           "playsound minecraft:ambient.soul_sand_valley.mood master @s ~ ~ ~ 0.5 0.8"
         ]
       },
