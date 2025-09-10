@@ -678,19 +678,10 @@ public class EnhancedCommandExtractor {
                                                             ServerPlayer player) {
         List<String> commands = new ArrayList<>();
         
-        // Try to get the chant that triggered this conversation
-        com.bluelotuscoding.eidolonunchained.chant.DatapackChant triggeringChant = getLastPerformedChant(player);
-        
-        String prayerType;
-        if (triggeringChant != null) {
-            // 🔥 NEW: Use chant-based prayer type detection
-            prayerType = determinePrayerTypeFromChant(triggeringChant, aiConfig);
-            LOGGER.info("🔥 Determined prayer type from chant {}: {}", triggeringChant.getId(), prayerType);
-        } else {
-            // Fallback to old message-based detection
-            prayerType = determinePrayerTypeForDeity(playerMessage, aiResponse, aiConfig);
-            LOGGER.info("🔥 Determined prayer type from message (fallback): {}", prayerType);
-        }
+        // 🔥 NEW: Use dedicated prayer type resolver
+        String prayerType = com.bluelotuscoding.eidolonunchained.prayer.PrayerTypeResolver
+            .resolve(player, aiConfig.deity_id, playerMessage, aiResponse);
+        LOGGER.info("🔥 Determined prayer type: {}", prayerType);
         
         if (aiConfig.prayer_configs.containsKey(prayerType)) {
             com.bluelotuscoding.eidolonunchained.ai.PrayerAIConfig prayerConfig = aiConfig.prayer_configs.get(prayerType);
@@ -718,7 +709,7 @@ public class EnhancedCommandExtractor {
      * 🔥 NEW: Get the last chant performed by the player (if available)
      * This allows us to determine prayer type based on the actual chant performed
      */
-    private static com.bluelotuscoding.eidolonunchained.chant.DatapackChant getLastPerformedChant(ServerPlayer player) {
+    public static com.bluelotuscoding.eidolonunchained.chant.DatapackChant getLastPerformedChant(ServerPlayer player) {
         try {
             return lastPerformedChants.get(player.getUUID());
         } catch (Exception e) {
@@ -968,160 +959,25 @@ public class EnhancedCommandExtractor {
     }
     
     /**
-     * 🔥 NEW: Determine prayer type from chant configuration
-     * This is the CORRECT way to determine prayer types - based on the actual chant performed
-     * rather than trying to guess from player messages.
+     * @deprecated Moved to PrayerTypeResolver.determinePrayerTypeFromChant()
      */
+    @Deprecated
     public static String determinePrayerTypeFromChant(com.bluelotuscoding.eidolonunchained.chant.DatapackChant chant, 
                                                      com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
-        if (chant == null || aiConfig == null) {
-            LOGGER.warn("🔥 determinePrayerTypeFromChant called with null chant or config - returning 'conversation'");
-            return "conversation";
-        }
-        
-        // Check if the chant has a prayer_effect_type property configured
-        String chantPrayerType = chant.getPrayerEffectType();
-        if (chantPrayerType != null && !chantPrayerType.isEmpty()) {
-            // Validate that this prayer type exists in the deity's configuration
-            if (aiConfig.prayer_configs.containsKey(chantPrayerType)) {
-                LOGGER.info("🔥 Using chant-configured prayer type: '{}' for chant: {}", 
-                    chantPrayerType, chant.getId());
-                return chantPrayerType;
-            } else {
-                LOGGER.warn("🔥 Chant {} specifies prayer type '{}' but deity {} doesn't have this type. Available: {}", 
-                    chant.getId(), chantPrayerType, aiConfig.deity_id, aiConfig.prayer_configs.keySet());
-            }
-        }
-        
-        // Fallback: Try to infer prayer type from chant properties
-        String inferredType = inferPrayerTypeFromChant(chant, aiConfig);
-        if (inferredType != null && aiConfig.prayer_configs.containsKey(inferredType)) {
-            LOGGER.info("🔥 Inferred prayer type: '{}' for chant: {}", inferredType, chant.getId());
-            return inferredType;
-        }
-        
-        // Ultimate fallback: conversation (all deities should have this)
-        LOGGER.info("🔥 Using fallback prayer type 'conversation' for chant: {}", chant.getId());
-        return "conversation";
+        LOGGER.warn("🔥 DEPRECATED: determinePrayerTypeFromChant moved to PrayerTypeResolver");
+        return com.bluelotuscoding.eidolonunchained.prayer.PrayerTypeResolver
+            .determinePrayerTypeFromChant(chant, aiConfig);
     }
     
     /**
-     * Infer prayer type from chant properties when not explicitly configured
+     * @deprecated Moved to PrayerTypeResolver.determinePrayerTypeFromMessage()
      */
-    private static String inferPrayerTypeFromChant(com.bluelotuscoding.eidolonunchained.chant.DatapackChant chant, 
-                                                  com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
-        String chantName = chant.getName().toLowerCase();
-        String chantCategory = chant.getCategory().toLowerCase();
-        
-        // Check available prayer types in order of specificity
-        Set<String> availableTypes = aiConfig.prayer_configs.keySet();
-        
-        // Direct name/category matches
-        for (String prayerType : availableTypes) {
-            String lowerType = prayerType.toLowerCase();
-            if (chantName.contains(lowerType) || chantCategory.contains(lowerType)) {
-                return prayerType;
-            }
-        }
-        
-        // Semantic matching based on chant content
-        if (availableTypes.contains("blessing") && 
-            (chantName.contains("bless") || chantName.contains("favor") || chantName.contains("aid"))) {
-            return "blessing";
-        }
-        
-        if (availableTypes.contains("communion") && 
-            (chantName.contains("communion") || chantName.contains("commune") || chantName.contains("wisdom"))) {
-            return "communion";
-        }
-        
-        if (availableTypes.contains("curse") && 
-            (chantName.contains("curse") || chantName.contains("wrath") || chantName.contains("vengeance"))) {
-            return "curse";
-        }
-        
-        if (availableTypes.contains("protection") && 
-            (chantName.contains("protect") || chantName.contains("shield") || chantName.contains("ward"))) {
-            return "protection";
-        }
-        
-        if (availableTypes.contains("growth") && 
-            (chantName.contains("growth") || chantName.contains("nature") || chantName.contains("harvest"))) {
-            return "growth";
-        }
-        
-        // No match found
-        return null;
-    }
-    
-    /**
-     * NEW: Determine prayer type using actual deity config
-     * This is the CORRECT way to determine prayer types dynamically
-     */
+    @Deprecated
     public static String determinePrayerTypeForDeity(String playerMessage, String aiResponse, 
                                                    com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
-        if (aiConfig == null || aiConfig.prayer_configs == null) {
-            return "conversation"; // Safe fallback
-        }
-        
-        String lowerMessage = playerMessage.toLowerCase();
-        Set<String> availablePrayerTypes = aiConfig.prayer_configs.keySet();
-        
-        LOGGER.info("🔥 Available prayer types for deity {}: {}", aiConfig.deity_id, availablePrayerTypes);
-        
-        // Match player message against available prayer types
-        for (String prayerType : availablePrayerTypes) {
-            String lowerPrayerType = prayerType.toLowerCase();
-            
-            // Direct mention of prayer type
-            if (lowerMessage.contains(lowerPrayerType)) {
-                LOGGER.info("🔥 Direct match: '{}' contains prayer type '{}'", lowerMessage, prayerType);
-                return prayerType;
-            }
-            
-            // Contextual matching based on prayer type semantics
-            switch (lowerPrayerType) {
-                case "blessing":
-                    if (lowerMessage.contains("bless") || lowerMessage.contains("help") || 
-                        lowerMessage.contains("aid") || lowerMessage.contains("boost")) {
-                        LOGGER.info("🔥 Contextual match: '{}' → blessing", lowerMessage);
-                        return prayerType;
-                    }
-                    break;
-                case "growth":
-                    if (lowerMessage.contains("grow") || lowerMessage.contains("plant") || 
-                        lowerMessage.contains("harvest") || lowerMessage.contains("fertility")) {
-                        LOGGER.info("🔥 Contextual match: '{}' → growth", lowerMessage);
-                        return prayerType;
-                    }
-                    break;
-                case "curse":
-                    if (lowerMessage.contains("curse") || lowerMessage.contains("punish") || 
-                        lowerMessage.contains("revenge") || lowerMessage.contains("harm")) {
-                        LOGGER.info("🔥 Contextual match: '{}' → curse", lowerMessage);
-                        return prayerType;
-                    }
-                    break;
-                case "protection":
-                    if (lowerMessage.contains("protect") || lowerMessage.contains("shield") || 
-                        lowerMessage.contains("defend") || lowerMessage.contains("guard")) {
-                        LOGGER.info("🔥 Contextual match: '{}' → protection", lowerMessage);
-                        return prayerType;
-                    }
-                    break;
-                case "communion":
-                    if (lowerMessage.contains("wisdom") || lowerMessage.contains("knowledge") || 
-                        lowerMessage.contains("teach") || lowerMessage.contains("guide")) {
-                        LOGGER.info("🔥 Contextual match: '{}' → communion", lowerMessage);
-                        return prayerType;
-                    }
-                    break;
-            }
-        }
-        
-        // Default to conversation (all deities have this)
-        LOGGER.info("🔥 No specific prayer type match - defaulting to 'conversation'");
-        return "conversation";
+        LOGGER.warn("🔥 DEPRECATED: determinePrayerTypeForDeity moved to PrayerTypeResolver");
+        return com.bluelotuscoding.eidolonunchained.prayer.PrayerTypeResolver
+            .determinePrayerTypeFromMessage(playerMessage, aiResponse, aiConfig);
     }
     
     /**

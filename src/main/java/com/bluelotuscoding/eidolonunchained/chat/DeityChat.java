@@ -373,10 +373,9 @@ public class DeityChat {
                 if (!aiCommands.isEmpty()) {
                     // 🔥 TIER ENFORCEMENT: Check if player is allowed to receive blessings
                     if (shouldAllowBlessing(player, deity, message)) {
-                        // Determine prayer type (blessing, curse, conversation, etc.)
-                        // Use the existing aiConfig from outer scope for proper prayer type detection
-                        String prayerType = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
-                            .determinePrayerTypeForDeity(message, rawResponse, aiConfig);
+                        // 🔥 NEW: Use proper prayer type resolution with chant context
+                        String prayerType = com.bluelotuscoding.eidolonunchained.prayer.PrayerTypeResolver
+                            .resolve(player, deityId, message, rawResponse);
                         
                         // Get max commands from AI deity config for this specific prayer type
                         int maxCommands = getMaxCommandsForPrayerType(deityId, prayerType);
