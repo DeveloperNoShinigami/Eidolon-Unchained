@@ -93,9 +93,9 @@ public class CommandStringUtils {
         
         // Replace potentially dangerous characters but preserve Unicode
         String cleaned = input.replace("§", "\\§")  // Escape color codes
-                              .replace("\n", "\\n")  // Escape newlines
-                              .replace("\r", "\\r")  // Escape carriage returns
-                              .replace("\t", "\\t"); // Escape tabs
+                              .replace("\n", " ")   // 🔥 FIX: Convert newlines to spaces instead of literal \n
+                              .replace("\r", " ")   // Convert carriage returns to spaces
+                              .replace("\t", " ");  // Convert tabs to spaces
         
         // Normalize common AI-generated special characters that display poorly in Minecraft chat
         cleaned = cleaned.replace("—", "-")      // Em dash to hyphen
@@ -110,6 +110,9 @@ public class CommandStringUtils {
                         .replace("©", "(C)")    // Copyright symbol
                         .replace("®", "(R)")    // Registered trademark symbol
                         .replace("°", " deg");  // Degree symbol
+        
+        // 🔥 FIX: Clean up multiple spaces from newline conversions
+        cleaned = cleaned.replaceAll("\\s+", " ").trim();
         
         return cleaned;
     }

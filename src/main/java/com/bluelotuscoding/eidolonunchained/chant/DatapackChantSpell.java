@@ -92,13 +92,17 @@ public class DatapackChantSpell extends PrayerSpell {
         if (chantData.requiresEffigy()) {
             elucent.eidolon.common.tile.EffigyTileEntity effigy = getEffigy(world, pos);
             if (effigy == null) {
-                player.sendSystemMessage(Component.literal("§cThis chant requires an effigy nearby."));
+                player.sendSystemMessage(Component.literal("§c⚠ This chant requires an Effigy nearby (within 4 blocks)."));
+                player.sendSystemMessage(Component.literal("§7Build an Effigy to channel divine power for this ritual."));
                 return false;
             }
             if (!effigy.ready()) {
-                player.sendSystemMessage(Component.literal("§cThe effigy is not ready. Wait for the cooldown to end."));
+                player.sendSystemMessage(Component.literal("§c⏰ The Effigy is cooling down. Wait for it to be ready."));
+                player.sendSystemMessage(Component.literal("§7The divine channels need time to recover their energy."));
                 return false;
             }
+            // Success feedback
+            player.sendSystemMessage(Component.literal("§a✓ Effigy detected and ready - divine power flows freely."));
         }
         
         // Check parent conditions (basic spell requirements)
