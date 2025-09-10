@@ -1294,16 +1294,16 @@ public class UnifiedCommands {
             if (success) {
                 // 🎯 TRIGGER REPUTATION CHECK - Same as devotion command
                 com.bluelotuscoding.eidolonunchained.chat.DeityChat.checkAndHandleTierProgression(player, deityId);
-                context.getSource().sendSuccess(
-                    () -> Component.literal("§6Patron selection completed with reputation checks"), 
-                    false
-                );
+                
+                // Debug log only - player already gets patron selection message from PatronSystem
+                LOGGER.info("Patron selection completed with reputation checks for player {}", player.getName().getString());
+                
+                // Don't send redundant success message - PatronSystem already notifies player
+                return 1;
             } else {
                 context.getSource().sendFailure(Component.literal("§cFailed to set patron"));
                 return 0;
             }
-            
-            return 1;
             
         } catch (Exception e) {
             context.getSource().sendFailure(Component.literal("§cError choosing patron: " + e.getMessage()));

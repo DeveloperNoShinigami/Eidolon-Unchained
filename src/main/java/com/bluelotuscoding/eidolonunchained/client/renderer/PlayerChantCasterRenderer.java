@@ -83,9 +83,9 @@ public class PlayerChantCasterRenderer extends ChantCasterRenderer {
         TextureAtlasSprite ring = mc.getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
             .apply(new ResourceLocation("eidolon", "particle/ring"));
         
-        // Player position with interpolation
+        // Player position with interpolation - use +1.5 offset like working commit a41413f
         double px = Mth.lerp(partialTick, player.xOld, player.getX());
-        double py = Mth.lerp(partialTick, player.yOld, player.getY()) + 0.5; // Eye level, not above
+        double py = Mth.lerp(partialTick, player.yOld, player.getY()); // Above player like working version
         double pz = Mth.lerp(partialTick, player.zOld, player.getZ());
         
         // Translate relative to camera (like entity rendering)
