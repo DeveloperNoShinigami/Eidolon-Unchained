@@ -63,6 +63,7 @@ minecraft {
             jvmArgs '--add-opens', 'java.base/sun.nio.ch=ALL-UNNAMED'
             jvmArgs '--add-opens', 'java.base/java.net=ALL-UNNAMED'
             jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED'
+            jvmArgs '--illegal-access=permit'
         }
 
         server {
@@ -79,6 +80,7 @@ minecraft {
             jvmArgs '--add-opens', 'java.base/sun.nio.ch=ALL-UNNAMED'
             jvmArgs '--add-opens', 'java.base/java.net=ALL-UNNAMED'
             jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED'
+            jvmArgs '--illegal-access=permit'
             
             // Curios mixin configuration
             property 'mixin.env.remapRefMap', 'true'

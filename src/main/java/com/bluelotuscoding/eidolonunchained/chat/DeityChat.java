@@ -144,11 +144,14 @@ public class DeityChat {
                     
                     switch (relationship) {
                         case FOLLOWER:
-                            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.divine_presence"));
+                            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.divine_presence")
+                                .withStyle(net.minecraft.ChatFormatting.YELLOW));
                             if (title != null && !title.isEmpty()) {
-                                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.recognizes_faithful", deity.getName(), title));
+                                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.recognizes_faithful", deity.getName(), title)
+                                    .withStyle(net.minecraft.ChatFormatting.YELLOW));
                             } else {
-                                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.recognizes_faithful", deity.getName(), "servant"));
+                                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.recognizes_faithful", deity.getName(), "servant")
+                                    .withStyle(net.minecraft.ChatFormatting.YELLOW));
                             }
                             break;
                         case ALLIED:

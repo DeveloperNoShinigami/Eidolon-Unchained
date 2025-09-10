@@ -55,9 +55,13 @@ public class PlayerChantingSystem {
     private static class PlayerChant {
         final List<Sign> signs = new ArrayList<>();
         long lastSignTime = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
         private CompletableFuture<Void> spellExecutionTask = null;
         
         void addSign(Sign sign) {
+            if (signs.isEmpty()) {
+                startTime = System.currentTimeMillis();
+            }
             signs.add(sign);
             lastSignTime = System.currentTimeMillis();
             // Cancel any pending spell execution when adding new signs
@@ -75,29 +79,35 @@ public class PlayerChantingSystem {
             
             // Schedule execution after delay (like ribbon system)
             spellExecutionTask = CompletableFuture.runAsync(() -> {
-                try {
-                    // CRITICAL FIX: Call the Eidolon spell's cast() method, not DatapackChant.execute()!
-                    // The cast() method contains the AI deity communication logic
-                    DatapackChantSpell eidolonSpell = DatapackChantManager.getSpellForChant(spell.getId());
-                    if (eidolonSpell != null) {
-                        // Call the spell's cast method with player's position
-                        BlockPos playerPos = player.blockPosition();
-                        eidolonSpell.cast(player.level(), playerPos, player);
-                        
-                        LOGGER.info("Successfully cast spell {} for player {} with AI deity communication", 
-                            spell.getName(), player.getName().getString());
-                    } else {
-                        LOGGER.warn("No Eidolon spell found for chant {}, falling back to direct execution", spell.getId());
-                        // Fallback to direct execution if spell not found
-                        spell.execute(player);
-                    }
-                        
-                } catch (Exception e) {
-                    LOGGER.error("Error executing spell {} for player {}: {}", 
-                        spell.getName(), player.getName().getString(), e.getMessage());
-                } finally {
-                    // Clear the chant after execution (success or failure)
-                    PlayerChantingSystem.clearPlayerChant(player);
+                // Execute on server thread to ensure proper effigy synchronization
+                net.minecraft.server.MinecraftServer server = player.getServer();
+                if (server != null) {
+                    server.execute(() -> {
+                        try {
+                            // CRITICAL FIX: Call the Eidolon spell's cast() method, not DatapackChant.execute()!
+                            // The cast() method contains the AI deity communication logic
+                            DatapackChantSpell eidolonSpell = DatapackChantManager.getSpellForChant(spell.getId());
+                            if (eidolonSpell != null) {
+                                // Call the spell's cast method with player's position
+                                BlockPos playerPos = player.blockPosition();
+                                eidolonSpell.cast(player.level(), playerPos, player);
+                                
+                                LOGGER.info("Successfully cast spell {} for player {} with AI deity communication", 
+                                    spell.getName(), player.getName().getString());
+                            } else {
+                                LOGGER.warn("No Eidolon spell found for chant {}, falling back to direct execution", spell.getId());
+                                // Fallback to direct execution if spell not found
+                                spell.execute(player);
+                            }
+                                
+                        } catch (Exception e) {
+                            LOGGER.error("Error executing spell {} for player {}: {}", 
+                                spell.getName(), player.getName().getString(), e.getMessage());
+                        } finally {
+                            // Clear the chant after execution (success or failure)
+                            PlayerChantingSystem.clearPlayerChant(player);
+                        }
+                    });
                 }
             }, CompletableFuture.delayedExecutor(SPELL_RESOLUTION_DELAY, TimeUnit.MILLISECONDS));
         }
@@ -416,10 +426,24 @@ public class PlayerChantingSystem {
     public static List<Sign> getPlayerChantSigns(UUID playerId) {
         PlayerChant chant = activeChants.get(playerId);
         List<Sign> result = chant != null ? new ArrayList<>(chant.signs) : new ArrayList<>();
-        if (!result.isEmpty()) {
-            System.out.println("DEBUG: getPlayerChantSigns returning " + result.size() + " signs for player " + playerId);
-        }
         return result;
+    }
+    
+    /**
+     * Get the timing information for progressive rendering
+     */
+    public static long getChantStartTime(UUID playerId) {
+        PlayerChant chant = activeChants.get(playerId);
+        return chant != null ? chant.startTime : 0;
+    }
+    
+    /**
+     * Get how long the chant has been active (for animation timing)
+     */
+    public static long getChantDuration(UUID playerId) {
+        PlayerChant chant = activeChants.get(playerId);
+        if (chant == null) return 0;
+        return System.currentTimeMillis() - chant.startTime;
     }
     
     /**

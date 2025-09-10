@@ -7,8 +7,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,13 +54,13 @@ public class AIItemExtractor {
     }
     
     /**
-     * 🎯 SIMPLE: Let AI understand player request and generate appropriate commands
+     * 🎯 ENHANCED: Multi-method item extraction for maximum accuracy
      */
     private static List<String> processPlayerMessageWithAI(String playerMessage, ServerPlayer player, 
                                                           com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
         List<String> commands = new ArrayList<>();
         
-        LOGGER.info("🤖 AI processing player request: '{}'", playerMessage);
+        LOGGER.info("🤖 Enhanced AI processing player request: '{}'", playerMessage);
         
         // Check if this looks like an item request
         if (!isItemRequest(playerMessage)) {
@@ -67,15 +69,20 @@ public class AIItemExtractor {
         }
         
         try {
-            // 🎯 MAKE AI API CALL to understand and generate commands
-            String itemAnalysisPrompt = buildItemRequestPrompt(playerMessage, player);
+            // METHOD 1: Enhanced pattern matching with improved patterns
+            commands.addAll(processWithEnhancedPatternMatching(playerMessage, player, aiConfig));
             
-            // TODO: Make actual AI API call here
-            // For now, fall back to pattern matching
-            commands.addAll(processWithPatternMatching(playerMessage, player, aiConfig));
+            // METHOD 2: Semantic analysis for complex item descriptions  
+            commands.addAll(processWithSemanticAnalysis(playerMessage, player, aiConfig));
+            
+            // METHOD 3: Word-by-word registry scanning
+            commands.addAll(processWithRegistryScanning(playerMessage, player, aiConfig));
+            
+            LOGGER.info("🤖 Enhanced extraction generated {} total commands", commands.size());
             
         } catch (Exception e) {
-            LOGGER.error("🤖 AI processing failed, using fallback: {}", e.getMessage());
+            LOGGER.error("🤖 Enhanced AI processing failed: {}", e.getMessage());
+            // Fallback to basic pattern matching
             commands.addAll(processWithPatternMatching(playerMessage, player, aiConfig));
         }
         
@@ -584,6 +591,176 @@ public class AIItemExtractor {
         LOGGER.info("🔍 Final cleaned item name: '{}'", cleaned);
         
         return cleaned;
+    }
+    
+    /**
+     * METHOD 1: Enhanced pattern matching with improved patterns
+     */
+    private static List<String> processWithEnhancedPatternMatching(String playerMessage, ServerPlayer player,
+                                                                  com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
+        List<String> commands = new ArrayList<>();
+        
+        // Enhanced patterns that capture more natural language variations
+        Pattern[] enhancedPatterns = {
+            // Direct requests with articles
+            Pattern.compile("(?:give me|i need|i want|can i have|grant me|bestow)\\s+(?:a|an|the|some)?\\s*([a-zA-Z][a-zA-Z0-9\\s]*?)(?:\\s*[,.!?]|\\s+(?:please|now|today)|$)", Pattern.CASE_INSENSITIVE),
+            
+            // Blessing requests 
+            Pattern.compile("(?:bless me with|blessing of)\\s+(?:a|an|the)?\\s*([a-zA-Z][a-zA-Z0-9\\s]*?)(?:\\s*[,.!?]|$)", Pattern.CASE_INSENSITIVE),
+            
+            // Desire/wish patterns
+            Pattern.compile("(?:i wish for|i desire|i seek)\\s+(?:a|an|the|some)?\\s*([a-zA-Z][a-zA-Z0-9\\s]*?)(?:\\s*[,.!?]|$)", Pattern.CASE_INSENSITIVE),
+            
+            // Help patterns
+            Pattern.compile("(?:help me (?:get|find|obtain)|could you give me)\\s+(?:a|an|the|some)?\\s*([a-zA-Z][a-zA-Z0-9\\s]*?)(?:\\s*[,.!?]|$)", Pattern.CASE_INSENSITIVE)
+        };
+        
+        Set<String> foundItems = new HashSet<>(); // Prevent duplicates
+        
+        for (Pattern pattern : enhancedPatterns) {
+            Matcher matcher = pattern.matcher(playerMessage);
+            while (matcher.find()) {
+                String requestedItem = matcher.group(1).trim();
+                if (requestedItem != null && !requestedItem.isEmpty()) {
+                    String cleanedItem = cleanupItemName(requestedItem);
+                    LOGGER.info("🔍 Enhanced pattern found: '{}' → '{}'", requestedItem, cleanedItem);
+                    foundItems.add(cleanedItem);
+                }
+            }
+        }
+        
+        // Process found items with scoring
+        commands.addAll(processFoundItemsWithScoring(foundItems, player, aiConfig));
+        
+        return commands;
+    }
+    
+    /**
+     * METHOD 2: Semantic analysis for complex item descriptions
+     */
+    private static List<String> processWithSemanticAnalysis(String playerMessage, ServerPlayer player,
+                                                           com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
+        List<String> commands = new ArrayList<>();
+        Set<String> semanticItems = new HashSet<>();
+        
+        String lowerMessage = playerMessage.toLowerCase();
+        
+        // Item categories with context patterns
+        Map<String, Pattern> categoryPatterns = new HashMap<>();
+        categoryPatterns.put("sword", Pattern.compile("(?:dark|light|shadow|divine|magical|enchanted|blessed|cursed|ancient|powerful|iron|diamond|steel)?\\s*sword(?:\\s+of\\s+(?:power|magic|strength|darkness|light))?", Pattern.CASE_INSENSITIVE));
+        categoryPatterns.put("armor", Pattern.compile("(?:dark|light|shadow|divine|magical|enchanted|blessed|cursed|ancient|powerful)?\\s*(?:armor|chestplate|helmet|boots|leggings)(?:\\s+of\\s+(?:power|magic|strength|protection|darkness|light))?", Pattern.CASE_INSENSITIVE));
+        categoryPatterns.put("cloak", Pattern.compile("(?:dark|light|shadow|divine|magical|enchanted|blessed|cursed|ancient|powerful)?\\s*(?:cloak|robe)(?:\\s+of\\s+(?:power|magic|strength|protection|darkness|light))?", Pattern.CASE_INSENSITIVE));
+        categoryPatterns.put("staff", Pattern.compile("(?:dark|light|shadow|divine|magical|enchanted|blessed|cursed|ancient|powerful)?\\s*(?:staff|wand)(?:\\s+of\\s+(?:power|magic|strength|darkness|light))?", Pattern.CASE_INSENSITIVE));
+        categoryPatterns.put("ring", Pattern.compile("(?:dark|light|shadow|divine|magical|enchanted|blessed|cursed|ancient|powerful)?\\s*(?:ring|amulet)(?:\\s+of\\s+(?:power|magic|strength|protection|darkness|light))?", Pattern.CASE_INSENSITIVE));
+        
+        for (Map.Entry<String, Pattern> entry : categoryPatterns.entrySet()) {
+            Matcher matcher = entry.getValue().matcher(playerMessage);
+            if (matcher.find()) {
+                String semanticMatch = matcher.group().trim();
+                String cleanedMatch = cleanupItemName(semanticMatch);
+                LOGGER.info("🧠 Semantic match: '{}' → '{}'", semanticMatch, cleanedMatch);
+                semanticItems.add(cleanedMatch);
+            }
+        }
+        
+        // Process semantic items with scoring
+        commands.addAll(processFoundItemsWithScoring(semanticItems, player, aiConfig));
+        
+        return commands;
+    }
+    
+    /**
+     * METHOD 3: Word-by-word registry scanning for exact matches
+     */
+    private static List<String> processWithRegistryScanning(String playerMessage, ServerPlayer player,
+                                                           com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
+        List<String> commands = new ArrayList<>();
+        Set<String> foundItems = new HashSet<>();
+        
+        List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
+            aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+        
+        List<ResourceLocation> availableItems = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
+            .getAllItemsForMods(modContextIds);
+        
+        String[] messageWords = playerMessage.toLowerCase().replace(",", " ").replace(".", " ").split("\\s+");
+        
+        // Look for exact item name matches in the message
+        for (ResourceLocation item : availableItems) {
+            String itemName = item.getPath().replace("_", " ");
+            String[] itemWords = itemName.split("\\s+");
+            
+            // For multi-word items, check if all words appear in sequence or nearby
+            if (itemWords.length > 1) {
+                if (containsWordSequence(messageWords, itemWords)) {
+                    LOGGER.info("🔍 Registry scan found: '{}' → {}", itemName, item);
+                    foundItems.add(itemName);
+                }
+            } else {
+                // Single word items - check for exact matches
+                for (String messageWord : messageWords) {
+                    if (messageWord.equals(itemWords[0]) || 
+                        (messageWord.contains(itemWords[0]) && messageWord.length() <= itemWords[0].length() + 2)) {
+                        LOGGER.info("🔍 Registry scan found single word: '{}' → {}", itemWords[0], item);
+                        foundItems.add(itemName);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Process found items with scoring
+        commands.addAll(processFoundItemsWithScoring(foundItems, player, aiConfig));
+        
+        return commands;
+    }
+    
+    /**
+     * Helper: Check if message words contain item word sequence
+     */
+    private static boolean containsWordSequence(String[] messageWords, String[] itemWords) {
+        if (itemWords.length > messageWords.length) return false;
+        
+        for (int i = 0; i <= messageWords.length - itemWords.length; i++) {
+            boolean sequenceMatch = true;
+            for (int j = 0; j < itemWords.length; j++) {
+                if (!messageWords[i + j].contains(itemWords[j]) && !itemWords[j].contains(messageWords[i + j])) {
+                    sequenceMatch = false;
+                    break;
+                }
+            }
+            if (sequenceMatch) return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Process found items using the scoring system
+     */
+    private static List<String> processFoundItemsWithScoring(Set<String> foundItems, ServerPlayer player,
+                                                            com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
+        List<String> commands = new ArrayList<>();
+        
+        List<String> modContextIds = aiConfig.mod_context_ids != null && !aiConfig.mod_context_ids.isEmpty() ? 
+            aiConfig.mod_context_ids : Arrays.asList("minecraft", "eidolon", "eidolonunchained");
+        
+        for (String itemName : foundItems) {
+            List<ResourceLocation> matches = com.bluelotuscoding.eidolonunchained.integration.ai.RegistryContextProvider
+                .findMatchingItemsWithScoring(itemName, modContextIds);
+            
+            if (!matches.isEmpty()) {
+                ResourceLocation bestMatch = matches.get(0);
+                
+                if (deityAllowsItem(bestMatch.toString(), aiConfig, player)) {
+                    String command = String.format("/give %s %s 1", player.getName().getString(), bestMatch.toString());
+                    commands.add(command);
+                    LOGGER.info("🎯 Enhanced extraction SUCCESS: '{}' → {}", itemName, bestMatch);
+                }
+            }
+        }
+        
+        return commands;
     }
     
     /**

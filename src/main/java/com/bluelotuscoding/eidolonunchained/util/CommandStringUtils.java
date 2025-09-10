@@ -86,16 +86,32 @@ public class CommandStringUtils {
     
     /**
      * Safely formats a string for display in chat, preserving Unicode.
-     * Escapes only dangerous characters that could break chat formatting.
+     * Escapes dangerous characters and normalizes common special characters that may display incorrectly.
      */
     public static String safeChatDisplay(String input) {
         if (input == null) return "null";
         
         // Replace potentially dangerous characters but preserve Unicode
-        return input.replace("§", "\\§")  // Escape color codes
-                   .replace("\n", "\\n")  // Escape newlines
-                   .replace("\r", "\\r")  // Escape carriage returns
-                   .replace("\t", "\\t"); // Escape tabs
+        String cleaned = input.replace("§", "\\§")  // Escape color codes
+                              .replace("\n", "\\n")  // Escape newlines
+                              .replace("\r", "\\r")  // Escape carriage returns
+                              .replace("\t", "\\t"); // Escape tabs
+        
+        // Normalize common AI-generated special characters that display poorly in Minecraft chat
+        cleaned = cleaned.replace("—", "-")      // Em dash to hyphen
+                        .replace("–", "-")      // En dash to hyphen
+                        .replace("'", "'")      // Left single quotation mark to apostrophe
+                        .replace("'", "'")      // Right single quotation mark to apostrophe
+                        .replace("…", "...")    // Horizontal ellipsis to three dots
+                        .replace("«", "<<")     // Left-pointing double angle quotation mark
+                        .replace("»", ">>")     // Right-pointing double angle quotation mark
+                        .replace("•", "*")      // Bullet to asterisk
+                        .replace("™", "(TM)")   // Trademark symbol
+                        .replace("©", "(C)")    // Copyright symbol
+                        .replace("®", "(R)")    // Registered trademark symbol
+                        .replace("°", " deg");  // Degree symbol
+        
+        return cleaned;
     }
     
     /**

@@ -1,6 +1,8 @@
 package com.bluelotuscoding.eidolonunchained.chant;
 
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
+import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
+import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
 import elucent.eidolon.api.spells.Sign;
 import elucent.eidolon.common.spell.PrayerSpell;
 import elucent.eidolon.api.deity.Deity;
@@ -11,6 +13,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.core.BlockPos;
 import com.mojang.logging.LogUtils;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -26,16 +31,34 @@ public class DatapackChantSpell extends PrayerSpell {
     private final DatapackChant chantData;
     
     public DatapackChantSpell(ResourceLocation name, DatapackChant chantData, Sign... signs) {
-        // Create a dummy deity for the parent class
-        super(name, createDummyDeity(name), signs);
+        // Create a deity with correct colors for the parent class
+        super(name, createDeityWithColors(name, chantData), signs);
         this.chantData = chantData;
     }
     
     /**
-     * Creates a dummy deity for the parent PrayerSpell class
+     * Creates a deity with proper colors from datapack for the parent PrayerSpell class
      */
-    private static Deity createDummyDeity(ResourceLocation spellName) {
-        return new Deity(new ResourceLocation(spellName.getNamespace(), "chant_" + spellName.getPath()), 100, 100, 100) {
+    private static Deity createDeityWithColors(ResourceLocation spellName, DatapackChant chantData) {
+        // Get colors from linked deity or generate smart colors
+        float[] colors;
+        if (chantData.hasLinkedDeity()) {
+            DatapackDeity deity = DatapackDeityManager.getDeity(chantData.getLinkedDeity());
+            if (deity != null) {
+                colors = new float[]{deity.getRed(), deity.getGreen(), deity.getBlue()};
+            } else {
+                colors = new float[]{0.8f, 0.4f, 1.0f}; // Default mystical purple
+            }
+        } else {
+            colors = new float[]{1.0f, 0.6f, 0.2f}; // Default warm orange/gold
+        }
+        
+        // Convert to 0-255 range for Deity constructor
+        int red = (int)(colors[0] * 255);
+        int green = (int)(colors[1] * 255);
+        int blue = (int)(colors[2] * 255);
+        
+        return new Deity(new ResourceLocation(spellName.getNamespace(), "chant_" + spellName.getPath()), red, green, blue) {
             public String getDisplayName() {
                 return "Chant: " + spellName.getPath();
             }
@@ -99,21 +122,13 @@ public class DatapackChantSpell extends PrayerSpell {
             LOGGER.warn("Failed to record chant for AI context: {}", e.getMessage());
         }
         
-        // 🔥 NEW: Only trigger deity conversation if prayer_effect_type is specified
+        // 🔥 Only trigger deity conversation if prayer_effect_type is specified
         // This allows chants to be linked to deities for lore/context without auto-triggering conversations
         if (chantData.hasLinkedDeity() && chantData.getPrayerEffectType() != null && !chantData.getPrayerEffectType().isEmpty()) {
             // Import the necessary classes for deity interaction
             try {
                 var aiDeityManager = com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance();
                 var deityChat = com.bluelotuscoding.eidolonunchained.chat.DeityChat.class;
-                
-                // Check if effigy setup is available (recommended but not required for chants)
-                var effigy = getEffigy(world, pos);
-                if (effigy == null) {
-                    LOGGER.debug("Chant {} performed without nearby effigy at {}", chantData.getId(), pos);
-                } else {
-                    LOGGER.info("Chant {} performed near effigy at {}", chantData.getId(), effigy.getBlockPos());
-                }
                 
                 // Execute chant effects first
                 executeChantEffects(serverPlayer, world, pos);
@@ -150,8 +165,16 @@ public class DatapackChantSpell extends PrayerSpell {
         // Set cooldown after successful cast
         ChantCooldownManager.setCooldown(serverPlayer, chantData);
         
+        // Manually trigger effigy visual effects like Eidolon does
+        triggerEffigyEffects(world, pos, serverPlayer);
+        
         LOGGER.info("Player {} successfully performed chant: {}", 
                    serverPlayer.getName().getString(), chantData.getId());
+    }
+    
+    private void triggerEffigyEffects(Level world, BlockPos pos, ServerPlayer player) {
+        // Effigy effects - to be implemented later if needed
+        LOGGER.info("Chant completed successfully at {}", pos);
     }
     
     /**
@@ -167,4 +190,5 @@ public class DatapackChantSpell extends PrayerSpell {
             }
         }
     }
+    
 }
