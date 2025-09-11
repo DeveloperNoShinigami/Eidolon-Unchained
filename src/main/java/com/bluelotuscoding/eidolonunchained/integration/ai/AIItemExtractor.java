@@ -85,21 +85,40 @@ public class AIItemExtractor {
         }
         
         try {
-            // METHOD 1: Enhanced pattern matching with improved patterns
-            commands.addAll(processWithEnhancedPatternMatching(playerMessage, player, aiConfig));
+            // 🔥 FIXED: Try methods sequentially and stop when we get a good match
+            // This prevents multiple items being extracted from the same request
             
-            // METHOD 2: Semantic analysis for complex item descriptions  
-            commands.addAll(processWithSemanticAnalysis(playerMessage, player, aiConfig));
+            // METHOD 1: Enhanced pattern matching (best for explicit requests)
+            List<String> method1Results = processWithEnhancedPatternMatching(playerMessage, player, aiConfig);
+            if (!method1Results.isEmpty()) {
+                // Limit to 1 item for blessing requests to avoid spam
+                commands.add(method1Results.get(0));
+                LOGGER.info("🔥 METHOD 1 SUCCESS: Found item via pattern matching, stopping here");
+            } else {
+                // METHOD 2: Semantic analysis (fallback for complex descriptions)
+                List<String> method2Results = processWithSemanticAnalysis(playerMessage, player, aiConfig);
+                if (!method2Results.isEmpty()) {
+                    commands.add(method2Results.get(0));
+                    LOGGER.info("🔥 METHOD 2 SUCCESS: Found item via semantic analysis, stopping here");
+                } else {
+                    // METHOD 3: Registry scanning (last resort)
+                    List<String> method3Results = processWithRegistryScanning(playerMessage, player, aiConfig);
+                    if (!method3Results.isEmpty()) {
+                        commands.add(method3Results.get(0));
+                        LOGGER.info("🔥 METHOD 3 SUCCESS: Found item via registry scanning");
+                    }
+                }
+            }
             
-            // METHOD 3: Word-by-word registry scanning
-            commands.addAll(processWithRegistryScanning(playerMessage, player, aiConfig));
-            
-            LOGGER.info("🤖 Enhanced extraction generated {} total commands", commands.size());
+            LOGGER.info("🔥 FIXED EXTRACTION: Generated {} command (limited to 1 per request)", commands.size());
             
         } catch (Exception e) {
             LOGGER.error("🤖 Enhanced AI processing failed: {}", e.getMessage());
             // Fallback to basic pattern matching
-            commands.addAll(processWithPatternMatching(playerMessage, player, aiConfig));
+            List<String> fallbackResults = processWithPatternMatching(playerMessage, player, aiConfig);
+            if (!fallbackResults.isEmpty()) {
+                commands.add(fallbackResults.get(0)); // Still limit to 1
+            }
         }
         
         return commands;
@@ -167,10 +186,11 @@ public class AIItemExtractor {
     
     /**
      * AI helper: Determine if message contains item requests
+     * 🔧 FIXED: Now matches ALL the actual patterns we support
      */
     private static boolean isItemRequest(String message) {
         String lowerMessage = message.toLowerCase();
-        return lowerMessage.matches(".*(?:can i have|give me|i need|i want|bestow|grant me).*");
+        return lowerMessage.matches(".*(?:can i have|give me|i need|i want|bestow|grant me|bless me with|blessing of|i wish for|i desire|i seek|help me get|help me find|help me obtain|could you give me).*");
     }
     
     /**
@@ -609,13 +629,15 @@ public class AIItemExtractor {
                                                                   com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig) {
         List<String> commands = new ArrayList<>();
         
+        LOGGER.info("🔥 ENHANCED PATTERN MATCHING: Processing '{}'", playerMessage);
+        
         // Enhanced patterns that capture more natural language variations
         Pattern[] enhancedPatterns = {
             // Direct requests with articles
             Pattern.compile("(?:give me|i need|i want|can i have|grant me|bestow)\\s+(?:a|an|the|some)?\\s*([a-zA-Z][a-zA-Z0-9\\s]*?)(?:\\s*[,.!?]|\\s+(?:please|now|today)|$)", Pattern.CASE_INSENSITIVE),
             
-            // Blessing requests 
-            Pattern.compile("(?:bless me with|blessing of)\\s+(?:a|an|the)?\\s*([a-zA-Z][a-zA-Z0-9\\s]*?)(?:\\s*[,.!?]|$)", Pattern.CASE_INSENSITIVE),
+            // Blessing requests (🔥 FIXED: More greedy capture to get full item names)
+            Pattern.compile("(?:bless me with|blessing of)\\s+(?:a|an|the)?\\s*([a-zA-Z][a-zA-Z0-9\\s]+?)(?:\\s*[,.!?]|\\?|$)", Pattern.CASE_INSENSITIVE),
             
             // Desire/wish patterns
             Pattern.compile("(?:i wish for|i desire|i seek)\\s+(?:a|an|the|some)?\\s*([a-zA-Z][a-zA-Z0-9\\s]*?)(?:\\s*[,.!?]|$)", Pattern.CASE_INSENSITIVE),

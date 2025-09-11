@@ -158,44 +158,56 @@ public class RegistryContextProvider {
         String[] searchWords = searchTerm.toLowerCase().split("\\s+");
         List<ScoredItem> scoredItems = new ArrayList<>();
         
-        // If single word, use existing logic
+        LOGGER.info("🔥 MULTI-WORD ANALYSIS: Breaking down '{}' into words: {}", searchTerm, Arrays.toString(searchWords));
+        
+        // If single word, use existing logic but still log for debugging
         if (searchWords.length == 1) {
-            return findMatchingItems(searchTerm, modIds);
+            LOGGER.info("🔥 Single word search, delegating to findMatchingItems()");
+            List<ResourceLocation> singleWordResults = findMatchingItems(searchTerm, modIds);
+            LOGGER.info("🔥 Single word search found {} results", singleWordResults.size());
+            return singleWordResults;
         }
         
         // 🔥 FIXED: Always respect the provided mod_context_ids from configuration
         List<String> searchMods = modIds;
-        LOGGER.info("🔍 DEBUG: Using configured mod IDs from AI deity config: {}", searchMods);
+        LOGGER.info("🔍 DEBUG: Using mod IDs for search: {}", searchMods);
         
         // 🔍 DEBUG: Show what items are actually available in each mod
+        int totalItemsAvailable = 0;
         for (String modId : searchMods) {
             List<String> modItems = getRegistryEntriesForMod(BuiltInRegistries.ITEM.keySet(), modId);
+            totalItemsAvailable += modItems.size();
             LOGGER.info("🔍 Available items in '{}' mod: {} items", modId, modItems.size());
             if (modItems.size() > 0) {
-                LOGGER.info("  Sample items: {}", modItems.subList(0, Math.min(10, modItems.size())));
+                LOGGER.info("  Sample items: {}", modItems.subList(0, Math.min(5, modItems.size())));
             }
         }
+        LOGGER.info("🔥 TOTAL ITEMS TO SEARCH: {} items across {} mods", totalItemsAvailable, searchMods.size());
         
         // 🔥 NEW APPROACH: Search for items that contain ANY of the search words
+        int itemsScanned = 0;
         for (ResourceLocation itemKey : BuiltInRegistries.ITEM.keySet()) {
             // Only search in specified mod namespaces
             if (!searchMods.contains(itemKey.getNamespace())) continue;
             
+            itemsScanned++;
             String path = itemKey.getPath().toLowerCase();
             int score = calculateIndividualWordScore(path, searchWords);
             
             // Lower threshold - we want to find items with any matching words
             if (score > 0) {
                 scoredItems.add(new ScoredItem(itemKey, score));
-                LOGGER.debug("🔥 WORD MATCH: '{}' contains words from '{}' → score: {}", itemKey, searchTerm, score);
+                LOGGER.info("🔥 WORD MATCH FOUND: '{}' contains words from '{}' → score: {}", itemKey, searchTerm, score);
             }
         }
+        
+        LOGGER.info("🔥 SCANNING COMPLETE: Examined {} items, found {} scoring matches", itemsScanned, scoredItems.size());
         
         // Sort by score (highest first)
         scoredItems.sort((a, b) -> Integer.compare(b.score, a.score));
         
         // 🔧 DEBUG: Log top scoring items
-        LOGGER.info("🔥 INDIVIDUAL WORD MATCHES for '{}':", searchTerm);
+        LOGGER.info("🔥 TOP INDIVIDUAL WORD MATCHES for '{}':", searchTerm);
         for (int i = 0; i < Math.min(10, scoredItems.size()); i++) {
             ScoredItem item = scoredItems.get(i);
             LOGGER.info("  {}. {} (score: {})", i+1, item.resourceLocation, item.score);
@@ -206,7 +218,7 @@ public class RegistryContextProvider {
             .map(item -> item.resourceLocation)
             .collect(Collectors.toList());
         
-        LOGGER.info("🔥 Individual word search for '{}' found {} items in {} mods", 
+        LOGGER.info("🔥 FINAL RESULT: Multi-word search for '{}' found {} items in {} mods", 
             searchTerm, matches.size(), searchMods.size());
         
         return matches;
@@ -233,6 +245,7 @@ public class RegistryContextProvider {
     private static int calculateIndividualWordScore(String itemPath, String[] searchWords) {
         int score = 0;
         List<String> matchedWords = new ArrayList<>();
+        int wordsMatched = 0;
         
         for (String word : searchWords) {
             // Skip very short or common words
@@ -240,29 +253,44 @@ public class RegistryContextProvider {
                 continue;
             }
             
+            boolean wordMatched = false;
             if (itemPath.equals(word)) {
-                score += 100; // Exact single word match
+                score += 50; // Reduced from 100 - exact single word match
                 matchedWords.add(word + "(exact)");
+                wordMatched = true;
             } else if (itemPath.startsWith(word + "_") || itemPath.endsWith("_" + word)) {
-                score += 50; // Word at boundary
+                score += 30; // Reduced from 50 - word at boundary
                 matchedWords.add(word + "(boundary)");
+                wordMatched = true;
             } else if (itemPath.contains("_" + word + "_")) {
-                score += 40; // Word in middle with boundaries
+                score += 25; // Reduced from 40 - word in middle with boundaries
                 matchedWords.add(word + "(middle)");
+                wordMatched = true;
             } else if (itemPath.contains(word)) {
-                score += 20; // Word anywhere
+                score += 15; // Reduced from 20 - word anywhere
                 matchedWords.add(word + "(partial)");
+                wordMatched = true;
             }
             
-            // Special bonus for important item words
-            if (word.matches("helm|helmet|sword|armor|weapon|tool|ring|amulet|cloak|robe|staff|wand|bow|shield|boots|gloves")) {
-                score += 10; // Bonus for equipment words
+            if (wordMatched) {
+                wordsMatched++;
+                // Special bonus for important item words
+                if (word.matches("helm|helmet|sword|armor|weapon|tool|ring|amulet|cloak|robe|staff|wand|bow|shield|boots|gloves")) {
+                    score += 10; // Bonus for equipment words
+                }
             }
+        }
+        
+        // 🔥 CRITICAL FIX: Exponential bonus for multi-word matches
+        if (wordsMatched > 1) {
+            int multiWordBonus = wordsMatched * wordsMatched * 100; // 2 words = 400, 3 words = 900
+            score += multiWordBonus;
+            matchedWords.add("MULTI-WORD-BONUS: +" + multiWordBonus);
         }
         
         // 🔍 DEBUG: Log matches for debugging
         if (score > 0) {
-            LOGGER.debug("  📋 ITEM MATCH: '{}' matched words: {} → total score: {}", itemPath, matchedWords, score);
+            LOGGER.debug("  📋 ITEM MATCH: '{}' matched {} words: {} → total score: {}", itemPath, wordsMatched, matchedWords, score);
         }
         
         return score;

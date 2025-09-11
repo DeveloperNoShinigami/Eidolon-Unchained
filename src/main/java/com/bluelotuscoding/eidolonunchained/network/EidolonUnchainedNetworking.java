@@ -103,6 +103,15 @@ public class EidolonUnchainedNetworking {
                 ActiveChantSignPacket::handle
             );
             
+            // Register effigy effects packet for visual/audio effects
+            INSTANCE.registerMessage(
+                ++packetId,
+                EffigyEffectsPacket.class,
+                EffigyEffectsPacket::encode,
+                EffigyEffectsPacket::decode,
+                EffigyEffectsPacket::consume
+            );
+            
             // Add more packets here as needed
         } catch (Exception e) {
             // Log but don't crash - networking is optional for core functionality

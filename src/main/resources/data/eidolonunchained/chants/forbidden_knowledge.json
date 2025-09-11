@@ -40,12 +40,12 @@
       "amplifier": 0
     },
     {
-      "type": "run_command",
-      "command": "particle minecraft:soul_fire_flame ~ ~2 ~ 2 2 2 0.2 50"
-    },
-    {
-      "type": "run_command",
-      "command": "playsound minecraft:entity.wither.spawn player @s"
+      "type": "effigy_effects",
+      "ambient_sound": {
+        "sound": "minecraft:entity.wither.spawn",
+        "volume": 0.9,
+        "pitch": 0.8
+      }
     },
     {
       "type": "send_message",

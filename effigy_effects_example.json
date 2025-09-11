@@ -1,0 +1,36 @@
+{
+  "id": "shadow_communion",
+  "name": "Shadow Communion",
+  "description": "Commune with Nyxathel through the ancient effigy",
+  "sign_sequence": [
+    "elucent.eidolon.api.spells.Signs.WICKED_SIGN",
+    "elucent.eidolon.api.spells.Signs.SOUL_SIGN",
+    "elucent.eidolon.api.spells.Signs.MIND_SIGN"
+  ],
+  "effects": [
+    {
+      "type": "give_item",
+      "item": "eidolon:soul_shard",
+      "count": 2
+    },
+    {
+      "type": "effigy_effects",
+      "ambient_sound": {
+        "sound": "minecraft:ambient_soul_sand_valley_mood",
+        "volume": 0.8,
+        "pitch": 1.2
+      }
+    },
+    {
+      "type": "start_conversation"
+    }
+  ],
+  "requires_effigy": true,
+  "linked_deity": "eidolonunchained:dark_deity",
+  "prayer_effect_type": "conversation",
+  "mana_cost": 40,
+  "cooldown": 300,
+  "difficulty": 3,
+  "category": "communication",
+  "show_in_codex": true
+}

@@ -48,16 +48,12 @@
       "amplifier": 0
     },
     {
-      "type": "run_command",
-      "command": "particle minecraft:totem_of_undying ~ ~2 ~ 1 2 1 0.2 50"
-    },
-    {
-      "type": "run_command",
-      "command": "particle minecraft:end_rod ~ ~1 ~ 0.5 1 0.5 0.1 30"
-    },
-    {
-      "type": "run_command",
-      "command": "playsound minecraft:entity.player.levelup player @s"
+      "type": "effigy_effects",
+      "ambient_sound": {
+        "sound": "minecraft:entity.player.levelup",
+        "volume": 1.0,
+        "pitch": 1.2
+      }
     },
     {
       "type": "send_message",

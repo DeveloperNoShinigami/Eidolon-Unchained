@@ -18,12 +18,12 @@
   "requirements": [],
   "effects": [
     {
-      "type": "run_command",
-      "command": "particle minecraft:soul_fire_flame ~ ~1 ~ 0.5 0.5 0.5 0.1 20"
-    },
-    {
-      "type": "run_command",
-      "command": "playsound minecraft:entity.wither.ambient player @s"
+      "type": "effigy_effects",
+      "ambient_sound": {
+        "sound": "minecraft:entity_wither_ambient",
+        "volume": 0.8,
+        "pitch": 1.1
+      }
     },
     {
       "type": "send_message",

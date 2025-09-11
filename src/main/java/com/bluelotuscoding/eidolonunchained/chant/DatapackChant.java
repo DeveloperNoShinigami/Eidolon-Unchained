@@ -5,6 +5,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -14,6 +16,7 @@ import java.util.ArrayList;
  * Chants are defined in data/modid/chants/ folder
  */
 public class DatapackChant {
+    private static final Logger LOGGER = LogUtils.getLogger();
     
     private final ResourceLocation id;
     private final String name;
@@ -200,9 +203,12 @@ public class DatapackChant {
     
     /**
      * Execute the chant effects
+     * 🔮 UPDATED: Now sets parent chant context for effigy effects
      */
     public void execute(net.minecraft.server.level.ServerPlayer player) {
         for (ChantEffect effect : effects) {
+            // Set parent chant context for effects that need it (like effigy_effects)
+            effect.setParentChant(this);
             effect.apply(player);
         }
     }
@@ -327,10 +333,16 @@ public class DatapackChant {
     public static class ChantEffect {
         private final String type;
         private final JsonObject data;
+        private DatapackChant parentChant; // 🔮 NEW: Track parent chant for effigy effects
         
         public ChantEffect(String type, JsonObject data) {
             this.type = type;
             this.data = data;
+        }
+        
+        // 🔮 NEW: Set parent chant context for effigy effects
+        public void setParentChant(DatapackChant chant) {
+            this.parentChant = chant;
         }
         
         public String getType() { return type; }
@@ -354,6 +366,10 @@ public class DatapackChant {
                 case "communication":
                     // Both effect types do the same thing - start deity conversation
                     startConversation(player);
+                    break;
+                case "effigy_effects":
+                    // 🔮 NEW: Trigger effigy visual/audio effects like Eidolon does
+                    applyEffigyEffects(player);
                     break;
                 default:
                     // Unknown effect type
@@ -445,6 +461,67 @@ public class DatapackChant {
             return new ChantEffect(type, json);
         }
         
+        /**
+         * 🔮 NEW: Apply effigy effects using new EffigyEffectsPacket
+         */
+        private void applyEffigyEffects(net.minecraft.server.level.ServerPlayer player) {
+            try {
+                // Check if this chant has a linked deity (from JSON configuration)
+                if (!this.parentChant.hasLinkedDeity()) {
+                    player.sendSystemMessage(Component.literal("§c⚠ Effigy effects require a linked deity"));
+                    return;
+                }
+                
+                // Get effigy from casting position (where the chant was successful)
+                // Use the same method as DatapackChantSpell but search from a wider area
+                elucent.eidolon.common.tile.EffigyTileEntity effigy = findNearbyEffigy(player);
+                
+                if (effigy == null) {
+                    LOGGER.info("🔮 No effigy found for enhanced effects - chant will complete without visual enhancements");
+                    // Effigy effects are optional enhancement - don't block the chant
+                    return;
+                }
+                
+                // Parse ambient sound configuration from JSON
+                com.bluelotuscoding.eidolonunchained.network.EffigyEffectsPacket.SoundConfig soundConfig = 
+                    parseSoundConfig();
+                
+                // Start persistent effigy effects using the persistence manager
+                com.bluelotuscoding.eidolonunchained.network.EffigyEffectsPersistenceManager
+                    .startEffects(player, effigy.getBlockPos(), this.parentChant.getLinkedDeity(), soundConfig);
+                
+                LOGGER.info("🔮 Started persistent effigy effects for deity {} at pos {}", 
+                    this.parentChant.getLinkedDeity(), effigy.getBlockPos());
+                    
+            } catch (Exception e) {
+                LOGGER.error("🔮 Failed to apply effigy effects: {}", e.getMessage(), e);
+                player.sendSystemMessage(Component.literal("§c⚠ Effigy effects failed: " + e.getMessage()));
+            }
+        }
+        
+        /**
+         * Parse sound configuration from JSON data
+         */
+        private com.bluelotuscoding.eidolonunchained.network.EffigyEffectsPacket.SoundConfig parseSoundConfig() {
+            if (data.has("ambient_sound") && data.get("ambient_sound").isJsonObject()) {
+                com.google.gson.JsonObject soundObj = data.getAsJsonObject("ambient_sound");
+                String sound = soundObj.has("sound") ? soundObj.get("sound").getAsString() : "minecraft:ambient_cave";
+                float volume = soundObj.has("volume") ? soundObj.get("volume").getAsFloat() : 1.0f;
+                float pitch = soundObj.has("pitch") ? soundObj.get("pitch").getAsFloat() : 1.0f;
+                return new com.bluelotuscoding.eidolonunchained.network.EffigyEffectsPacket.SoundConfig(sound, volume, pitch);
+            } else {
+                // Default sound configuration
+                return new com.bluelotuscoding.eidolonunchained.network.EffigyEffectsPacket.SoundConfig("minecraft:ambient_cave", 1.0f, 1.0f);
+            }
+        }
+        
+        /**
+         * Get the parent chant that contains this effect (needed for linked deity info)
+         */
+        private DatapackChant getParentChant(net.minecraft.server.level.ServerPlayer player) {
+            return this.parentChant;
+        }
+        
         public JsonObject toJson() {
             JsonObject json = new JsonObject();
             json.addProperty("type", type);
@@ -457,6 +534,61 @@ public class DatapackChant {
             }
             
             return json;
+        }
+        
+        /**
+         * Find nearby effigy using multiple search strategies
+         */
+        private elucent.eidolon.common.tile.EffigyTileEntity findNearbyEffigy(net.minecraft.server.level.ServerPlayer player) {
+            net.minecraft.core.BlockPos playerPos = player.blockPosition();
+            
+            // Strategy 1: Use DatapackChantSpell's exact method (9x9x9 from player position)
+            elucent.eidolon.common.tile.EffigyTileEntity effigy = 
+                com.bluelotuscoding.eidolonunchained.chant.DatapackChantSpell.getEffigy(player.serverLevel(), playerPos);
+            if (effigy != null) {
+                LOGGER.debug("🔮 Found effigy using exact method at {}", effigy.getBlockPos());
+                return effigy;
+            }
+            
+            // Strategy 2: Search from slightly below player (in case they're standing on/above the effigy)
+            elucent.eidolon.common.tile.EffigyTileEntity effigyBelow = 
+                com.bluelotuscoding.eidolonunchained.chant.DatapackChantSpell.getEffigy(player.serverLevel(), playerPos.below(2));
+            if (effigyBelow != null) {
+                LOGGER.debug("🔮 Found effigy using below-player method at {}", effigyBelow.getBlockPos());
+                return effigyBelow;
+            }
+            
+            // Strategy 3: Use ChantSlotManager's approach - scan for effigy blocks by name
+            return findEffigyByBlockScan(player.serverLevel(), playerPos);
+        }
+        
+        /**
+         * Alternative effigy detection using block name scanning (like ChantSlotManager)
+         */
+        private elucent.eidolon.common.tile.EffigyTileEntity findEffigyByBlockScan(net.minecraft.world.level.Level world, net.minecraft.core.BlockPos center) {
+            // Scan 9x9x9 area looking for blocks with "effigy" in the name
+            for (int x = -4; x <= 4; x++) {
+                for (int y = -4; y <= 4; y++) {
+                    for (int z = -4; z <= 4; z++) {
+                        net.minecraft.core.BlockPos pos = center.offset(x, y, z);
+                        net.minecraft.world.level.block.state.BlockState state = world.getBlockState(pos);
+                        
+                        // Check if this block is an effigy by name
+                        String blockName = state.getBlock().getDescriptionId().toLowerCase();
+                        if (blockName.contains("effigy")) {
+                            // Check if it has an EffigyTileEntity
+                            net.minecraft.world.level.block.entity.BlockEntity blockEntity = world.getBlockEntity(pos);
+                            if (blockEntity instanceof elucent.eidolon.common.tile.EffigyTileEntity) {
+                                LOGGER.debug("🔮 Found effigy using block scan at {}", pos);
+                                return (elucent.eidolon.common.tile.EffigyTileEntity) blockEntity;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            LOGGER.debug("🔮 No effigy found using any detection method");
+            return null;
         }
     }
 }

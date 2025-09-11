@@ -36,12 +36,12 @@
       "amplifier": 0
     },
     {
-      "type": "run_command",
-      "command": "particle minecraft:happy_villager ~ ~1 ~ 1 1 1 0.1 30"
-    },
-    {
-      "type": "run_command",
-      "command": "playsound minecraft:block.grass.step player @s"
+      "type": "effigy_effects",
+      "ambient_sound": {
+        "sound": "minecraft:block_grass_step",
+        "volume": 0.9,
+        "pitch": 0.8
+      }
     },
     {
       "type": "send_message",

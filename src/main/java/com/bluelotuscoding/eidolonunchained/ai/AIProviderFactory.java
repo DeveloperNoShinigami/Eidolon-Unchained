@@ -109,7 +109,7 @@ public class AIProviderFactory {
         // Use simple local Player2AI client
         int timeout = EidolonUnchainedConfig.COMMON.geminiTimeout.get();
         Player2AIClient client = new Player2AIClient(timeout);
-        LOGGER.info("Creating Player2AI provider for local mode");
+        LOGGER.debug("Creating Player2AI provider for local mode");
         
         // Start health signal as required by Player2AI jam submission rules
         Player2HealthSignal.startHealthSignal();

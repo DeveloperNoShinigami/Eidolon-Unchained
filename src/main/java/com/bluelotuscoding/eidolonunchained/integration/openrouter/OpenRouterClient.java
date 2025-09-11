@@ -106,15 +106,15 @@ public class OpenRouterClient {
                 } else {
                     LOGGER.error("OpenRouter API request failed with status {}: {}", 
                         response.statusCode(), response.body());
-                    return createErrorResponse("API request failed: " + response.statusCode());
+                    return createErrorResponse("The deity's voice grows distant...");
                 }
                 
             } catch (IOException | InterruptedException e) {
-                LOGGER.error("OpenRouter API request failed: {}", e.getMessage(), e);
-                return createErrorResponse("Request failed: " + e.getMessage());
+                LOGGER.debug("OpenRouter API request failed: {}", e.getMessage(), e);
+                return createErrorResponse("The divine connection wavers...");
             } catch (Exception e) {
-                LOGGER.error("Unexpected error in OpenRouter API call: {}", e.getMessage(), e);
-                return createErrorResponse("Unexpected error: " + e.getMessage());
+                LOGGER.debug("Unexpected error in OpenRouter API call: {}", e.getMessage(), e);
+                return createErrorResponse("The deity cannot hear your prayer...");
             }
         });
     }
@@ -136,12 +136,12 @@ public class OpenRouterClient {
                 return new GeminiAPIClient.AIResponse(true, content, null);
             } else {
                 LOGGER.warn("OpenRouter API response missing choices: {}", responseBody);
-                return createErrorResponse("Invalid response format");
+                return createErrorResponse("The deity speaks in riddles...");
             }
             
         } catch (Exception e) {
-            LOGGER.error("Failed to parse OpenRouter API response: {}", e.getMessage(), e);
-            return createErrorResponse("Failed to parse response");
+            LOGGER.debug("Failed to parse OpenRouter API response: {}", e.getMessage(), e);
+            return createErrorResponse("The deity's words are unclear...");
         }
     }
     

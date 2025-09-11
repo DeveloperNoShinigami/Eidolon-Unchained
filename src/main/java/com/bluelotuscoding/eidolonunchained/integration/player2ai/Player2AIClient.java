@@ -48,7 +48,7 @@ public class Player2AIClient {
     
     public Player2AIClient(int timeoutSeconds) {
         this.timeoutSeconds = timeoutSeconds;
-        LOGGER.info("Player2AI client initialized for LOCAL instance (Player2AI desktop app)");
+        LOGGER.debug("Player2AI client initialized for LOCAL instance (Player2AI desktop app)");
     }
     
     /**
@@ -235,23 +235,18 @@ public class Player2AIClient {
                 return new GeminiAPIClient.AIResponse(true, response, Collections.emptyList());
                 
             } catch (Exception e) {
-                LOGGER.error("Player2AI request failed", e);
+                LOGGER.debug("Player2AI request failed: {}", e.getMessage());
                 
-                // In debug mode or development, show actual error details
+                // Always return clean user-friendly message to players
                 String errorMessage = "The deity's voice echoes from beyond the veil...";
-                if (LOGGER.isDebugEnabled() || e.getMessage().contains("Connection refused")) {
-                    errorMessage = "Player2AI Error: " + e.getMessage() + 
-                        " (Check if Player2 App is running on localhost:4315)";
-                }
-                
                 return new GeminiAPIClient.AIResponse(false, errorMessage, Collections.emptyList());
             }
         }, EXECUTOR)
         .orTimeout(15, java.util.concurrent.TimeUnit.SECONDS) // Critical: Enforce strict timeout
         .exceptionally(throwable -> {
-            LOGGER.warn("Player2AI request timed out or failed: {}", throwable.getMessage());
+            LOGGER.debug("Player2AI request timed out or failed: {}", throwable.getMessage());
             return new GeminiAPIClient.AIResponse(false, 
-                "The deity's attention wavers... (Connection timeout - ensure Player2 App is running)", 
+                "The deity's attention wavers...", 
                 Collections.emptyList());
         });
     }
@@ -297,7 +292,7 @@ public class Player2AIClient {
             // Safe defaults if no generation config provided
             request.addProperty("max_tokens", 500);
             request.addProperty("temperature", 0.8);
-            LOGGER.warn("No generation config provided to Player2AI, using defaults");
+            LOGGER.debug("No generation config provided to Player2AI, using defaults");
         }
         
         // Send request to the local OpenAI-compatible endpoint

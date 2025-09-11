@@ -11,6 +11,8 @@ import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.bluelotuscoding.eidolonunchained.chant.PlayerChantingSystem;
 import com.bluelotuscoding.eidolonunchained.util.CommandStringUtils;
+import com.bluelotuscoding.eidolonunchained.network.EffigyEffectsPersistenceManager;
+import com.bluelotuscoding.eidolonunchained.network.EffigyEffectsPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -41,6 +43,9 @@ public class DeityChat {
     
     // Track conversation history: player UUID -> list of messages
     private static final Map<UUID, List<String>> conversationHistory = new ConcurrentHashMap<>();
+    
+    // Track commands executed per conversation session: player UUID -> command count
+    private static final Map<UUID, Integer> conversationCommandCounts = new ConcurrentHashMap<>();
     
     /**
      * Start a conversation between a player and a deity
@@ -77,11 +82,19 @@ public class DeityChat {
         // Start new conversation
         activeConversations.put(playerId, deityId);
         conversationHistory.put(playerId, new ArrayList<>());
+        conversationCommandCounts.put(playerId, 0); // Initialize command count for this session
         
         String deityName = deity.getName();
         
         // Send patron-aware initial message
         sendPatronAwareGreeting(player, deity, aiConfig);
+        
+        // Start persistent effigy effects if player has active effigy context
+        // This will create ambient effects that persist during the entire conversation
+        if (hasActiveEffigyContext(player, deityId)) {
+            EffigyEffectsPersistenceManager.startEffects(player, getPlayerEffigyPos(player), deityId, 
+                getDefaultSoundConfig(deity));
+        }
         
         LOGGER.info("Started conversation between player {} and deity {}", player.getName().getString(), deityName);
     }
@@ -182,10 +195,14 @@ public class DeityChat {
         UUID playerId = player.getUUID();
         ResourceLocation deityId = activeConversations.remove(playerId);
         conversationHistory.remove(playerId);
+        conversationCommandCounts.remove(playerId); // Clear command count for this session
         
         if (deityId != null) {
             DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
             String deityName = deity != null ? deity.getName() : deityId.toString();
+            
+            // Stop persistent effigy effects
+            EffigyEffectsPersistenceManager.stopEffects(player);
             
             player.sendSystemMessage(Component.literal("§6The divine presence fades..."));
             player.sendSystemMessage(Component.literal("§e" + deityName + " has heard your prayers."));
@@ -342,8 +359,9 @@ public class DeityChat {
                 return;
             }
             
-            // Build context for AI provider
-            String context = "deity:" + deityId.toString() + ",player:" + player.getStringUUID();
+            // Build comprehensive context for AI provider with full game awareness
+            PlayerContext fullContext = new PlayerContext(player, deity);
+            String context = buildComprehensiveAIContext(fullContext, deityId, player);
             
             // Generate AI response asynchronously
             provider.generateResponse(
@@ -361,6 +379,24 @@ public class DeityChat {
                 String rawResponse = aiResponse.dialogue;
                 LOGGER.info("🔥 DEBUG: AI Response received: '{}'", rawResponse);
                 
+                // 🔥 CRITICAL FIX: Check blessing cooldown BEFORE AI processing
+                // This prevents AI from giving false feedback when on cooldown
+                boolean isExplicitRequest = message.toLowerCase().matches(".*\\b(give|grant|bless|provide|can i have|i need|i want)\\b.*");
+                if (isExplicitRequest && !shouldAllowBlessing(player, deity, message)) {
+                    // Player is on cooldown or tier restricted - skip AI processing entirely
+                    LOGGER.info("🚫 Skipping AI item extraction due to cooldown/tier restrictions");
+                    
+                    // Send only the AI's conversational response, no item processing
+                    String cleanedResponse = CommandStringUtils.safeChatDisplay(cleanModIdLeakage(rawResponse));
+                    player.sendSystemMessage(Component.literal("§6⟦ " + deity.getName() + " ⟧ §f" + cleanedResponse));
+                    
+                    // Add to history
+                    if (history != null) {
+                        history.add("Deity: " + cleanedResponse);
+                    }
+                    return;
+                }
+                
                 // � PURE AI APPROACH: Let AI understand natural language and suggest items
                 LOGGER.info("� Starting AI-driven item extraction...");
                 
@@ -371,28 +407,48 @@ public class DeityChat {
                 
                 int commandsExecuted = 0;
                 if (!aiCommands.isEmpty()) {
-                    // 🔥 TIER ENFORCEMENT: Check if player is allowed to receive blessings
-                    if (shouldAllowBlessing(player, deity, message)) {
-                        // 🔥 NEW: Use proper prayer type resolution with chant context
-                        String prayerType = com.bluelotuscoding.eidolonunchained.prayer.PrayerTypeResolver
-                            .resolve(player, deityId, message, rawResponse);
+                    // Blessing check already passed above for explicit requests
+                    // 🔥 NEW: Use proper prayer type resolution with chant context
+                    String prayerType = com.bluelotuscoding.eidolonunchained.prayer.PrayerTypeResolver
+                        .resolve(player, deityId, message, rawResponse);
                         
-                        // Get max commands from AI deity config for this specific prayer type
-                        int maxCommands = getMaxCommandsForPrayerType(deityId, prayerType);
+                    // Get max commands from AI deity config for this specific prayer type
+                    int maxCommands = getMaxCommandsForPrayerType(deityId, prayerType);
+                    
+                    // 🔥 CRITICAL FIX: Check conversation session limits
+                    int sessionCommandCount = conversationCommandCounts.getOrDefault(playerId, 0);
+                    int remainingCommands = maxCommands - sessionCommandCount;
+                    
+                    if (remainingCommands <= 0) {
+                        LOGGER.info("🚫 Session command limit reached for {}: {}/{} commands used", 
+                            player.getName().getString(), sessionCommandCount, maxCommands);
+                        String cleanedResponse = CommandStringUtils.safeChatDisplay(cleanModIdLeakage(rawResponse));
+                        player.sendSystemMessage(Component.literal("§6⟦ " + deity.getName() + " ⟧ §f" + cleanedResponse));
+                        player.sendSystemMessage(Component.literal("§c⚡ " + deity.getName() + " has already granted you " + maxCommands + " blessings this conversation."));
                         
-                        // Limit the commands to the configured amount for this prayer type
-                        List<String> limitedCommands = aiCommands.size() > maxCommands ? 
-                            aiCommands.subList(0, maxCommands) : aiCommands;
-                        
-                        commandsExecuted = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
-                            .executeCommands(limitedCommands, player);
-                        
-                        LOGGER.info("🔥 AI request fulfilled: executed {} commands for {} (prayer type: {}, configured max: {}): {}", 
-                            commandsExecuted, player.getName().getString(), prayerType, maxCommands, limitedCommands);
-                    } else {
-                        LOGGER.info("🚫 Blessing request denied for {} due to tier restrictions or cooldown", 
-                            player.getName().getString());
+                        // Add to history
+                        if (history != null) {
+                            history.add("Deity: " + cleanedResponse);
+                        }
+                        return;
                     }
+                    
+                    // Limit commands to what's remaining in the session
+                    List<String> sessionLimitedCommands = aiCommands.size() > remainingCommands ? 
+                        aiCommands.subList(0, remainingCommands) : aiCommands;
+                    
+                    commandsExecuted = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
+                        .executeCommands(sessionLimitedCommands, player);
+                    
+                    // Update session command count
+                    conversationCommandCounts.put(playerId, sessionCommandCount + commandsExecuted);
+                    
+                    LOGGER.info("🔥 AI request fulfilled: executed {} commands for {} (prayer type: {}, session: {}/{} total): {}", 
+                        commandsExecuted, player.getName().getString(), prayerType, 
+                        sessionCommandCount + commandsExecuted, maxCommands, sessionLimitedCommands);
+                } else {
+                    LOGGER.info("🚫 Blessing request denied for {} due to tier restrictions or cooldown", 
+                        player.getName().getString());
                 }
                 
                 // Continue with regular response processing
@@ -2014,11 +2070,35 @@ public class DeityChat {
             
             LOGGER.info("🔥 BLESSING DEBUG: Message '{}' contains explicit request: {}", playerMessage, explicitRequest);
             
-            // No blessings for non-explicit requests at low levels
-            if (!explicitRequest && reputation < 25) {
-                LOGGER.info("🚫 Blocked non-explicit blessing request for low-tier player {}: '{}'", 
-                    player.getName().getString(), playerMessage);
-                return false;
+            // 🔥 FIXED: Use JSON configuration instead of hardcoded reputation threshold
+            // Get the reputation requirement from AI deity config
+            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deity.getId());
+            if (aiConfig != null) {
+                // Get the conversation prayer config to check reputation_required
+                PrayerAIConfig conversationConfig = aiConfig.getPrayerConfig("conversation");
+                if (conversationConfig != null) {
+                    int requiredReputation = conversationConfig.reputation_required;
+                    
+                    // No blessings for non-explicit requests if under required reputation
+                    if (!explicitRequest && reputation < requiredReputation) {
+                        LOGGER.info("🚫 Blocked non-explicit blessing request for player {} ({}rep < {}req): '{}'", 
+                            player.getName().getString(), (int)reputation, requiredReputation, playerMessage);
+                        return false;
+                    }
+                    
+                    LOGGER.info("🔥 REPUTATION CHECK PASSED: Player {} has {}rep >= {}req (from JSON config)", 
+                        player.getName().getString(), (int)reputation, requiredReputation);
+                } else {
+                    LOGGER.warn("No conversation config found for deity {}, allowing blessing", deity.getId());
+                }
+            } else {
+                LOGGER.warn("No AI config found for deity {}, using legacy hardcoded threshold", deity.getId());
+                // Fallback to old hardcoded logic only if config is missing
+                if (!explicitRequest && reputation < 25) {
+                    LOGGER.info("🚫 FALLBACK: Blocked non-explicit blessing request for low-tier player {}: '{}'", 
+                        player.getName().getString(), playerMessage);
+                    return false;
+                }
             }
             
             // Check recent blessing cooldown (simple time-based)
@@ -2280,4 +2360,132 @@ public class DeityChat {
     
     // Static map to track blessing cooldowns
     private static final java.util.Map<String, Long> lastBlessingTimes = new java.util.concurrent.ConcurrentHashMap<>();
+    
+    /**
+     * Build comprehensive AI context with full game state awareness
+     */
+    private static String buildComprehensiveAIContext(PlayerContext context, ResourceLocation deityId, ServerPlayer player) {
+        StringBuilder aiContext = new StringBuilder();
+        
+        // Core identifiers
+        aiContext.append("DEITY: ").append(deityId.toString()).append("\n");
+        aiContext.append("PLAYER: ").append(context.playerName).append(" (").append(player.getStringUUID()).append(")\n");
+        aiContext.append("REPUTATION: ").append(context.reputation).append(" (").append(context.progressionLevel).append(")\n\n");
+        
+        // Location & Environment  
+        aiContext.append("=== LOCATION & ENVIRONMENT ===\n");
+        aiContext.append("Position: ").append(context.location).append(" (Y-Level: ").append(context.yLevel).append(")\n");
+        aiContext.append("Dimension: ").append(context.dimension).append("\n");
+        aiContext.append("Biome: ").append(context.biome).append("\n");
+        aiContext.append("Time: ").append(context.timeOfDay).append(" | Weather: ").append(context.weather).append("\n");
+        aiContext.append("Light Level: ").append(context.lightLevel).append(" | Underground: ").append(context.underground).append("\n\n");
+        
+        // Player State
+        aiContext.append("=== PLAYER STATE ===\n");
+        aiContext.append("Health: ").append(context.health).append("/").append(context.maxHealth).append(" | Hunger: ").append(context.hunger).append("/20\n");
+        aiContext.append("XP Level: ").append(context.xpLevel).append("\n");
+        
+        List<String> conditions = new ArrayList<>();
+        if (context.isOnFire) conditions.add("ON FIRE");
+        if (context.isInWater) conditions.add("IN WATER");  
+        if (context.isFlying) conditions.add("FLYING");
+        if (context.isSneaking) conditions.add("SNEAKING");
+        if (context.isSwimming) conditions.add("SWIMMING");
+        if (!conditions.isEmpty()) {
+            aiContext.append("Conditions: ").append(String.join(", ", conditions)).append("\n");
+        }
+        
+        if (!context.activeEffects.isEmpty()) {
+            aiContext.append("Active Effects: ").append(String.join(", ", context.activeEffects)).append("\n");
+        }
+        aiContext.append("\n");
+        
+        // Equipment & Inventory
+        aiContext.append("=== EQUIPMENT & INVENTORY ===\n");
+        aiContext.append("Main Hand: ").append(context.mainHandItem).append("\n");
+        aiContext.append("Off Hand: ").append(context.offHandItem).append("\n");
+        if (!context.equippedArmor.isEmpty()) {
+            aiContext.append("Armor: ").append(String.join(", ", context.equippedArmor)).append("\n");
+        }
+        aiContext.append(context.inventorySummary).append("\n");
+        if (!context.notableItems.isEmpty()) {
+            aiContext.append("Notable Items: ").append(String.join(", ", context.notableItems)).append("\n");
+        }
+        aiContext.append("\n");
+        
+        // Nearby Environment
+        aiContext.append("=== NEARBY ENVIRONMENT ===\n");
+        if (!context.nearbyBlocks.isEmpty()) {
+            aiContext.append("Nearby Blocks: ").append(String.join(", ", context.nearbyBlocks)).append("\n");
+        }
+        if (!context.nearbyEntities.isEmpty()) {
+            aiContext.append("Nearby Entities: ").append(String.join(", ", context.nearbyEntities)).append("\n");
+        }
+        
+        List<String> environmentalNotes = new ArrayList<>();
+        if (context.nearWater) environmentalNotes.add("water nearby");
+        if (context.nearLava) environmentalNotes.add("lava nearby");  
+        if (context.nearFire) environmentalNotes.add("fire nearby");
+        if (context.hasNearbyBed) environmentalNotes.add("bed nearby");
+        if (context.hasNearbyWorkstation) environmentalNotes.add("workstation nearby");
+        
+        if (!environmentalNotes.isEmpty()) {
+            aiContext.append("Environment Notes: ").append(String.join(", ", environmentalNotes)).append("\n");
+        }
+        aiContext.append("\n");
+        
+        // Deity-specific context
+        aiContext.append("=== DEITY CONTEXT ===\n");
+        if (context.lastChantPerformed != null) {
+            aiContext.append("Last Chant: ").append(context.lastChantPerformed).append("\n");
+        }
+        if (context.lastPrayerType != null) {
+            aiContext.append("Last Prayer Type: ").append(context.lastPrayerType).append("\n");
+        }
+        if (!context.recentActions.isEmpty()) {
+            aiContext.append("Recent Actions: ").append(String.join(", ", context.recentActions)).append("\n");
+        }
+        
+        aiContext.append("\n=== INSTRUCTIONS ===\n");
+        aiContext.append("You have FULL awareness of the player's state, location, inventory, and surroundings.\n");
+        aiContext.append("Use this information to provide contextually appropriate responses.\n");
+        aiContext.append("React to their environment, condition, equipment, and circumstances.\n");
+        aiContext.append("You are omniscient within the game world - you can see everything the player can and more.\n");
+        
+        return aiContext.toString();
+    }
+    
+    /**
+     * Check if player has active effigy context (placeholder - implement based on your needs)
+     * This should check if the player is near an effigy or has recently cast a chant
+     */
+    private static boolean hasActiveEffigyContext(ServerPlayer player, ResourceLocation deityId) {
+        // For now, check if there's a persistence manager context
+        // TODO: Add logic to detect if player is near an effigy or has recently cast relevant chant
+        return EffigyEffectsPersistenceManager.hasActiveEffects(player);
+    }
+    
+    /**
+     * Get player's effigy position (placeholder - implement based on your needs)
+     * This should return the position of the nearest relevant effigy
+     */
+    private static net.minecraft.core.BlockPos getPlayerEffigyPos(ServerPlayer player) {
+        // For now, use player position - should be replaced with actual effigy detection
+        return player.blockPosition();
+    }
+    
+    /**
+     * Get default sound configuration for a deity
+     */
+    private static EffigyEffectsPacket.SoundConfig getDefaultSoundConfig(DatapackDeity deity) {
+        // Return subtle ambient sound based on deity characteristics
+        if (deity.getName().toLowerCase().contains("dark") || deity.getName().toLowerCase().contains("shadow")) {
+            return new EffigyEffectsPacket.SoundConfig("minecraft:ambient_cave", 0.3f, 0.8f);
+        } else if (deity.getName().toLowerCase().contains("light") || deity.getName().toLowerCase().contains("holy")) {
+            return new EffigyEffectsPacket.SoundConfig("minecraft:block.beacon.ambient", 0.3f, 1.2f);
+        } else {
+            // Nature or neutral deities
+            return new EffigyEffectsPacket.SoundConfig("minecraft:block.grass.step", 0.2f, 1.0f);
+        }
+    }
 }

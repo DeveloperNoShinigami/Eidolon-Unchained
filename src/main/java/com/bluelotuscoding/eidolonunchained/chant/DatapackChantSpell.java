@@ -20,6 +20,7 @@ import elucent.eidolon.common.tile.EffigyTileEntity;
 import elucent.eidolon.api.ritual.Ritual;
 import net.minecraft.world.phys.AABB;
 import org.slf4j.Logger;
+import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 
 import java.util.List;
 import java.util.Comparator;
@@ -105,8 +106,19 @@ public class DatapackChantSpell extends PrayerSpell {
             player.sendSystemMessage(Component.literal("§a✓ Effigy detected and ready - divine power flows freely."));
         }
         
-        // Check parent conditions (basic spell requirements)
-        return super.canCast(world, pos, player);
+        // Check basic spell requirements (magic cost) - bypass PrayerSpell's effigy check
+        if (getCost() > 0 && !player.isCreative()) {
+            if (player.getCapability(elucent.eidolon.capability.ISoul.INSTANCE).isPresent()) {
+                elucent.eidolon.capability.ISoul soul = player.getCapability(elucent.eidolon.capability.ISoul.INSTANCE).resolve().get();
+                if (soul.getMagic() < getCost()) {
+                    if (player instanceof ServerPlayer serverPlayer)
+                        serverPlayer.connection.send(new net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket(Component.translatable("eidolon.title.no_mana")));
+                    return false;
+                }
+            }
+        }
+        
+        return true;
     }
     
     @Override
@@ -200,18 +212,12 @@ public class DatapackChantSpell extends PrayerSpell {
     }
     
     /**
-     * Get nearby effigy (same logic as Eidolon's PrayerSpell)
+     * Get nearby effigy (exact same logic as Eidolon's PrayerSpell)
      */
     protected static EffigyTileEntity getEffigy(Level world, BlockPos pos) {
-        try {
-            List<EffigyTileEntity> effigies = Ritual.getTilesWithinAABB(EffigyTileEntity.class, world, 
-                new AABB(pos.offset(-4, -4, -4), pos.offset(5, 5, 5)));
-            if (effigies.isEmpty()) return null;
-            return effigies.stream().min(Comparator.comparingDouble((e) -> e.getBlockPos().distSqr(pos))).get();
-        } catch (Exception e) {
-            LOGGER.warn("Failed to find effigy: {}", e.getMessage());
-            return null;
-        }
+        List<EffigyTileEntity> effigies = Ritual.getTilesWithinAABB(EffigyTileEntity.class, world, new AABB(pos.offset(-4, -4, -4), pos.offset(5, 5, 5)));
+        if (effigies.isEmpty()) return null;
+        return effigies.stream().min(Comparator.comparingDouble((e) -> e.getBlockPos().distSqr(pos))).get();
     }
 
     private void triggerEffigyEffects(Level world, BlockPos pos, ServerPlayer player) {
@@ -225,6 +231,9 @@ public class DatapackChantSpell extends PrayerSpell {
     private void executeChantEffects(ServerPlayer player, Level world, BlockPos pos) {
         for (DatapackChant.ChantEffect effect : chantData.getEffects()) {
             try {
+                // 🔧 FIX: Set parent chant context before applying effect
+                // This is needed for effigy effects that require access to linked deity
+                effect.setParentChant(chantData);
                 effect.apply(player);
             } catch (Exception e) {
                 LOGGER.error("Failed to execute chant effect for {}: {}", chantData.getId(), e.getMessage());

@@ -163,6 +163,18 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
         config.model = json.get("model").getAsString();
         config.personality = json.get("personality").getAsString();
         
+        // 🔥 CRITICAL FIX: Parse mod_context_ids field from JSON
+        if (json.has("mod_context_ids")) {
+            JsonArray modContextArray = json.getAsJsonArray("mod_context_ids");
+            config.mod_context_ids.clear(); // Clear the default empty list
+            for (JsonElement modElement : modContextArray) {
+                config.mod_context_ids.add(modElement.getAsString());
+            }
+            LOGGER.info("🔧 Loaded mod_context_ids for {}: {}", deityId, config.mod_context_ids);
+        } else {
+            LOGGER.warn("🔧 No mod_context_ids found in JSON for deity: {}", deityId);
+        }
+        
         // Parse behavior rules
         if (json.has("behavior_rules")) {
             loadBehaviorRules(config, json.getAsJsonObject("behavior_rules"));
@@ -228,6 +240,18 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 // Model field is optional - some providers like Player2AI don't need it
                 config.model = json.has("model") ? json.get("model").getAsString() : null;
                 config.personality = json.get("personality").getAsString();
+                
+                // 🔥 CRITICAL FIX: Parse mod_context_ids field from JSON
+                if (json.has("mod_context_ids")) {
+                    JsonArray modContextArray = json.getAsJsonArray("mod_context_ids");
+                    config.mod_context_ids.clear(); // Clear the default empty list
+                    for (JsonElement modElement : modContextArray) {
+                        config.mod_context_ids.add(modElement.getAsString());
+                    }
+                    LOGGER.info("🔧 Loaded mod_context_ids for {}: {}", deityId, config.mod_context_ids);
+                } else {
+                    LOGGER.warn("🔧 No mod_context_ids found in JSON for deity: {}", deityId);
+                }
                 
                 // Parse behavior rules
                 if (json.has("behavior_rules")) {
