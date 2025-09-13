@@ -70,23 +70,7 @@ Task Config (`task_config`)
 
 Defines deity‑scoped tasks; loaded by `AIDeityManager.loadTaskConfig` into `TaskSystemConfig.TaskTemplate`.
 
-- `enabled` (bool, default true): Toggle this deity’s tasks.
-- `max_active_tasks` (int): Cap per player.
-- `available_tasks` (array<object>): List of task templates. Fields:
-  - `task_id` (string, required): Unique id within this deity (e.g., `harvest_shadows`).
-  - `display_name` (string, recommended): Shown in UIs/autocomplete comments.
-  - `description` (string, recommended): What the player must do.
-  - `progression_tier` (string, optional): Dev label for your own gating.
-  - `requirements` (array<object>): Requirement objects; stored internally as `type:` + JSON string for now. Recommended types:
-    - `{ "type": "item", "item": "minecraft:wheat", "count": 16 }`
-    - `{ "type": "ritual", "ritual": "eidolonunchained:shadow_communion" }`
-    - `{ "type": "entity_kill", "entity": "minecraft:zombie", "count": 10 }`
-  - `rewards` (object):
-    - `reputation` (int): Points awarded.
-    - `commands` (array<string>): Server commands to run on completion (supports `{player}` token).
-  - `cooldown_hours` (int): Time before it can be reassigned.
-  - `repeatable` (bool)
-  - `ai_assignment_context` (object): Arbitrary JSON for your AI prompts (stored as string, not interpreted by loader).
+- See the complete task spec: wiki/Datapacks/Task-JSON.md
 
 Notes on requirement parsing
 
