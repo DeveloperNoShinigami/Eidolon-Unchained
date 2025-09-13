@@ -31,3 +31,14 @@ Tooling
 Notes
 
 - Items in the screenshot (CLAUDE.md, CODEX_AGENT_CONFIG.md, CODEX_AGENT_OPTIMAL.md) are preserved as‑is.
+
+Naming & UX
+
+- Transition `tasks` to a more thematic name such as `fate` or `mission`.
+- Keep `/eidolon-unchained tasks` as a compatibility alias during migration.
+
+AI-Driven Adventures
+
+- Let AI deities originate adventures/requests (task chains) based on player state.
+- Persist per-player history: accepted/completed tasks, outcomes, failures.
+- Cross-deity memory: track tasks from rival deities and react (alliance/opposition).

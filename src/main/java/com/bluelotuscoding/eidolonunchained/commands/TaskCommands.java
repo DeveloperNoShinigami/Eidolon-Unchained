@@ -62,7 +62,7 @@ public class TaskCommands {
         );
     }
     
-    private static int assignTask(CommandContext<CommandSourceStack> context) {
+    public static int assignTask(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
             String taskId = StringArgumentType.getString(context, "taskId");
@@ -112,7 +112,7 @@ public class TaskCommands {
         }
     }
     
-    private static int assignAnyTask(CommandContext<CommandSourceStack> context) {
+    public static int assignAnyTask(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
             String taskId = StringArgumentType.getString(context, "taskId");
@@ -149,7 +149,7 @@ public class TaskCommands {
         }
     }
     
-    private static int completeTask(CommandContext<CommandSourceStack> context) {
+    public static int completeTask(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer player = EntityArgument.getPlayer(context, "player");
             String taskId = StringArgumentType.getString(context, "taskId");
@@ -190,7 +190,7 @@ public class TaskCommands {
         }
     }
     
-    private static int listTasks(CommandContext<CommandSourceStack> context) {
+    public static int listTasks(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer player = EntityArgument.getPlayer(context, "player");
             PlayerContextTracker.EnhancedPlayerContext playerContext = PlayerContextTracker.getContext(player.getUUID());
@@ -213,7 +213,7 @@ public class TaskCommands {
         }
     }
     
-    private static int checkSpecificReputation(CommandContext<CommandSourceStack> context) {
+    public static int checkSpecificReputation(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer player = EntityArgument.getPlayer(context, "player");
             String deityIdStr = StringArgumentType.getString(context, "deity");
@@ -247,7 +247,7 @@ public class TaskCommands {
         }
     }
     
-    private static int checkAllReputation(CommandContext<CommandSourceStack> context) {
+    public static int checkAllReputation(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer player = EntityArgument.getPlayer(context, "player");
             PlayerContextTracker.EnhancedPlayerContext playerContext = PlayerContextTracker.getContext(player.getUUID());
@@ -274,7 +274,7 @@ public class TaskCommands {
         }
     }
     
-    private static int markRitualComplete(CommandContext<CommandSourceStack> context) {
+    public static int markRitualComplete(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
             String ritualIdString = StringArgumentType.getString(context, "ritualId");

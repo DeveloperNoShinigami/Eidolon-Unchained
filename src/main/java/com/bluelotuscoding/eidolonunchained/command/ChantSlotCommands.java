@@ -22,9 +22,10 @@ import java.util.Collection;
  * Supports both individual sign assignment and full chant assignment.
  */
 public class ChantSlotCommands {
-    
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("chant")
+
+    // Build the full `chant` subtree so it can be registered under multiple roots
+    public static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> buildNode() {
+        return Commands.literal("chant")
             .then(Commands.literal("assign-sign")
                 .then(Commands.argument("slot", IntegerArgumentType.integer(1, 4))
                     .then(Commands.argument("sign_id", ResourceLocationArgument.id())
@@ -60,8 +61,12 @@ public class ChantSlotCommands {
             )
             .then(Commands.literal("mode")
                 .executes(ChantSlotCommands::showCurrentMode)
-            )
-        );
+            );
+    }
+
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Legacy root command
+        dispatcher.register(buildNode());
     }
     
     private static int assignSign(CommandContext<CommandSourceStack> context) {

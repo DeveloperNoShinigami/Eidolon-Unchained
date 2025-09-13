@@ -1,5 +1,7 @@
 # Eidolon Unchained
 
+Docs: wiki/Home/README.md
+
 **AI-Powered Deity Conversations for Minecraft 1.20.1**
 
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.20.1-green.svg)](https://minecraft.net)

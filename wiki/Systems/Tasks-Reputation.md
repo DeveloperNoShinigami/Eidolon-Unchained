@@ -5,14 +5,18 @@ Divine Tasks
 - Command entrypoints for assigning/listing/completing tasks, and checking reputation.
 - Implementation: `src/main/java/com/bluelotuscoding/eidolonunchained/commands/TaskCommands.java`
 
-Command Summary (`/dtask`)
+Commands (canonical)
 
-- ` /dtask assign <player> <deity> <taskId>` — assign a specific task for a deity
-- ` /dtask assignany <player> <taskId>` — assign task without deity restriction
-- ` /dtask complete <player> <taskId>` — mark task complete
-- ` /dtask list <player>` — show active tasks
-- ` /dtask reputation <player> <deity>` — show reputation for a deity
-- ` /dtask repall <player>` — show reputation for all deities
+- ` /eidolon-unchained tasks assign <player> <deity> <taskId>`
+- ` /eidolon-unchained tasks assignany <player> <taskId>`
+- ` /eidolon-unchained tasks complete <player> <taskId>`
+- ` /eidolon-unchained tasks list <player>`
+- ` /eidolon-unchained tasks reputation <player> <deity>`
+- ` /eidolon-unchained tasks repall <player>`
+
+Legacy alias
+
+- The older `/dtask` tree remains as a compatibility alias.
 
 Chat & Feedback Keys
 
@@ -20,4 +24,5 @@ Chat & Feedback Keys
 
 Notes
 
-- Reputation also integrates with AIDeity prayers to gate conversations/rewards.
+- Reputation integrates with AI Deity prayers to gate conversations/rewards.
+- Autocomplete: deity IDs and task IDs are suggested dynamically.
