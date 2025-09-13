@@ -322,7 +322,11 @@ public class PlayerContextTracker {
             // Every 5 seconds, check for biome changes
             if (player.tickCount % 100 == 0) {
                 EnhancedPlayerContext context = getOrCreateContext(player.getUUID(), player);
-                String currentBiome = player.level().getBiome(player.blockPosition()).toString();
+                // Use canonical biome ID (namespace:path), not Holder#toString()
+                String currentBiome = player.level().getBiome(player.blockPosition())
+                    .unwrapKey()
+                    .map(key -> key.location().toString())
+                    .orElse("");
                 if (!currentBiome.equals(context.currentBiome)) {
                     context.currentBiome = currentBiome;
                     context.addAction("entered " + currentBiome);

@@ -20,6 +20,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.server.ServerLifecycleHooks;
 import org.slf4j.Logger;
 
 import java.util.UUID;
@@ -48,6 +49,7 @@ public class EffigyEffectsManager {
         public int tickCounter = 0;
         public float currentIntensity = 0.0f;
         public float targetIntensity = 1.0f;
+        public int pulsingStartTick = -1;
         
         public ActiveEffigyEffect(BlockPos effigyPos, ResourceLocation deityId) {
             this.effigyPos = effigyPos;
@@ -63,128 +65,112 @@ public class EffigyEffectsManager {
             ENDING       // Effect is fading out
         }
     }
-    
+
+    /**
+     * Drive visual updates each server tick for all active effigy effects
+     */
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
+
+        var server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null) return;
+
+        if (activeEffects.isEmpty()) return;
+
+        // Iterate a copy of keys to allow safe removal
+        for (var entry : new java.util.ArrayList<>(activeEffects.entrySet())) {
+            UUID playerId = entry.getKey();
+            ActiveEffigyEffect effect = entry.getValue();
+
+            ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+            if (player == null) {
+                activeEffects.remove(playerId);
+                continue;
+            }
+
+            ServerLevel world = player.serverLevel();
+            DatapackDeity deity = DatapackDeityManager.getDeity(effect.deityId);
+
+            // Try to resolve the effigy BE at the stored position (fallback uses pos overload)
+            EffigyTileEntity effigy = null;
+            BlockEntity be = world.getBlockEntity(effect.effigyPos);
+            if (be instanceof EffigyTileEntity e) effigy = e;
+
+            // Advance time and smooth intensity
+            effect.tickCounter++;
+            adjustIntensity(effect);
+
+            // Spawn particles based on state
+            switch (effect.state) {
+                case STARTING -> createStartingEffects(world, effigy, deity, effect);
+                case ACTIVE -> createSteadyEffects(world, effigy, deity, effect);
+                case PULSING -> createPulsingEffects(world, effigy, deity, effect);
+                case ENDING -> createEndingEffects(world, effigy, deity, effect);
+            }
+        }
+    }
+
     /**
      * Start effigy effects when AI conversation begins
      */
     public static void startConversationEffects(ServerPlayer player, BlockPos effigyPos, ResourceLocation deityId) {
         UUID playerId = player.getUUID();
-        
         // Stop any existing effects for this player
         stopEffects(player);
-        
-        // Create new active effect
-        ActiveEffigyEffect effect = new ActiveEffigyEffect(effigyPos, deityId);
-        activeEffects.put(playerId, effect);
-        
-        // Play initial sound effect (like Eidolon does)
-        ServerLevel world = player.serverLevel();
-        world.playSound(null, effigyPos, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 0.8f, 1.2f);
-        
-        LOGGER.info("🔮 Started conversation effigy effects for player {} with deity {} at {}", 
-            player.getName().getString(), deityId, effigyPos);
+        // Register new active effect
+        activeEffects.put(playerId, new ActiveEffigyEffect(effigyPos, deityId));
+        // Optional configurable start sound
+        try {
+            String id = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.effigyConversationSoundId.get();
+            if (id != null && !id.isBlank() && !"none".equalsIgnoreCase(id)) {
+                net.minecraft.resources.ResourceLocation rl = net.minecraft.resources.ResourceLocation.tryParse(id);
+                net.minecraft.sounds.SoundEvent sound = SoundEvents.BEACON_ACTIVATE;
+                if (rl != null) {
+                    net.minecraft.sounds.SoundEvent cfg = net.minecraftforge.registries.ForgeRegistries.SOUND_EVENTS.getValue(rl);
+                    if (cfg != null) sound = cfg;
+                }
+                float vol = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.effigyConversationSoundVolume.get().floatValue();
+                float pit = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.effigyConversationSoundPitch.get().floatValue();
+                player.serverLevel().playSound(null, effigyPos, sound, SoundSource.BLOCKS, vol, pit);
+            }
+        } catch (Exception ignored) {}
     }
-    
+
     /**
      * Intensify effects when AI starts responding (pulsing mode)
      */
     public static void startAIResponseEffects(ServerPlayer player) {
-        UUID playerId = player.getUUID();
-        ActiveEffigyEffect effect = activeEffects.get(playerId);
-        
+        ActiveEffigyEffect effect = activeEffects.get(player.getUUID());
         if (effect != null) {
             effect.state = ActiveEffigyEffect.EffectState.PULSING;
-            effect.targetIntensity = 1.5f; // Increase intensity for response
-            LOGGER.debug("🌊 Started pulsing effects for AI response - player: {}", player.getName().getString());
+            effect.targetIntensity = 1.5f;
+            effect.pulsingStartTick = effect.tickCounter;
         }
     }
-    
+
     /**
      * Return to steady effects when AI finishes responding
      */
     public static void endAIResponseEffects(ServerPlayer player) {
-        UUID playerId = player.getUUID();
-        ActiveEffigyEffect effect = activeEffects.get(playerId);
-        
+        ActiveEffigyEffect effect = activeEffects.get(player.getUUID());
         if (effect != null) {
             effect.state = ActiveEffigyEffect.EffectState.ACTIVE;
-            effect.targetIntensity = 1.0f; // Return to normal intensity
-            LOGGER.debug("💫 Returned to steady effects after AI response - player: {}", player.getName().getString());
+            effect.targetIntensity = 1.0f;
+            effect.pulsingStartTick = -1;
         }
     }
-    
+
     /**
      * Stop all effigy effects when conversation ends
      */
     public static void stopEffects(ServerPlayer player) {
-        UUID playerId = player.getUUID();
-        ActiveEffigyEffect effect = activeEffects.remove(playerId);
-        
+        ActiveEffigyEffect effect = activeEffects.remove(player.getUUID());
         if (effect != null) {
-            // Create final completion flash (like ChantCasterEntity does)
             createCompletionFlash(player.serverLevel(), effect.effigyPos, effect.deityId);
-            LOGGER.info("✨ Stopped conversation effigy effects for player {}", player.getName().getString());
         }
     }
-    
-    /**
-     * Server tick handler for updating effigy effects
-     */
-    @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
-        
-        // Update all active effects
-        for (Map.Entry<UUID, ActiveEffigyEffect> entry : activeEffects.entrySet()) {
-            UUID playerId = entry.getKey();
-            ActiveEffigyEffect effect = entry.getValue();
-            
-            // Find the player and world
-            ServerLevel world = null;
-            for (ServerLevel serverWorld : event.getServer().getAllLevels()) {
-                ServerPlayer player = serverWorld.getServer().getPlayerList().getPlayer(playerId);
-                if (player != null) {
-                    world = serverWorld;
-                    break;
-                }
-            }
-            
-            if (world != null) {
-                updateEffigyEffect(world, effect);
-            }
-        }
-    }
-    
-    /**
-     * Update a single effigy effect each tick (mimics ChantCasterEntity.tick())
-     */
-    private static void updateEffigyEffect(ServerLevel world, ActiveEffigyEffect effect) {
-        effect.tickCounter++;
-        
-        // Find the effigy tile entity
-        BlockEntity blockEntity = world.getBlockEntity(effect.effigyPos);
-        if (!(blockEntity instanceof EffigyTileEntity effigy)) {
-            return; // Effigy was removed
-        }
-        
-        // Get deity information for colors
-        DatapackDeity deity = DatapackDeityManager.getDeity(effect.deityId);
-        if (deity == null) {
-            return; // Invalid deity
-        }
-        
-        // Smoothly adjust intensity based on state
-        adjustIntensity(effect);
-        
-        // Create particle effects based on current state
-        switch (effect.state) {
-            case STARTING -> createStartingEffects(world, effigy, deity, effect);
-            case ACTIVE -> createSteadyEffects(world, effigy, deity, effect);
-            case PULSING -> createPulsingEffects(world, effigy, deity, effect);
-            case ENDING -> createEndingEffects(world, effigy, deity, effect);
-        }
-    }
-    
+
     /**
      * Smoothly adjust effect intensity
      */
@@ -203,7 +189,8 @@ public class EffigyEffectsManager {
      */
     private static void createStartingEffects(ServerLevel world, EffigyTileEntity effigy, DatapackDeity deity, ActiveEffigyEffect effect) {
         if (effect.tickCounter % 4 == 0) { // Reduced frequency during startup
-            createFlameParticles(world, effigy, deity, effect.currentIntensity * 0.7f);
+            if (effigy != null) createFlameParticles(world, effigy, deity, effect.currentIntensity * 0.7f);
+            else createFlameParticles(world, effect.effigyPos, deity, effect.currentIntensity * 0.7f);
         }
         
         // Transition to active after 40 ticks (2 seconds)
@@ -217,7 +204,8 @@ public class EffigyEffectsManager {
      */
     private static void createSteadyEffects(ServerLevel world, EffigyTileEntity effigy, DatapackDeity deity, ActiveEffigyEffect effect) {
         if (effect.tickCounter % 3 == 0) { // Regular frequency
-            createFlameParticles(world, effigy, deity, effect.currentIntensity);
+            if (effigy != null) createFlameParticles(world, effigy, deity, effect.currentIntensity);
+            else createFlameParticles(world, effect.effigyPos, deity, effect.currentIntensity);
         }
     }
     
@@ -230,13 +218,11 @@ public class EffigyEffectsManager {
         float pulseMultiplier = 0.7f + 0.4f * (float)Math.sin(pulsePhase); // Oscillate between 0.7 and 1.1
         
         if (effect.tickCounter % 2 == 0) { // Higher frequency during pulsing
-            createFlameParticles(world, effigy, deity, effect.currentIntensity * pulseMultiplier);
+            if (effigy != null) createFlameParticles(world, effigy, deity, effect.currentIntensity * pulseMultiplier);
+            else createFlameParticles(world, effect.effigyPos, deity, effect.currentIntensity * pulseMultiplier);
         }
         
-        // Add extra sparkle effects during pulses
-        if (effect.tickCounter % 10 == 0) {
-            createSparkleEffects(world, effigy, deity);
-        }
+        // No extra sparkle effects during pulses (user preference)
     }
     
     /**
@@ -255,37 +241,84 @@ public class EffigyEffectsManager {
         BlockPos pos = effigy.getBlockPos();
         Vec3 center = Vec3.atCenterOf(pos);
         RandomSource random = world.getRandom();
-        
-        // Get deity colors
-        float red = deity.getRed();
-        float green = deity.getGreen();
-        float blue = deity.getBlue();
-        
-        // Create flame particles around the effigy (like Eidolon does)
+
+        float red = deity != null ? deity.getRed() : 1.0f;
+        float green = deity != null ? deity.getGreen() : 0.7f;
+        float blue = deity != null ? deity.getBlue() : 0.3f;
+
+        // Place two colored flame clusters at the effigy front corners (matches PrayerSpell look)
+        var state = world.getBlockState(pos);
+        if (state.hasProperty(elucent.eidolon.common.block.HorizontalBlockBase.HORIZONTAL_FACING)) {
+            var dir = state.getValue(elucent.eidolon.common.block.HorizontalBlockBase.HORIZONTAL_FACING);
+            var tangent = dir.getClockWise();
+            float x0 = pos.getX() + 0.5f + dir.getStepX() * 0.21875f;
+            float y0 = pos.getY() + 0.8125f;
+            float z0 = pos.getZ() + 0.5f + dir.getStepZ() * 0.21875f;
+
+            // Make both eyes the same size and strengthen with intensity
+            int eyeRepeats = Math.max(3, Math.round(4 * intensity));
+
+            elucent.eidolon.client.particle.Particles.create(EidolonParticles.FLAME_PARTICLE.get())
+                .setColor(red, green, blue)
+                .setAlpha(0.5f, 0f)
+                .setScale(0.14f, 0.09f)
+                .randomOffset(0.01f)
+                .randomVelocity(0.0025f)
+                .addVelocity(0, 0.005f, 0)
+                .repeat(world, x0 + 0.09375f * tangent.getStepX(), y0, z0 + 0.09375f * tangent.getStepZ(), eyeRepeats);
+
+            elucent.eidolon.client.particle.Particles.create(EidolonParticles.FLAME_PARTICLE.get())
+                .setColor(red, green, blue)
+                .setAlpha(0.5f, 0f)
+                .setScale(0.14f, 0.09f)
+                .randomOffset(0.01f)
+                .randomVelocity(0.0025f)
+                .addVelocity(0, 0.005f, 0)
+                .repeat(world, x0 - 0.09375f * tangent.getStepX(), y0, z0 - 0.09375f * tangent.getStepZ(), eyeRepeats);
+        }
+
+        // Soft colored ring above the effigy for ambiance
+        int particleCount = Math.max(1, (int)(intensity * 4));
+        for (int i = 0; i < particleCount; i++) {
+            double angle = random.nextDouble() * 2 * Math.PI;
+            double radius = 0.6 + random.nextDouble() * 0.5;
+            double height = random.nextDouble() * 0.6;
+            double x = center.x + Math.cos(angle) * radius;
+            double y = center.y + 0.6 + height;
+            double z = center.z + Math.sin(angle) * radius;
+
+            elucent.eidolon.client.particle.Particles.create(EidolonParticles.FLAME_PARTICLE.get())
+                .setColor(red, green, blue)
+                .setAlpha(0.4f, 0f)
+                .setScale(0.1f, 0.06f)
+                .randomOffset(0.02f)
+                .randomVelocity(0.003f)
+                .spawn(world, x, y, z);
+        }
+    }
+
+    // Overload: render at a raw position when effigy BE type is unavailable
+    private static void createFlameParticles(ServerLevel world, BlockPos pos, DatapackDeity deity, float intensity) {
+        Vec3 center = Vec3.atCenterOf(pos);
+        RandomSource random = world.getRandom();
+        float red = deity != null ? deity.getRed() : 1.0f;
+        float green = deity != null ? deity.getGreen() : 0.7f;
+        float blue = deity != null ? deity.getBlue() : 0.3f;
         int particleCount = Math.max(1, (int)(intensity * 4));
         for (int i = 0; i < particleCount; i++) {
             double angle = random.nextDouble() * 2 * Math.PI;
             double radius = 0.8 + random.nextDouble() * 0.7;
-            double height = random.nextDouble() * 1.5;
-            
+            double height = random.nextDouble() * 1.0;
             double x = center.x + Math.cos(angle) * radius;
-            double y = center.y + 0.2 + height;
+            double y = center.y + 0.4 + height;
             double z = center.z + Math.sin(angle) * radius;
-            
-            // Use flame-like particles (will integrate proper Eidolon particles later)
-            // Create multiple particle types for rich visual effect
-            world.sendParticles(
-                ParticleTypes.FLAME,
-                x, y, z,
-                1, 0.1, 0.1, 0.1, 0.02
-            );
-            
-            // Add sparkle effect based on deity colors
-            world.sendParticles(
-                ParticleTypes.ENCHANT,
-                x, y, z,
-                2, 0.15, 0.15, 0.15, 0.01
-            );
+            elucent.eidolon.client.particle.Particles.create(EidolonParticles.FLAME_PARTICLE.get())
+                .setColor(red, green, blue)
+                .setAlpha(0.4f, 0f)
+                .setScale(0.1f, 0.06f)
+                .randomOffset(0.02f)
+                .randomVelocity(0.003f)
+                .spawn(world, x, y, z);
         }
     }
     
@@ -321,11 +354,12 @@ public class EffigyEffectsManager {
         Vec3 center = Vec3.atCenterOf(effigyPos);
         DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
         
-        // Play completion sound
-        world.playSound(null, effigyPos, SoundEvents.BEACON_DEACTIVATE, SoundSource.BLOCKS, 0.6f, 0.8f);
+        // Play completion thunder instead of beacon sound
+        world.playSound(null, effigyPos, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.NEUTRAL, 8.0f, 0.8f);
+        world.playSound(null, effigyPos, SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.NEUTRAL, 1.4f, 0.9f);
         
-        // Create flash burst
-        for (int i = 0; i < 20; i++) {
+        // Visual flash disabled per request
+        for (int i = 0; i < 0; i++) {
             double angle = (i * 2.0 * Math.PI) / 20;
             double radius = 1.5 + world.getRandom().nextDouble() * 1.0;
             double height = world.getRandom().nextDouble() * 1.5;
@@ -366,21 +400,27 @@ public class EffigyEffectsManager {
      */
     public static EffigyTileEntity findNearbyEffigy(ServerPlayer player, double maxDistance) {
         ServerLevel world = player.serverLevel();
-        BlockPos playerPos = player.blockPosition();
         
-        LOGGER.info("🔍 Searching for effigy near player {} at {} using Eidolon's detection method", 
-            player.getName().getString(), playerPos);
+        // CRITICAL: Use ChantCasterEntity's position calculation (elevated + offset)
+        double rad = Math.toRadians(player.yHeadRot);
+        net.minecraft.world.phys.Vec3 entityPos = player.getEyePosition().add(-Math.sin(rad) / 2, -0.75, Math.cos(rad) / 2);
+        BlockPos searchPos = new BlockPos((int)entityPos.x, (int)entityPos.y, (int)entityPos.z);
         
-        // Use Eidolon's proven method - create AABB search area
+        LOGGER.info("🔍 Searching for effigy using ChantCasterEntity position calculation", 
+            player.getName().getString());
+        LOGGER.info("🔍 Player at: {} → ChantCaster equivalent at: {}", 
+            player.blockPosition(), searchPos);
+        
+        // Use Eidolon's proven method - create AABB search area from ChantCaster position
         int range = (int) Math.ceil(maxDistance);
         AABB searchArea = new AABB(
-            playerPos.offset(-range, -range, -range), 
-            playerPos.offset(range + 1, range + 1, range + 1)
+            searchPos.offset(-range, -range, -range), 
+            searchPos.offset(range + 1, range + 1, range + 1)
         );
         
         LOGGER.info("🔎 Search area: {} to {} (range: {})", 
-            playerPos.offset(-range, -range, -range),
-            playerPos.offset(range + 1, range + 1, range + 1), range);
+            searchPos.offset(-range, -range, -range),
+            searchPos.offset(range + 1, range + 1, range + 1), range);
         
         try {
             // Debug chunk loading and tile entity registration
@@ -425,7 +465,7 @@ public class EffigyEffectsManager {
                     for (int y = (int) searchArea.minY; y <= searchArea.maxY; y++) {
                         for (int z = (int) searchArea.minZ; z <= searchArea.maxZ; z++) {
                             BlockPos pos = new BlockPos(x, y, z);
-                            if (playerPos.distSqr(pos) <= maxDistance * maxDistance) {
+                            if (searchPos.distSqr(pos) <= maxDistance * maxDistance) {
                                 net.minecraft.world.level.block.state.BlockState blockState = world.getBlockState(pos);
                                 net.minecraft.world.level.block.entity.BlockEntity blockEntity = world.getBlockEntity(pos);
                                 
@@ -438,7 +478,7 @@ public class EffigyEffectsManager {
                                     
                                     if (blockEntity instanceof EffigyTileEntity effigy) {
                                         LOGGER.info("🎆 MANUAL SEARCH: Found effigy at {} (distance: {:.1f} blocks)", 
-                                            pos, Math.sqrt(playerPos.distSqr(pos)));
+                                            pos, Math.sqrt(searchPos.distSqr(pos)));
                                         return effigy;
                                     }
                                 }
@@ -447,19 +487,47 @@ public class EffigyEffectsManager {
                     }
                 }
                 
-                LOGGER.warn("🔮 No effigy found within {} blocks of player {} at {} (both methods failed)", 
-                    maxDistance, player.getName().getString(), playerPos);
+                LOGGER.warn("🔮 No effigy found within {} blocks of player {} at search pos {} (both methods failed)", 
+                    maxDistance, player.getName().getString(), searchPos);
                 return null;
             }
             
-            // Return closest effigy (same logic as Eidolon's PrayerSpell)
-            EffigyTileEntity closestEffigy = effigies.stream()
-                .min(java.util.Comparator.comparingDouble((e) -> e.getBlockPos().distSqr(playerPos)))
+            // Filter effigies that are properly placed on altar structures (CRITICAL)
+            java.util.List<EffigyTileEntity> validEffigies = effigies.stream()
+                .filter(effigy -> {
+                    // Check if effigy is placed on a proper altar block (TableBlockBase)
+                    net.minecraft.world.level.block.state.BlockState below = world.getBlockState(effigy.getBlockPos().below());
+                    boolean hasAltar = below.getBlock() instanceof elucent.eidolon.common.block.TableBlockBase;
+                    boolean isReady = effigy.ready();
+                    
+                    if (!hasAltar) {
+                        LOGGER.warn("🚫 Effigy at {} not on altar (below: {})", 
+                            effigy.getBlockPos(), below.getBlock().getName().getString());
+                    }
+                    if (!isReady) {
+                        LOGGER.warn("🚫 Effigy at {} not ready (cooldown)", effigy.getBlockPos());
+                    }
+                    
+                    return hasAltar && isReady;
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
+            LOGGER.info("🔍 Found {} total effigies, {} valid (on altar + ready)", 
+                effigies.size(), validEffigies.size());
+            
+            if (validEffigies.isEmpty()) {
+                LOGGER.warn("🔮 No valid effigy found (must be placed on altar and ready)");
+                return null;
+            }
+            
+            // Return closest valid effigy
+            EffigyTileEntity closestEffigy = validEffigies.stream()
+                .min(java.util.Comparator.comparingDouble((e) -> e.getBlockPos().distSqr(searchPos)))
                 .orElse(null);
             
             if (closestEffigy != null) {
-                double distance = Math.sqrt(closestEffigy.getBlockPos().distSqr(playerPos));
-                LOGGER.info("🎆 Found effigy at {} (distance: {:.1f} blocks) using Eidolon's method", 
+                double distance = Math.sqrt(closestEffigy.getBlockPos().distSqr(searchPos));
+                LOGGER.info("🎆 Found effigy at {} (distance: {:.1f} blocks) using ChantCaster position", 
                     closestEffigy.getBlockPos(), distance);
             }
             
@@ -470,4 +538,40 @@ public class EffigyEffectsManager {
             return null;
         }
     }
+
+    /**
+     * Robust effigy position detection: returns the nearest effigy BlockPos even if the tile class differs.
+     */
+    public static BlockPos findNearbyEffigyPos(ServerPlayer player, double maxDistance) {
+        EffigyTileEntity effigy = findNearbyEffigy(player, maxDistance);
+        if (effigy != null) return effigy.getBlockPos();
+
+        // Fallback: scan for the effigy block by registry id
+        try {
+            ServerLevel world = player.serverLevel();
+            double rad = Math.toRadians(player.yHeadRot);
+            net.minecraft.world.phys.Vec3 entityPos = player.getEyePosition().add(-Math.sin(rad) / 2, -0.75, Math.cos(rad) / 2);
+            BlockPos searchPos = new BlockPos((int)entityPos.x, (int)entityPos.y, (int)entityPos.z);
+            int range = (int)Math.ceil(maxDistance);
+            BlockPos nearest = null;
+            double best = Double.MAX_VALUE;
+            for (int x = -range; x <= range; x++)
+                for (int y = -range; y <= range; y++)
+                    for (int z = -range; z <= range; z++) {
+                        BlockPos pos = searchPos.offset(x, y, z);
+                        if (searchPos.distSqr(pos) > maxDistance * maxDistance) continue;
+                        var state = world.getBlockState(pos);
+                        var key = net.minecraftforge.registries.ForgeRegistries.BLOCKS.getKey(state.getBlock());
+                        if (key != null && key.getNamespace().equals("eidolon") && key.getPath().contains("effigy")) {
+                            double d = pos.distSqr(searchPos);
+                            if (d < best) { best = d; nearest = pos; }
+                        }
+                    }
+            return nearest;
+        } catch (Exception ignored) {}
+        return null;
+    }
 }
+
+
+

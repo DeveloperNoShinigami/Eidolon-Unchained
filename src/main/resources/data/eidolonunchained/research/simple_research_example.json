@@ -2,42 +2,10 @@
   "id": "simple_research_example",
   "stars": 2,
   "triggers": [
-    "minecraft:zombie",
-    {
-      "type": "kill_entity",
-      "entity": "minecraft:zombie",
-      "max_found": 1,
-      "nbt": {},
-      "item_requirements": {
-        "check_inventory": true,
-        "items": [
-          {
-            "item": "minecraft:iron_sword",
-            "nbt": {},
-            "count": 1
-          }
-        ]
-      }
-    },
     {
       "type": "biome",
-      "biome": "minecraft:desert",
-      "max_found": 1,
-      "coordinates": {
-        "x": 100,
-        "z": 200,
-        "range": 50.0
-      },
-      "item_requirements": {
-        "check_inventory": true,
-        "items": [
-          {
-            "item": "minecraft:sand",
-            "nbt": {},
-            "count": 1
-          }
-        ]
-      }
+      "biome": "minecraft:jungle",
+      "max_found": 1
     }
   ],
   "tasks": {
@@ -45,33 +13,21 @@
       {
         "type": "item",
         "item": "minecraft:stick",
-        "count": 1
+        "count": 1,
+        "command": "tellraw @s {\"text\":\"Stage 1 complete: stick collected\",\"color\":\"green\"}"
       }
     ],
     "1": [
       {
         "type": "item",
         "item": "minecraft:cobblestone",
-        "count": 5
-      }
-    ],
-    "2": [
-      {
-        "type": "item",
-        "item": "minecraft:stone",
-        "count": 5
+        "count": 5,
+        "commands": [
+          "title @s actionbar {\"text\":\"Stage 2 complete!\",\"color\":\"yellow\"}",
+          "playsound minecraft:block.amethyst_block.place master @s"
+        ]
       }
     ]
   },
-  "rewards": [
-    {
-      "type": "item",
-      "item": "minecraft:enchanted_book",
-      "count": 1
-    },
-    {
-      "type": "experience",
-      "amount": 100
-    }
-  ]
+  "rewards": []
 }

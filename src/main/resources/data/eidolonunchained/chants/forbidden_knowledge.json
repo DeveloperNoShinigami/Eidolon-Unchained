@@ -22,6 +22,13 @@
   ],
   "effects": [
     {
+      "type": "effigy_sound",
+      "sound": "minecraft:block.enchantment_table.use",
+      "volume": 0.8,
+      "pitch": 1.2,
+      "category": "BLOCKS"
+    },
+    {
       "type": "apply_effect",
       "effect": "minecraft:night_vision",
       "duration": 2400,

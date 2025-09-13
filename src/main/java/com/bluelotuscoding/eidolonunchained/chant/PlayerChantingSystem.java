@@ -162,9 +162,13 @@ public class PlayerChantingSystem {
         // Add the sign to the sequence
         chant.addSign(sign);
         
-        // Immediate visual and audio feedback
-        spawnSignParticles(player, sign, chant.signs.size());
-        playSignSound(player, sign);
+        // Run configurable sign effects (datapack-driven) instead of built-in visuals/sounds
+        try {
+            // Determine if current input matches the prefix of any known chant
+            ResourceLocation matchedChant = findMatchingChantPrefix(chant.signs);
+            int signIndex = Math.max(0, chant.signs.size() - 1);
+            KeybindSignEffectsManager.runSignEffects(player, sign.getRegistryName(), signIndex, matchedChant);
+        } catch (Exception ignored) {}
         
         // Check for spell completion IMMEDIATELY (like ribbon system)
         checkAndHandleSpellCompletion(player, chant);
@@ -177,6 +181,24 @@ public class PlayerChantingSystem {
             Component.literal("§6" + signDisplayName + " §7(" + chant.signs.size() + " signs)"), 
             true // action bar
         );
+    }
+
+    // Determine if current sequence matches the prefix of any datapack chant
+    private static ResourceLocation findMatchingChantPrefix(java.util.List<Sign> signs) {
+        if (signs == null || signs.isEmpty()) return null;
+        java.util.List<ResourceLocation> current = new java.util.ArrayList<>();
+        for (Sign s : signs) current.add(s.getRegistryName());
+        for (DatapackChant chant : DatapackChantManager.getAllChantsCollection()) {
+            java.util.List<ResourceLocation> seq = chant.getSignSequence();
+            if (current.size() <= seq.size()) {
+                boolean prefix = true;
+                for (int i = 0; i < current.size(); i++) {
+                    if (!current.get(i).equals(seq.get(i))) { prefix = false; break; }
+                }
+                if (prefix) return chant.getId();
+            }
+        }
+        return null;
     }
     
     /**
@@ -280,20 +302,28 @@ public class PlayerChantingSystem {
     private static void spawnSignParticles(ServerPlayer player, Sign sign, int signCount) {
         Level level = player.level();
         Vec3 playerPos = player.position();
+        Vec3 look = player.getLookAngle();
+        double forward = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.chantVisualForwardOffset.get();
+        double vertical = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.chantVisualVerticalBase.get();
+        Vec3 center = new Vec3(
+            playerPos.x + look.x * forward,
+            playerPos.y + vertical,
+            playerPos.z + look.z * forward
+        );
         
         // Ensure we're on the server side for particles
         if (!(level instanceof net.minecraft.server.level.ServerLevel serverLevel)) {
             return;
         }
         
-        // Base particles around player
+        // Base particles around chant center (in front of player)
         for (int i = 0; i < PARTICLE_COUNT_PER_SIGN; i++) {
             double angle = (i * 2.0 * Math.PI) / PARTICLE_COUNT_PER_SIGN;
             double radius = PARTICLE_RADIUS * (0.5 + 0.5 * Math.random());
             
-            double x = playerPos.x + Math.cos(angle) * radius;
-            double y = playerPos.y + 1.0 + Math.random() * 2.0;
-            double z = playerPos.z + Math.sin(angle) * radius;
+            double x = center.x + Math.cos(angle) * radius;
+            double y = center.y + (Math.random() * 1.5 - 0.25);
+            double z = center.z + Math.sin(angle) * radius;
             
             // Enchantment particles for magical effect
             serverLevel.sendParticles(
@@ -313,9 +343,9 @@ public class PlayerChantingSystem {
             double height = t * 3.0; // Rise 3 blocks
             double radius = 1.0 + t * 0.5; // Expanding spiral
             
-            double x = playerPos.x + Math.cos(angle) * radius;
-            double y = playerPos.y + 0.5 + height;
-            double z = playerPos.z + Math.sin(angle) * radius;
+            double x = center.x + Math.cos(angle) * radius;
+            double y = (center.y - 0.3) + height;
+            double z = center.z + Math.sin(angle) * radius;
             
             // Glow particles for the spiral
             serverLevel.sendParticles(
@@ -329,15 +359,15 @@ public class PlayerChantingSystem {
         
         // Sign-specific colored particles (if we can determine sign color)
         for (int i = 0; i < 10; i++) {
-            double offsetX = (level.random.nextDouble() - 0.5) * 1.5;
-            double offsetY = level.random.nextDouble() * 1.5;
-            double offsetZ = (level.random.nextDouble() - 0.5) * 1.5;
+            double offsetX = (level.random.nextDouble() - 0.5) * 1.2;
+            double offsetY = (level.random.nextDouble() - 0.3) * 1.2;
+            double offsetZ = (level.random.nextDouble() - 0.5) * 1.2;
             
             serverLevel.sendParticles(
                 ParticleTypes.END_ROD,
-                playerPos.x + offsetX,
-                playerPos.y + 1.2 + offsetY,
-                playerPos.z + offsetZ,
+                center.x + offsetX,
+                center.y + offsetY,
+                center.z + offsetZ,
                 1, // count
                 0, 0.1, 0, // velocity
                 0.1 // speed
@@ -366,6 +396,14 @@ public class PlayerChantingSystem {
     private static void spawnCompletionParticles(ServerPlayer player) {
         Level level = player.level();
         Vec3 playerPos = player.position();
+        Vec3 look = player.getLookAngle();
+        double forward = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.chantVisualForwardOffset.get();
+        double vertical = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.chantVisualVerticalBase.get();
+        Vec3 center = new Vec3(
+            playerPos.x + look.x * forward,
+            playerPos.y + vertical,
+            playerPos.z + look.z * forward
+        );
         
         // Ensure we're on the server side for particles
         if (!(level instanceof net.minecraft.server.level.ServerLevel serverLevel)) {
@@ -383,7 +421,7 @@ public class PlayerChantingSystem {
             
             serverLevel.sendParticles(
                 ParticleTypes.FIREWORK,
-                playerPos.x, playerPos.y + 1.0, playerPos.z,
+                center.x, center.y, center.z,
                 1,
                 vx, vy, vz,
                 0.1
@@ -395,9 +433,9 @@ public class PlayerChantingSystem {
             double angle = (i * 2.0 * Math.PI) / 30;
             double radius = 2.5;
             
-            double x = playerPos.x + Math.cos(angle) * radius;
-            double y = playerPos.y + 0.1;
-            double z = playerPos.z + Math.sin(angle) * radius;
+            double x = center.x + Math.cos(angle) * radius;
+            double y = center.y - 1.1;
+            double z = center.z + Math.sin(angle) * radius;
             
             serverLevel.sendParticles(
                 ParticleTypes.ENCHANT,

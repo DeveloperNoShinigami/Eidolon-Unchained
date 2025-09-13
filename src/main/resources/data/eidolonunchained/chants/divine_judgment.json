@@ -24,6 +24,13 @@
   ],
   "effects": [
     {
+      "type": "effigy_sound",
+      "sound": "minecraft:block.bell.use",
+      "volume": 0.7,
+      "pitch": 1.0,
+      "category": "BLOCKS"
+    },
+    {
       "type": "apply_effect",
       "effect": "minecraft:absorption",
       "duration": 1200,

@@ -18,6 +18,13 @@
   "requirements": [],
   "effects": [
     {
+      "type": "effigy_sound",
+      "sound": "minecraft:ambient.soul_sand_valley.mood",
+      "volume": 0.8,
+      "pitch": 1.2,
+      "category": "AMBIENT"
+    },
+    {
       "type": "send_message",
       "message": "§5The shadows whisper your name as dark power flows through you..."
     }

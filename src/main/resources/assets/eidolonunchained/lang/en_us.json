@@ -8,12 +8,29 @@
   "eidolon.codex.category.custom_research": "Custom Research",
   "eidolon.codex.category.ai_deity_chants": "AI Deity Communion",
   "eidolon.codex.category.divine_rituals": "Divine Rituals",
+
+  "_comment_structure_custom_categories": "Aliases using our namespace for custom categories (datapack-driven)",
+  "eidolonunchained.codex.category.examples": "Examples",
+  "eidolonunchained.codex.category.example_chants": "Example Chants",
+  "eidolonunchained.codex.category.custom_research": "Custom Research",
+  "eidolonunchained.codex.category.ai_deity_chants": "AI Deity Communion",
+  "eidolonunchained.codex.category.divine_rituals": "Divine Rituals",
   
   "eidolon.codex.chapter.getting_started": "Getting Started",
   "eidolon.codex.chapter.examples": "Example Chants",
   "eidolon.codex.chapter.ai_deity_chants": "AI Deity Communion", 
   "eidolon.codex.chapter.custom_research": "Custom Research",
   "eidolon.codex.chapter.divine_rituals": "Divine Rituals",
+
+  "_comment_structure_chapter_title_aliases": "Aliases for chapter titles under our namespace",
+  "eidolonunchained.codex.chapter.getting_started": "Getting Started",
+  "eidolonunchained.codex.chapter.examples": "Example Chants",
+  "eidolonunchained.codex.chapter.ai_deity_chants": "AI Deity Communion",
+  "eidolonunchained.codex.chapter.custom_research": "Custom Research",
+  "eidolonunchained.codex.chapter.divine_rituals": "Divine Rituals",
+  
+  "_comment_structure_common_alt_name": "Common alternate name sometimes used in datapacks",
+  "eidolonunchained.codex.chapter.deity_rituals": "Divine Rituals",
   
   "eidolon.codex.entry.text_example.title": "Text Example",
   "eidolon.codex.entry.text_example": "This is a simple text example showing how to create codex entries.",
@@ -56,6 +73,31 @@
   "eidolon.codex.entry.gaias_wrath.chant_description": "Unleash the fury of the earth itself. Draw the signs of Harmony, Flame, and Death to invoke nature's devastating power.",
   
   "eidolon.codex.entry.forbidden_knowledge.title": "Forbidden Knowledge",
+
+  "_comment_structure_page_key_aliases": "Page-key aliases for chant chapters (TitlePage/ChantPage/TextPage expect eidolon.codex.page.*)",
+  "eidolon.codex.page.shadow_communion.title": "Shadow Communion",
+  "eidolon.codex.page.shadow_communion.chant": "Draw the signs of Wicked, Wicked, and Blood to establish contact with the shadow realm.",
+  "eidolon.codex.page.shadow_communion.description": "Commune with Nyxathel the Shadow Lord through dark rituals. This chant opens a direct communication channel with the deity of shadows.",
+
+  "eidolon.codex.page.divine_communion.title": "Divine Communion",
+  "eidolon.codex.page.divine_communion.chant": "Draw the signs of Sacred, Harmony, and Warding to call upon divine blessing.",
+  "eidolon.codex.page.divine_communion.description": "Seek guidance from Lumina the Sacred Guardian. This blessed chant allows communication with the deity of light and protection.",
+
+  "eidolon.codex.page.natures_communion.title": "Nature's Communion",
+  "eidolon.codex.page.natures_communion.chant": "Draw the signs of Harmony, Soul, and Sacred to commune with nature's guardian.",
+  "eidolon.codex.page.natures_communion.description": "Connect with Verdania, Guardian of Nature. This chant harmonizes your spirit with the natural world.",
+
+  "eidolon.codex.page.divine_judgment.title": "Divine Judgment",
+  "eidolon.codex.page.divine_judgment.chant": "Channel the wrath of the divine to strike down evil. Draw the signs of Sacred, Flame, and Death to invoke divine judgment.",
+  "eidolon.codex.page.divine_judgment.description": "A powerful offensive chant that calls upon divine power to destroy the wicked.",
+
+  "eidolon.codex.page.gaias_wrath.title": "Gaia's Wrath",
+  "eidolon.codex.page.gaias_wrath.chant": "Unleash the fury of the earth itself. Draw the signs of Harmony, Flame, and Death to invoke nature's devastating power.",
+  "eidolon.codex.page.gaias_wrath.description": "A destructive chant that channels the earth's anger against those who would harm the natural world.",
+
+  "eidolon.codex.page.forbidden_knowledge.title": "Forbidden Knowledge",
+  "eidolon.codex.page.forbidden_knowledge.chant": "Probe secrets best left hidden. Draw the signs of Mind, Wicked, and Soul to invite forbidden whispers.",
+  "eidolon.codex.page.forbidden_knowledge.description": "A dangerous chant that reveals hidden knowledge at a terrible price.",
   "eidolon.codex.entry.forbidden_knowledge": "A dangerous chant that reveals hidden knowledge at a terrible price.",
   "eidolon.codex.entry.forbidden_knowledge.description": "A dangerous chant that reveals hidden knowledge at a terrible price.",
   "eidolon.codex.entry.forbidden_knowledge.chant_description": "Seek out secrets that should remain hidden. Draw the signs of Wicked, Mind, and Magic to access forbidden lore.",

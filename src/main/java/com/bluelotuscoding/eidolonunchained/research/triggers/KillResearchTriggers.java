@@ -32,8 +32,8 @@ public class KillResearchTriggers {
     
     @SubscribeEvent
     public static void onEntityKilled(LivingDeathEvent event) {
-        // CRITICAL DEBUG: Add logging to verify event handler registration
-        LOGGER.debug("KillResearchTriggers: LivingDeathEvent fired - source: {}", 
+        // Event fires reliably; keep logs quiet by default
+        LOGGER.trace("KillResearchTriggers: LivingDeathEvent fired - source: {}", 
             event.getSource().getEntity() != null ? event.getSource().getEntity().getClass().getSimpleName() : "null");
         
         if (!(event.getSource().getEntity() instanceof ServerPlayer player)) {
@@ -53,13 +53,13 @@ public class KillResearchTriggers {
         
         // Check if player has notetaking tools (required for research discovery)
         if (!hasNotetakingTools(player)) {
-            LOGGER.debug("Player {} killed {} but has no notetaking tools", 
+            LOGGER.trace("Player {} killed {} but has no notetaking tools", 
                 player.getName().getString(), entityType);
             return; // No tools, no research discovery
         }
         
-        LOGGER.debug("Player {} killed entity: {}", player.getName().getString(), entityType);
-        LOGGER.debug("Checking {} research entries for kill triggers", allTriggers.size());
+        LOGGER.trace("Player {} killed entity: {}", player.getName().getString(), entityType);
+        LOGGER.trace("Checking {} research entries for kill triggers", allTriggers.size());
         
         String playerKey = player.getUUID().toString();
         Set<String> triggeredResearch = PLAYER_TRIGGERED_RESEARCH.getOrDefault(playerKey, new HashSet<>());
@@ -76,7 +76,7 @@ public class KillResearchTriggers {
                         .count();
                     
                     if (currentCount >= trigger.getMaxFound()) {
-                        LOGGER.debug("Player {} already triggered kill research '{}' {} times (max: {})", 
+                        LOGGER.trace("Player {} already triggered kill research '{}' {} times (max: {})", 
                             player.getName().getString(), researchId, currentCount, trigger.getMaxFound());
                         continue; // Skip if already triggered enough times
                     }

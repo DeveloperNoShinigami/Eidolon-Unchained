@@ -18,6 +18,13 @@
   "requirements": [],
   "effects": [
     {
+      "type": "effigy_sound",
+      "sound": "minecraft:block.beacon.power_select",
+      "volume": 0.8,
+      "pitch": 1.1,
+      "category": "BLOCKS"
+    },
+    {
       "type": "apply_effect",
       "effect": "minecraft:glowing",
       "duration": 200,

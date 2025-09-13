@@ -17,6 +17,13 @@
   "requirements": [],
   "effects": [
     {
+      "type": "effigy_sound",
+      "sound": "minecraft:entity.player.levelup",
+      "volume": 0.5,
+      "pitch": 1.2,
+      "category": "PLAYERS"
+    },
+    {
       "type": "apply_effect",
       "effect": "minecraft:glowing",
       "duration": 100,

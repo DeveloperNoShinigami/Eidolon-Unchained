@@ -63,6 +63,10 @@ public class EidolonUnchainedConfig {
         public final ForgeConfigSpec.IntValue maxSubtitleLength;
         public final ForgeConfigSpec.DoubleValue titleScale;
         public final ForgeConfigSpec.DoubleValue subtitleScale;
+        // Effigy audio customization
+        public final ForgeConfigSpec.ConfigValue<String> effigyConversationSoundId;
+        public final ForgeConfigSpec.DoubleValue effigyConversationSoundVolume;
+        public final ForgeConfigSpec.DoubleValue effigyConversationSoundPitch;
         
         // Action Bar Specific Configuration
         public final ForgeConfigSpec.BooleanValue enableActionBarTyping;
@@ -92,6 +96,9 @@ public class EidolonUnchainedConfig {
         public final ForgeConfigSpec.IntValue chantAutoCompleteDelay;
         public final ForgeConfigSpec.IntValue defaultManaCost;
         public final ForgeConfigSpec.BooleanValue enableManaCosts;
+        // Chant visuals positioning
+        public final ForgeConfigSpec.DoubleValue chantVisualForwardOffset;
+        public final ForgeConfigSpec.DoubleValue chantVisualVerticalBase;
         
         // ===========================================
         // DEITY INTERACTION CONFIGURATION
@@ -323,8 +330,8 @@ public class EidolonUnchainedConfig {
             actionBarMaxWidth = builder
                 .comment("Maximum character width for action bar messages",
                         "Text longer than this will wrap or truncate",
-                        "Recommended: 50-70 characters for most screen sizes")
-                .defineInRange("action_bar_max_width", 55, 30, 100);
+                        "Recommended: 90-130 characters for larger screens")
+                .defineInRange("action_bar_max_width", 120, 30, 200);
             
             actionBarCenterText = builder
                 .comment("Center text in the action bar",
@@ -337,6 +344,19 @@ public class EidolonUnchainedConfig {
                         "When true: Long messages show first line with '...' indicator",
                         "When false: Long messages are truncated")
                 .define("action_bar_wrap_text", true);
+            
+            // Effigy audio during conversations
+            builder.comment("Effigy audio customization").push("effigy_audio");
+            effigyConversationSoundId = builder
+                .comment("Sound event ID to play when a conversation starts (e.g. minecraft:block.beacon.activate)")
+.define("conversation_sound_id", "none");
+            effigyConversationSoundVolume = builder
+                .comment("Volume for conversation start sound (0.0 - 4.0)")
+                .defineInRange("conversation_sound_volume", 0.8D, 0.0D, 4.0D);
+            effigyConversationSoundPitch = builder
+                .comment("Pitch for conversation start sound (0.5 - 2.0)")
+                .defineInRange("conversation_sound_pitch", 1.2D, 0.5D, 2.0D);
+            builder.pop();
             
             builder.pop();
             
@@ -415,6 +435,21 @@ public class EidolonUnchainedConfig {
             defaultManaCost = builder
                 .comment("Default mana cost for chants that don't specify a cost")
                 .defineInRange("default_mana_cost", 10, 0, 100);
+
+            // Chant visuals positioning
+            builder.comment(
+                "Adjust chant visual positioning relative to the player")
+                .push("chant_visuals");
+
+            chantVisualForwardOffset = builder
+                .comment("How far in front of the player to render chant visuals (in blocks)")
+                .defineInRange("forward_offset", 1.25D, -4.0D, 8.0D);
+
+            chantVisualVerticalBase = builder
+                .comment("Base height above the player's feet for chant visuals (in blocks)")
+                .defineInRange("vertical_base", 1.2D, -2.0D, 4.0D);
+
+            builder.pop();
             
             builder.pop();
             

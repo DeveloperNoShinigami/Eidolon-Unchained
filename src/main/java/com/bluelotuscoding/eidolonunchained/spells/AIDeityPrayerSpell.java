@@ -41,8 +41,17 @@ public class AIDeityPrayerSpell extends PrayerSpell {
     }
     
     private static Deity createDummyDeity(ResourceLocation aiDeityId) {
-        // Create a minimal deity implementation for the parent class
-        return new Deity(aiDeityId, 128, 128, 128) {
+        // Create a minimal deity implementation for the parent class using datapack colors when available
+        int r = 128, g = 128, b = 128;
+        try {
+            DatapackDeity d = DatapackDeityManager.getDeity(aiDeityId);
+            if (d != null) {
+                r = (int)(d.getRed() * 255f);
+                g = (int)(d.getGreen() * 255f);
+                b = (int)(d.getBlue() * 255f);
+            }
+        } catch (Exception ignored) {}
+        return new Deity(aiDeityId, r, g, b) {
             @Override
             public void onReputationUnlock(Player player, ResourceLocation lock) {
                 // No-op for AI deities

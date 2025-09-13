@@ -356,6 +356,12 @@ public class DatapackChant {
                 case "apply_effect":
                     applyEffect(player);
                     break;
+                case "play_sound":
+                    playSoundAtPlayer(player);
+                    break;
+                case "effigy_sound":
+                    playSoundAtEffigy(player);
+                    break;
                 case "run_command":
                     runCommand(player);
                     break;
@@ -370,6 +376,62 @@ public class DatapackChant {
                 default:
                     // Unknown effect type
                     break;
+            }
+        }
+
+        private void playSoundAtPlayer(net.minecraft.server.level.ServerPlayer player) {
+            if (!data.has("sound")) return;
+            String soundId = data.get("sound").getAsString();
+            float volume = data.has("volume") ? (float)data.get("volume").getAsDouble() : 1.0f;
+            float pitch = data.has("pitch") ? (float)data.get("pitch").getAsDouble() : 1.0f;
+            String cat = data.has("category") ? data.get("category").getAsString() : "VOICE";
+            net.minecraft.sounds.SoundSource source = safeSoundSource(cat);
+            net.minecraft.sounds.SoundEvent evt = resolveSound(soundId);
+            if (evt != null) {
+                player.level().playSound(null, player.blockPosition(), evt, source, volume, pitch);
+            } else {
+                player.sendSystemMessage(Component.literal("\u00A7cUnknown sound: " + soundId));
+            }
+        }
+
+        private void playSoundAtEffigy(net.minecraft.server.level.ServerPlayer player) {
+            if (!data.has("sound")) return;
+            String soundId = data.get("sound").getAsString();
+            float volume = data.has("volume") ? (float)data.get("volume").getAsDouble() : 1.0f;
+            float pitch = data.has("pitch") ? (float)data.get("pitch").getAsDouble() : 1.0f;
+            String cat = data.has("category") ? data.get("category").getAsString() : "BLOCKS";
+            net.minecraft.sounds.SoundSource source = safeSoundSource(cat);
+            net.minecraft.sounds.SoundEvent evt = resolveSound(soundId);
+            if (evt == null) {
+                player.sendSystemMessage(Component.literal("\u00A7cUnknown sound: " + soundId));
+                return;
+            }
+            elucent.eidolon.common.tile.EffigyTileEntity effigy =
+                com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.findNearbyEffigy(player, 10.0);
+            if (effigy != null) {
+                player.serverLevel().playSound(null, effigy.getBlockPos(), evt, source, volume, pitch);
+            } else {
+                // Fallback: play at player if no effigy found
+                player.level().playSound(null, player.blockPosition(), evt, source, volume, pitch);
+            }
+        }
+
+        private net.minecraft.sounds.SoundEvent resolveSound(String id) {
+            try {
+                net.minecraft.resources.ResourceLocation rl = net.minecraft.resources.ResourceLocation.tryParse(id);
+                if (rl != null) {
+                    return net.minecraftforge.registries.ForgeRegistries.SOUND_EVENTS.getValue(rl);
+                }
+            } catch (Exception ignored) {}
+            return null;
+        }
+
+        private net.minecraft.sounds.SoundSource safeSoundSource(String name) {
+            try {
+                return net.minecraft.sounds.SoundSource.valueOf(name.toUpperCase());
+            } catch (Exception e) {
+                if ("VOICE".equalsIgnoreCase(name)) return net.minecraft.sounds.SoundSource.VOICE;
+                return net.minecraft.sounds.SoundSource.BLOCKS;
             }
         }
         
@@ -480,78 +542,7 @@ public class DatapackChant {
             
             return json;
         }
-        
-        /**
-         * Find nearby effigy using multiple search strategies
-         */
-        private elucent.eidolon.common.tile.EffigyTileEntity findNearbyEffigy(net.minecraft.server.level.ServerPlayer player) {
-            net.minecraft.core.BlockPos playerPos = player.blockPosition();
-            
-            LOGGER.info("🔍 TESTING EFFIGY DETECTION - Player position: {}", playerPos);
-            
-            // Strategy 0: 🔥 NEW - Use ChantCasterEntity's exact position calculation!
-            double rad = Math.toRadians(player.yHeadRot);
-            net.minecraft.world.phys.Vec3 entityPos = player.getEyePosition().add(-Math.sin(rad) / 2, -0.75, Math.cos(rad) / 2);
-            net.minecraft.core.BlockPos chantCasterPos = new net.minecraft.core.BlockPos((int)entityPos.x, (int)entityPos.y, (int)entityPos.z);
-            
-            LOGGER.info("🔍 ChantCasterEntity equivalent position: {}", chantCasterPos);
-            
-            elucent.eidolon.common.tile.EffigyTileEntity chantCasterEffigy = 
-                com.bluelotuscoding.eidolonunchained.chant.DatapackChantSpell.getEffigy(player.serverLevel(), chantCasterPos);
-            if (chantCasterEffigy != null) {
-                LOGGER.info("🎆 SUCCESS! Found effigy using ChantCasterEntity position method at {}", chantCasterEffigy.getBlockPos());
-                return chantCasterEffigy;
-            } else {
-                LOGGER.warn("❌ ChantCasterEntity position method failed to find effigy");
-            }
-            
-            // Strategy 1: Use DatapackChantSpell's exact method (9x9x9 from player position)
-            elucent.eidolon.common.tile.EffigyTileEntity effigy = 
-                com.bluelotuscoding.eidolonunchained.chant.DatapackChantSpell.getEffigy(player.serverLevel(), playerPos);
-            if (effigy != null) {
-                LOGGER.debug("🔮 Found effigy using exact method at {}", effigy.getBlockPos());
-                return effigy;
-            }
-            
-            // Strategy 2: Search from slightly below player (in case they're standing on/above the effigy)
-            elucent.eidolon.common.tile.EffigyTileEntity effigyBelow = 
-                com.bluelotuscoding.eidolonunchained.chant.DatapackChantSpell.getEffigy(player.serverLevel(), playerPos.below(2));
-            if (effigyBelow != null) {
-                LOGGER.debug("🔮 Found effigy using below-player method at {}", effigyBelow.getBlockPos());
-                return effigyBelow;
-            }
-            
-            // Strategy 3: Use ChantSlotManager's approach - scan for effigy blocks by name
-            return findEffigyByBlockScan(player.serverLevel(), playerPos);
-        }
-        
-        /**
-         * Alternative effigy detection using block name scanning (like ChantSlotManager)
-         */
-        private elucent.eidolon.common.tile.EffigyTileEntity findEffigyByBlockScan(net.minecraft.world.level.Level world, net.minecraft.core.BlockPos center) {
-            // Scan 9x9x9 area looking for blocks with "effigy" in the name
-            for (int x = -4; x <= 4; x++) {
-                for (int y = -4; y <= 4; y++) {
-                    for (int z = -4; z <= 4; z++) {
-                        net.minecraft.core.BlockPos pos = center.offset(x, y, z);
-                        net.minecraft.world.level.block.state.BlockState state = world.getBlockState(pos);
-                        
-                        // Check if this block is an effigy by name
-                        String blockName = state.getBlock().getDescriptionId().toLowerCase();
-                        if (blockName.contains("effigy")) {
-                            // Check if it has an EffigyTileEntity
-                            net.minecraft.world.level.block.entity.BlockEntity blockEntity = world.getBlockEntity(pos);
-                            if (blockEntity instanceof elucent.eidolon.common.tile.EffigyTileEntity) {
-                                LOGGER.debug("🔮 Found effigy using block scan at {}", pos);
-                                return (elucent.eidolon.common.tile.EffigyTileEntity) blockEntity;
-                            }
-                        }
-                    }
-                }
-            }
-            
-            LOGGER.debug("🔮 No effigy found using any detection method");
-            return null;
-        }
     }
 }
+
+

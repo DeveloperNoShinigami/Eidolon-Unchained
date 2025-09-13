@@ -260,18 +260,19 @@ public class ChantSlotManager {
      */
     private static boolean isNearEffigy(ServerPlayer player) {
         Level world = player.level();
-        BlockPos playerPos = player.blockPosition();
-        
-        // Search in a 16x16x16 area around the player
-        for (int x = -8; x <= 8; x++) {
-            for (int y = -8; y <= 8; y++) {
-                for (int z = -8; z <= 8; z++) {
-                    BlockPos checkPos = playerPos.offset(x, y, z);
-                    String blockName = world.getBlockState(checkPos).getBlock().getDescriptionId();
-                    
-                    // Check for Eidolon effigy blocks
-                    if (blockName.contains("effigy")) {
-                        return true;
+        BlockPos origin = player.blockPosition();
+
+        // Scan a 16x16x16 cube around the player for a valid effigy tile entity
+        for (int dx = -8; dx <= 8; dx++) {
+            for (int dy = -8; dy <= 8; dy++) {
+                for (int dz = -8; dz <= 8; dz++) {
+                    BlockPos pos = origin.offset(dx, dy, dz);
+                    var be = world.getBlockEntity(pos);
+                    if (be instanceof elucent.eidolon.common.tile.EffigyTileEntity effigy) {
+                        // Optional: require effigy placed on altar and ready, to mirror prayer rules
+                        var below = world.getBlockState(pos.below());
+                        boolean hasAltar = below.getBlock() instanceof elucent.eidolon.common.block.TableBlockBase;
+                        if (hasAltar && effigy.ready()) return true;
                     }
                 }
             }

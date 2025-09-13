@@ -21,6 +21,13 @@
   ],
   "effects": [
     {
+      "type": "effigy_sound",
+      "sound": "minecraft:entity.lightning_bolt.thunder",
+      "volume": 0.6,
+      "pitch": 1.0,
+      "category": "WEATHER"
+    },
+    {
       "type": "apply_effect",
       "effect": "minecraft:strength",
       "duration": 800,

@@ -37,6 +37,15 @@ public class LocationResearchTriggers {
     // Track triggered research per player to prevent infinite loops
     private static final Map<String, Set<String>> PLAYER_TRIGGERED_RESEARCH = new HashMap<>();
 
+    // Ensure biome listener is registered even if MOD setup event isn't delivered on this bus
+    static {
+        try {
+            PlayerContextTracker.addBiomeChangeListener(LocationResearchTriggers::onBiomeChange);
+        } catch (Throwable t) {
+            // Safe-guard: avoid class init failure
+        }
+    }
+
     /**
      * SMART: Register with AI system's biome tracking to avoid duplicate ticking
      */
@@ -181,10 +190,15 @@ public class LocationResearchTriggers {
                 return;
             }
             
+            // Normalize research id to a namespaced ID expected by Eidolon
+            String namespacedId = researchId.contains(":")
+                ? researchId
+                : new ResourceLocation(EidolonUnchained.MODID, researchId).toString();
+
             // Create ItemStack with proper NBT
             ItemStack researchNote = new ItemStack(researchNoteItem);
             CompoundTag tag = researchNote.getOrCreateTag();
-            tag.putString("research", researchId);
+            tag.putString("research", namespacedId);
             tag.putInt("stepsDone", 0);
             
             // Add worldSeed for research table compatibility
@@ -197,7 +211,7 @@ public class LocationResearchTriggers {
                 player.drop(researchNote, false); // Drop if inventory full
             }
             
-            LOGGER.info("Gave research note for '{}' to player {}", researchId, player.getName().getString());
+            LOGGER.info("Gave research note for '{}' to player {}", namespacedId, player.getName().getString());
             
         } catch (Exception e) {
             LOGGER.error("Failed to give research note for '{}': {}", researchId, e.getMessage());

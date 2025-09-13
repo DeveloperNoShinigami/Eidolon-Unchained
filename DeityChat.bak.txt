@@ -86,13 +86,12 @@ public class DeityChat {
         conversationCommandCounts.put(playerId, 0); // Initialize command count for this session
         
         // Start effigy effects for the conversation
-        // Start effigy effects for the conversation
-        net.minecraft.core.BlockPos effigyPos = com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.findNearbyEffigyPos(player, 10.0);
-        if (effigyPos != null) {
-            com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.startConversationEffects(player, effigyPos, deityId);
-            LOGGER.info("Started effigy effects for deity {} at {}", deityId, effigyPos);
+        EffigyTileEntity effigy = EffigyEffectsManager.findNearbyEffigy(player, 10.0);
+        if (effigy != null) {
+            EffigyEffectsManager.startConversationEffects(player, effigy.getBlockPos(), deityId);
+            LOGGER.info("🔮 Started effigy effects for deity {} at {}", deityId, effigy.getBlockPos());
         } else {
-            LOGGER.warn("No effigy found within 10 blocks of player {} at {}", player.getName().getString(), player.blockPosition());
+            LOGGER.warn("🔮 No effigy found within 10 blocks of player {} at {}", player.getName().getString(), player.blockPosition());
         }
         
         String deityName = deity.getName();
@@ -1066,13 +1065,7 @@ public class DeityChat {
             // Show instant message
             String formattedMessage = formatActionBarMessage(deityName, message, maxWidth, centerText, wrapText);
             Component actionBarComponent = Component.literal(formattedMessage);
-            // Pulse effigy eyes for each action bar send to emulate speech
-            try { com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.startAIResponseEffects(player); } catch (Exception ignored) {}
             player.sendSystemMessage(actionBarComponent, true);
-            java.util.concurrent.CompletableFuture.runAsync(() -> {
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
-                try { com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.endAIResponseEffects(player); } catch (Exception ignored) {}
-            });
             
             LOGGER.debug("Sent instant action bar message to {}: {}", player.getName().getString(), formattedMessage);
             
@@ -1124,14 +1117,9 @@ public class DeityChat {
                         String formattedMessage = formatActionBarMessage(deityName, partialChunk, maxWidth, centerText, false);
                         Component actionBarComponent = Component.literal(formattedMessage);
                         
-                        // Send to action bar on main thread + pulse per update
+                        // Send to action bar on main thread
                         player.getServer().execute(() -> {
-                            try { com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.startAIResponseEffects(player); } catch (Exception ignored) {}
                             player.sendSystemMessage(actionBarComponent, true);
-                            java.util.concurrent.CompletableFuture.runAsync(() -> {
-                                try { Thread.sleep(400); } catch (InterruptedException ignored) {}
-                                try { com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.endAIResponseEffects(player); } catch (Exception ignored) {}
-                            });
                         });
                         
                         // Wait for typing speed
@@ -1192,17 +1180,80 @@ public class DeityChat {
     }
 
     /**
-     * Sentence-first wrap for action bar typing.
-     * Break only at sentence boundaries (., !, ?). Avoid mid-sentence chopping.
+     * Intelligently wrap text into action bar-friendly chunks
+     * Splits on sentence boundaries first, then word boundaries if needed
+     * Properly accounts for formatting codes when calculating length
      */
     private static List<String> intelligentTextWrap(String message, String deityName, int maxWidth) {
         List<String> chunks = new ArrayList<>();
-        // Split on sentence boundaries: keep end punctuation with the sentence
+        
+        // Calculate usable width (subtract deity header space - accounting for formatting codes)
+        String header = "§6⟦ " + deityName + " ⟧ §f";
+        int headerVisibleLength = ("⟦ " + deityName + " ⟧ ").length(); // Length without formatting codes
+        int usableWidth = maxWidth - headerVisibleLength;
+        
+        // Split on sentence boundaries - periods, exclamation points, question marks
+        // This regex captures the sentence ending punctuation with the sentence
         String[] sentences = message.split("(?<=[.!?])\\s+");
-        for (String s : sentences) {
-            String sentence = s.trim();
-            if (!sentence.isEmpty()) chunks.add(sentence);
+        
+        for (String sentence : sentences) {
+            sentence = sentence.trim();
+            if (sentence.isEmpty()) continue;
+            
+            // Calculate visible length (without formatting codes)
+            int visibleLength = sentence.replaceAll("§.", "").length();
+            
+            // ALWAYS add complete sentences as separate chunks
+            // This ensures each sentence gets its own action bar line
+            if (visibleLength <= usableWidth) {
+                // Sentence fits perfectly - add as complete sentence
+                chunks.add(sentence);
+            } else {
+                // Sentence is too long for action bar width
+                // Still prioritize sentence completion but handle overflow gracefully
+                
+                // For very long sentences, we'll display what we can but try to break at natural points
+                String[] words = sentence.split("\\s+");
+                StringBuilder currentChunk = new StringBuilder();
+                
+                for (String word : words) {
+                    // Test if adding this word would exceed width
+                    String testChunk = currentChunk.length() == 0 ? word : currentChunk + " " + word;
+                    int testVisibleLength = testChunk.replaceAll("§.", "").length();
+                    
+                    if (testVisibleLength <= usableWidth) {
+                        // Add word to current chunk
+                        if (currentChunk.length() > 0) currentChunk.append(" ");
+                        currentChunk.append(word);
+                    } else {
+                        // Word would overflow - save current chunk and start new one
+                        if (currentChunk.length() > 0) {
+                            chunks.add(currentChunk.toString());
+                            currentChunk = new StringBuilder();
+                        }
+                        
+                        // Check if single word is too long
+                        int wordVisibleLength = word.replaceAll("§.", "").length();
+                        if (wordVisibleLength > usableWidth) {
+                            // Very long word - split it but this is rare
+                            String cleanWord = word.replaceAll("§.", "");
+                            for (int i = 0; i < cleanWord.length(); i += usableWidth) {
+                                chunks.add(cleanWord.substring(i, Math.min(i + usableWidth, cleanWord.length())));
+                            }
+                        } else {
+                            // Start new chunk with this word
+                            currentChunk.append(word);
+                        }
+                    }
+                }
+                
+                // Add any remaining content
+                if (currentChunk.length() > 0) {
+                    chunks.add(currentChunk.toString());
+                }
+            }
         }
+        
         return chunks;
     }
     
@@ -1297,13 +1348,7 @@ public class DeityChat {
     private static void sendActionBarWithChat(ServerPlayer player, String deityName, String message) {
         // Brief action bar notification
         Component actionBar = Component.literal("§6§l" + deityName + " §7⟨ speaks ⟩");
-        // Pulse for the speak notice
-        try { com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.startAIResponseEffects(player); } catch (Exception ignored) {}
         player.sendSystemMessage(actionBar, true);
-        java.util.concurrent.CompletableFuture.runAsync(() -> {
-            try { Thread.sleep(500); } catch (InterruptedException ignored) {}
-            try { com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.endAIResponseEffects(player); } catch (Exception ignored) {}
-        });
         
         // Detailed message in chat with better formatting
         player.sendSystemMessage(Component.literal(""));
@@ -1353,39 +1398,19 @@ public class DeityChat {
         Component actionBarComponent = Component.literal(formattedMessage);
         
         // Send multiple times for persistence (action bar messages fade quickly)
-        try { com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.startAIResponseEffects(player); } catch (Exception ignored) {}
         player.sendSystemMessage(actionBarComponent, true);
-        java.util.concurrent.CompletableFuture.runAsync(() -> {
-            try { Thread.sleep(500); } catch (InterruptedException ignored) {}
-            try { com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.endAIResponseEffects(player); } catch (Exception ignored) {}
-        });
         
         // Schedule additional sends for persistence
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
                 Thread.sleep(1000); // 1 second
-                try { com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.startAIResponseEffects(player); } catch (Exception ignored) {}
                 player.sendSystemMessage(actionBarComponent, true);
-                java.util.concurrent.CompletableFuture.runAsync(() -> {
-                    try { Thread.sleep(400); } catch (InterruptedException ignored) {}
-                    try { com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.endAIResponseEffects(player); } catch (Exception ignored) {}
-                });
                 
                 Thread.sleep(1000); // Another second
-                try { com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.startAIResponseEffects(player); } catch (Exception ignored) {}
                 player.sendSystemMessage(actionBarComponent, true);
-                java.util.concurrent.CompletableFuture.runAsync(() -> {
-                    try { Thread.sleep(400); } catch (InterruptedException ignored) {}
-                    try { com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.endAIResponseEffects(player); } catch (Exception ignored) {}
-                });
                 
                 Thread.sleep(1000); // Final send
-                try { com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.startAIResponseEffects(player); } catch (Exception ignored) {}
                 player.sendSystemMessage(actionBarComponent, true);
-                java.util.concurrent.CompletableFuture.runAsync(() -> {
-                    try { Thread.sleep(400); } catch (InterruptedException ignored) {}
-                    try { com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.endAIResponseEffects(player); } catch (Exception ignored) {}
-                });
                 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -2455,3 +2480,4 @@ public class DeityChat {
     
     
 }
+

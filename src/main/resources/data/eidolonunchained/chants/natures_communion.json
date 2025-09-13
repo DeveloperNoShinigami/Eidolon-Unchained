@@ -18,6 +18,13 @@
   "requirements": [],
   "effects": [
     {
+      "type": "effigy_sound",
+      "sound": "minecraft:block.amethyst_block.chime",
+      "volume": 0.8,
+      "pitch": 1.15,
+      "category": "BLOCKS"
+    },
+    {
       "type": "apply_effect",
       "effect": "minecraft:regeneration",
       "duration": 400,

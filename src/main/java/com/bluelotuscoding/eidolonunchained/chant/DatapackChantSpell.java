@@ -40,6 +40,12 @@ public class DatapackChantSpell extends PrayerSpell {
         super(name, createDeityWithColors(name, chantData), signs);
         this.chantData = chantData;
     }
+
+    @Override
+    public int getCost() {
+        // Respect datapack-defined mana cost for gating
+        return chantData != null ? Math.max(0, chantData.getManaCost()) : 0;
+    }
     
     /**
      * Creates a deity with proper colors from datapack for the parent PrayerSpell class
@@ -191,6 +197,32 @@ public class DatapackChantSpell extends PrayerSpell {
             serverPlayer.sendSystemMessage(Component.translatable("eidolonunchained.ui.chant.success", chantData.getName()));
         }
         
+        // Consume mana based on datapack cost (if any)
+        try {
+            if (getCost() > 0 && !player.isCreative()) {
+                var capOpt = player.getCapability(elucent.eidolon.capability.ISoul.INSTANCE);
+                if (capOpt.isPresent()) {
+                    elucent.eidolon.capability.ISoul soul = capOpt.resolve().get();
+                    double current = 0;
+                    try {
+                        current = ((Number)soul.getClass().getMethod("getMagic").invoke(soul)).doubleValue();
+                    } catch (Exception e0) {
+                        try { current = ((Number)soul.getMagic()).doubleValue(); } catch (Exception ignored2) {}
+                    }
+                    double newVal = Math.max(0, current - (double)getCost());
+                    try {
+                        soul.getClass().getMethod("setMagic", double.class).invoke(soul, newVal);
+                    } catch (Exception e1) {
+                        try {
+                            soul.getClass().getMethod("setMagic", int.class).invoke(soul, (int)newVal);
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Failed to consume mana for chant {}: {}", chantData.getId(), e.getMessage());
+        }
+
         // Set cooldown after successful cast
         ChantCooldownManager.setCooldown(serverPlayer, chantData);
         
