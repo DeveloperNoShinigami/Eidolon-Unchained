@@ -18,14 +18,6 @@
   "requirements": [],
   "effects": [
     {
-      "type": "effigy_effects",
-      "ambient_sound": {
-        "sound": "minecraft:entity_wither_ambient",
-        "volume": 0.8,
-        "pitch": 1.1
-      }
-    },
-    {
       "type": "send_message",
       "message": "§5The shadows whisper your name as dark power flows through you..."
     }

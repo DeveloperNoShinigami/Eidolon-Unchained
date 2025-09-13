@@ -367,10 +367,6 @@ public class DatapackChant {
                     // Both effect types do the same thing - start deity conversation
                     startConversation(player);
                     break;
-                case "effigy_effects":
-                    // 🔮 NEW: Trigger effigy visual/audio effects like Eidolon does
-                    applyEffigyEffects(player);
-                    break;
                 default:
                     // Unknown effect type
                     break;
@@ -461,59 +457,8 @@ public class DatapackChant {
             return new ChantEffect(type, json);
         }
         
-        /**
-         * 🔮 NEW: Apply effigy effects using new EffigyEffectsPacket
-         */
-        private void applyEffigyEffects(net.minecraft.server.level.ServerPlayer player) {
-            try {
-                // Check if this chant has a linked deity (from JSON configuration)
-                if (!this.parentChant.hasLinkedDeity()) {
-                    player.sendSystemMessage(Component.literal("§c⚠ Effigy effects require a linked deity"));
-                    return;
-                }
-                
-                // Get effigy from casting position (where the chant was successful)
-                // Use the same method as DatapackChantSpell but search from a wider area
-                elucent.eidolon.common.tile.EffigyTileEntity effigy = findNearbyEffigy(player);
-                
-                if (effigy == null) {
-                    LOGGER.info("🔮 No effigy found for enhanced effects - chant will complete without visual enhancements");
-                    // Effigy effects are optional enhancement - don't block the chant
-                    return;
-                }
-                
-                // Parse ambient sound configuration from JSON
-                com.bluelotuscoding.eidolonunchained.network.EffigyEffectsPacket.SoundConfig soundConfig = 
-                    parseSoundConfig();
-                
-                // Start persistent effigy effects using the persistence manager
-                com.bluelotuscoding.eidolonunchained.network.EffigyEffectsPersistenceManager
-                    .startEffects(player, effigy.getBlockPos(), this.parentChant.getLinkedDeity(), soundConfig);
-                
-                LOGGER.info("🔮 Started persistent effigy effects for deity {} at pos {}", 
-                    this.parentChant.getLinkedDeity(), effigy.getBlockPos());
-                    
-            } catch (Exception e) {
-                LOGGER.error("🔮 Failed to apply effigy effects: {}", e.getMessage(), e);
-                player.sendSystemMessage(Component.literal("§c⚠ Effigy effects failed: " + e.getMessage()));
-            }
-        }
+        // Effigy effects are now handled by EffigyEffectsManager during conversations
         
-        /**
-         * Parse sound configuration from JSON data
-         */
-        private com.bluelotuscoding.eidolonunchained.network.EffigyEffectsPacket.SoundConfig parseSoundConfig() {
-            if (data.has("ambient_sound") && data.get("ambient_sound").isJsonObject()) {
-                com.google.gson.JsonObject soundObj = data.getAsJsonObject("ambient_sound");
-                String sound = soundObj.has("sound") ? soundObj.get("sound").getAsString() : "minecraft:ambient_cave";
-                float volume = soundObj.has("volume") ? soundObj.get("volume").getAsFloat() : 1.0f;
-                float pitch = soundObj.has("pitch") ? soundObj.get("pitch").getAsFloat() : 1.0f;
-                return new com.bluelotuscoding.eidolonunchained.network.EffigyEffectsPacket.SoundConfig(sound, volume, pitch);
-            } else {
-                // Default sound configuration
-                return new com.bluelotuscoding.eidolonunchained.network.EffigyEffectsPacket.SoundConfig("minecraft:ambient_cave", 1.0f, 1.0f);
-            }
-        }
         
         /**
          * Get the parent chant that contains this effect (needed for linked deity info)

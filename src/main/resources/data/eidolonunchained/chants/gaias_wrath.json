@@ -39,14 +39,6 @@
       "amplifier": 2
     },
     {
-      "type": "effigy_effects",
-      "ambient_sound": {
-        "sound": "minecraft:entity.ravager.roar",
-        "volume": 1.1,
-        "pitch": 0.9
-      }
-    },
-    {
       "type": "send_message",
       "message": "§2§lNATURE'S FURY AWAKENS!"
     },

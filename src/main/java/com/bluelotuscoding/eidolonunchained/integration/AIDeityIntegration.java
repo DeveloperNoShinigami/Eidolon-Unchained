@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID)
 public class AIDeityIntegration {
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static ScheduledExecutorService cleanupExecutor;
+    private static transient ScheduledExecutorService cleanupExecutor;
     
     /**
      * Initialize the AI deity system

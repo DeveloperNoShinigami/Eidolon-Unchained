@@ -204,8 +204,7 @@ public class DatapackChantSpell extends PrayerSpell {
             }
         }
         
-        // Manually trigger effigy visual effects like Eidolon does
-        triggerEffigyEffects(world, pos, serverPlayer);
+        // Effigy effects are now handled by EffigyEffectsManager
         
         LOGGER.info("Player {} successfully performed chant: {}", 
                    serverPlayer.getName().getString(), chantData.getId());
@@ -220,10 +219,6 @@ public class DatapackChantSpell extends PrayerSpell {
         return effigies.stream().min(Comparator.comparingDouble((e) -> e.getBlockPos().distSqr(pos))).get();
     }
 
-    private void triggerEffigyEffects(Level world, BlockPos pos, ServerPlayer player) {
-        // Effigy effects - to be implemented later if needed
-        LOGGER.info("Chant completed successfully at {}", pos);
-    }
     
     /**
      * Executes the custom effects defined in the chant configuration

@@ -11,8 +11,9 @@ import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.bluelotuscoding.eidolonunchained.chant.PlayerChantingSystem;
 import com.bluelotuscoding.eidolonunchained.util.CommandStringUtils;
-import com.bluelotuscoding.eidolonunchained.network.EffigyEffectsPersistenceManager;
-import com.bluelotuscoding.eidolonunchained.network.EffigyEffectsPacket;
+import com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager;
+import elucent.eidolon.common.tile.EffigyTileEntity;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -84,17 +85,21 @@ public class DeityChat {
         conversationHistory.put(playerId, new ArrayList<>());
         conversationCommandCounts.put(playerId, 0); // Initialize command count for this session
         
+        // Start effigy effects for the conversation
+        EffigyTileEntity effigy = EffigyEffectsManager.findNearbyEffigy(player, 10.0);
+        if (effigy != null) {
+            EffigyEffectsManager.startConversationEffects(player, effigy.getBlockPos(), deityId);
+            LOGGER.info("🔮 Started effigy effects for deity {} at {}", deityId, effigy.getBlockPos());
+        } else {
+            LOGGER.warn("🔮 No effigy found within 10 blocks of player {} at {}", player.getName().getString(), player.blockPosition());
+        }
+        
         String deityName = deity.getName();
         
         // Send patron-aware initial message
         sendPatronAwareGreeting(player, deity, aiConfig);
         
-        // Start persistent effigy effects if player has active effigy context
-        // This will create ambient effects that persist during the entire conversation
-        if (hasActiveEffigyContext(player, deityId)) {
-            EffigyEffectsPersistenceManager.startEffects(player, getPlayerEffigyPos(player), deityId, 
-                getDefaultSoundConfig(deity));
-        }
+        // Effigy effects are now handled by EffigyEffectsManager
         
         LOGGER.info("Started conversation between player {} and deity {}", player.getName().getString(), deityName);
     }
@@ -201,8 +206,9 @@ public class DeityChat {
             DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
             String deityName = deity != null ? deity.getName() : deityId.toString();
             
-            // Stop persistent effigy effects
-            EffigyEffectsPersistenceManager.stopEffects(player);
+            // Stop effigy effects when conversation ends
+            EffigyEffectsManager.stopEffects(player);
+            
             
             player.sendSystemMessage(Component.literal("§6The divine presence fades..."));
             player.sendSystemMessage(Component.literal("§e" + deityName + " has heard your prayers."));
@@ -375,6 +381,9 @@ public class DeityChat {
                     player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.no_response"));
                     return;
                 }
+                
+                // Start pulsing effigy effects when AI begins responding
+                EffigyEffectsManager.startAIResponseEffects(player);
                 
                 String rawResponse = aiResponse.dialogue;
                 LOGGER.info("🔥 DEBUG: AI Response received: '{}'", rawResponse);
@@ -1851,6 +1860,15 @@ public class DeityChat {
                 activeConversations.put(player.getUUID(), deity.getId());
                 // 🔥 CRITICAL FIX: Initialize conversation history for tier congratulations
                 conversationHistory.put(player.getUUID(), new ArrayList<>());
+                
+                // Start effigy effects for tier congratulations
+                EffigyTileEntity effigy = EffigyEffectsManager.findNearbyEffigy(player, 10.0);
+                if (effigy != null) {
+                    EffigyEffectsManager.startConversationEffects(player, effigy.getBlockPos(), deity.getId());
+                    LOGGER.info("🔮 Started tier congratulation effigy effects for deity {} at {}", deity.getId(), effigy.getBlockPos());
+                } else {
+                    LOGGER.warn("🔮 No effigy found for tier congratulation - player {} at {}", player.getName().getString(), player.blockPosition());
+                }
                 LOGGER.info("🗣️ Added player {} to active conversations with deity {} (with history initialization)", 
                     player.getName().getString(), deity.getName());
                 
@@ -2455,37 +2473,5 @@ public class DeityChat {
         return aiContext.toString();
     }
     
-    /**
-     * Check if player has active effigy context (placeholder - implement based on your needs)
-     * This should check if the player is near an effigy or has recently cast a chant
-     */
-    private static boolean hasActiveEffigyContext(ServerPlayer player, ResourceLocation deityId) {
-        // For now, check if there's a persistence manager context
-        // TODO: Add logic to detect if player is near an effigy or has recently cast relevant chant
-        return EffigyEffectsPersistenceManager.hasActiveEffects(player);
-    }
     
-    /**
-     * Get player's effigy position (placeholder - implement based on your needs)
-     * This should return the position of the nearest relevant effigy
-     */
-    private static net.minecraft.core.BlockPos getPlayerEffigyPos(ServerPlayer player) {
-        // For now, use player position - should be replaced with actual effigy detection
-        return player.blockPosition();
-    }
-    
-    /**
-     * Get default sound configuration for a deity
-     */
-    private static EffigyEffectsPacket.SoundConfig getDefaultSoundConfig(DatapackDeity deity) {
-        // Return subtle ambient sound based on deity characteristics
-        if (deity.getName().toLowerCase().contains("dark") || deity.getName().toLowerCase().contains("shadow")) {
-            return new EffigyEffectsPacket.SoundConfig("minecraft:ambient_cave", 0.3f, 0.8f);
-        } else if (deity.getName().toLowerCase().contains("light") || deity.getName().toLowerCase().contains("holy")) {
-            return new EffigyEffectsPacket.SoundConfig("minecraft:block.beacon.ambient", 0.3f, 1.2f);
-        } else {
-            // Nature or neutral deities
-            return new EffigyEffectsPacket.SoundConfig("minecraft:block.grass.step", 0.2f, 1.0f);
-        }
-    }
 }

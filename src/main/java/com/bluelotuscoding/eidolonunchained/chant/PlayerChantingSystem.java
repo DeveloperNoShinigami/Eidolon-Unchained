@@ -47,7 +47,7 @@ public class PlayerChantingSystem {
     private static final long SPELL_RESOLUTION_DELAY = 1000; // 1 second delay before casting
     
     // Scheduler for delayed spell execution (like ribbon system)
-    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+    private static final transient ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     
     /**
      * Container for tracking a player's active chanting sequence

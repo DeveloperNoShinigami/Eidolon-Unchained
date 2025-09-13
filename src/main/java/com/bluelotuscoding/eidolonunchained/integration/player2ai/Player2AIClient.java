@@ -34,7 +34,7 @@ public class Player2AIClient {
     private static final String PLAYER2_LOCAL_API_BASE = "http://127.0.0.1:4315/v1/chat/completions"; // OpenAI-compatible endpoint
     private static final String PLAYER2_AUTH_BASE = "http://localhost:4316/v1/login/web/";
     private static final String GAME_CLIENT_ID = "eidolon-unchained"; // Player2AI game client ID
-    private static final Executor EXECUTOR = Executors.newCachedThreadPool();
+    private static final transient Executor EXECUTOR = Executors.newCachedThreadPool();
     
     private final int timeoutSeconds;
     private final Map<String, String> characterCache = new HashMap<>();

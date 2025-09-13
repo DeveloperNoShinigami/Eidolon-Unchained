@@ -53,34 +53,16 @@ minecraft {
             arg '-mixin'
             arg 'eidolonunchained.mixins.json'
             
-            // Fix Java 17+ module system issues with Gson
+            // Memory settings
             jvmArgs '-Xmx4G', '-Xms2G'
-            jvmArgs '--add-opens', 'java.base/java.util=ALL-UNNAMED'
-            jvmArgs '--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED'
-            jvmArgs '--add-opens', 'java.base/java.text=ALL-UNNAMED'
-            jvmArgs '--add-opens', 'java.desktop/java.awt.font=ALL-UNNAMED'
-            jvmArgs '--add-opens', 'java.base/java.util.concurrent=ALL-UNNAMED'
-            jvmArgs '--add-opens', 'java.base/sun.nio.ch=ALL-UNNAMED'
-            jvmArgs '--add-opens', 'java.base/java.net=ALL-UNNAMED'
-            jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED'
-            jvmArgs '--illegal-access=permit'
         }
 
         server {
             property 'forge.enabledGameTestNamespaces', mod_id
             args '--nogui'
             
-            // Fix Java 17+ module system issues with Gson  
+            // Memory settings
             jvmArgs '-Xmx4G', '-Xms2G'
-            jvmArgs '--add-opens', 'java.base/java.util=ALL-UNNAMED'
-            jvmArgs '--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED'
-            jvmArgs '--add-opens', 'java.base/java.text=ALL-UNNAMED'
-            jvmArgs '--add-opens', 'java.desktop/java.awt.font=ALL-UNNAMED'
-            jvmArgs '--add-opens', 'java.base/java.util.concurrent=ALL-UNNAMED'
-            jvmArgs '--add-opens', 'java.base/sun.nio.ch=ALL-UNNAMED'
-            jvmArgs '--add-opens', 'java.base/java.net=ALL-UNNAMED'
-            jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED'
-            jvmArgs '--illegal-access=permit'
             
             // Curios mixin configuration
             property 'mixin.env.remapRefMap', 'true'

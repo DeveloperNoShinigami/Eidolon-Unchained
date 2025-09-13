@@ -36,14 +36,6 @@
       "amplifier": 0
     },
     {
-      "type": "effigy_effects",
-      "ambient_sound": {
-        "sound": "minecraft:block_grass_step",
-        "volume": 0.9,
-        "pitch": 0.8
-      }
-    },
-    {
       "type": "send_message",
       "message": "§aThe earth beneath your feet pulses with life as nature's embrace surrounds you..."
     }

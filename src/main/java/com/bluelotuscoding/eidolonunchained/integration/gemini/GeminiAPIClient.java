@@ -31,7 +31,7 @@ import java.util.concurrent.Executors;
 public class GeminiAPIClient {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
-    private static final Executor EXECUTOR = Executors.newCachedThreadPool();
+    private static final transient Executor EXECUTOR = Executors.newCachedThreadPool();
     
     private final String apiKey;
     private final String model;

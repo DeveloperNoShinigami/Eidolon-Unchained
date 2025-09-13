@@ -28,7 +28,7 @@ public class Player2HealthSignal {
     private static final String GAME_CLIENT_ID = "eidolon-unchained"; // Player2AI game client ID
     private static final int HEALTH_SIGNAL_INTERVAL = 60; // seconds
     
-    private static ScheduledExecutorService healthSignalExecutor;
+    private static transient ScheduledExecutorService healthSignalExecutor;
     private static boolean healthSignalActive = false;
     
     /**
