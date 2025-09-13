@@ -316,30 +316,30 @@ public class UnifiedCommands {
             // Tasks system (formerly /dtask) — unified under /eidolon-unchained
             .then(Commands.literal("tasks")
                 .then(Commands.literal("assign")
-                    .then(net.minecraft.commands.arguments.EntityArgument.player()
+                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
                         .then(Commands.argument("deity", StringArgumentType.string()).suggests(DEITY_SUGGESTIONS)
                             .then(Commands.argument("taskId", StringArgumentType.string()).suggests(TASK_ID_SUGGESTIONS)
                                 .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::assignTask)))))
                 .then(Commands.literal("assignany")
-                    .then(net.minecraft.commands.arguments.EntityArgument.player()
+                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
                         .then(Commands.argument("taskId", StringArgumentType.string()).suggests(TASK_ID_SUGGESTIONS)
                             .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::assignAnyTask))))
                 .then(Commands.literal("complete")
-                    .then(net.minecraft.commands.arguments.EntityArgument.player()
+                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
                         .then(Commands.argument("taskId", StringArgumentType.string()).suggests(TASK_ID_SUGGESTIONS)
                             .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::completeTask))))
                 .then(Commands.literal("list")
-                    .then(net.minecraft.commands.arguments.EntityArgument.player()
+                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
                         .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::listTasks)))
                 .then(Commands.literal("reputation")
-                    .then(net.minecraft.commands.arguments.EntityArgument.player()
+                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
                         .then(Commands.argument("deity", StringArgumentType.string()).suggests(DEITY_SUGGESTIONS)
                             .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::checkSpecificReputation))))
                 .then(Commands.literal("repall")
-                    .then(net.minecraft.commands.arguments.EntityArgument.player()
+                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
                         .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::checkAllReputation)))
                 .then(Commands.literal("ritual")
-                    .then(net.minecraft.commands.arguments.EntityArgument.player()
+                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
                         .then(Commands.argument("ritualId", StringArgumentType.string())
                             .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::markRitualComplete)))))
 
@@ -458,8 +458,11 @@ public class UnifiedCommands {
                 .suggests(DEITY_SUGGESTIONS)
                 .executes(UnifiedCommands::showReputationStatus)));
         
-        // Register the new flexible chant slot commands
+        // Register the flexible chant slot commands
+        // Legacy root: /chant
         ChantSlotCommands.register(dispatcher);
+        // Canonical nested: /eidolon-unchained chant
+        dispatcher.register(Commands.literal("eidolon-unchained").then(com.bluelotuscoding.eidolonunchained.command.ChantSlotCommands.buildNode()));
     }
     
     // Configuration commands
