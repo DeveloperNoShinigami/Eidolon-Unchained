@@ -1,0 +1,18 @@
+{
+  "linked_deity": "eidolonunchained:nether_deity",
+  "task_id": "embers_of_power",
+  "display_name": "Embers of Power",
+  "description": "Collect 12 blaze powder in the Nether.",
+  "requirements": [
+    "item:minecraft:blaze_powder:12",
+    { "type": "dimension", "value": "minecraft:the_nether" }
+  ],
+  "rewards": {
+    "reputation": 8,
+    "commands": [
+      "effect give {player} minecraft:fire_resistance 300 0"
+    ]
+  },
+  "cooldown_hours": 12,
+  "repeatable": true
+}

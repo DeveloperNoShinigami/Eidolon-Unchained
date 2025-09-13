@@ -13,16 +13,16 @@ Overview
 
 Commands (canonical)
 
-- ` /eidolon-unchained tasks assign <player> <deity> <taskId>`
-- ` /eidolon-unchained tasks assignany <player> <taskId>`
-- ` /eidolon-unchained tasks complete <player> <taskId>`
-- ` /eidolon-unchained tasks list <player>`
-- ` /eidolon-unchained tasks reputation <player> <deity>`
-- ` /eidolon-unchained tasks repall <player>`
+- ` /eidolon-unchained fates assign <player> <deity> <fateId>`
+- ` /eidolon-unchained fates assignany <player> <fateId>`
+- ` /eidolon-unchained fates complete <player> <fateId>`
+- ` /eidolon-unchained fates list <player>`
+- ` /eidolon-unchained fates reputation <player> <deity>`
+- ` /eidolon-unchained fates repall <player>`
 
-Legacy alias
+Legacy aliases
 
-- The older `/dtask` tree remains as a compatibility alias.
+- The older `/tasks` and `/dtask` trees remain as compatibility aliases.
 
 Chat & Feedback Keys
 
@@ -32,7 +32,7 @@ Notes
 
 - Reputation integrates with AI Deity prayers to gate conversations/rewards.
 - Autocomplete: deity IDs and task IDs are suggested dynamically.
-- Full JSON spec: wiki/Datapacks/Task-JSON.md
+- Full JSON spec: wiki/Datapacks/Task-JSON.md (applies to Fates)
 
 How It Works
 

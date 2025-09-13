@@ -21,10 +21,10 @@ Debug (selected)
 - Progression/debug tools are available under ` /eidolon-unchained debug ...`
 - Reputation helpers: ` /eidolon-unchained debug reputation <player> "<deity_id>"`
 
-Tasks
+Fates
 
-- Canonical: `/eidolon-unchained tasks ...` (autocomplete enabled)
-- Legacy alias: `/dtask ...` (kept for compatibility)
+- Canonical: `/eidolon-unchained fates ...` (autocomplete enabled)
+- Legacy aliases: `/eidolon-unchained tasks ...` and `/dtask ...`
 - See usage: wiki/Systems/Tasks-Reputation.md
 
 Autocomplete

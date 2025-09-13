@@ -11,16 +11,16 @@
   "prayer_effect_type": "conversation",
   "requires_effigy": true,
   "signs": [
-    "eidolon:sacred",
-    "eidolon:harmony",
-    "eidolon:warding"
+    "eidolon:soul",
+    "eidolon:soul",
+    "eidolon:soul"
   ],
   "requirements": [],
   "effects": [
     {
       "type": "effigy_sound",
       "sound": "minecraft:block.beacon.power_select",
-      "volume": 0.8,
+      "volume": 1.0,
       "pitch": 1.1,
       "category": "BLOCKS"
     },

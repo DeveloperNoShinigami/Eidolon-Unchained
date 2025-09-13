@@ -1,0 +1,22 @@
+{
+  "target_chapter": "deity_rituals",
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolon.codex.entry.overworld_patronage_ritual"
+    },
+    {
+      "type": "text",
+      "text": "eidolon.codex.entry.overworld_patronage_ritual.description"
+    },
+    {
+      "type": "ritual",
+      "text": "eidolon.codex.page.overworld_patronage_ritual",
+      "ritual": "eidolonunchained:overworld_patronage_ritual"
+    },
+    {
+      "type": "text",
+      "text": "eidolon.codex.entry.overworld_patronage_ritual.effects"
+    }
+  ]
+}

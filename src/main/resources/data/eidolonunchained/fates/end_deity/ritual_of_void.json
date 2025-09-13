@@ -1,0 +1,21 @@
+{
+  "linked_deity": "eidolonunchained:end_deity",
+  "task_id": "ritual_of_void",
+  "display_name": "Ritual of the Void",
+  "description": "Perform the void communion ritual in the End.",
+  "progression_tier": "priest",
+  "requirements": [
+    { "type": "complete_ritual", "rituals": [{ "ritual_id": "eidolonunchained:void_communion", "count": 1, "success_required": true }] },
+    { "type": "dimension", "value": "minecraft:the_end" }
+  ],
+  "rewards": {
+    "reputation": 18,
+    "commands": [
+      "effect give {player} minecraft:regeneration 200 1",
+      "give {player} minecraft:ender_pearl 4"
+    ],
+    "progression_unlock": "void_priest"
+  },
+  "cooldown_hours": 48,
+  "repeatable": false
+}

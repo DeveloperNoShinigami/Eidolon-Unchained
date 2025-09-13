@@ -1,0 +1,18 @@
+{
+  "linked_deity": "eidolonunchained:dark_deity",
+  "task_id": "gather_shadow_essence",
+  "display_name": "Gather Shadow Essence",
+  "description": "Collect 16 coal at night to distill shadow essence.",
+  "requirements": [
+    "item:minecraft:coal:16",
+    { "type": "time", "value": "night" }
+  ],
+  "rewards": {
+    "reputation": 6,
+    "commands": [
+      "give {player} eidolon:soul_shard 2"
+    ]
+  },
+  "cooldown_hours": 12,
+  "repeatable": true
+}

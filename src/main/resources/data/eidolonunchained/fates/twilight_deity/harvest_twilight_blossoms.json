@@ -1,0 +1,18 @@
+{
+  "linked_deity": "eidolonunchained:twilight_deity",
+  "task_id": "harvest_twilight_blossoms",
+  "display_name": "Harvest Twilight Blossoms",
+  "description": "Collect 12 glow berries at dusk or dawn.",
+  "requirements": [
+    "item:minecraft:glow_berries:12",
+    { "type": "time", "value": "twilight" }
+  ],
+  "rewards": {
+    "reputation": 6,
+    "commands": [
+      "effect give {player} minecraft:night_vision 300 0"
+    ]
+  },
+  "cooldown_hours": 10,
+  "repeatable": true
+}

@@ -1,0 +1,20 @@
+{
+  "linked_deity": "eidolonunchained:nether_deity",
+  "task_id": "nether_hunter",
+  "display_name": "Nether Hunter",
+  "description": "Slay 6 Wither Skeletons in the Nether fortresses.",
+  "progression_tier": "champion",
+  "requirements": [
+    { "type": "kill_entities", "entities": [{ "entity_type": "minecraft:wither_skeleton", "count": 6 }] },
+    { "type": "dimension", "value": "minecraft:the_nether" }
+  ],
+  "rewards": {
+    "reputation": 14,
+    "commands": [
+      "give {player} minecraft:wither_skeleton_skull 1"
+    ],
+    "progression_unlock": "nether_champion"
+  },
+  "cooldown_hours": 24,
+  "repeatable": false
+}

@@ -1,0 +1,36 @@
+{
+  "type": "eidolon:ritual_brazier_command",
+  "symbol": "eidolon:particle/earth_sign",
+  "color": 8553090,
+  "reagent": [
+    {
+      "item": "minecraft:diamond"
+    }
+  ],
+  "pedestalItems": [
+    {
+      "item": "minecraft:emerald"
+    },
+    {
+      "item": "minecraft:stone"
+    },
+    {
+      "item": "minecraft:iron_ingot"
+    },
+    {
+      "item": "eidolon:arcane_gold_ingot"
+    }
+  ],
+  "focusItems": [],
+  "invariantItems": [
+    {
+      "item": "eidolon:codex"
+    }
+  ],
+  "commands": [
+    "execute as @p[distance=..10] run eidolon-unchained patron choose eidolonunchained:earth_deity",
+    "tellraw @p {\"text\":\"§2The eternal stone recognizes your devotion as Terra accepts your service!\",\"color\":\"dark_green\"}",
+    "playsound minecraft:block.stone.break player @p ~ ~ ~ 1.0 0.7",
+    "particle minecraft:block minecraft:stone ~ ~1 ~ 2 2 2 0.1 50 force"
+  ]
+}

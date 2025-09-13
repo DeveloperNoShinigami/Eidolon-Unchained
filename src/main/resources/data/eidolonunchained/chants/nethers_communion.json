@@ -1,0 +1,44 @@
+{
+  "name": "eidolonunchained.chant.nethers_communion.name",
+  "description": "eidolonunchained.chant.nethers_communion.description",
+  "category": "dimensional",
+  "codex_icon": "minecraft:blaze_rod",
+  "difficulty": 4,
+  "mana_cost": 27,
+  "cooldown": 60,
+  "show_in_codex": true,
+  "linked_deity": "eidolonunchained:nether_deity",
+  "prayer_effect_type": "conversation",
+  "requires_effigy": true,
+  "signs": [
+    "eidolon:flame",
+    "eidolon:soul",
+    "eidolon:sacred"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "effigy_sound",
+      "sound": "minecraft:entity.wither.ambient",
+      "volume": 0.8,
+      "pitch": 0.7,
+      "category": "BLOCKS"
+    },
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:fire_resistance",
+      "duration": 600,
+      "amplifier": 0
+    },
+    {
+      "type": "apply_effect", 
+      "effect": "minecraft:strength",
+      "duration": 300,
+      "amplifier": 0
+    },
+    {
+      "type": "send_message",
+      "message": "§4The hellfire burns in recognition as Infernus draws near..."
+    }
+  ]
+}

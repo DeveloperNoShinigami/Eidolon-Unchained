@@ -1,0 +1,22 @@
+{
+  "target_chapter": "deity_rituals",
+  "pages": [
+    {
+      "type": "title",
+      "text": "eidolon.codex.entry.water_patronage_ritual"
+    },
+    {
+      "type": "text",
+      "text": "eidolon.codex.entry.water_patronage_ritual.description"
+    },
+    {
+      "type": "ritual",
+      "text": "eidolon.codex.page.water_patronage_ritual",
+      "ritual": "eidolonunchained:water_patronage_ritual"
+    },
+    {
+      "type": "text",
+      "text": "eidolon.codex.entry.water_patronage_ritual.effects"
+    }
+  ]
+}

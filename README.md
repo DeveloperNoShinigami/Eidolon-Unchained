@@ -31,10 +31,12 @@ Docs: wiki/Home/README.md
 - **Context awareness** of player health, inventory, location, reputation, and past actions
 - **Dynamic personalities** that change based on your patron status and progression
 
-### 🏛️ **JSON-Driven Deity System**  
-- **Single-file configurations** combining deity data and AI behavior
-- **No hardcoded values** - everything customizable via datapack JSON
-- **Complete patron allegiance system** with opposition/alliance mechanics
+### 🏛️ **Comprehensive Deity System**  
+- **11 Unique Deities** across elemental, primal, and dimensional themes
+- **5-Stage Progression** with reputation-based rewards (100+ total rewards)
+- **Complete Patron System** with ritual ceremonies and exclusive benefits
+- **AI-Powered Conversations** with context-aware personalities
+- **Dynamic Relationships** between allied, neutral, and opposing deities
 
 ### ⚡ **Flexible Chant Casting**
 - **Configurable keybinds** for spells and sign sequences

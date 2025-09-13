@@ -1,0 +1,17 @@
+{
+  "linked_deity": "eidolonunchained:end_deity",
+  "task_id": "collect_ender_essence",
+  "display_name": "Collect Ender Essence",
+  "description": "Gather 8 ender pearls from Endermen.",
+  "requirements": [
+    "item:minecraft:ender_pearl:8"
+  ],
+  "rewards": {
+    "reputation": 8,
+    "commands": [
+      "effect give {player} minecraft:slow_falling 300 0"
+    ]
+  },
+  "cooldown_hours": 12,
+  "repeatable": true
+}

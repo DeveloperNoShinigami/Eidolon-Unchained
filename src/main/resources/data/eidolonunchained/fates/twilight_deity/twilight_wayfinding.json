@@ -1,0 +1,19 @@
+{
+  "linked_deity": "eidolonunchained:twilight_deity",
+  "task_id": "twilight_wayfinding",
+  "display_name": "Twilight Wayfinding",
+  "description": "Travel through 3 biomes during twilight hours.",
+  "progression_tier": "adept",
+  "requirements": [
+    { "type": "explore_biomes", "count": 3, "time": "twilight" }
+  ],
+  "rewards": {
+    "reputation": 10,
+    "commands": [
+      "effect give {player} minecraft:speed 300 0"
+    ],
+    "progression_unlock": "twilight_wayfinder"
+  },
+  "cooldown_hours": 16,
+  "repeatable": false
+}

@@ -1,0 +1,21 @@
+{
+  "linked_deity": "eidolonunchained:dark_deity",
+  "task_id": "bind_souls",
+  "display_name": "Bind Restless Souls",
+  "description": "Consume 3 soul shards and slay 5 zombies under night sky.",
+  "progression_tier": "acolyte",
+  "requirements": [
+    { "type": "use_items", "items": [{ "item": "eidolon:soul_shard", "count": 3, "usage_type": "consume" }] },
+    { "type": "kill_entities", "entities": [{ "entity_type": "minecraft:zombie", "count": 5 }], "time": "night" }
+  ],
+  "rewards": {
+    "reputation": 12,
+    "commands": [
+      "effect give {player} minecraft:strength 300 0",
+      "give {player} eidolon:death_essence 2"
+    ],
+    "progression_unlock": "soul_binder"
+  },
+  "cooldown_hours": 24,
+  "repeatable": false
+}

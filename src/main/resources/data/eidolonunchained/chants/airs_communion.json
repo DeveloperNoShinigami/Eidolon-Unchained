@@ -1,0 +1,44 @@
+{
+  "name": "eidolonunchained.chant.airs_communion.name",
+  "description": "eidolonunchained.chant.airs_communion.description",
+  "category": "elemental",
+  "codex_icon": "minecraft:feather",
+  "difficulty": 2,
+  "mana_cost": 20,
+  "cooldown": 60,
+  "show_in_codex": true,
+  "linked_deity": "eidolonunchained:air_deity",
+  "prayer_effect_type": "conversation",
+  "requires_effigy": true,
+  "signs": [
+    "eidolon:mind",
+    "eidolon:soul",
+    "eidolon:sacred"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "effigy_sound",
+      "sound": "minecraft:entity.breeze.idle_air",
+      "volume": 0.8,
+      "pitch": 1.3,
+      "category": "BLOCKS"
+    },
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:speed",
+      "duration": 600,
+      "amplifier": 0
+    },
+    {
+      "type": "apply_effect", 
+      "effect": "minecraft:jump_boost",
+      "duration": 300,
+      "amplifier": 0
+    },
+    {
+      "type": "send_message",
+      "message": "§fThe winds dance as Zephyr draws near..."
+    }
+  ]
+}

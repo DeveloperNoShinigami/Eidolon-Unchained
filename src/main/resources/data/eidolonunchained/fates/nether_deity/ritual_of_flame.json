@@ -1,0 +1,21 @@
+{
+  "linked_deity": "eidolonunchained:nether_deity",
+  "task_id": "ritual_of_flame",
+  "display_name": "Ritual of Flame",
+  "description": "Complete a flame binding ritual in the Nether.",
+  "progression_tier": "priest",
+  "requirements": [
+    { "type": "complete_ritual", "rituals": [{ "ritual_id": "eidolonunchained:nether_binding", "count": 1, "success_required": true }] },
+    { "type": "dimension", "value": "minecraft:the_nether" }
+  ],
+  "rewards": {
+    "reputation": 18,
+    "commands": [
+      "effect give {player} minecraft:strength 600 1",
+      "give {player} minecraft:netherite_scrap 1"
+    ],
+    "progression_unlock": "flame_priest"
+  },
+  "cooldown_hours": 48,
+  "repeatable": false
+}

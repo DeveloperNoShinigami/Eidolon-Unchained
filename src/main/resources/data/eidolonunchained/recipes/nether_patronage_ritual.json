@@ -1,0 +1,36 @@
+{
+  "type": "eidolon:ritual_brazier_command",
+  "symbol": "eidolon:particle/flame_sign",
+  "color": 11546880,
+  "reagent": [
+    {
+      "item": "minecraft:blaze_rod"
+    }
+  ],
+  "pedestalItems": [
+    {
+      "item": "minecraft:nether_wart"
+    },
+    {
+      "item": "minecraft:ghast_tear"
+    },
+    {
+      "item": "minecraft:magma_block"
+    },
+    {
+      "item": "eidolon:arcane_gold_ingot"
+    }
+  ],
+  "focusItems": [],
+  "invariantItems": [
+    {
+      "item": "eidolon:codex"
+    }
+  ],
+  "commands": [
+    "execute as @p[distance=..10] run eidolon-unchained patron choose eidolonunchained:nether_deity",
+    "tellraw @p {\"text\":\"§4The hellfire recognizes your devotion as Infernus accepts your service!\",\"color\":\"dark_red\"}",
+    "playsound minecraft:entity.wither.ambient player @p ~ ~ ~ 0.8 0.7",
+    "particle minecraft:lava ~ ~1 ~ 2 2 2 0.1 50 force"
+  ]
+}

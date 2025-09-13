@@ -1,0 +1,19 @@
+{
+  "linked_deity": "eidolonunchained:end_deity",
+  "task_id": "end_gate_scout",
+  "display_name": "End Gate Scout",
+  "description": "Visit 2 end gateways in the End.",
+  "progression_tier": "wanderer",
+  "requirements": [
+    { "type": "visit_structures", "structures": ["minecraft:end_gateway"], "count": 2 }
+  ],
+  "rewards": {
+    "reputation": 10,
+    "commands": [
+      "effect give {player} minecraft:levitation 3 0"
+    ],
+    "progression_unlock": "end_scout"
+  },
+  "cooldown_hours": 20,
+  "repeatable": false
+}

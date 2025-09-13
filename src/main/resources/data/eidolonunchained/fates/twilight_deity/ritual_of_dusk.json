@@ -1,0 +1,20 @@
+{
+  "linked_deity": "eidolonunchained:twilight_deity",
+  "task_id": "ritual_of_dusk",
+  "display_name": "Ritual of Dusk",
+  "description": "Perform the Twilight Communion ritual once at dusk.",
+  "progression_tier": "priest",
+  "requirements": [
+    { "type": "complete_ritual", "rituals": [{ "ritual_id": "eidolonunchained:twilights_communion", "count": 1, "success_required": true }] }
+  ],
+  "rewards": {
+    "reputation": 16,
+    "commands": [
+      "give {player} minecraft:amethyst_shard 4",
+      "effect give {player} minecraft:glowing 200 0"
+    ],
+    "progression_unlock": "twilight_priest"
+  },
+  "cooldown_hours": 36,
+  "repeatable": false
+}

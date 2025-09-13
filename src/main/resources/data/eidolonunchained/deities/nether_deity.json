@@ -1,0 +1,108 @@
+{
+  "id": "eidolonunchained:nether_deity",
+  "name": "Infernus, Lord of Burning Realm",
+  "description": "Ancient deity of hellish fires and trials",
+  "colors": {
+    "red": 204,
+    "green": 51,
+    "blue": 51
+  },
+  "progression": {
+    "max_reputation": 100,
+    "stages": [
+      {
+        "id": "hellfire_initiate",
+        "reputation": 0,
+        "major": false,
+        "title": "Hellfire Initiate",
+        "description": "One tested by the burning realm",
+        "rewards": [
+          "give @s minecraft:blaze_rod 2",
+          "effect give @s minecraft:fire_resistance 300 0",
+          "title @s title {\"text\":\"The hellfire tests your worth...\",\"color\":\"red\"}",
+          "playsound minecraft:entity.blaze.ambient master @s ~ ~ ~ 0.3 0.8"
+        ]
+      },
+      {
+        "id": "hellfire_warrior",
+        "reputation": 25,
+        "major": false,
+        "title": "Hellfire Warrior",
+        "description": "Fighter forged in infernal flames",
+        "rewards": [
+          "give @s minecraft:netherrack 16",
+          "give @s minecraft:ghast_tear 2",
+          "effect give @s minecraft:strength 600 0",
+          "effect give @s minecraft:fire_resistance 1200 0",
+          "title @s title {\"text\":\"Hellfire Warrior\",\"color\":\"red\"}",
+          "playsound minecraft:entity.wither.ambient master @s ~ ~ ~ 0.5 1.2"
+        ]
+      },
+      {
+        "id": "infernal_champion",
+        "reputation": 50,
+        "major": true,
+        "title": "Champion of Hellfire",
+        "description": "Proven warrior of the burning realm",
+        "rewards": [
+          "give @s minecraft:nether_star 1",
+          "give @s minecraft:wither_skeleton_skull 2",
+          "give @s minecraft:beacon 1",
+          "effect give @s minecraft:absorption 1800 2",
+          "effect give @s minecraft:strength 1800 1",
+          "effect give @s minecraft:fire_resistance 3600 0",
+          "title @s title {\"text\":\"Champion of Hellfire\",\"color\":\"red\"}",
+          "title @s subtitle {\"text\":\"The infernal flames bow to you\",\"color\":\"gold\"}",
+          "playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1.0 0.8",
+          "say A new Champion of Hellfire rises from the burning depths!"
+        ]
+      },
+      {
+        "id": "infernal_lord",
+        "reputation": 75,
+        "major": true,
+        "title": "Lord of the Inferno",
+        "description": "Commander of hellish legions",
+        "rewards": [
+          "give @s minecraft:netherite_ingot 3",
+          "give @s minecraft:ancient_debris 5",
+          "give @s minecraft:crying_obsidian 8",
+          "effect give @s minecraft:health_boost 3600 3",
+          "effect give @s minecraft:strength 3600 2",
+          "effect give @s minecraft:resistance 3600 2",
+          "effect give @s minecraft:fire_resistance 7200 0",
+          "title @s title {\"text\":\"Lord of the Inferno\",\"color\":\"red\"}",
+          "title @s subtitle {\"text\":\"Hell itself serves your will\",\"color\":\"dark_red\"}",
+          "playsound minecraft:entity.player.levelup master @s ~ ~ ~ 1.0 1.2",
+          "say The depths of hell crown a new Infernal Lord!"
+        ]
+      },
+      {
+        "id": "hellfire_emperor",
+        "reputation": 100,
+        "major": true,
+        "title": "Emperor of Hellfire",
+        "description": "Ultimate ruler of the burning cosmos",
+        "rewards": [
+          "give @s minecraft:netherite_block 4",
+          "give @s minecraft:beacon 2",
+          "give @s minecraft:dragon_head 1",
+          "effect give @s minecraft:health_boost 7200 5",
+          "effect give @s minecraft:strength 7200 4",
+          "effect give @s minecraft:resistance 7200 4",
+          "effect give @s minecraft:fire_resistance 14400 0",
+          "title @s title {\"text\":\"Emperor of Hellfire\",\"color\":\"red\",\"bold\":true}",
+          "title @s subtitle {\"text\":\"All burning realms bow before you\",\"color\":\"gold\"}",
+          "playsound minecraft:ui.toast.challenge_complete master @a ~ ~ ~ 2.0 0.6",
+          "say BEHOLD! The Emperor of Hellfire ascends! The cosmos burns at their command!"
+        ]
+      }
+    ]
+  },
+  "abandon": {
+    "reputation_penalty": 0.75,
+    "reset_reputation": false,
+    "message": "§cThe hellfire abandons your soul. §7Infernus's fury cools, but the path through burning trials remains open to the strong."
+  },
+  "prayer_types": ["conversation", "trial", "strength_blessing", "hellfire"]
+}

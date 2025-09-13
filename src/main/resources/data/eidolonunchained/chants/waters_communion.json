@@ -1,0 +1,44 @@
+{
+  "name": "eidolonunchained.chant.waters_communion.name",
+  "description": "eidolonunchained.chant.waters_communion.description",
+  "category": "elemental",
+  "codex_icon": "minecraft:water_bucket",
+  "difficulty": 2,
+  "mana_cost": 22,
+  "cooldown": 60,
+  "show_in_codex": true,
+  "linked_deity": "eidolonunchained:water_deity",
+  "prayer_effect_type": "conversation",
+  "requires_effigy": true,
+  "signs": [
+    "eidolon:winter",
+    "eidolon:soul",
+    "eidolon:sacred"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "effigy_sound",
+      "sound": "minecraft:ambient.underwater.loop",
+      "volume": 0.8,
+      "pitch": 1.2,
+      "category": "BLOCKS"
+    },
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:water_breathing",
+      "duration": 600,
+      "amplifier": 0
+    },
+    {
+      "type": "apply_effect", 
+      "effect": "minecraft:regeneration",
+      "duration": 300,
+      "amplifier": 0
+    },
+    {
+      "type": "send_message",
+      "message": "§bThe sacred waters flow as Aquaria draws near..."
+    }
+  ]
+}

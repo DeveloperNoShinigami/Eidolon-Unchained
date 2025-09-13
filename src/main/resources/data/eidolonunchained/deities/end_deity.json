@@ -1,0 +1,106 @@
+{
+  "id": "eidolonunchained:end_deity",
+  "name": "Voidheart, Sovereign of Void",
+  "description": "Ancient deity of endings and transcendence",
+  "colors": {
+    "red": 153,
+    "green": 102,
+    "blue": 204
+  },
+  "progression": {
+    "max_reputation": 100,
+    "stages": [
+      {
+        "id": "void_touched",
+        "reputation": 0,
+        "major": false,
+        "title": "Void Touched",
+        "description": "One who has glimpsed the endless void",
+        "rewards": [
+          "give @s minecraft:ender_pearl 3",
+          "effect give @s minecraft:slow_falling 300 0",
+          "title @s title {\"text\":\"The void acknowledges...\",\"color\":\"light_purple\"}",
+          "playsound minecraft:entity.enderman.ambient master @s ~ ~ ~ 0.3 0.6"
+        ]
+      },
+      {
+        "id": "void_walker",
+        "reputation": 25,
+        "major": false,
+        "title": "Void Walker",
+        "description": "Traveler between dimensions",
+        "rewards": [
+          "give @s minecraft:chorus_fruit 5",
+          "give @s minecraft:end_stone 8",
+          "effect give @s minecraft:levitation 120 0",
+          "effect give @s minecraft:resistance 600 0",
+          "title @s title {\"text\":\"Void Walker\",\"color\":\"light_purple\"}",
+          "playsound minecraft:entity.enderman.teleport master @s ~ ~ ~ 0.5 1.0"
+        ]
+      },
+      {
+        "id": "void_master",
+        "reputation": 50,
+        "major": true,
+        "title": "Master of the Void",
+        "description": "Commander of endless space",
+        "rewards": [
+          "give @s minecraft:shulker_shell 2",
+          "give @s minecraft:dragon_breath 3",
+          "give @s minecraft:elytra 1",
+          "effect give @s minecraft:absorption 1800 2",
+          "effect give @s minecraft:levitation 300 0",
+          "title @s title {\"text\":\"Master of the Void\",\"color\":\"light_purple\"}",
+          "title @s subtitle {\"text\":\"The endless void bends to your will\",\"color\":\"purple\"}",
+          "playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1.0 0.7",
+          "say A new Master of the Void emerges from the endless space!"
+        ]
+      },
+      {
+        "id": "void_sovereign",
+        "reputation": 75,
+        "major": true,
+        "title": "Sovereign of Endings",
+        "description": "Ruler of transcendent spaces",
+        "rewards": [
+          "give @s minecraft:end_crystal 2",
+          "give @s minecraft:dragon_egg 1",
+          "give @s minecraft:shulker_box 3",
+          "effect give @s minecraft:health_boost 3600 3",
+          "effect give @s minecraft:absorption 3600 3",
+          "effect give @s minecraft:levitation 600 1",
+          "title @s title {\"text\":\"Sovereign of Endings\",\"color\":\"light_purple\"}",
+          "title @s subtitle {\"text\":\"Reality yields to your transcendence\",\"color\":\"white\"}",
+          "playsound minecraft:entity.player.levelup master @s ~ ~ ~ 1.0 1.5",
+          "say The void itself crowns a new Sovereign of Endings!"
+        ]
+      },
+      {
+        "id": "void_transcendent",
+        "reputation": 100,
+        "major": true,
+        "title": "Transcendent of the Void",
+        "description": "Ultimate being beyond existence",
+        "rewards": [
+          "give @s minecraft:dragon_egg 2",
+          "give @s minecraft:beacon 3",
+          "give @s minecraft:netherite_block 5",
+          "effect give @s minecraft:health_boost 7200 5",
+          "effect give @s minecraft:strength 7200 3",
+          "effect give @s minecraft:resistance 7200 4",
+          "effect give @s minecraft:levitation 1200 1",
+          "title @s title {\"text\":\"Transcendent of the Void\",\"color\":\"light_purple\",\"bold\":true}",
+          "title @s subtitle {\"text\":\"You are beyond existence itself\",\"color\":\"white\"}",
+          "playsound minecraft:ui.toast.challenge_complete master @a ~ ~ ~ 2.0 0.5",
+          "say BEHOLD! A Transcendent of the Void ascends beyond reality! The universe trembles!"
+        ]
+      }
+    ]
+  },
+  "abandon": {
+    "reputation_penalty": 0.75,
+    "reset_reputation": false,
+    "message": "§dThe void's embrace loosens around your soul. §7Voidheart's whispers fade into silence, but the path to transcendence remains for those who dare."
+  },
+  "prayer_types": ["conversation", "transcendence", "void_blessing", "ending"]
+}

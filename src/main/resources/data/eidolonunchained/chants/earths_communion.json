@@ -1,0 +1,44 @@
+{
+  "name": "eidolonunchained.chant.earths_communion.name",
+  "description": "eidolonunchained.chant.earths_communion.description",
+  "category": "elemental",
+  "codex_icon": "minecraft:stone",
+  "difficulty": 2,
+  "mana_cost": 24,
+  "cooldown": 60,
+  "show_in_codex": true,
+  "linked_deity": "eidolonunchained:earth_deity",
+  "prayer_effect_type": "conversation",
+  "requires_effigy": true,
+  "signs": [
+    "eidolon:warding",
+    "eidolon:soul",
+    "eidolon:sacred"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "effigy_sound",
+      "sound": "minecraft:block.stone.step",
+      "volume": 1.2,
+      "pitch": 0.7,
+      "category": "BLOCKS"
+    },
+    {
+      "type": "apply_effect",
+      "effect": "minecraft:resistance",
+      "duration": 600,
+      "amplifier": 0
+    },
+    {
+      "type": "apply_effect", 
+      "effect": "minecraft:absorption",
+      "duration": 300,
+      "amplifier": 0
+    },
+    {
+      "type": "send_message",
+      "message": "§8The bedrock trembles as Terra draws near..."
+    }
+  ]
+}
