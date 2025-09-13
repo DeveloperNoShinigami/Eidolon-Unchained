@@ -89,9 +89,9 @@ public class DatapackChantSpell extends PrayerSpell {
             return false;
         }
         
-        // 🔥 NEW: Check effigy requirement (like Eidolon's PrayerSpell)
+        // 🔥 FIXED: Check effigy requirement using ChantCasterEntity position
         if (chantData.requiresEffigy()) {
-            elucent.eidolon.common.tile.EffigyTileEntity effigy = getEffigy(world, pos);
+            elucent.eidolon.common.tile.EffigyTileEntity effigy = getEffigyFromPlayer(world, player);
             if (effigy == null) {
                 player.sendSystemMessage(Component.literal("§c⚠ This chant requires an Effigy nearby (within 4 blocks)."));
                 player.sendSystemMessage(Component.literal("§7Build an Effigy to channel divine power for this ritual."));
@@ -194,9 +194,9 @@ public class DatapackChantSpell extends PrayerSpell {
         // Set cooldown after successful cast
         ChantCooldownManager.setCooldown(serverPlayer, chantData);
         
-        // 🔥 NEW: If chant requires effigy, trigger Eidolon's effigy mechanics
+        // 🔥 FIXED: If chant requires effigy, trigger Eidolon's effigy mechanics using correct position
         if (chantData.requiresEffigy()) {
-            EffigyTileEntity effigy = getEffigy(world, pos);
+            EffigyTileEntity effigy = getEffigyFromPlayer(world, player);
             if (effigy != null) {
                 // Trigger effigy cooldown (like Eidolon's PrayerSpell does)
                 effigy.pray();
@@ -211,12 +211,30 @@ public class DatapackChantSpell extends PrayerSpell {
     }
     
     /**
-     * Get nearby effigy (exact same logic as Eidolon's PrayerSpell)
+     * 🔥 CRITICAL FIX: Calculate ChantCasterEntity position for effigy detection
+     * This is the EXACT position calculation that Eidolon uses internally
+     */
+    protected static BlockPos getChantCasterPosition(Player player) {
+        double rad = Math.toRadians(player.yHeadRot);
+        net.minecraft.world.phys.Vec3 entityPos = player.getEyePosition().add(-Math.sin(rad) / 2, -0.75, Math.cos(rad) / 2);
+        return new BlockPos((int)entityPos.x, (int)entityPos.y, (int)entityPos.z);
+    }
+    
+    /**
+     * Get nearby effigy using ChantCasterEntity position (FIXED - matches Eidolon's real method)
      */
     protected static EffigyTileEntity getEffigy(Level world, BlockPos pos) {
         List<EffigyTileEntity> effigies = Ritual.getTilesWithinAABB(EffigyTileEntity.class, world, new AABB(pos.offset(-4, -4, -4), pos.offset(5, 5, 5)));
         if (effigies.isEmpty()) return null;
         return effigies.stream().min(Comparator.comparingDouble((e) -> e.getBlockPos().distSqr(pos))).get();
+    }
+    
+    /**
+     * Get nearby effigy using the correct ChantCasterEntity position (RECOMMENDED)
+     */
+    protected static EffigyTileEntity getEffigyFromPlayer(Level world, Player player) {
+        BlockPos chantCasterPos = getChantCasterPosition(player);
+        return getEffigy(world, chantCasterPos);
     }
 
     

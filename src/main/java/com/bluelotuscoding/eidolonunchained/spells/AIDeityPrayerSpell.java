@@ -8,6 +8,7 @@ import com.bluelotuscoding.eidolonunchained.chat.DeityChat;
 import elucent.eidolon.api.spells.Sign;
 import elucent.eidolon.common.spell.PrayerSpell;
 import elucent.eidolon.api.deity.Deity;
+import elucent.eidolon.common.tile.EffigyTileEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
@@ -82,8 +83,8 @@ public class AIDeityPrayerSpell extends PrayerSpell {
             return;
         }
         
-        // Verify effigy and altar setup (respects Eidolon's mechanics)
-        var effigy = getEffigy(world, pos);
+        // 🔥 FIXED: Verify effigy and altar setup using ChantCasterEntity position
+        var effigy = getEffigyFromPlayer(world, player);
         if (effigy == null) {
             player.sendSystemMessage(Component.translatable("eidolonunchained.spell.no_effigy"));
             return;
@@ -111,5 +112,23 @@ public class AIDeityPrayerSpell extends PrayerSpell {
     
     public ResourceLocation getAIDeityId() {
         return aiDeityId;
+    }
+    
+    /**
+     * 🔥 CRITICAL FIX: Calculate ChantCasterEntity position for effigy detection
+     * This is the EXACT position calculation that Eidolon uses internally
+     */
+    protected static BlockPos getChantCasterPosition(Player player) {
+        double rad = Math.toRadians(player.yHeadRot);
+        net.minecraft.world.phys.Vec3 entityPos = player.getEyePosition().add(-Math.sin(rad) / 2, -0.75, Math.cos(rad) / 2);
+        return new BlockPos((int)entityPos.x, (int)entityPos.y, (int)entityPos.z);
+    }
+    
+    /**
+     * Get nearby effigy using the correct ChantCasterEntity position (RECOMMENDED)
+     */
+    protected static EffigyTileEntity getEffigyFromPlayer(Level world, Player player) {
+        BlockPos chantCasterPos = getChantCasterPosition(player);
+        return getEffigy(world, chantCasterPos);
     }
 }

@@ -487,6 +487,24 @@ public class DatapackChant {
         private elucent.eidolon.common.tile.EffigyTileEntity findNearbyEffigy(net.minecraft.server.level.ServerPlayer player) {
             net.minecraft.core.BlockPos playerPos = player.blockPosition();
             
+            LOGGER.info("🔍 TESTING EFFIGY DETECTION - Player position: {}", playerPos);
+            
+            // Strategy 0: 🔥 NEW - Use ChantCasterEntity's exact position calculation!
+            double rad = Math.toRadians(player.yHeadRot);
+            net.minecraft.world.phys.Vec3 entityPos = player.getEyePosition().add(-Math.sin(rad) / 2, -0.75, Math.cos(rad) / 2);
+            net.minecraft.core.BlockPos chantCasterPos = new net.minecraft.core.BlockPos((int)entityPos.x, (int)entityPos.y, (int)entityPos.z);
+            
+            LOGGER.info("🔍 ChantCasterEntity equivalent position: {}", chantCasterPos);
+            
+            elucent.eidolon.common.tile.EffigyTileEntity chantCasterEffigy = 
+                com.bluelotuscoding.eidolonunchained.chant.DatapackChantSpell.getEffigy(player.serverLevel(), chantCasterPos);
+            if (chantCasterEffigy != null) {
+                LOGGER.info("🎆 SUCCESS! Found effigy using ChantCasterEntity position method at {}", chantCasterEffigy.getBlockPos());
+                return chantCasterEffigy;
+            } else {
+                LOGGER.warn("❌ ChantCasterEntity position method failed to find effigy");
+            }
+            
             // Strategy 1: Use DatapackChantSpell's exact method (9x9x9 from player position)
             elucent.eidolon.common.tile.EffigyTileEntity effigy = 
                 com.bluelotuscoding.eidolonunchained.chant.DatapackChantSpell.getEffigy(player.serverLevel(), playerPos);
