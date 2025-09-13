@@ -72,6 +72,15 @@ Defines deity‑scoped tasks; loaded by `AIDeityManager.loadTaskConfig` into `Ta
 
 - See the complete task spec: wiki/Datapacks/Task-JSON.md
 
+Progression & Titles
+
+- `{progression_title}` token: resolved at runtime from the deity’s tier system and localization keys (e.g., `eidolonunchained.patron.title.dark_deity.*`).
+- `progression_chains` (object, optional, top‑level): authoring space for named chains and their narrative; used by prompts/UX.
+- `progression_milestone` (string, optional): message template when tier changes occur.
+- `progression_context_format` (string, optional): summary format (e.g., `Dark Progression: {current_tier} | Shadow Paths: {unlocked_progressions}`).
+- `follower_personality_modifiers` map title → text used to flavor responses per tier.
+- Note: tier detection and congratulation flow is handled by the chat system; JSON here provides narrative strings and tokens for immersion.
+
 Notes on requirement parsing
 
 - Automatic completion works for ritual requirements because the engine looks for `"ritual:"` and the ritual id inside the requirement string.

@@ -108,3 +108,28 @@ Notes
 **Related Docs**
 - AI Deity JSON: wiki/Datapacks/AI-Deity-JSON.md
 - Commands: wiki/Systems/Tasks-Reputation.md
+
+**Assignment Strategy (task_assignment_behavior)**
+- Optional policy block under `task_config` for AI auto‑assignment heuristics (not strictly parsed yet; used by prompts/UX):
+- `auto_assign_probability` (0.0–1.0), `min_reputation_for_auto_assign` (int)
+- `conversation_triggers` (e.g., `first_conversation`, `reputation_milestone`, `completed_previous_task`, `shadow_prayer`, `dark_communion`)
+- `cooldown_between_assignments_hours` (int)
+
+**AI Assignment Context (per task)**
+- `ai_assignment_context` is stored as JSON string and used by AI when deciding to offer a task:
+- `trigger_conditions`: `min_reputation`, `max_reputation`, `required_time` (e.g., `["night"]`), `prayer_types`, `completed_tasks`, `unlocked_progressions`, `required_research`
+- `assignment_prompt`: deity’s offer text; `completion_phrases`: flavor lines after finishing
+
+**Additional Requirement Types (JSON style)**
+- Supported authoring patterns beyond items/rituals (stored as `type:` + JSON):
+- Mine blocks: `{ "type": "mine_blocks", "blocks": [{"block":"minecraft:obsidian","count":8}] }`
+- Collect items: `{ "type": "collect_items", "items": [{"item":"minecraft:coal","count":32}] }`
+- Use items: `{ "type": "use_items", "items": [{"item":"eidolon:soul_shard","count":5,"usage_type":"consume"}] }`
+- Kill entities: `{ "type": "kill_entities", "entities": [{"entity_type":"minecraft:zombie","count":10}] }`
+- Complete ritual (batch): `{ "type":"complete_ritual", "rituals":[{"ritual_id":"ns:id","count":1,"success_required":true}] }`
+- Note: Engine auto‑validation today covers token item/ritual; provide token mirrors or extend validator to parse JSON bodies.
+
+**Progression Hooks (in tasks)**
+- `progression_tier` (string): narrative tier label like `initiate`, `acolyte`, `priest`, …; parsed into `TaskTemplate.progressionTier`.
+- `rewards.progression_unlock` (string): progression key granted on completion (e.g., `shadow_harvester`); not persisted by engine yet, but referenced by prompts and `trigger_conditions.unlocked_progressions`.
+- `ai_assignment_context.trigger_conditions.unlocked_progressions` (array<string>): required progression keys before offering.
