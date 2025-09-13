@@ -18,7 +18,6 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.bluelotuscoding.eidolonunchained.util.CommandStringUtils;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
@@ -124,8 +123,8 @@ public class UnifiedCommands {
                     for (var t : cfg.task_config.availableTasks) {
                         if (t != null && t.taskId != null) {
                             suggestions.add(t.taskId);
-                            if (t.title != null && !t.title.isBlank()) {
-                                suggestions.add("# " + t.title + " = " + t.taskId);
+                            if (t.displayName != null && !t.displayName.isBlank()) {
+                                suggestions.add("# " + t.displayName + " = " + t.taskId);
                             }
                         }
                     }
