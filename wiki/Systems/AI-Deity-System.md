@@ -14,6 +14,10 @@ Code Highlights
 - `EffigyEffectsManager` — conversation‑linked effigy visuals and audio
 - `EidolonUnchainedConfig` — AI provider, models, retry, and display options
 
+Full JSON Reference
+
+- See wiki/Datapacks/AI-Deity-JSON.md for all fields, defaults, and examples.
+
 Deity Definitions
 
 - Managed by `DatapackDeityManager`
