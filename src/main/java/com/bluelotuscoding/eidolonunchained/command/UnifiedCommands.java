@@ -18,6 +18,7 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.bluelotuscoding.eidolonunchained.util.CommandStringUtils;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
@@ -63,7 +64,7 @@ public class UnifiedCommands {
         
         // Add deity IDs with quotes to handle colons properly
         for (Map.Entry<ResourceLocation, com.bluelotuscoding.eidolonunchained.deity.DatapackDeity> entry : 
-             DatapackDeityManager.getAllDeities().entrySet()) {
+            DatapackDeityManager.getAllDeities().entrySet()) {
             ResourceLocation id = entry.getKey();
             com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = entry.getValue();
             
