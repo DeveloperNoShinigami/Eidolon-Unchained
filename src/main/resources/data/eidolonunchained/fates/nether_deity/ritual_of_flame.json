@@ -3,19 +3,33 @@
   "task_id": "ritual_of_flame",
   "display_name": "Ritual of Flame",
   "description": "Complete a flame binding ritual in the Nether.",
-  "progression_tier": "priest",
+  "progression_tier": "none",
   "requirements": [
     { "type": "complete_ritual", "rituals": [{ "ritual_id": "eidolonunchained:nether_binding", "count": 1, "success_required": true }] },
     { "type": "dimension", "value": "minecraft:the_nether" }
   ],
   "rewards": {
-    "reputation": 18,
+    "reputation": 10,
     "commands": [
-      "effect give {player} minecraft:strength 600 1",
-      "give {player} minecraft:netherite_scrap 1"
-    ],
-    "progression_unlock": "flame_priest"
+      "effect give {player} minecraft:fire_resistance 600 0",
+      "give {player} minecraft:blaze_powder 8"
+    ]
   },
+  "progression_unlock": "hellfire_initiate",
   "cooldown_hours": 48,
-  "repeatable": false
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 0,
+      "required_dimension": "minecraft:the_nether",
+      "unlocked_progressions": [],
+      "auto_assign_probability": 0.5,
+      "min_reputation_for_auto_assign": 0
+    },
+    "assignment_prompt": "Seeker, bind the first flame and etch your vow into the nether's heart.",
+    "completion_phrases": [
+      "The blaze bends to your rite.",
+      "Cinders spiral in deference."
+    ]
+  }
 }

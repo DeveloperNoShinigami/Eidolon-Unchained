@@ -19,12 +19,8 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import org.slf4j.Logger;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
 
 /**
  * Handles location-based research triggers (dimension, biome, structure) loaded from JSON
@@ -34,8 +30,7 @@ import java.util.UUID;
 public class LocationResearchTriggers {
     private static final Logger LOGGER = LogUtils.getLogger();
     
-    // Track triggered research per player to prevent infinite loops
-    private static final Map<String, Set<String>> PLAYER_TRIGGERED_RESEARCH = new HashMap<>();
+    // Note: Research trigger tracking is now handled by PlayerContextTracker for persistence
 
     // Ensure biome listener is registered even if MOD setup event isn't delivered on this bus
     static {
@@ -102,36 +97,26 @@ public class LocationResearchTriggers {
             return; // No tools, no research discovery
         }
         
-        String playerKey = player.getUUID().toString();
-        
         for (Map.Entry<String, List<ResearchTrigger>> entry : allTriggers.entrySet()) {
             String researchId = entry.getKey();
-            
-            // Check if this research has already been triggered enough times for this player
-            String triggerKey = playerKey + ":" + researchId;
-            Set<String> triggeredResearch = PLAYER_TRIGGERED_RESEARCH.getOrDefault(playerKey, new HashSet<>());
-            
+
             for (ResearchTrigger trigger : entry.getValue()) {
                 if (shouldCheckTrigger(trigger, player)) {
-                    // Check max_found limit - fix the tracking key format
-                    String trackingPrefix = researchId + ":";
-                    long currentCount = triggeredResearch.stream()
-                        .filter(key -> key.contains(trackingPrefix))
-                        .count();
-                    
+                    // Check max_found limit using persistent tracking
+                    long currentCount = PlayerContextTracker.getTriggeredResearchCount(player, researchId);
+
                     if (currentCount < trigger.getMaxFound()) {
                         // Consume notetaking tool before giving research
                         if (consumeNotetakingTool(player)) {
                             giveResearchNote(player, researchId);
-                            
-                            // Track this trigger - store just researchId:timestamp for proper filtering
-                            triggeredResearch.add(researchId + ":" + System.currentTimeMillis());
-                            PLAYER_TRIGGERED_RESEARCH.put(playerKey, triggeredResearch);
-                            
-                            LOGGER.debug("Player {} triggered location research '{}' ({}/{} times)", 
+
+                            // Track this trigger using persistent system
+                            PlayerContextTracker.trackTriggeredResearch(player, researchId);
+
+                            LOGGER.debug("Player {} triggered location research '{}' ({}/{} times)",
                                 player.getName().getString(), researchId, currentCount + 1, trigger.getMaxFound());
                         } else {
-                            LOGGER.warn("Failed to consume notetaking tool for player {}, research discovery cancelled", 
+                            LOGGER.warn("Failed to consume notetaking tool for player {}, research discovery cancelled",
                                 player.getName().getString());
                         }
                     }
@@ -291,37 +276,30 @@ public class LocationResearchTriggers {
         }
         
         LOGGER.debug("Player {} checking biome triggers for: {}", player.getName().getString(), currentBiome);
-        
-        String playerKey = player.getUUID().toString();
-        
+
         for (Map.Entry<String, List<ResearchTrigger>> entry : allTriggers.entrySet()) {
             String researchId = entry.getKey();
-            Set<String> triggeredResearch = PLAYER_TRIGGERED_RESEARCH.getOrDefault(playerKey, new HashSet<>());
-            
+
             for (ResearchTrigger trigger : entry.getValue()) {
                 // Check if this is a biome trigger that matches the current biome
-                if (trigger.getBiome() != null && 
+                if (trigger.getBiome() != null &&
                     trigger.getBiome().toString().equals(currentBiome)) {
-                    
-                    // Check max_found limit
-                    String trackingPrefix = researchId + ":";
-                    long currentCount = triggeredResearch.stream()
-                        .filter(key -> key.contains(trackingPrefix))
-                        .count();
-                    
+
+                    // Check max_found limit using persistent tracking
+                    long currentCount = PlayerContextTracker.getTriggeredResearchCount(player, researchId);
+
                     if (currentCount < trigger.getMaxFound()) {
                         // Consume notetaking tool before giving research
                         if (consumeNotetakingTool(player)) {
                             giveResearchNote(player, researchId);
-                            
-                            // Track this trigger
-                            triggeredResearch.add(researchId + ":" + System.currentTimeMillis());
-                            PLAYER_TRIGGERED_RESEARCH.put(playerKey, triggeredResearch);
-                            
-                            LOGGER.debug("Player {} triggered biome research '{}' in {} ({}/{} times)", 
+
+                            // Track this trigger using persistent system
+                            PlayerContextTracker.trackTriggeredResearch(player, researchId);
+
+                            LOGGER.debug("Player {} triggered biome research '{}' in {} ({}/{} times)",
                                 player.getName().getString(), researchId, currentBiome, currentCount + 1, trigger.getMaxFound());
                         } else {
-                            LOGGER.warn("Failed to consume notetaking tool for player {}, biome research discovery cancelled", 
+                            LOGGER.warn("Failed to consume notetaking tool for player {}, biome research discovery cancelled",
                                 player.getName().getString());
                         }
                     }

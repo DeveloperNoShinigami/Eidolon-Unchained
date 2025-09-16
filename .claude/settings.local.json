@@ -5,7 +5,22 @@
       "Bash(./gradlew:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(for:*)",
+      "Bash(do echo \"=== $deity ===\")",
+      "Bash(ls:*)",
+      "Bash(done)",
+      "Bash(sed:*)",
+      "Bash(grep:*)",
+      "Bash(python:*)",
+      "WebFetch(domain:player2.game)",
+      "WebSearch",
+      "WebFetch(domain:blog.player2.game)",
+      "Read(//c/Users/bluel/Downloads/**)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:modrepo.de)",
+      "WebFetch(domain:maven.maxhenkel.de)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

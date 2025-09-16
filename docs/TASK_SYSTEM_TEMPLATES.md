@@ -1,10 +1,30 @@
-# Task System Templates
+# Fate System Templates
 
-This document defines the templated, flexible task system that can be applied to any deity in Eidolon Unchained.
+This document defines the templated, flexible fate (task) system that can be applied to any deity in Eidolon Unchained.
+
+Note on naming and status
+- Player-facing term is Fate. Internal code still uses some Task class/field names for compatibility (e.g., task_config, TaskTemplate), but commands, UI text, and docs refer to Fates.
+- The deity-level field task_config.task_assignment_behavior.*is applied at runtime as an offer/accept flow*. Fates are never forced on the player. When conditions are met (probability, reputation, cooldown), the deity will OFFER a fate during conversation; the fate is only ASSIGNED if the player explicitly accepts.
+- See also: docs/NATURAL_LANGUAGE_TRIGGERS.md for pre-AI message triggers (offer_fate, run_commands, send_message).
+
+## Runtime Offer/Accept Behavior
+
+- Consent-based flow: deities offer a fate; players must accept with a short affirmative to receive it. No silent or forced assignments.
+- Acceptance keywords: "yes", "sure", "accept", "okay", "ok", "yep", "y". Decline keywords: "no", "nope", "decline", "not now", "later", "n".
+- Explicit ask: if a player asks for a "task/quest/fate/job/mission", the deity attempts to offer one immediately (still requires acceptance). This bypasses probability checks but still honors gating and cooldowns.
+- Probability and reputation: offers respect `auto_assign_probability` (0.0–1.0) and minimum reputation guard `min_reputation_for_auto_assign` from `task_assignment_behavior`.
+- Cooldown: per-deity cooldown between offers is enforced via `cooldown_between_assignments_hours`.
+- Gating: only eligible fates are offered. Eligibility checks include:
+  - `progression_tier` stage ID (with special value `none` to bypass tier requirements)
+  - `ai_assignment_context` rules (e.g., `min_reputation`, `required_dimension`, `required_items`)
+  - Avoid duplicates (no offering already-active fates)
+  - Respect `max_active_tasks` from `task_config`
+
+Implementation note: Offer state and per-deity cooldowns are persisted in the player context to prevent spam and survive reconnects.
 
 ## Core Template Structure
 
-### Task Configuration Template
+### Deity Fate Configuration Template (task_config)
 ```json
 {
   "task_config": {
@@ -52,9 +72,9 @@ This document defines the templated, flexible task system that can be applied to
 }
 ```
 
-## Task Template Categories
+## Fate Template Categories
 
-### 1. Collection Tasks
+### 1. Collection Fates
 **Template**: Gather resources that align with deity's domain
 ```json
 {
@@ -79,7 +99,7 @@ This document defines the templated, flexible task system that can be applied to
 }
 ```
 
-### 2. Combat/Interaction Tasks
+### 2. Combat/Interaction Fates
 **Template**: Defeat or interact with entities
 ```json
 {
@@ -104,7 +124,7 @@ This document defines the templated, flexible task system that can be applied to
 }
 ```
 
-### 3. Ritual Tasks
+### 3. Ritual Fates
 **Template**: Perform deity-specific rituals
 ```json
 {
@@ -129,7 +149,7 @@ This document defines the templated, flexible task system that can be applied to
 }
 ```
 
-### 4. Crafting Tasks
+### 4. Crafting Fates
 **Template**: Create items using deity-specific methods
 ```json
 {
@@ -154,7 +174,7 @@ This document defines the templated, flexible task system that can be applied to
 }
 ```
 
-### 5. Exploration Tasks
+### 5. Exploration Fates
 **Template**: Visit locations that align with deity's nature
 ```json
 {
@@ -251,7 +271,7 @@ This document defines the templated, flexible task system that can be applied to
 ## Template Validation Rules
 
 1. All `{variable}` placeholders must be defined in deity configuration
-2. Task IDs must follow pattern: `{deity_theme}_{task_category}_{specific_name}`
+2. Fate IDs (task_id) must follow pattern: `{deity_theme}_{task_category}_{specific_name}`
 3. Progression chains must be logically ordered
 4. AI integration prompts must include all required context variables
 5. Requirements must be achievable within the deity's thematic constraints

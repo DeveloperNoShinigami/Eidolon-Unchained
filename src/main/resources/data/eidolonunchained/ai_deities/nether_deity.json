@@ -17,6 +17,10 @@
         "minecraft:nether_wastes": "In these burning wastes, your hellish power reigns supreme.",
         "minecraft:crimson_forest": "The crimson flames here dance in harmony with your will.",
         "minecraft:basalt_deltas": "These volcanic peaks echo with your molten authority."
+      },
+      "environment": {
+        "underground": "In the Nether's choking caverns, your trials burn hottest.",
+        "high_altitude": "Perched above lava seas, the air shimmers with your infernal heat."
       }
     }
   },
@@ -72,23 +76,132 @@
   "api_settings": {
     "temperature": 0.8,
     "max_tokens": 400,
-    "timeout_seconds": 30
+    "timeout_seconds": 30,
+    "generation_config": {
+      "temperature": 0.8,
+      "topK": 40,
+      "topP": 0.9,
+      "maxOutputTokens": 400
+    },
+    "safety_settings": {
+      "harassment": "BLOCK_MEDIUM_AND_ABOVE",
+      "hate_speech": "BLOCK_MEDIUM_AND_ABOVE",
+      "sexually_explicit": "BLOCK_MEDIUM_AND_ABOVE",
+      "dangerous_content": "BLOCK_MEDIUM_AND_ABOVE"
+    }
   },
   
   "patron_config": {
     "requires_patron_status": "any",
     "allied_deities": [],
     "neutral_deities": ["eidolonunchained:fire_deity"],
-    "deity_opinions": {
+  "deity_opinions": {
       "eidolonunchained:fire_deity": "Ignis understands the power of flame, though they lack the trial-by-fire wisdom that true strength demands."
+    },
+    "cross_deity_interactions": {
+      "player_serves_ally": "You endure the flames well—prove you can wield them.",
+      "player_serves_enemy": "If you fear fire, you fear strength. Step in, or step aside.",
+      "player_serves_neutral": "Neutral souls are untempered metal—face the heat to be forged.",
+      "mentions_allied_deity": "Kindred embers roar when stoked by true will.",
+      "mentions_enemy_deity": "Water hisses and flees; only stone stands to be improved."
+    },
+    "conversation_rules": {
+      "follower_restrictions": {
+        "can_speak_to_enemies": true,
+        "reputation_bonus_for_followers": 1
+      },
+      "enemy_restrictions": {
+        "reputation_penalty_on_contact": 0,
+        "hostile_response_probability": 0.1
+      }
     },
     "follower_personality_modifiers": {
       "Hellfire Initiate": "A new soul learning hellfire's trials, deserving harsh but fair testing.",
       "Hellfire Warrior": "A dedicated warrior growing strong through infernal trials.",
       "Champion of Hellfire": "A proven champion who understands hellfire's demands.",
-      "Lord of the Inferno": "A lord of burning wisdom, blessed with infernal authority.", 
+      "Lord of the Inferno": "A lord of burning wisdom, blessed with infernal authority.",
       "Emperor of Hellfire": "Your chosen emperor, ultimate master of all hellish trials.",
       "default": "A faithful warrior walking the burning paths of hellfire wisdom."
+    },
+
+    "assignsPlayersToTeam": true,
+    "teamName": "Infernal Legion",
+    "teamColor": "dark_red",
+
+    "supportedMobIds": [
+      "minecraft:zombified_piglin",
+      "minecraft:piglin",
+      "minecraft:piglin_brute",
+      "minecraft:hoglin",
+      "minecraft:zoglin",
+      "minecraft:blaze",
+      "minecraft:ghast",
+      "minecraft:magma_cube",
+      "minecraft:strider",
+      "minecraft:wither_skeleton",
+      "minecraft:wither"
+    ],
+    "friendlyFire": true
+  }
+  ,
+  "natural_language_triggers": [
+    {
+      "id": "nether_heat",
+      "contains": ["nether is harsh", "too hot"],
+      "min_reputation": 5,
+      "cooldown_seconds": 240,
+      "action": "run_commands",
+      "params": { "prayer_type": "blessing", "commands": [
+        "effect give {player} minecraft:fire_resistance 600 0"
+      ]}
+    },
+    {
+      "id": "piglin_trade",
+      "contains": ["barter", "trade with piglins"],
+      "min_reputation": 10,
+      "cooldown_seconds": 300,
+      "action": "run_commands",
+      "params": { "commands": [
+        "give {player} minecraft:gold_ingot 8"
+      ]}
+    },
+    {
+      "id": "ask_task",
+      "contains": ["task", "quest", "fate"],
+      "cooldown_seconds": 60,
+      "action": "offer_fate"
     }
+  ],
+
+  "tts_config": {
+    "voice_id": "caleb",
+    "backup_voice": "nicholas",
+    "pitch": 0.9,
+    "speed": 1.0,
+    "volume": 1.3,
+    "emotion": "fierce",
+    "accent": "infernal",
+    "emphasis_level": 2,
+    "enabled": false,
+    "allow_player_override": true,
+    "funding_preference": "player_first",
+    "voice_aliases": {
+      "nether_lord": "male-demonic-1",
+      "flame_voice": "male-intense-1",
+      "lava_rumble": "male-deep-1"
+    },
+    "reputation_voices": {
+      "0": "male-intense-1",
+      "25": "male-demonic-1",
+      "75": "male-demonic-divine-1"
+    },
+    "biome_voices": {
+      "minecraft:nether_wastes": "male-demonic-1",
+      "minecraft:soul_sand_valley": "male-haunting-1",
+      "minecraft:crimson_forest": "male-intense-1"
+    },
+    "audio_format": "wav",
+    "voice_language": "en_US",
+    "voice_gender": "male"
   }
 }

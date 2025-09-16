@@ -1,0 +1,39 @@
+{
+  "linked_deity": "eidolonunchained:water_deity",
+  "task_id": "water_tidal_master",
+  "display_name": "Tidal Master",
+  "description": "Master the ancient arts of water magic and oceanic power",
+  "progression_tier": "tide_master",
+  "requirements": [
+    "kill_entities:minecraft:elder_guardian:1",
+    "use_items:minecraft:conduit:5",
+    "location:minecraft:deep_ocean"
+  ],
+  "rewards": {
+    "reputation": 15,
+    "commands": [
+      "give {player} minecraft:enchanted_book 1",
+      "give {player} minecraft:prismarine_crystals 8",
+      "effect give {player} minecraft:water_breathing 1800 0",
+      "tellraw {player} {\"text\":\"🌊 The ancient tides bow to your mastery - water magic flows through you\",\"color\":\"blue\"}"
+    ],
+    "progression_unlock": "tide_master"
+  },
+  "unlocked_progressions": ["wave_walker"],
+  "cooldown_hours": 48,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 35,
+      "required_dimension": "minecraft:overworld",
+      "unlocked_progressions": ["wave_walker"],
+      "auto_assign_probability": 0.2,
+      "min_reputation_for_auto_assign": 50
+    },
+    "assignment_prompt": "Command the great currents and prove your mastery over the living ocean.",
+    "completion_phrases": [
+      "Tides answer at a gesture.",
+      "Ancient waters speak your name."
+    ]
+  }
+}

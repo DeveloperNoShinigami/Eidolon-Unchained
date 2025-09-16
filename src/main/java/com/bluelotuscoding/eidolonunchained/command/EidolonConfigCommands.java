@@ -1,64 +1,20 @@
 package com.bluelotuscoding.eidolonunchained.command;
 
-import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
 import com.bluelotuscoding.eidolonunchained.validation.AIConfigValidator;
-import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Commands for configuring AI deity system
  */
-@Mod.EventBusSubscriber(modid = EidolonUnchained.MODID)
 public class EidolonConfigCommands {
 
-    @SubscribeEvent
-    public static void onRegisterCommands(RegisterCommandsEvent event) {
-        CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
-        
-        dispatcher.register(Commands.literal("eidolon-config")
-            .requires(source -> source.hasPermission(4)) // OP level 4 required
-            .then(Commands.literal("quick-setup")
-                .then(Commands.argument("provider", StringArgumentType.string())
-                    .then(Commands.argument("api-key", StringArgumentType.string())
-                        .executes(EidolonConfigCommands::quickSetup))))
-            .then(Commands.literal("set")
-                .then(Commands.argument("key", StringArgumentType.string())
-                    .then(Commands.argument("value", StringArgumentType.string())
-                        .executes(EidolonConfigCommands::setConfig))))
-            .then(Commands.literal("get")
-                .then(Commands.argument("key", StringArgumentType.string())
-                    .executes(EidolonConfigCommands::getConfig)))
-            .then(Commands.literal("list")
-                .executes(EidolonConfigCommands::listConfig))
-            .then(Commands.literal("test")
-                .then(Commands.argument("provider", StringArgumentType.string())
-                    .executes(EidolonConfigCommands::testProvider)))
-            .then(Commands.literal("remove")
-                .then(Commands.argument("key", StringArgumentType.string())
-                    .executes(EidolonConfigCommands::removeConfig)))
-            .then(Commands.literal("reload")
-                .executes(EidolonConfigCommands::reloadConfig))
-            .then(Commands.literal("validate")
-                .executes(EidolonConfigCommands::validateSystem))
-            .then(Commands.literal("status")
-                .executes(EidolonConfigCommands::showStatus))
-            .then(Commands.literal("status")
-                .executes(EidolonConfigCommands::showStatus))
-            .then(Commands.literal("validate-all")
-                .executes(EidolonConfigCommands::validateAll))
-        );
-    }
 
     private static int quickSetup(CommandContext<CommandSourceStack> context) {
         String provider = StringArgumentType.getString(context, "provider");

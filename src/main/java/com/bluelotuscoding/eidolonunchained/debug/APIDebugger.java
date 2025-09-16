@@ -5,16 +5,13 @@ import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiAPIClient;
 import com.bluelotuscoding.eidolonunchained.ai.GenerationConfig;
 import com.bluelotuscoding.eidolonunchained.ai.SafetySettings;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import net.minecraft.network.chat.Component;
+// import com.google.gson.Gson;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.List;
-import java.util.ArrayList;
+// removed unused imports after switching to centralized Gson
 
 /**
  * Enhanced API testing and debugging utility for Eidolon Unchained
@@ -23,7 +20,7 @@ import java.util.ArrayList;
 public class APIDebugger {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(APIDebugger.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    // Use centralized Gson on demand from JsonUtils when needed
     
     public enum TestType {
         CONNECTION,     // Test basic API connectivity

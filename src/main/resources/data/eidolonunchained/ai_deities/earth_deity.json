@@ -17,6 +17,10 @@
         "minecraft:mountains": "These towering peaks reflect your eternal strength and patience.",
         "minecraft:cave": "In these depths, your stone wisdom echoes through every chamber.",
         "minecraft:plains": "This fertile ground speaks of your nurturing power."
+      },
+      "environment": {
+        "underground": "Beneath layers of stone, your patience and power feel closest to mortal hearts.",
+        "high_altitude": "Even atop the highest cliffs, bedrock truths anchor all who stand firm."
       }
     }
   },
@@ -72,24 +76,126 @@
   "api_settings": {
     "temperature": 0.6,
     "max_tokens": 400,
-    "timeout_seconds": 30
+    "timeout_seconds": 30,
+    "generation_config": {
+      "temperature": 0.6,
+      "topK": 40,
+      "topP": 0.9,
+      "maxOutputTokens": 400
+    },
+    "safety_settings": {
+      "harassment": "BLOCK_MEDIUM_AND_ABOVE",
+      "hate_speech": "BLOCK_MEDIUM_AND_ABOVE",
+      "sexually_explicit": "BLOCK_MEDIUM_AND_ABOVE",
+      "dangerous_content": "BLOCK_MEDIUM_AND_ABOVE"
+    }
   },
   
   "patron_config": {
     "requires_patron_status": "any",
     "allied_deities": ["eidolonunchained:fire_deity"],
     "neutral_deities": ["eidolonunchained:water_deity"],
-    "deity_opinions": {
+  "deity_opinions": {
       "eidolonunchained:fire_deity": "Ignis provides the forge-heat that shapes my raw stone into perfection. Together we create lasting foundations.",
       "eidolonunchained:water_deity": "Aquaria's patient erosion shapes my mountains, teaching that even stone must yield to time's flow."
+    },
+    "cross_deity_interactions": {
+      "player_serves_ally": "Allies who build with purpose are welcome on solid ground.",
+      "player_serves_enemy": "Those who tear down without plan will learn patience.",
+      "player_serves_neutral": "Choose your foundation, then build—stone remembers.",
+      "mentions_allied_deity": "Forge heat and bedrock strength craft lasting works.",
+      "mentions_enemy_deity": "Erosion humbles all arrogance in time."
+    },
+    "conversation_rules": {
+      "follower_restrictions": {
+        "can_speak_to_enemies": true,
+        "reputation_bonus_for_followers": 1
+      },
+      "enemy_restrictions": {
+        "reputation_penalty_on_contact": 0,
+        "hostile_response_probability": 0.05
+      }
     },
     "follower_personality_modifiers": {
       "Stone Touched": "A new soul learning earth's patience, deserving steady guidance.",
       "Mountain Walker": "A dedicated seeker growing wise in stone's ways.",
       "Guardian of Stone": "A trusted protector who understands earth's enduring mysteries.",
-      "Lord of Mountains": "A master of stone wisdom, blessed with deep earth authority.", 
+      "Lord of Mountains": "A master of stone wisdom, blessed with deep earth authority.",
       "Sovereign of All Earth": "Your chosen sovereign of earth, ultimate master of all stone and soil.",
       "default": "A faithful seeker walking the patient paths of earth wisdom."
+    },
+
+    "assignsPlayersToTeam": true,
+    "teamName": "Stone Guardians",
+    "teamColor": "gray",
+
+    "supportedMobIds": [
+      "minecraft:iron_golem",
+      "minecraft:turtle",
+      "minecraft:armadillo",
+      "minecraft:camel"
+    ],
+    "friendlyFire": false
+  }
+  ,
+  "natural_language_triggers": [
+    {
+      "id": "mining_blessing",
+      "contains": ["deep cave", "mining trip"],
+      "min_reputation": 10,
+      "cooldown_seconds": 240,
+      "action": "run_commands",
+      "params": { "prayer_type": "blessing", "commands": [
+        "effect give {player} minecraft:haste 600 1"
+      ]}
+    },
+    {
+      "id": "make_camp",
+      "contains": ["set up camp", "shelter"],
+      "min_reputation": 0,
+      "cooldown_seconds": 300,
+      "action": "run_commands",
+      "params": { "commands": [
+        "give {player} minecraft:torch 32"
+      ]}
+    },
+    {
+      "id": "ask_task",
+      "contains": ["task", "quest", "fate"],
+      "cooldown_seconds": 60,
+      "action": "offer_fate"
     }
+  ],
+
+  "tts_config": {
+        "voice_id": "earth_guardian",
+    "backup_voice": "mason",
+    "pitch": 0.8,
+    "speed": 0.85,
+    "volume": 1.2,
+    "emotion": "steady",
+    "accent": "earthen",
+    "emphasis_level": 2,
+    "enabled": false,
+    "allow_player_override": true,
+    "funding_preference": "player_first",
+    "voice_aliases": {
+      "stone_lord": "male-deep-earth-1",
+      "mountain_voice": "male-rumbling-1",
+      "cave_echo": "male-deep-1"
+    },
+    "reputation_voices": {
+      "0": "male-rumbling-1",
+      "25": "male-deep-earth-1",
+      "75": "male-earth-divine-1"
+    },
+    "biome_voices": {
+      "minecraft:mountains": "male-deep-earth-1",
+      "minecraft:caves": "male-echo-1",
+      "minecraft:stone_shore": "male-rumbling-1"
+    },
+    "audio_format": "wav",
+    "voice_language": "en_US",
+    "voice_gender": "male"
   }
 }

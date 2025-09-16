@@ -8,24 +8,24 @@ import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
 import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
 import com.bluelotuscoding.eidolonunchained.chat.ConversationHistoryManager;
 import com.bluelotuscoding.eidolonunchained.chat.ConversationMessage;
-import com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler;
+// import com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
 import com.bluelotuscoding.eidolonunchained.events.RitualCompleteEvent;
 import com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient;
-import elucent.eidolon.capability.IReputation;
+import com.bluelotuscoding.eidolonunchained.command.TTSCommands;
+// import elucent.eidolon.capability.IReputation;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.bluelotuscoding.eidolonunchained.util.CommandStringUtils;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+// import com.mojang.brigadier.suggestion.Suggestions; // not directly used
+// import com.mojang.brigadier.suggestion.SuggestionsBuilder; // not directly used
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -34,8 +34,8 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
+// import java.util.UUID;
+// import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -43,7 +43,6 @@ import org.slf4j.LoggerFactory;
 
 // Eidolon integration imports
 import elucent.eidolon.util.KnowledgeUtil;
-import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.common.MinecraftForge;
 
 /**
@@ -57,49 +56,26 @@ public class UnifiedCommands {
     // 🎯 SUGGESTION PROVIDERS FOR TAB COMPLETION
     
     /**
-     * Suggests available deity IDs with proper quoting and names
+     * Suggest available deity IDs (namespace:path) without extra comment lines or quoting
      */
     private static final SuggestionProvider<CommandSourceStack> DEITY_SUGGESTIONS = (context, builder) -> {
         List<String> suggestions = new ArrayList<>();
-        
-        // Add deity IDs with quotes to handle colons properly
-        for (Map.Entry<ResourceLocation, com.bluelotuscoding.eidolonunchained.deity.DatapackDeity> entry : 
+        for (Map.Entry<ResourceLocation, com.bluelotuscoding.eidolonunchained.deity.DatapackDeity> entry :
             DatapackDeityManager.getAllDeities().entrySet()) {
             ResourceLocation id = entry.getKey();
-            com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = entry.getValue();
-            
-            // Add quoted ID for exact matching (primary suggestion)
-            suggestions.add("\"" + id.toString() + "\"");
-            
-            // Add deity name as a helpful comment
-            if (deity != null && deity.getName() != null) {
-                suggestions.add("# " + deity.getName() + " = \"" + id.toString() + "\"");
-            }
+            suggestions.add(id.toString());
         }
-        
         return SharedSuggestionProvider.suggest(suggestions, builder);
     };
     
     /**
-     * Suggests online player names with additional context
+     * Suggest online player names only (no comment entries)
      */
     private static final SuggestionProvider<CommandSourceStack> PLAYER_SUGGESTIONS = (context, builder) -> {
         List<String> suggestions = new ArrayList<>();
-        
-        // Add currently online players
         for (ServerPlayer player : context.getSource().getServer().getPlayerList().getPlayers()) {
-            String playerName = player.getName().getString();
-            suggestions.add(playerName);
-            
-            // Add helpful context for the player
-            suggestions.add("# " + playerName + " (online)");
+            suggestions.add(player.getName().getString());
         }
-        
-        // Add a note about offline players
-        if (suggestions.isEmpty()) {
-            suggestions.add("# No players online - type player name manually");
-        }
-        
         return SharedSuggestionProvider.suggest(suggestions, builder);
     };
     
@@ -114,29 +90,28 @@ public class UnifiedCommands {
     };
 
     /**
-     * Suggests available task IDs aggregated from all deity configs
+     * Suggest available fate/task IDs aggregated from all deity configs (no comments)
      */
     private static final SuggestionProvider<CommandSourceStack> TASK_ID_SUGGESTIONS = (context, builder) -> {
-        List<String> suggestions = new ArrayList<>();
+        // Use a set to deduplicate; filter out blank and comment-prefixed entries
+        java.util.Set<String> unique = new java.util.LinkedHashSet<>();
         try {
             for (AIDeityConfig cfg : AIDeityManager.getInstance().getAllConfigs()) {
                 if (cfg != null && cfg.task_config != null && cfg.task_config.availableTasks != null) {
                     for (var t : cfg.task_config.availableTasks) {
                         if (t != null && t.taskId != null) {
-                            suggestions.add(t.taskId);
-                            if (t.displayName != null && !t.displayName.isBlank()) {
-                                suggestions.add("# " + t.displayName + " = " + t.taskId);
-                            }
+                            String id = t.taskId.trim();
+                            if (!id.isEmpty() && !id.startsWith("#")) unique.add(id);
                         }
                     }
                 }
             }
         } catch (Exception ignored) {}
-        return SharedSuggestionProvider.suggest(suggestions, builder);
+        return SharedSuggestionProvider.suggest(new ArrayList<>(unique), builder);
     };
     
     /**
-     * Suggests available ritual IDs with proper quoting
+     * Suggest available ritual IDs without quoting or comment lines
      */
     private static final SuggestionProvider<CommandSourceStack> RITUAL_SUGGESTIONS = (context, builder) -> {
         var server = context.getSource().getServer();
@@ -149,11 +124,8 @@ public class UnifiedCommands {
             recipeManager.getAllRecipesFor(elucent.eidolon.registries.EidolonRecipes.RITUAL_TYPE.get()).stream()
         ).map(recipe -> recipe.getId().toString()).collect(Collectors.toList());
         
-        // Add quoted ritual IDs to handle colons properly
-        for (String ritualId : ritualIds) {
-            suggestions.add("\"" + ritualId + "\"");
-            suggestions.add("# " + ritualId);
-        }
+    // Add ritual IDs as raw namespace:path values
+    suggestions.addAll(ritualIds);
         
         return SharedSuggestionProvider.suggest(suggestions, builder);
     };
@@ -164,11 +136,8 @@ public class UnifiedCommands {
     private static final SuggestionProvider<CommandSourceStack> CHANT_SUGGESTIONS = (context, builder) -> {
         // Get chants from DatapackChantManager if available
         try {
-            var chantIds = com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager.getAllChants()
-                .keySet().stream().collect(Collectors.toList());
-            if (!chantIds.isEmpty()) {
-                return SharedSuggestionProvider.suggest(chantIds, builder);
-            }
+            var chantIds = new ArrayList<>(com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager.getAllChants().keySet());
+            if (!chantIds.isEmpty()) return SharedSuggestionProvider.suggest(chantIds, builder);
         } catch (Exception e) {
             // Fallback to examples if manager is not available
         }
@@ -246,18 +215,18 @@ public class UnifiedCommands {
                         .executes(UnifiedCommands::testPlayer2AIChat)))
                 .then(Commands.literal("memory")
                     .then(Commands.literal("clear")
-                        .then(Commands.argument("deity", StringArgumentType.string())
+                        .then(Commands.argument("deity", ResourceLocationArgument.id())
                             .suggests(DEITY_SUGGESTIONS)
                             .executes(UnifiedCommands::clearPlayer2AIMemory)))
                     .then(Commands.literal("show")
-                        .then(Commands.argument("deity", StringArgumentType.string())
+                        .then(Commands.argument("deity", ResourceLocationArgument.id())
                             .suggests(DEITY_SUGGESTIONS)
                             .executes(UnifiedCommands::showPlayer2AIMemory))))
                 .then(Commands.literal("characters")
                     .then(Commands.literal("list")
                         .executes(UnifiedCommands::listPlayer2AICharacters))
                     .then(Commands.literal("update-personality")
-                        .then(Commands.argument("deity", StringArgumentType.string())
+                        .then(Commands.argument("deity", ResourceLocationArgument.id())
                             .suggests(DEITY_SUGGESTIONS)
                             .executes(UnifiedCommands::updatePlayer2AIPersonality)))))
             
@@ -268,7 +237,7 @@ public class UnifiedCommands {
                 .then(Commands.literal("reload")
                     .executes(UnifiedCommands::reloadDeities))
                 .then(Commands.literal("status")
-                    .then(Commands.argument("deity", StringArgumentType.string())
+                    .then(Commands.argument("deity", ResourceLocationArgument.id())
                         .suggests(DEITY_SUGGESTIONS)
                         .executes(UnifiedCommands::showDeityStatus))))
             
@@ -317,60 +286,60 @@ public class UnifiedCommands {
             .then(Commands.literal("tasks")
                 .then(Commands.literal("assign")
                     .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("deity", StringArgumentType.string()).suggests(DEITY_SUGGESTIONS)
-                            .then(Commands.argument("taskId", StringArgumentType.string()).suggests(TASK_ID_SUGGESTIONS)
+                        .then(Commands.argument("deity", ResourceLocationArgument.id()).suggests(DEITY_SUGGESTIONS)
+                            .then(Commands.argument("taskId", StringArgumentType.greedyString()).suggests(TASK_ID_SUGGESTIONS)
                                 .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::assignTask)))))
                 .then(Commands.literal("assignany")
                     .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("taskId", StringArgumentType.string()).suggests(TASK_ID_SUGGESTIONS)
+                        .then(Commands.argument("taskId", StringArgumentType.greedyString()).suggests(TASK_ID_SUGGESTIONS)
                             .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::assignAnyTask))))
                 .then(Commands.literal("complete")
                     .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("taskId", StringArgumentType.string()).suggests(TASK_ID_SUGGESTIONS)
+                        .then(Commands.argument("taskId", StringArgumentType.greedyString()).suggests(TASK_ID_SUGGESTIONS)
                             .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::completeTask))))
                 .then(Commands.literal("list")
                     .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
                         .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::listTasks)))
                 .then(Commands.literal("reputation")
                     .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("deity", StringArgumentType.string()).suggests(DEITY_SUGGESTIONS)
+                        .then(Commands.argument("deity", ResourceLocationArgument.id()).suggests(DEITY_SUGGESTIONS)
                             .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::checkSpecificReputation))))
                 .then(Commands.literal("repall")
                     .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
                         .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::checkAllReputation)))
                 .then(Commands.literal("ritual")
                     .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("ritualId", StringArgumentType.string())
+                        .then(Commands.argument("ritualId", ResourceLocationArgument.id())
                             .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::markRitualComplete)))))
 
             // Fates system (renamed tasks) — canonical
             .then(Commands.literal("fates")
                 .then(Commands.literal("assign")
                     .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("deity", StringArgumentType.string()).suggests(DEITY_SUGGESTIONS)
-                            .then(Commands.argument("fateId", StringArgumentType.string()).suggests(TASK_ID_SUGGESTIONS)
+                        .then(Commands.argument("deity", ResourceLocationArgument.id()).suggests(DEITY_SUGGESTIONS)
+                            .then(Commands.argument("fateId", StringArgumentType.greedyString()).suggests(TASK_ID_SUGGESTIONS)
                                 .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::assignTask)))))
                 .then(Commands.literal("assignany")
                     .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("fateId", StringArgumentType.string()).suggests(TASK_ID_SUGGESTIONS)
+                        .then(Commands.argument("fateId", StringArgumentType.greedyString()).suggests(TASK_ID_SUGGESTIONS)
                             .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::assignAnyTask))))
                 .then(Commands.literal("complete")
                     .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("fateId", StringArgumentType.string()).suggests(TASK_ID_SUGGESTIONS)
+                        .then(Commands.argument("fateId", StringArgumentType.greedyString()).suggests(TASK_ID_SUGGESTIONS)
                             .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::completeTask))))
                 .then(Commands.literal("list")
                     .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
                         .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::listTasks)))
                 .then(Commands.literal("reputation")
                     .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("deity", StringArgumentType.string()).suggests(DEITY_SUGGESTIONS)
+                        .then(Commands.argument("deity", ResourceLocationArgument.id()).suggests(DEITY_SUGGESTIONS)
                             .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::checkSpecificReputation))))
                 .then(Commands.literal("repall")
                     .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
                         .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::checkAllReputation)))
                 .then(Commands.literal("ritual")
                     .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("ritualId", StringArgumentType.string())
+                        .then(Commands.argument("ritualId", ResourceLocationArgument.id())
                             .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::markRitualComplete)))))
 
             // Conversation system  
@@ -378,7 +347,7 @@ public class UnifiedCommands {
                 .then(Commands.literal("stats")
                     .executes(UnifiedCommands::showConversationStats))
                 .then(Commands.literal("clear")
-                    .then(Commands.argument("deity", StringArgumentType.string())
+                    .then(Commands.argument("deity", ResourceLocationArgument.id())
                         .suggests(DEITY_SUGGESTIONS)
                         .executes(UnifiedCommands::clearConversationHistory)))
                 .then(Commands.literal("clear-all")
@@ -412,45 +381,47 @@ public class UnifiedCommands {
                 .then(Commands.literal("reputation")
                     .then(Commands.argument("player", StringArgumentType.string())
                         .suggests(PLAYER_SUGGESTIONS)
-                        .then(Commands.argument("deity", StringArgumentType.string())
+                        .then(Commands.argument("deity", ResourceLocationArgument.id())
                             .suggests(DEITY_SUGGESTIONS)
                             .executes(UnifiedCommands::debugPlayerReputation))))
                 .then(Commands.literal("ritual")
                     .then(Commands.literal("list")
                         .executes(UnifiedCommands::listLoadedRituals))
                     .then(Commands.literal("test")
-                        .then(Commands.argument("ritual_id", StringArgumentType.string())
+                        .then(Commands.argument("ritual_id", ResourceLocationArgument.id())
                             .suggests(RITUAL_SUGGESTIONS)
                             .executes(UnifiedCommands::testRitualExecution)))
                     .then(Commands.literal("diagnose")
                         .executes(UnifiedCommands::diagnoseRitualSystem)))
                 .then(Commands.literal("clear-rewards")
-                    .then(Commands.argument("player", StringArgumentType.string())
-                        .suggests(PLAYER_SUGGESTIONS)
-                        .then(Commands.argument("deity", StringArgumentType.string())
-                            .suggests(DEITY_SUGGESTIONS)
-                            .executes(UnifiedCommands::clearPlayerRewards))))
+                        .then(Commands.argument("player", StringArgumentType.string())
+                            .suggests(PLAYER_SUGGESTIONS)
+                            .then(Commands.argument("deity", ResourceLocationArgument.id())
+                                .suggests(DEITY_SUGGESTIONS)
+                                .executes(UnifiedCommands::clearPlayerRewards))))
                 .then(Commands.literal("clear-all-rewards")
                     .then(Commands.argument("player", StringArgumentType.string())
                         .suggests(PLAYER_SUGGESTIONS)
                         .executes(UnifiedCommands::clearAllPlayerRewards)))
                 .then(Commands.literal("tier-debug")
-                    .then(Commands.argument("player", StringArgumentType.string())
-                        .suggests(PLAYER_SUGGESTIONS)
-                        .then(Commands.argument("deity", StringArgumentType.string())
-                            .suggests(DEITY_SUGGESTIONS)
-                            .executes(UnifiedCommands::debugTierTracking))))
+                        .then(Commands.argument("player", StringArgumentType.string())
+                            .suggests(PLAYER_SUGGESTIONS)
+                            .then(Commands.argument("deity", ResourceLocationArgument.id())
+                                .suggests(DEITY_SUGGESTIONS)
+                                .executes(UnifiedCommands::debugTierTracking))))
                 .then(Commands.literal("verify-progression-stages")
-                    .then(Commands.argument("deity", StringArgumentType.string())
+                    .then(Commands.argument("deity", ResourceLocationArgument.id())
                         .suggests(DEITY_SUGGESTIONS)
                         .executes(UnifiedCommands::verifyProgressionStages)))
                 .then(Commands.literal("test-tier-progression")
                     .then(Commands.argument("player", StringArgumentType.string())
                         .suggests(PLAYER_SUGGESTIONS)
-                        .then(Commands.argument("deity", StringArgumentType.string())
+                        .then(Commands.argument("deity", ResourceLocationArgument.id())
                             .suggests(DEITY_SUGGESTIONS)
                             .executes(UnifiedCommands::testTierProgression))))));
-            
+
+            // TTS (Text-To-Speech) commands moved to a separate dispatcher.register below
+
             // TODO: Reputation system commands - implement these methods when needed
             /*
             .then(Commands.literal("reputation")
@@ -475,37 +446,22 @@ public class UnifiedCommands {
                         .executes(UnifiedCommands::listPlayerReputations))))
             */
         
-        // Alias commands for convenience
+        // Alias commands for convenience (keep only the short root alias)
         dispatcher.register(Commands.literal("eu")
             .redirect(dispatcher.getRoot().getChild("eidolon-unchained")));
-        
-        dispatcher.register(Commands.literal("eidolon-config")
-            .redirect(dispatcher.getRoot().getChild("eidolon-unchained").getChild("config")));
-        
-        // Separate reputation status command
-        dispatcher.register(Commands.literal("eidolon-status")
-            .then(Commands.argument("deity", StringArgumentType.string())
-                .suggests(DEITY_SUGGESTIONS)
-                .executes(UnifiedCommands::showReputationStatus)));
-        
-        // Register the flexible chant slot commands
-        // Legacy root: /chant
-        ChantSlotCommands.register(dispatcher);
-        // Canonical nested: /eidolon-unchained chant
+
+    // Canonical nested: /eidolon-unchained chant (no standalone /chant root)
         dispatcher.register(Commands.literal("eidolon-unchained").then(com.bluelotuscoding.eidolonunchained.command.ChantSlotCommands.buildNode()));
+
+    // TTS subcommands under /eidolon-unchained
+    dispatcher.register(Commands.literal("eidolon-unchained").then(com.bluelotuscoding.eidolonunchained.command.TTSCommands.buildNode()));
     }
     
     // Configuration commands
     private static int reloadConfig(CommandContext<CommandSourceStack> context) {
-        try {
-            // Reload configuration
-            EidolonUnchainedConfig.COMMON_SPEC.setConfig(null);
-            context.getSource().sendSuccess(() -> Component.translatable("eidolonunchained.command.config.reloaded"), false);
-            return 1;
-        } catch (Exception e) {
-            context.getSource().sendFailure(Component.translatable("eidolonunchained.command.config.reload_failed", e.getMessage()));
-            return 0;
-        }
+        // Forge config cannot be hot-reloaded programmatically here; instruct the user
+        context.getSource().sendSuccess(() -> Component.literal("§eReloading config requires restarting or /reload datapacks."), false);
+        return 1;
     }
     
     private static int showConfigStatus(CommandContext<CommandSourceStack> context) {
@@ -605,9 +561,8 @@ public class UnifiedCommands {
             // Set provider to player2ai with "local" key (local connection doesn't need real API key)
             APIKeyManager.setAPIKey("player2ai", "local");
             
-            // Set the AI provider configuration to player2ai
+            // Set the AI provider configuration to player2ai (persisted by Forge on exit)
             EidolonUnchainedConfig.COMMON.aiProvider.set("player2ai");
-            EidolonUnchainedConfig.COMMON.aiProvider.save();
             
             // Test the connection immediately
             boolean connected = Player2AIClient.isPlayer2AppAvailable();
@@ -719,15 +674,8 @@ public class UnifiedCommands {
     }
     
     private static int showDeityStatus(CommandContext<CommandSourceStack> context) {
-        String rawDeityName = StringArgumentType.getString(context, "deity");
-        String deityName = CommandStringUtils.safeTrim(rawDeityName);
-        
-        // Validate deity name
-        if (deityName == null || deityName.isEmpty()) {
-            context.getSource().sendFailure(Component.literal("§cDeity name cannot be empty"));
-            return 0;
-        }
-        context.getSource().sendSuccess(() -> Component.translatable("eidolonunchained.command.deity.status", deityName), false);
+        ResourceLocation deityId = net.minecraft.commands.arguments.ResourceLocationArgument.getId(context, "deity");
+        context.getSource().sendSuccess(() -> Component.translatable("eidolonunchained.command.deity.status", deityId.toString()), false);
         return 1;
     }
     
@@ -922,9 +870,8 @@ public class UnifiedCommands {
         String model = StringArgumentType.getString(context, "model");
         
         try {
-            // Update the config value
+            // Update the config value (Forge persists automatically at appropriate times)
             EidolonUnchainedConfig.COMMON.geminiModel.set(model);
-            EidolonUnchainedConfig.COMMON_SPEC.save();
             
             context.getSource().sendSuccess(() -> 
                 Component.literal("§aAI model set to: " + model), false);
@@ -1044,15 +991,7 @@ public class UnifiedCommands {
                 return 0;
             }
             
-            String deityString = StringArgumentType.getString(context, "deity");
-            net.minecraft.resources.ResourceLocation deityId;
-            
-            // Parse deity identifier 
-            if (deityString.contains(":")) {
-                deityId = new net.minecraft.resources.ResourceLocation(deityString);
-            } else {
-                deityId = new net.minecraft.resources.ResourceLocation("eidolonunchained", deityString);
-            }
+            net.minecraft.resources.ResourceLocation deityId = net.minecraft.commands.arguments.ResourceLocationArgument.getId(context, "deity");
             
             com.bluelotuscoding.eidolonunchained.chat.DeityChat.clearConversationHistory(player, deityId);
             return 1;
@@ -1537,7 +1476,7 @@ public class UnifiedCommands {
     
     private static int confirmPatronChoice(CommandContext<CommandSourceStack> context) {
         try {
-            if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+            if (!(context.getSource().getEntity() instanceof ServerPlayer)) {
                 context.getSource().sendFailure(Component.literal("§cThis command can only be used by players"));
                 return 0;
             }
@@ -1751,14 +1690,7 @@ public class UnifiedCommands {
             context.getSource().sendFailure(Component.literal("§cPlayer name cannot be empty"));
             return 0;
         }
-            String rawDeityId = StringArgumentType.getString(context, "deity");
-        String deityId = CommandStringUtils.safeTrim(rawDeityId);
-        
-        // Validate deity ID
-        if (deityId == null || deityId.isEmpty()) {
-            context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
-            return 0;
-        }
+            net.minecraft.resources.ResourceLocation deityLocation = net.minecraft.commands.arguments.ResourceLocationArgument.getId(context, "deity");
             
             ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
             if (player == null) {
@@ -1766,20 +1698,18 @@ public class UnifiedCommands {
                 return 0;
             }
             
-            net.minecraft.resources.ResourceLocation deityLocation = new net.minecraft.resources.ResourceLocation(deityId);
             com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = 
                 com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(deityLocation);
             
             if (deity == null) {
-                context.getSource().sendFailure(Component.literal("§cDeity not found: " + deityId));
-                context.getSource().sendFailure(Component.literal("§7Tip: Use quotes for deity IDs with colons, e.g., \"eidolonunchained:dark_deity\""));
+                context.getSource().sendFailure(Component.literal("§cDeity not found: " + deityLocation));
                 
                 // Show available deities
                 var availableDeities = com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getAllDeities();
                 if (!availableDeities.isEmpty()) {
                     context.getSource().sendSuccess(() -> Component.literal("§7Available deities:"), false);
                     availableDeities.keySet().forEach(id -> 
-                        context.getSource().sendSuccess(() -> Component.literal("§7- \"" + id + "\""), false)
+                        context.getSource().sendSuccess(() -> Component.literal("§7- " + id), false)
                     );
                 }
                 return 0;
@@ -1837,9 +1767,6 @@ public class UnifiedCommands {
             
         } catch (Exception e) {
             context.getSource().sendFailure(Component.literal("§cError debugging reputation: " + e.getMessage()));
-            if (e.getMessage().contains("Invalid resource location") || e.getMessage().contains("colon")) {
-                context.getSource().sendFailure(Component.literal("§7Tip: Use quotes for deity IDs with colons, e.g., \"eidolonunchained:dark_deity\""));
-            }
             return 0;
         }
     }
@@ -1927,14 +1854,7 @@ public class UnifiedCommands {
             context.getSource().sendFailure(Component.literal("§cPlayer name cannot be empty"));
             return 0;
         }
-            String rawDeityId = StringArgumentType.getString(context, "deity");
-        String deityId = CommandStringUtils.safeTrim(rawDeityId);
-        
-        // Validate deity ID
-        if (deityId == null || deityId.isEmpty()) {
-            context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
-            return 0;
-        }
+            net.minecraft.resources.ResourceLocation deityLocation = net.minecraft.commands.arguments.ResourceLocationArgument.getId(context, "deity");
             
             ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
             if (player == null) {
@@ -1942,12 +1862,11 @@ public class UnifiedCommands {
                 return 0;
             }
             
-            net.minecraft.resources.ResourceLocation deityLocation = new net.minecraft.resources.ResourceLocation(deityId);
             com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = 
                 com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(deityLocation);
             
             if (deity == null) {
-                context.getSource().sendFailure(Component.literal("§cDeity not found: " + deityId));
+                context.getSource().sendFailure(Component.literal("§cDeity not found: " + deityLocation));
                 return 0;
             }
             
@@ -2023,14 +1942,7 @@ public class UnifiedCommands {
                 return 0;
             }
             
-            String rawDeityId = StringArgumentType.getString(context, "deity");
-            String deityId = CommandStringUtils.safeTrim(rawDeityId);
-            
-            // Validate deity ID
-            if (deityId == null || deityId.isEmpty()) {
-                context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
-                return 0;
-            }
+            net.minecraft.resources.ResourceLocation deityLocation = net.minecraft.commands.arguments.ResourceLocationArgument.getId(context, "deity");
             
             ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
             if (player == null) {
@@ -2038,12 +1950,11 @@ public class UnifiedCommands {
                 return 0;
             }
             
-            net.minecraft.resources.ResourceLocation deityLocation = new net.minecraft.resources.ResourceLocation(deityId);
             com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = 
                 com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(deityLocation);
             
             if (deity == null) {
-                context.getSource().sendFailure(Component.literal("§cDeity not found: " + deityId));
+                context.getSource().sendFailure(Component.literal("§cDeity not found: " + deityLocation));
                 return 0;
             }
             
@@ -2081,23 +1992,15 @@ public class UnifiedCommands {
      * 
      * Validates that progression stages are properly loaded from /deities/ JSON files
      */
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private static int verifyProgressionStages(CommandContext<CommandSourceStack> context) {
         try {
-            String rawDeityId = StringArgumentType.getString(context, "deity");
-            String deityId = CommandStringUtils.safeTrim(rawDeityId);
-            
-            // Validate deity ID
-            if (deityId == null || deityId.isEmpty()) {
-                context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
-                return 0;
-            }
-            
-            net.minecraft.resources.ResourceLocation deityLocation = new net.minecraft.resources.ResourceLocation(deityId);
+            net.minecraft.resources.ResourceLocation deityLocation = net.minecraft.commands.arguments.ResourceLocationArgument.getId(context, "deity");
             com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = 
                 com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(deityLocation);
             
             if (deity == null) {
-                context.getSource().sendFailure(Component.literal("§cDeity not found: " + deityId));
+                context.getSource().sendFailure(Component.literal("§cDeity not found: " + deityLocation));
                 return 0;
             }
             
@@ -2109,7 +2012,7 @@ public class UnifiedCommands {
             
             if (stagesMap == null || stagesMap.isEmpty()) {
                 context.getSource().sendFailure(Component.literal("§c❌ NO PROGRESSION STAGES FOUND! This is the root cause of tier progression issues."));
-                context.getSource().sendFailure(Component.literal("§eCheck if /deities/" + deityId.replace(":", "/") + ".json exists and has progression.stages array"));
+                context.getSource().sendFailure(Component.literal("§eCheck if /deities/" + deityLocation.toString().replace(":", "/") + ".json exists and has progression.stages array"));
                 return 0;
             }
             
@@ -2202,7 +2105,7 @@ public class UnifiedCommands {
      */
     private static int testRitualExecution(CommandContext<CommandSourceStack> context) {
         try {
-            String ritualId = StringArgumentType.getString(context, "ritual_id");
+            ResourceLocation ritualLocation = net.minecraft.commands.arguments.ResourceLocationArgument.getId(context, "ritual_id");
             var source = context.getSource();
             
             if (!(source.getEntity() instanceof ServerPlayer player)) {
@@ -2210,10 +2113,8 @@ public class UnifiedCommands {
                 return 0;
             }
             
-            ResourceLocation ritualLocation = new ResourceLocation(ritualId);
-            
             context.getSource().sendSuccess(() -> Component.literal(
-                "§6Testing ritual execution: §f" + ritualId), false);
+                "§6Testing ritual execution: §f" + ritualLocation), false);
             
             // Create and fire the ritual complete event
             RitualCompleteEvent event = new RitualCompleteEvent(player, ritualLocation, true);
@@ -2356,22 +2257,14 @@ public class UnifiedCommands {
         CommandSourceStack source = context.getSource();
         
         try {
-            String rawDeityId = StringArgumentType.getString(context, "deity");
-        String deityId = CommandStringUtils.safeTrim(rawDeityId);
-        
-        // Validate deity ID
-        if (deityId == null || deityId.isEmpty()) {
-            context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
-            return 0;
-        }
+            ResourceLocation deityRL = net.minecraft.commands.arguments.ResourceLocationArgument.getId(context, "deity");
             Player player = source.getPlayerOrException();
             
             // Get the deity
-            ResourceLocation deityRL = new ResourceLocation(deityId);
             DatapackDeity deity = DatapackDeityManager.getDeity(deityRL);
             
             if (deity == null) {
-                source.sendFailure(Component.literal("§cDeity not found: " + deityId));
+                source.sendFailure(Component.literal("§cDeity not found: " + deityRL));
                 return 0;
             }
             
@@ -2406,14 +2299,7 @@ public class UnifiedCommands {
         CommandSourceStack source = context.getSource();
         
         try {
-            String rawDeityId = StringArgumentType.getString(context, "deity");
-        String deityId = CommandStringUtils.safeTrim(rawDeityId);
-        
-        // Validate deity ID
-        if (deityId == null || deityId.isEmpty()) {
-            context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
-            return 0;
-        }
+            ResourceLocation deityRL = net.minecraft.commands.arguments.ResourceLocationArgument.getId(context, "deity");
             Player player = source.getPlayerOrException();
             
             if (!"player2ai".equals(EidolonUnchainedConfig.COMMON.aiProvider.get())) {
@@ -2431,9 +2317,9 @@ public class UnifiedCommands {
             com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient client = 
                 new com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient(30);
             
-            client.clearPlayerMemory(deityId, player.getStringUUID()).thenAccept(success -> {
+        client.clearPlayerMemory(deityRL.toString(), player.getStringUUID()).thenAccept(success -> {
                 if (success) {
-                    source.sendSuccess(() -> Component.literal("§aCleared Player2AI memory for " + deityId), false);
+            source.sendSuccess(() -> Component.literal("§aCleared Player2AI memory for " + deityRL), false);
                 } else {
                     source.sendFailure(Component.literal("§cFailed to clear Player2AI memory"));
                 }
@@ -2451,14 +2337,7 @@ public class UnifiedCommands {
         CommandSourceStack source = context.getSource();
         
         try {
-            String rawDeityId = StringArgumentType.getString(context, "deity");
-        String deityId = CommandStringUtils.safeTrim(rawDeityId);
-        
-        // Validate deity ID
-        if (deityId == null || deityId.isEmpty()) {
-            context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
-            return 0;
-        }
+        ResourceLocation deityRL = net.minecraft.commands.arguments.ResourceLocationArgument.getId(context, "deity");
             Player player = source.getPlayerOrException();
             
             if (!"player2ai".equals(EidolonUnchainedConfig.COMMON.aiProvider.get())) {
@@ -2476,8 +2355,8 @@ public class UnifiedCommands {
             com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient client = 
                 new com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient(30);
             
-            client.getCharacterMemory(deityId, player.getStringUUID()).thenAccept(memory -> {
-                source.sendSuccess(() -> Component.literal("§6=== Player2AI Memory for " + deityId + " ===\n" + memory), false);
+            client.getCharacterMemory(deityRL.toString(), player.getStringUUID()).thenAccept(memory -> {
+                source.sendSuccess(() -> Component.literal("§6=== Player2AI Memory for " + deityRL + " ===\n" + memory), false);
             });
             
         } catch (Exception e) {
@@ -2508,14 +2387,7 @@ public class UnifiedCommands {
         CommandSourceStack source = context.getSource();
         
         try {
-            String rawDeityId = StringArgumentType.getString(context, "deity");
-        String deityId = CommandStringUtils.safeTrim(rawDeityId);
-        
-        // Validate deity ID
-        if (deityId == null || deityId.isEmpty()) {
-            context.getSource().sendFailure(Component.literal("§cDeity ID cannot be empty"));
-            return 0;
-        }
+            ResourceLocation deityRL = net.minecraft.commands.arguments.ResourceLocationArgument.getId(context, "deity");
             
             if (!"player2ai".equals(EidolonUnchainedConfig.COMMON.aiProvider.get())) {
                 source.sendFailure(Component.literal("§cPlayer2AI is not the current AI provider"));
@@ -2523,16 +2395,15 @@ public class UnifiedCommands {
             }
             
             // Get deity to get current personality
-            ResourceLocation deityRL = new ResourceLocation(deityId);
             DatapackDeity deity = DatapackDeityManager.getDeity(deityRL);
             if (deity == null) {
-                source.sendFailure(Component.literal("§cDeity not found: " + deityId));
+                source.sendFailure(Component.literal("§cDeity not found: " + deityRL));
                 return 0;
             }
             
             AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deityRL);
             if (aiConfig == null) {
-                source.sendFailure(Component.literal("§cAI configuration not found for deity: " + deityId));
+                source.sendFailure(Component.literal("§cAI configuration not found for deity: " + deityRL));
                 return 0;
             }
             
@@ -2546,7 +2417,7 @@ public class UnifiedCommands {
             com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient client = 
                 new com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient(30);
             
-            client.updateCharacterPersonality(deityId, aiConfig.personality).thenAccept(success -> {
+            client.updateCharacterPersonality(deityRL.toString(), aiConfig.personality).thenAccept(success -> {
                 if (success) {
                     source.sendSuccess(() -> Component.literal("§aUpdated Player2AI personality for " + deity.getName()), false);
                 } else {
@@ -2575,7 +2446,6 @@ public class UnifiedCommands {
                 // Save the API key
                 APIKeyManager.setAPIKey("player2ai", apiKey);
                 EidolonUnchainedConfig.COMMON.aiProvider.set("player2ai");
-                EidolonUnchainedConfig.COMMON_SPEC.save();
                 
                 source.sendSuccess(() -> Component.literal("§a✓ Successfully authenticated with Player2 App!"), false);
                 source.sendSuccess(() -> Component.literal("§a✓ Player2AI set as active AI provider"), false);
@@ -2693,7 +2563,7 @@ public class UnifiedCommands {
         
         try {
             String playerName = StringArgumentType.getString(context, "player");
-            String deityName = StringArgumentType.getString(context, "deity");
+            ResourceLocation deityId = net.minecraft.commands.arguments.ResourceLocationArgument.getId(context, "deity");
             
             // Get the player
             ServerPlayer player = source.getServer().getPlayerList().getPlayerByName(playerName);
@@ -2702,14 +2572,7 @@ public class UnifiedCommands {
                 return 0;
             }
             
-            // Parse deity resource location
-            ResourceLocation deityId = ResourceLocation.tryParse(deityName);
-            if (deityId == null) {
-                source.sendFailure(Component.literal("§cInvalid deity ID: " + deityName));
-                return 0;
-            }
-            
-            source.sendSuccess(() -> Component.literal("§eTesting tier progression for " + playerName + " with deity " + deityName), false);
+            source.sendSuccess(() -> Component.literal("§eTesting tier progression for " + playerName + " with deity " + deityId), false);
             
             // Manually trigger tier progression check
             com.bluelotuscoding.eidolonunchained.chat.DeityChat.checkAndHandleTierProgression(player, deityId);

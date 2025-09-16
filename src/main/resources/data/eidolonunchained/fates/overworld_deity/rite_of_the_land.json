@@ -1,0 +1,36 @@
+{
+  "linked_deity": "eidolonunchained:overworld_deity",
+  "task_id": "rite_of_the_land",
+  "display_name": "Rite of the Land",
+  "description": "Perform a simple land blessing at a village bell at sunrise.",
+  "progression_tier": "none",
+  "requirements": [
+    { "type": "interact_block", "block": "minecraft:bell", "count": 1, "time": "dawn" },
+    { "type": "structure", "value": "minecraft:village" }
+  ],
+  "rewards": {
+    "reputation": 8,
+    "commands": [
+      "effect give {player} minecraft:regeneration 200 0",
+      "playsound minecraft:block.bell.use player {player} ~ ~ ~ 1 1.2"
+    ]
+  },
+  "progression_unlock": "world_initiate",
+  "cooldown_hours": 0,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 0,
+      "max_reputation": 20,
+      "required_time": "dawn",
+      "unlocked_progressions": [],
+      "auto_assign_probability": 0.5,
+      "min_reputation_for_auto_assign": 0
+    },
+    "assignment_prompt": "Begin as the sun rises—bless the village bell and pledge care for the land.",
+    "completion_phrases": [
+      "The land hears your vow.",
+      "Morning light seals your oath."
+    ]
+  }
+}

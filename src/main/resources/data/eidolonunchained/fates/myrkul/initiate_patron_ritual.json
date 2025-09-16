@@ -1,0 +1,31 @@
+{
+  "linked_deity": "eidolonunchained:myrkul",
+  "task_id": "myrkul_initiate_patron_ritual",
+  "display_name": "Embrace the Cold Flame",
+  "description": "Perform Myrkul's patronage ritual to bind your soul to undeath.",
+  "progression_tier": "none",
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 0,
+      "max_reputation": 20,
+      "prayer_types": ["conversation"],
+      "auto_assign_probability": 0.5,
+      "min_reputation_for_auto_assign": 0
+    },
+    "assignment_prompt": "Find a place of souls and perform my patronage rite.",
+    "completion_phrases": ["The cold fire answers your call."]
+  },
+  "requirements": [
+  { "type": "perform_ritual", "ritual_id": "eidolonunchained:myrkul_patronage_ritual" }
+  ],
+  "rewards": {
+    "reputation": 5,
+    "commands": [
+  "tellraw {player} {\"text\":\"The soul-flame answers. The blue fire nests behind your ribs.\",\"color\":\"aqua\"}",
+      "effect give {player} minecraft:resistance 600 0"
+    ]
+  },
+  "unlocked_progressions": [],
+  "cooldown_hours": 12,
+  "repeatable": false
+}

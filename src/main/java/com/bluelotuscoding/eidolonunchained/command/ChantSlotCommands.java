@@ -6,16 +6,19 @@ import com.bluelotuscoding.eidolonunchained.chant.DatapackChant;
 import com.bluelotuscoding.eidolonunchained.config.ChantCastingConfig;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Commands for managing flexible slot assignments.
@@ -23,19 +26,42 @@ import java.util.Collection;
  */
 public class ChantSlotCommands {
 
+    private static final SuggestionProvider<CommandSourceStack> SIGN_SUGGESTIONS = (context, builder) -> {
+        try {
+            List<String> ids = new ArrayList<>();
+            for (elucent.eidolon.api.spells.Sign sign : elucent.eidolon.registries.Signs.getSigns()) {
+                ResourceLocation id = sign.getRegistryName();
+                if (id != null) ids.add(id.toString());
+            }
+            return SharedSuggestionProvider.suggest(ids, builder);
+        } catch (Exception e) {
+            return SharedSuggestionProvider.suggest(List.of("eidolon:wicked", "eidolon:entropic", "eidolon:blood"), builder);
+        }
+    };
+
+    private static final SuggestionProvider<CommandSourceStack> CHANT_SUGGESTIONS = (context, builder) -> {
+        try {
+            List<String> ids = new ArrayList<>();
+            for (ResourceLocation id : DatapackChantManager.getAllChantIds()) ids.add(id.toString());
+            return SharedSuggestionProvider.suggest(ids, builder);
+        } catch (Exception e) {
+            return SharedSuggestionProvider.suggest(List.of("eidolonunchained:shadow_communion", "example:nature_blessing"), builder);
+        }
+    };
+
     // Build the full `chant` subtree so it can be registered under multiple roots
     public static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> buildNode() {
         return Commands.literal("chant")
             .then(Commands.literal("assign-sign")
                 .then(Commands.argument("slot", IntegerArgumentType.integer(1, 4))
-                    .then(Commands.argument("sign_id", ResourceLocationArgument.id())
+                    .then(Commands.argument("sign_id", ResourceLocationArgument.id()).suggests(SIGN_SUGGESTIONS)
                         .executes(ChantSlotCommands::assignSign)
                     )
                 )
             )
             .then(Commands.literal("assign-chant")
                 .then(Commands.argument("slot", IntegerArgumentType.integer(1, 4))
-                    .then(Commands.argument("chant_id", ResourceLocationArgument.id())
+                    .then(Commands.argument("chant_id", ResourceLocationArgument.id()).suggests(CHANT_SUGGESTIONS)
                         .executes(ChantSlotCommands::assignChant)
                     )
                 )
@@ -225,6 +251,11 @@ public class ChantSlotCommands {
                 player.sendSystemMessage(Component.literal("§7Description: Support both individual signs and full chants"));
                 player.sendSystemMessage(Component.literal("§7Usage: Assign either signs or chants to different slots"));
                 player.sendSystemMessage(Component.literal("§7Mixed example: Signs in slots 1-2, chants in slots 3-4"));
+            }
+            case ACTIVE_CHANTING -> {
+                player.sendSystemMessage(Component.literal("§7Description: Actively maintain chants while casting signs"));
+                player.sendSystemMessage(Component.literal("§7Usage: Assign a chant, maintain it, and weave signs between"));
+                player.sendSystemMessage(Component.literal("§7Tip: Use /chant available-chants to pick a chant"));
             }
         }
         

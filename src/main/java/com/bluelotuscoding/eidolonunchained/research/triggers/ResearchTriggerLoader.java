@@ -31,7 +31,7 @@ import java.util.Map;
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ResearchTriggerLoader {
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final Gson GSON = new Gson();
+    private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
     private static final Map<String, List<ResearchTrigger>> TRIGGERS_BY_TYPE = new HashMap<>();
     private static final Map<String, List<ResearchTrigger>> TRIGGERS_BY_RESEARCH = new HashMap<>();
     

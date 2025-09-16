@@ -1,0 +1,64 @@
+{
+  "linked_deity": "eidolonunchained:water_deity",
+  "task_id": "water_ocean_guardian",
+  "display_name": "Ocean Guardian",
+  "description": "Prove your dedication to protecting the waters and their creatures",
+  "progression_tier": "depths_guardian",
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 15,
+      "max_reputation": 60,
+      "required_biomes": ["minecraft:ocean", "minecraft:deep_ocean"],
+      "prayer_types": ["conversation", "depth", "protection"],
+      "completed_tasks": ["water_tidal_basics"],
+      "unlocked_progressions": [],
+      "auto_assign_probability": 0.3,
+      "min_reputation_for_auto_assign": 25
+    },
+    "assignment_prompt": "Tide-touched seeker, the ocean's guardianship calls to you. The drowned corrupt these sacred waters, and ancient ruins hold secrets that must be protected. Prove yourself worthy of the Ocean Heart's trust.",
+    "completion_phrases": [
+      "The ocean depths acknowledge your guardianship - you are become protector of the sacred waters...",
+      "Ancient currents flow in your favor, and the sea's creatures recognize their defender..."
+    ]
+  },
+  "requirements": [
+    {
+      "type": "kill_entities",
+      "entities": [
+        {
+          "entity": "minecraft:drowned",
+          "count": 15,
+          "display_name": "Corrupted Waters"
+        }
+      ]
+    },
+    {
+      "type": "visit_structures",
+      "structures": ["minecraft:ocean_ruins"],
+      "display_name": "Ancient Ocean Sanctum"
+    },
+    {
+      "type": "collect_items",
+      "items": [
+        {
+          "item": "minecraft:heart_of_the_sea",
+          "count": 1,
+          "display_name": "Ocean's Sacred Heart"
+        }
+      ]
+    }
+  ],
+  "rewards": {
+    "reputation": 10,
+    "commands": [
+      "give {player} minecraft:conduit 1",
+      "give {player} minecraft:nautilus_shell 4",
+      "effect give {player} minecraft:dolphins_grace 1200 0",
+      "tellraw {player} {\"text\":\"🌊 The ocean depths acknowledge your guardianship\",\"color\":\"dark_aqua\"}"
+    ],
+  "progression_unlock": "depths_guardian"
+  },
+  "unlocked_progressions": [],
+  "cooldown_hours": 24,
+  "repeatable": false
+}

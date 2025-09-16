@@ -1,0 +1,57 @@
+{
+  "linked_deity": "eidolonunchained:nature_deity",
+  "task_id": "nature_sacred_gathering",
+  "display_name": "Sacred Gathering",
+  "description": "Learn to identify and gather nature's gifts",
+  "progression_tier": "nature_initiate",
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 0,
+      "max_reputation": 30,
+      "required_biomes": ["minecraft:forest", "minecraft:flower_forest"],
+      "prayer_types": ["conversation", "growth"],
+      "completed_tasks": [],
+      "unlocked_progressions": [],
+      "auto_assign_probability": 0.4,
+      "min_reputation_for_auto_assign": 0
+    },
+    "assignment_prompt": "Young seeker, the sacred grove needs healing. The earth provides for those who know how to look. Show me you can gather the gifts that nature freely offers to her children.",
+    "completion_phrases": [
+      "Your gathering has restored life to the sacred places...",
+      "The forest spirits sing of your dedication to the growing world..."
+    ]
+  },
+  "requirements": [
+    {
+      "type": "collect_items",
+      "items": [
+        {
+          "item": "minecraft:wheat",
+          "count": 8,
+          "display_name": "Sacred Grains"
+        },
+        {
+          "item": "minecraft:carrot",
+          "count": 4,
+          "display_name": "Earth's Bounty"
+        }
+      ]
+    },
+    {
+      "type": "explore_biomes",
+      "biomes": ["minecraft:forest"],
+      "display_name": "Sacred Grove Pilgrimage"
+    }
+  ],
+  "rewards": {
+    "reputation": 5,
+    "commands": [
+      "give {player} minecraft:bone_meal 8",
+      "effect give {player} minecraft:regeneration 300 0",
+      "tellraw {player} {\"text\":\"🌱 Nature recognizes a new seeker of growth\",\"color\":\"green\"}"
+  ]
+  },
+  "unlocked_progressions": [],
+  "cooldown_hours": 12,
+  "repeatable": false
+}

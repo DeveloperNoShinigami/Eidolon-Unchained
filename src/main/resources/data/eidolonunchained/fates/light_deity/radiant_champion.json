@@ -1,0 +1,40 @@
+{
+  "linked_deity": "eidolonunchained:light_deity",
+  "task_id": "light_radiant_champion",
+  "display_name": "Radiant Champion",
+  "description": "Ascend to become the ultimate champion of light and radiance",
+  "progression_tier": "light_champion",
+  "requirements": [
+    "kill_entities:minecraft:wither_skeleton:20",
+    "kill_entities:minecraft:wither:1",
+    "{\"type\": \"channel_light_energy\", \"duration_seconds\": 3600, \"power_level\": \"maximum\"}"
+  ],
+  "rewards": {
+    "reputation": 25,
+    "commands": [
+      "give {player} minecraft:nether_star 1",
+      "give {player} minecraft:beacon 1",
+      "give {player} minecraft:enchanted_golden_apple 2",
+      "effect give {player} minecraft:hero_of_the_village 2400 2",
+      "tellraw {player} {\"text\":\"👑 You are now Champion of Light - darkness flees at your approach\",\"color\":\"gold\"}"
+    ],
+    "progression_unlock": "light_champion"
+  },
+  "unlocked_progressions": ["light_high_priest"],
+  "cooldown_hours": 72,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 80,
+      "prayer_types": ["conversation", "blessing"],
+      "unlocked_progressions": ["light_high_priest"],
+      "auto_assign_probability": 0.1,
+      "min_reputation_for_auto_assign": 75
+    },
+    "assignment_prompt": "Champion, blaze with unyielding radiance and banish the deepest shadows.",
+    "completion_phrases": [
+      "Radiance crowns your deeds.",
+      "The world gleams with your triumph."
+    ]
+  }
+}

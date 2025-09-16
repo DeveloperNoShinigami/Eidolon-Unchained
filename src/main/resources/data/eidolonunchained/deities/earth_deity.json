@@ -24,6 +24,19 @@
         ]
       },
       {
+        "id": "stone_initiate",
+        "reputation": 15,
+        "major": false,
+        "title": "Stone Initiate",
+        "description": "One who has learned to listen to stone",
+        "rewards": [
+          "give @s minecraft:cobblestone 32",
+          "effect give @s minecraft:haste 600 0",
+          "title @s title {\"text\":\"Stone Initiate\",\"color\":\"gray\"}",
+          "playsound minecraft:block.stone.place master @s ~ ~ ~ 0.6 0.9"
+        ]
+      },
+      {
         "id": "mountain_walker",
         "reputation": 25,
         "major": false,
@@ -103,7 +116,7 @@
   "abandon": {
     "reputation_penalty": 0.75,
     "reset_reputation": false,
-    "message": "§8The stone grows cold beneath your feet. §7Terra's steady presence fades, but the path through mountain wisdom remains open to the patient."
+    "message": "ï¿½8The stone grows cold beneath your feet. ï¿½7Terra's steady presence fades, but the path through mountain wisdom remains open to the patient."
   },
   "prayer_types": ["conversation", "blessing", "guidance", "growth"]
 }

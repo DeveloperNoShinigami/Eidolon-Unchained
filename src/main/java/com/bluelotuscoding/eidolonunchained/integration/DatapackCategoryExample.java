@@ -3,7 +3,7 @@ package com.bluelotuscoding.eidolonunchained.integration;
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.codex.CodexEntry;
 import com.bluelotuscoding.eidolonunchained.data.CodexDataManager;
-import com.google.gson.Gson;
+// import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
 import elucent.eidolon.codex.*;
@@ -156,7 +156,7 @@ public class DatapackCategoryExample {
      */
     private static CategoryDefinition loadCategoryDefinition(Resource resource, String categoryKey) {
         try (InputStreamReader reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
-            JsonObject json = new Gson().fromJson(reader, JsonObject.class);
+            JsonObject json = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON.fromJson(reader, JsonObject.class);
             if (json == null) return null;
 
             String nameKey = json.has("name")

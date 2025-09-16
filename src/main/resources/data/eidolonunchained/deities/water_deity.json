@@ -24,6 +24,20 @@
         ]
       },
       {
+        "id": "tide_initiate",
+        "reputation": 15,
+        "major": false,
+        "title": "Tide Initiate",
+        "description": "A novice welcomed by the living waters",
+        "rewards": [
+          "give @s minecraft:seagrass 8",
+          "give @s minecraft:nautilus_shell 1",
+          "effect give @s minecraft:water_breathing 600 0",
+          "title @s title {\"text\":\"Tide Initiate\",\"color\":\"aqua\"}",
+          "playsound minecraft:entity.dolphin.ambient master @s ~ ~ ~ 0.6 1.1"
+        ]
+      },
+      {
         "id": "wave_walker",
         "reputation": 25,
         "major": false,
@@ -103,7 +117,7 @@
   "abandon": {
     "reputation_penalty": 0.75,
     "reset_reputation": false,
-    "message": "§bThe waters recede from your soul. §7Aquaria's tides grow distant, but the path through healing waters remains open to those who seek balance."
+    "message": "ï¿½bThe waters recede from your soul. ï¿½7Aquaria's tides grow distant, but the path through healing waters remains open to those who seek balance."
   },
   "prayer_types": ["conversation", "blessing", "healing", "guidance"]
 }

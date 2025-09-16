@@ -1,0 +1,38 @@
+{
+  "linked_deity": "eidolonunchained:end_deity",
+  "task_id": "void_sovereign_ascension",
+  "display_name": "Ascension of the Void Sovereign",
+  "description": "Bridge the spaces between endings; command the currents of nothingness.",
+  "progression_tier": "void_sovereign",
+  "requirements": [
+    { "type": "kill_entities", "entity": "minecraft:shulker", "count": 10 },
+    { "type": "collect_items", "item": "minecraft:dragon_breath", "count": 4 },
+    { "type": "dimension_exploration", "dimension": "minecraft:the_end", "unique_chunks": 64 }
+  ],
+  "rewards": {
+    "reputation": 18,
+    "commands": [
+      "give {player} minecraft:ender_chest 1",
+      "effect give {player} minecraft:levitation 120 0",
+      "effect give {player} minecraft:resistance 600 1"
+    ]
+  },
+  "cooldown_hours": 48,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 65,
+      "max_reputation": 90,
+      "required_dimension": "minecraft:the_end",
+      "completed_tasks": ["void_master_trials", "ritual_of_void"],
+      "unlocked_progressions": ["void_master"],
+      "auto_assign_probability": 0.2,
+      "min_reputation_for_auto_assign": 70
+    },
+    "assignment_prompt": "Gather endings like stars; let the void crown you in silence.",
+    "completion_phrases": [
+      "The end bows, briefly.",
+      "Your steps leave no echo."
+    ]
+  }
+}

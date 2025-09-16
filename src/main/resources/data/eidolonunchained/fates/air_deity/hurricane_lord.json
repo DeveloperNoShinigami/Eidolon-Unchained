@@ -1,0 +1,38 @@
+{
+  "linked_deity": "eidolonunchained:air_deity",
+  "task_id": "air_hurricane_lord",
+  "display_name": "Hurricane Lord",
+  "description": "Achieve ultimate dominion over wind and storm to become Lord of Hurricanes",
+  "progression_tier": "sky_sovereign",
+  "requirements": [
+    "kill_entities:minecraft:wither:1",
+    "time:thundering",
+    {"type": "location", "condition": "y>250"}
+  ],
+  "rewards": {
+    "reputation": 25,
+    "commands": [
+      "give {player} minecraft:mace 1",
+      "give {player} minecraft:wind_charge 32",
+      "effect give {player} minecraft:levitation 300 1",
+      "effect give {player} minecraft:slow_falling 3600 0",
+      "tellraw {player} {\"text\":\"💨 Hurricanes obey your command - rise, Lord of the Eternal Storm!\",\"color\":\"dark_gray\"}"
+    ],
+  "progression_unlock": "sky_sovereign"
+  },
+  "cooldown_hours": 72,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 60,
+      "unlocked_progressions": ["wind_lord"],
+      "auto_assign_probability": 0.1,
+      "min_reputation_for_auto_assign": 75
+    },
+    "assignment_prompt": "Crown your dominion over wind and storm. Command the hurricane itself.",
+    "completion_phrases": [
+      "Gales kneel before your will.",
+      "The horizon bends to your winds."
+    ]
+  }
+}

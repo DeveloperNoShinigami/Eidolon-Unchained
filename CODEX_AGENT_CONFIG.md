@@ -12,6 +12,16 @@ You are a {TECHNICAL_ROLE} specializing in code analysis, documentation, and tec
 • **Context Depth**: {single-file | project-scope | ecosystem-wide}
 • **Standards**: {follow-conventions | suggest-improvements | enforce-best-practices}
 
+### Recommended defaults for this repository (Eidolon Unchained)
+- Reasoning: DEEP_TRACE
+- Code Focus: full-stack
+- Verbosity: comprehensive
+- Search Scope: all-web
+- Output Format: technical-report
+- Validation: logic-verify + test-generate + security-scan
+- Context Depth: ecosystem-wide
+- Standards: enforce-best-practices
+
 ## CORE TASK
 {one precise technical objective}
 
@@ -20,6 +30,12 @@ You are a {TECHNICAL_ROLE} specializing in code analysis, documentation, and tec
 • **Environment**: {development/staging/production}
 • **Constraints**: {performance/security/compatibility requirements}
 • **Dependencies**: {relevant libraries/services/APIs}
+
+### Repository-specific context defaults
+- Language/Framework: Java 17, Minecraft Forge 47.x (MC 1.20.1)
+- Environment: development (Gradle + ForgeGradle), production (packaged mod jar)
+- Constraints: Avoid JVM module flags in production; ensure Java 17 module safety; resource reload ordering must be respected; degrade gracefully without Eidolon
+- Dependencies: Gson, Eidolon (compileOnly), Google Gemini (optional), Curios (optional)
 
 ## INPUT SOURCES
 • Code: {files/snippets/repositories}
@@ -36,6 +52,40 @@ You are a {TECHNICAL_ROLE} specializing in code analysis, documentation, and tec
 • Provide performance implications
 • Reference authoritative sources
 • Include testing strategies where relevant
+
+### Serialization, reflection, and Java 17 module safety (MANDATORY)
+- Do not require JVM --add-opens/--add-exports in production. If absolutely needed during local debugging, document and remove before commit.
+- Centralize JSON serialization via a single utility (e.g., `util/JsonUtils.GSON`). Never instantiate raw `new Gson()` at call sites.
+- Configure the central Gson with:
+  - ExclusionStrategy to skip JDK internals and runtime constructs: `Thread`, `ExecutorService`/`ScheduledExecutorService`, `ClassLoader`, and `java.lang.reflect.Proxy` instances.
+  - TypeAdapterFactory for Optional and other commonly used container types.
+  - `disableHtmlEscaping()` and safe pretty-printing as needed.
+- Prefer DTOs over serializing live engine objects. Don’t serialize: `Server`, `Level/World`, `Entity` instances, `GameProfile`, or registry objects directly. Use identifiers (`ResourceLocation`, UUID, numeric ids) and reconstruct.
+- Mark non-serializable runtime fields as `transient` and keep JSON-bound state minimal and explicit.
+- Where applicable for game data, consider Mojang `Codec` based serialization for registry-aware types; use Gson only for datapack JSON and external APIs.
+- Validate all JSON against schemas or structural validators before use; fail fast with actionable logs.
+
+### Forbidden and required patterns (REPO POLICY)
+- Forbidden: Direct `new Gson()`/`new GsonBuilder()` in production code; reflection into `java.*`; serializing threads/executors/classloaders; relying on JVM opens for libraries.
+- Required: Route all JSON through `JsonUtils.GSON`; add adapters/exclusions in that one place; unit tests for serialization of complex types.
+
+### Resource loading and integration order (CRITICAL)
+Follow the mandatory loading sequence to avoid race conditions and "0 entries loaded" issues:
+1) Datapack Resource Loading Phase (SimpleJsonResourceReloadListener):
+  - CodexDataManager, ResearchDataManager, AIDeityManager, DatapackChantManager
+2) Integration Phase (triggered from the managers’ `apply()` AFTER load completes):
+  - `EidolonResearchIntegration.injectCustomResearch()` (from ResearchDataManager.apply)
+  - `EidolonCodexIntegration` entry injection; chant registration
+3) Mod Loading Events (FMLLoadCompleteEvent, FMLClientSetupEvent):
+  - Only component initialization not dependent on datapack content
+
+Never call integration from FML events. Always trigger from the respective resource manager `apply()` after successful data load.
+
+### Error handling and resiliency
+- Wrap external API calls (e.g., Gemini) with timeouts and fallbacks; use CompletableFuture with `exceptionally` handlers.
+- Ensure conversation histories or caches have bounded size; implement cleanup policies.
+- Validate keybinds, sign existence, and effect safety before applying.
+- Log with clear categories and remediation tips; avoid noisy stack traces in normal control flow.
 
 ---
 
@@ -102,6 +152,14 @@ When working with Minecraft modding projects, activate this specialized configur
 • **Compatibility Mode**: {standalone | integration | library | core-mod}
 • **Performance Profile**: {client-side | server-side | universal | optimization-focused}
 
+Recommended for this repository
+- MC Version Target: 1.20.1
+- Mod Loader: Forge (primary). Eidolon is optional dependency; degrade gracefully if absent.
+- Development Environment: IntelliJ-ForgeGradle
+- Mapping Channel: official
+- Compatibility Mode: integration
+- Performance Profile: universal
+
 #### Minecraft Technical Context (mandatory):
 • **Minecraft Version**: {exact version number}
 • **Mod Loader Version**: {specific build version}
@@ -109,6 +167,14 @@ When working with Minecraft modding projects, activate this specialized configur
 • **Target Audience**: {casual-players | technical-users | server-admins | mod-developers}
 • **Performance Requirements**: {lightweight | standard | heavy-processing}
 • **Compatibility Matrix**: {list other mods that must work together}
+
+Defaults for this repository
+- Minecraft Version: 1.20.1
+- Mod Loader Version: Forge 47.x
+- Java Version: 17
+- Target Audience: technical-users and mod-developers
+- Performance Requirements: standard to universal
+- Compatibility Matrix: Eidolon (parent mod), Curios, JEI/REI as applicable
 
 #### Minecraft-Specific Standards:
 • **Mixin Usage**: Follow best practices for mixins vs reflection vs events
@@ -118,6 +184,12 @@ When working with Minecraft modding projects, activate this specialized configur
 • **Resource Management**: Implement proper resource loading and cleanup
 • **Mod Compatibility**: Design for interoperability with popular mods
 • **Version Migration**: Plan for version upgrade paths
+
+Additional repository standards
+- Prefer events and APIs; use mixins only when no stable hook exists.
+- Use reflection into external mods (Eidolon) carefully and only behind feature checks; fail gracefully when absent.
+- Datapack schema separation: keep complex ritual JSON distinct from chant JSON to avoid loader schema mismatches.
+- Standardize language keys: `eidolonunchained.<system>.<category>.<name>.<type>`.
 
 #### Advanced Minecraft Capabilities:
 
@@ -247,6 +319,35 @@ When working with Minecraft modding projects, activate this specialized configur
 5. **Resource Efficiency**: Monitor memory and CPU usage
 6. **User Experience**: Ensure intuitive gameplay integration
 7. **Documentation Quality**: Provide clear setup and usage instructions
+
+### QA checklists for this repository
+- Resource loading order
+  - [ ] Managers load: Codex, Research, AI Deities, Chants
+  - [ ] Integrations triggered from `apply()` only
+  - [ ] No integration from FML events
+- Serialization audit
+  - [ ] No direct `new Gson()` usages remain
+  - [ ] `JsonUtils.GSON` registered with exclusions and adapters
+  - [ ] No serialization of JDK internals (Thread/Executor/ClassLoader)
+  - [ ] Runtime-only fields are `transient` or excluded
+- Validation commands (run in-game)
+  - [ ] `/eidolon-unchained config validate` passes
+  - [ ] `/eidolon-unchained debug status` healthy
+  - [ ] AI API test command succeeds when configured
+- Log hygiene
+  - [ ] No repeated WARN/ERROR patterns for loading or reflection
+  - [ ] Clear messages for missing categories/chapters with remediation
+
+### Try/verify locally
+- Build: `./gradlew build -x test`
+- Quick compile loop: `./gradlew compileJava`
+- Client run: `./gradlew runClient` (development only; do not ship with JVM opens)
+
+### Edge cases to design for
+- Missing or invalid API keys for AI provider
+- Empty datapacks or malformed JSON files
+- Absent optional dependencies (Eidolon/Curios)
+- Slow or failing external API calls (timeouts, retries, fallbacks)
 
 ### Minecraft Development Workflow:
 1. **Environment Setup**: Verify MDK/template configuration

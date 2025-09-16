@@ -1,0 +1,38 @@
+{
+  "linked_deity": "eidolonunchained:light_deity",
+  "task_id": "light_healing_basics",
+  "display_name": "Healing Basics",
+  "description": "Learn the fundamental arts of light and healing",
+  "progression_tier": "light_initiate",
+  "requirements": [
+    "collect_items:minecraft:golden_apple:4",
+    "use_items:minecraft:milk_bucket:3"
+  ],
+  "rewards": {
+    "reputation": 5,
+    "commands": [
+      "give {player} minecraft:golden_apple 2",
+      "effect give {player} minecraft:regeneration 300 1",
+      "tellraw {player} {\"text\":\"✨ The light welcomes a new healer\",\"color\":\"yellow\"}"
+    ]
+  },
+  "unlocked_progressions": [],
+  "cooldown_hours": 12,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 0,
+      "max_reputation": 20,
+      "prayer_types": ["conversation", "blessing"],
+      "completed_tasks": [],
+      "unlocked_progressions": [],
+      "auto_assign_probability": 0.4,
+      "min_reputation_for_auto_assign": 0
+    },
+    "assignment_prompt": "New healer, practice restorative arts and learn the gentleness of light.",
+    "completion_phrases": [
+      "Your hands glow with newfound grace.",
+      "The light approves your first steps toward mercy."
+    ]
+  }
+}

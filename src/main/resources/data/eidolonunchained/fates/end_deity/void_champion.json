@@ -1,0 +1,42 @@
+{
+  "linked_deity": "eidolonunchained:end_deity",
+  "task_id": "end_void_champion",
+  "display_name": "Void Champion",
+  "description": "Ascend to become the ultimate champion of the void and endless emptiness",
+  "progression_tier": "void_transcendent",
+  "requirements": [
+    "kill_entities:minecraft:enderman:25",
+    "kill_entities:minecraft:ender_dragon:1",
+    "{\"type\": \"teleport_distance\", \"total_blocks\": 10000, \"method\": \"ender_pearl\"}",
+    "{\"type\": \"dimension_exploration\", \"dimension\": \"minecraft:the_end\", \"unique_chunks\": 100}"
+  ],
+  "rewards": {
+    "reputation": 25,
+    "commands": [
+      "give {player} minecraft:elytra 1",
+      "give {player} minecraft:ender_chest 1",
+      "give {player} minecraft:shulker_shell 4",
+      "effect give {player} minecraft:levitation 2400 0",
+      "tellraw {player} {\"text\":\"\ud83d\udc51 You are now Champion of the Void - space and time bend to your will\",\"color\":\"dark_purple\"}"
+    ],
+  "progression_unlock": "void_transcendent"
+  },
+  "cooldown_hours": 72,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 60,
+      "max_reputation": 999,
+      "required_dimension": "minecraft:the_end",
+      "completed_tasks": ["ritual_of_void"],
+      "unlocked_progressions": ["void_sovereign"],
+      "auto_assign_probability": 0.1,
+      "min_reputation_for_auto_assign": 75
+    },
+    "assignment_prompt": "Transcend the last boundary; become the void's sovereign instrument.",
+    "completion_phrases": [
+      "You wear the void like a mantle.",
+      "Even the end yields to you."
+    ]
+  }
+}

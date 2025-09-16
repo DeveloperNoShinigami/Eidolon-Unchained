@@ -55,7 +55,7 @@ import com.bluelotuscoding.eidolonunchained.research.conditions.WeatherCondition
 public class ResearchDataManager extends SimpleJsonResourceReloadListener {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(ResearchDataManager.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
     
     // Storage for loaded research data
     private static final Map<ResourceLocation, ResearchChapter> LOADED_RESEARCH_CHAPTERS = new HashMap<>();

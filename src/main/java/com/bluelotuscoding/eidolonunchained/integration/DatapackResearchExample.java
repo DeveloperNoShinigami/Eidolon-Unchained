@@ -1,7 +1,7 @@
 package com.bluelotuscoding.eidolonunchained.integration;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
-import com.google.gson.Gson;
+// import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonElement;
 import com.mojang.logging.LogUtils;
@@ -64,7 +64,7 @@ public class DatapackResearchExample {
      */
     private static ResearchChapterDefinition loadResearchChapter(Resource resource) {
         try (InputStreamReader reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
-            JsonObject json = new Gson().fromJson(reader, JsonObject.class);
+            JsonObject json = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON.fromJson(reader, JsonObject.class);
             if (json == null) return null;
 
             String id = json.has("id") ? json.get("id").getAsString() : "";

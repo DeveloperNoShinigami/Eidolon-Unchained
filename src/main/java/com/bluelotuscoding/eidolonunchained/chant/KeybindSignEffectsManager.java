@@ -38,7 +38,7 @@ import java.util.*;
 @Mod.EventBusSubscriber(modid = "eidolonunchained", bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class KeybindSignEffectsManager extends SimpleJsonResourceReloadListener {
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
 
     private static KeybindSignEffectsManager INSTANCE;
 

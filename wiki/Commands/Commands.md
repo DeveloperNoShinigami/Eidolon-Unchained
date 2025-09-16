@@ -3,7 +3,7 @@
 Root
 
 - `/eidolon-unchained` — unified command tree (canonical)
-- Aliases: `/eu` (root), `/chant` (legacy), `/dtask` (legacy)
+- Alias: `/eu` (root)
 
 Admin/Config
 
@@ -24,13 +24,13 @@ Debug (selected)
 Fates
 
 - Canonical: `/eidolon-unchained fates ...` (autocomplete enabled)
-- Legacy aliases: `/eidolon-unchained tasks ...` and `/dtask ...`
+- Alias: `/eidolon-unchained tasks ...` remains for compatibility; `/dtask` removed
 - See usage: wiki/Systems/Tasks-Reputation.md
 
 Autocomplete
 
-- Deity, ritual, chant, and player suggestions are wired for convenience.
-- Task IDs suggest dynamically from all deity configs.
+- Deity, ritual, chant, sign, and player suggestions are dynamic and colon-friendly.
+- Fate IDs suggest dynamically from all deity configs.
 
 References
 

@@ -3,7 +3,7 @@
   "task_id": "twilight_wayfinding",
   "display_name": "Twilight Wayfinding",
   "description": "Travel through 3 biomes during twilight hours.",
-  "progression_tier": "adept",
+  "progression_tier": "twilight_walker",
   "requirements": [
     { "type": "explore_biomes", "count": 3, "time": "twilight" }
   ],
@@ -12,8 +12,24 @@
     "commands": [
       "effect give {player} minecraft:speed 300 0"
     ],
-    "progression_unlock": "twilight_wayfinder"
+  "progression_unlock": "twilight_walker"
   },
   "cooldown_hours": 16,
-  "repeatable": false
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 10,
+      "max_reputation": 40,
+      "required_time": "twilight",
+      "prayer_types": ["conversation", "guidance"],
+      "unlocked_progressions": [],
+      "auto_assign_probability": 0.3,
+      "min_reputation_for_auto_assign": 25
+    },
+    "assignment_prompt": "Walk the liminal paths between light and dark and learn the sky's changing hues.",
+    "completion_phrases": [
+      "You move with the evening star.",
+      "Dawn and dusk greet you as kin."
+    ]
+  }
 }

@@ -4,6 +4,7 @@ import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
 import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
 import com.bluelotuscoding.eidolonunchained.ai.AIDeityManager;
 import com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig;
+import com.bluelotuscoding.eidolonunchained.ai.TaskSystemConfig;
 import com.bluelotuscoding.eidolonunchained.ai.PrayerAIConfig;
 import com.bluelotuscoding.eidolonunchained.ai.PlayerContext;
 import com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiAPIClient;
@@ -302,6 +303,21 @@ public class DeityChat {
                 endConversation(player);
                 return;
             }
+
+            // QUICK NATURAL-LANGUAGE TRIGGER PASS (pre-AI): lets natural phrases cause actions
+            // Honor config: skip JSON triggers unless mode is json_only or both
+            String nlMode = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.naturalLanguageTriggerMode.get();
+            boolean allowJsonTriggers = "json_only".equalsIgnoreCase(nlMode) || "both".equalsIgnoreCase(nlMode);
+            if (allowJsonTriggers && evaluateNaturalLanguageTriggers(player, deityId, message, aiConfig)) {
+                if (onComplete != null) onComplete.run();
+                return; // If a trigger consumed this message, stop here
+            }
+
+            // Offer/accept conversational control (accept/decline/explicit ask)
+            if (handleFateOfferControl(player, deityId, message)) {
+                if (onComplete != null) onComplete.run();
+                return;
+            }
             
             // Add message to conversation history
             List<String> history = conversationHistory.computeIfAbsent(playerId, k -> {
@@ -466,6 +482,9 @@ public class DeityChat {
                         player.getName().getString());
                 }
                 
+                // After processing commands, optionally offer a fate (offer, not assign)
+                tryOfferFateToPlayer(player, deityId, message);
+
                 // Continue with regular response processing
                 processRegularResponse(player, deity, rawResponse, history, playerId, deityId, commandsExecuted, onComplete);
             }).exceptionally(ex -> {
@@ -481,6 +500,370 @@ public class DeityChat {
             endConversation(player);
         }
     }
+
+    // Evaluate JSON-driven natural-language triggers and perform actions if matched
+    private static boolean evaluateNaturalLanguageTriggers(ServerPlayer player, ResourceLocation deityId, String message, AIDeityConfig aiConfig) {
+        if (aiConfig.naturalLanguageTriggers == null || aiConfig.naturalLanguageTriggers.isEmpty()) return false;
+        String msg = message.toLowerCase(java.util.Locale.ROOT);
+
+        // Reputation helper
+        DatapackDeity d = DatapackDeityManager.getDeity(deityId);
+        double rep = d != null ? d.getPlayerReputation(player) : 0.0;
+
+        // Per-player cooldown bucket
+        var ctx = com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.getOrCreateContext(player.getUUID(), player);
+        if (ctx == null) return false;
+        if (ctx.triggerCooldowns == null) ctx.triggerCooldowns = new java.util.HashMap<>();
+
+        for (AIDeityConfig.NLTrigger trig : aiConfig.naturalLanguageTriggers) {
+            try {
+                // Reputation gate
+                if (rep < trig.minReputation) continue;
+
+                // Cooldown gate per deity+trigger key
+                String key = deityId.toString() + "::" + (trig.id != null ? trig.id : Integer.toHexString(trig.hashCode()));
+                long last = ctx.triggerCooldowns.getOrDefault(key, 0L);
+                if (trig.cooldownSeconds > 0 && (System.currentTimeMillis() - last) < trig.cooldownSeconds * 1000L) continue;
+
+                // Match check: contains OR regex
+                boolean match = false;
+                if (trig.contains != null && !trig.contains.isEmpty()) {
+                    for (String kw : trig.contains) {
+                        if (kw != null && !kw.isEmpty() && msg.contains(kw.toLowerCase(java.util.Locale.ROOT))) { match = true; break; }
+                    }
+                }
+                if (!match && trig.regex != null && !trig.regex.isEmpty()) {
+                    for (String r : trig.regex) {
+                        try { if (msg.matches(r)) { match = true; break; } } catch (Exception ignored) {}
+                    }
+                }
+                if (!match) continue;
+
+                // Perform action
+                if ("offer_fate".equalsIgnoreCase(trig.action)) {
+                    tryOfferFateToPlayer(player, deityId, message);
+                } else if ("run_commands".equalsIgnoreCase(trig.action)) {
+                    java.util.List<String> cmds = new java.util.ArrayList<>();
+                    if (trig.params != null && trig.params.has("commands")) {
+                        com.google.gson.JsonArray arr = trig.params.getAsJsonArray("commands");
+                        for (com.google.gson.JsonElement e : arr) cmds.add(e.getAsString());
+                    }
+                    // Optional prayer_type routing for blessing-like NL triggers
+                    String prayerTypeParam = null;
+                    if (trig.params != null && trig.params.has("prayer_type")) {
+                        try { prayerTypeParam = trig.params.get("prayer_type").getAsString(); } catch (Exception ignored) {}
+                    }
+                    if ("blessing".equalsIgnoreCase(prayerTypeParam)) {
+                        DatapackDeity deityObj = DatapackDeityManager.getDeity(deityId);
+                        // If gating fails, provide polite feedback and do not execute
+                        if (!shouldAllowBlessing(player, deityObj, message)) {
+                            long remaining = getBlessingCooldownRemainingMs(player, deityId);
+                            if (remaining > 0) {
+                                player.sendSystemMessage(Component.literal(
+                                    "§e⟦ " + (deityObj != null ? deityObj.getName() : deityId.toString()) +
+                                    " ⟧ §7The divine energies still resonate from your last blessing. " +
+                                    "§cWait " + formatShortDuration(remaining) + " before requesting another."));
+                            } else {
+                                player.sendSystemMessage(Component.literal(
+                                    "§e⟦ " + (deityObj != null ? deityObj.getName() : deityId.toString()) +
+                                    " ⟧ §7Your standing does not currently merit this blessing."));
+                            }
+                        } else if (!cmds.isEmpty()) {
+                            executeCommands(player, deityId, cmds);
+                        }
+                    } else {
+                        if (!cmds.isEmpty()) executeCommands(player, deityId, cmds);
+                    }
+                } else if ("send_message".equalsIgnoreCase(trig.action)) {
+                    String text = trig.params != null && trig.params.has("text") ? trig.params.get("text").getAsString() : null;
+                    if (text != null && !text.isEmpty()) {
+                        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(text));
+                    }
+                } else if ("curse_target".equalsIgnoreCase(trig.action)) {
+                    // Apply configured curse effects to nearby opposing entities (by team/tag)
+                    try {
+                        double radius = 10.0;
+                        int maxTargets = 3;
+                        String includeTeam = null; // only affect entities on this team (optional)
+                        String excludeTeam = null; // skip entities on this team (optional)
+                        String requireTag = null;  // only affect entities with this entity tag (optional)
+                        String excludeTag = null;  // skip entities with this entity tag (optional)
+                        boolean opposingToPlayer = true; // default: target entities not on player's team
+
+                        if (trig.params != null) {
+                            if (trig.params.has("radius")) radius = trig.params.get("radius").getAsDouble();
+                            if (trig.params.has("max_targets")) maxTargets = Math.max(1, trig.params.get("max_targets").getAsInt());
+                            if (trig.params.has("team")) includeTeam = trig.params.get("team").getAsString();
+                            if (trig.params.has("not_team")) excludeTeam = trig.params.get("not_team").getAsString();
+                            if (trig.params.has("tag")) requireTag = trig.params.get("tag").getAsString();
+                            if (trig.params.has("not_tag")) excludeTag = trig.params.get("not_tag").getAsString();
+                            if (trig.params.has("opposing_to_player")) opposingToPlayer = trig.params.get("opposing_to_player").getAsBoolean();
+                        }
+
+                        final double fRadius = radius;
+                        final int fMaxTargets = maxTargets;
+                        final String fIncludeTeam = includeTeam;
+                        final String fExcludeTeam = excludeTeam;
+                        final String fRequireTag = requireTag;
+                        final String fExcludeTag = excludeTag;
+                        final boolean fOpposingToPlayer = opposingToPlayer;
+
+                        java.util.List<net.minecraft.world.entity.LivingEntity> targets = player.level().getEntitiesOfClass(
+                            net.minecraft.world.entity.LivingEntity.class,
+                            player.getBoundingBox().inflate(fRadius),
+                            e -> {
+                                if (e == player) return false;
+                                if (!e.isAlive()) return false;
+                                // Team filters
+                                net.minecraft.world.scores.Team et = e.getTeam();
+                                net.minecraft.world.scores.Team pt = player.getTeam();
+                                if (fIncludeTeam != null && (et == null || !fIncludeTeam.equals(et.getName()))) return false;
+                                if (fExcludeTeam != null && et != null && fExcludeTeam.equals(et.getName())) return false;
+                                if (fOpposingToPlayer) {
+                                    // Opposing means different non-null teams, or entity has explicit 'enemy' tag
+                                    boolean teamOpposing = (pt != null && et != null && pt != et);
+                                    boolean tagEnemy = e.getTags().contains("enemy");
+                                    // If player has no team, consider any entity with 'enemy' tag as opposing
+                                    if (pt == null) {
+                                        if (!tagEnemy) return false;
+                                    } else {
+                                        if (!(teamOpposing || tagEnemy)) return false;
+                                    }
+                                }
+                                // Tag filters
+                                if (fRequireTag != null && !e.getTags().contains(fRequireTag)) return false;
+                                if (fExcludeTag != null && e.getTags().contains(fExcludeTag)) return false;
+                                return true;
+                            }
+                        );
+
+                        if (!targets.isEmpty()) {
+                            // Deterministic order by distance
+                            targets.sort(java.util.Comparator.comparingDouble(t -> t.distanceToSqr(player)));
+                            if (targets.size() > fMaxTargets) targets = targets.subList(0, fMaxTargets);
+
+                            // Parse effects from params
+                            java.util.List<String> effectSpecs = new java.util.ArrayList<>();
+                            if (trig.params != null && trig.params.has("effects")) {
+                                com.google.gson.JsonArray effArr = trig.params.getAsJsonArray("effects");
+                                for (com.google.gson.JsonElement el : effArr) {
+                                    if (el.isJsonPrimitive()) {
+                                        // String like "minecraft:slowness 200 1" (duration seconds, amplifier)
+                                        effectSpecs.add(el.getAsString());
+                                    } else if (el.isJsonObject()) {
+                                        com.google.gson.JsonObject o = el.getAsJsonObject();
+                                        String id = o.has("id") ? o.get("id").getAsString() : "minecraft:slowness";
+                                        int duration = o.has("duration") ? o.get("duration").getAsInt() : 120; // seconds
+                                        int amp = o.has("amplifier") ? o.get("amplifier").getAsInt() : 0;
+                                        effectSpecs.add(id + " " + duration + " " + amp);
+                                    }
+                                }
+                            }
+                            if (effectSpecs.isEmpty()) {
+                                effectSpecs.add("minecraft:weakness 120 0"); // default
+                            }
+
+                            // Apply effects directly (avoid command selectors)
+                            for (net.minecraft.world.entity.LivingEntity target : targets) {
+                                for (String spec : effectSpecs) {
+                                    try {
+                                        String[] parts = spec.trim().split("\\s+");
+                                        if (parts.length == 0) continue;
+                                        net.minecraft.resources.ResourceLocation effId = new net.minecraft.resources.ResourceLocation(parts[0]);
+                                        net.minecraft.world.effect.MobEffect eff = net.minecraftforge.registries.ForgeRegistries.MOB_EFFECTS.getValue(effId);
+                                        if (eff == null) {
+                                            LOGGER.warn("Unknown mob effect '{}', skipping", effId);
+                                            continue;
+                                        }
+                                        int seconds = parts.length > 1 ? Integer.parseInt(parts[1]) : 120;
+                                        int amplifier = parts.length > 2 ? Integer.parseInt(parts[2]) : 0;
+                                        int ticks = Math.max(1, seconds * 20);
+                                        target.addEffect(new net.minecraft.world.effect.MobEffectInstance(eff, ticks, amplifier), player);
+                                    } catch (Exception ie) {
+                                        LOGGER.warn("Failed applying curse effect '{}': {}", spec, ie.getMessage());
+                                    }
+                                }
+                            }
+
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                                "§5✦ A shadow passes... §7(" + targets.size() + " foe" + (targets.size() == 1 ? "" : "s") + " afflicted)"));
+                        }
+                    } catch (Exception cex) {
+                        LOGGER.warn("Error executing curse_target NL action: {}", cex.getMessage());
+                    }
+                }
+
+                // Stamp cooldown
+                ctx.triggerCooldowns.put(key, System.currentTimeMillis());
+                return true; // consumed
+            } catch (Exception ex) {
+                LOGGER.warn("NL trigger error for deity {}: {}", deityId, ex.getMessage());
+            }
+        }
+        return false;
+    }
+
+    // ===== Fate Offer/Accept Flow =====
+    private static boolean handleFateOfferControl(ServerPlayer player, ResourceLocation deityId, String message) {
+        String msg = message.trim().toLowerCase(java.util.Locale.ROOT);
+        var ctx = com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.getOrCreateContext(player.getUUID(), player);
+        boolean hasOffer = ctx.pendingFateOfferTaskId != null && deityId.equals(ctx.pendingFateOfferDeity);
+
+        // Accept keywords
+        if (hasOffer && (msg.equals("yes") || msg.equals("sure") || msg.equals("accept") || msg.equals("okay") || msg.equals("ok") || msg.equals("yep") || msg.equals("y"))) {
+            assignOfferedFate(player);
+            return true;
+        }
+        // Decline keywords
+        if (hasOffer && (msg.equals("no") || msg.equals("nope") || msg.equals("decline") || msg.equals("not now") || msg.equals("later") || msg.equals("n"))) {
+            clearPendingOffer(ctx);
+            player.sendSystemMessage(Component.literal("§7Very well. Another time."));
+            return true;
+        }
+
+        // Explicit ask for a task/quest/fate – prompt an offer (still requires confirmation)
+        if (msg.matches(".*\\b(task|quest|fate|job|mission)\\b.*") && msg.matches(".*\\b(give|have|offer|assign|got|any)\\b.*")) {
+            tryOfferFateToPlayer(player, deityId, message);
+            return false; // continue normal flow
+        }
+
+        return false;
+    }
+
+    private static void clearPendingOffer(com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.EnhancedPlayerContext ctx) {
+        ctx.pendingFateOfferTaskId = null;
+        ctx.pendingFateOfferDeity = null;
+    }
+
+    private static void assignOfferedFate(ServerPlayer player) {
+        var ctx = com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.getOrCreateContext(player.getUUID(), player);
+        if (ctx.pendingFateOfferTaskId == null || ctx.pendingFateOfferDeity == null) return;
+
+        var cfg = AIDeityManager.getInstance().getAIConfig(ctx.pendingFateOfferDeity);
+        if (cfg == null || cfg.task_config == null) { clearPendingOffer(ctx); return; }
+        TaskSystemConfig.TaskTemplate tpl = null;
+        for (TaskSystemConfig.TaskTemplate t : cfg.task_config.availableTasks) {
+            if (ctx.pendingFateOfferTaskId.equals(t.taskId)) { tpl = t; break; }
+        }
+        if (tpl == null) { clearPendingOffer(ctx); return; }
+
+        // Assign fate
+        com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.assignTask(player, tpl.taskId, tpl.description, cfg.deity_id, tpl.reputationReward);
+        player.sendSystemMessage(Component.translatable("eidolonunchained.fate.assigned", tpl.description));
+        player.sendSystemMessage(Component.translatable("eidolonunchained.fate.reward", tpl.reputationReward));
+
+        // Cooldown stamp
+        ctx.lastFateOfferByDeity.put(cfg.deity_id.toString(), System.currentTimeMillis());
+        clearPendingOffer(ctx);
+    }
+
+    private static void tryOfferFateToPlayer(ServerPlayer player, ResourceLocation deityId, String playerMessage) {
+        AIDeityConfig cfg = AIDeityManager.getInstance().getAIConfig(deityId);
+        if (cfg == null || cfg.task_config == null || !cfg.task_config.enabled) return;
+
+        var ctx = com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.getOrCreateContext(player.getUUID(), player);
+        // Respect cooldown between offers for this deity
+        long last = ctx.lastFateOfferByDeity.getOrDefault(deityId.toString(), 0L);
+        long cdMillis = cfg.task_config.taskAssignmentBehavior.cooldownBetweenAssignmentsHours * 3600_000L;
+        if (System.currentTimeMillis() - last < cdMillis) return;
+
+        // Max active tasks gate
+        if (ctx.activeTasks.size() >= cfg.task_config.maxActiveTasks) return;
+
+        // Reputation threshold gate
+        DatapackDeity d = DatapackDeityManager.getDeity(deityId);
+        double reputation = d != null ? d.getPlayerReputation(player) : 0.0;
+        if (reputation < cfg.task_config.taskAssignmentBehavior.minReputationForAutoAssign) return;
+
+        // More sophisticated detection: only offer new fates for explicit requests
+        boolean explicitRequest = playerMessage.toLowerCase(java.util.Locale.ROOT)
+            .matches(".*\\b(give|have|offer|assign|got|any|new)\\b.*\\b(task|quest|fate|job|mission)\\b.*");
+
+        // Don't offer fates for questions about existing ones
+        boolean askingAboutExisting = playerMessage.toLowerCase(java.util.Locale.ROOT)
+            .matches(".*\\b(recall|remember|current|my|what|which|about|status|progress)\\b.*\\b(task|quest|fate|job|mission)\\b.*");
+
+        if (askingAboutExisting) return; // Let AI respond conversationally instead
+
+        // Only offer if explicitly requesting new tasks or by probability
+        float p = cfg.task_config.taskAssignmentBehavior.autoAssignProbability;
+        float roll = new java.util.Random().nextFloat();
+        if (!explicitRequest && roll > p) return;
+
+        // Select eligible fate and offer (not assign)
+        TaskSystemConfig.TaskTemplate candidate = selectEligibleFate(player, cfg);
+        if (candidate == null) return;
+
+        ctx.pendingFateOfferTaskId = candidate.taskId;
+        ctx.pendingFateOfferDeity = deityId;
+        player.sendSystemMessage(Component.literal("§6I have a task for you: §e" + candidate.description));
+        player.sendSystemMessage(Component.literal("§7Reward: §6" + candidate.reputationReward + " reputation"));
+        player.sendSystemMessage(Component.literal("§7Do you accept? (yes/no)"));
+    }
+
+    private static TaskSystemConfig.TaskTemplate selectEligibleFate(ServerPlayer player, AIDeityConfig cfg) {
+        java.util.List<TaskSystemConfig.TaskTemplate> pool = new java.util.ArrayList<>();
+        var ctx = com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.getOrCreateContext(player.getUUID(), player);
+        for (TaskSystemConfig.TaskTemplate t : cfg.task_config.availableTasks) {
+            if (ctx.activeTasks.containsKey(t.taskId)) continue; // avoid duplicates
+            if (isFateEligibleForOffer(player, t)) pool.add(t);
+        }
+        if (pool.isEmpty()) return null;
+        return pool.get(new java.util.Random().nextInt(pool.size()));
+    }
+
+    private static boolean isFateEligibleForOffer(ServerPlayer player, TaskSystemConfig.TaskTemplate tpl) {
+        // Progression tier gate with "none" bypass
+        if (tpl.progressionTier != null && !tpl.progressionTier.isEmpty() && !"none".equalsIgnoreCase(tpl.progressionTier)) {
+            var c = com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.getOrCreateContext(player.getUUID(), player);
+            if (c == null || !c.unlockedProgressions.contains(tpl.progressionTier)) return false;
+        }
+        // ai_assignment_context gating
+        if (tpl.aiAssignmentContext != null && !tpl.aiAssignmentContext.isEmpty()) {
+            try {
+                com.google.gson.JsonObject rules = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON.fromJson(tpl.aiAssignmentContext, com.google.gson.JsonObject.class);
+                if (rules.has("min_reputation")) {
+                    int minRep = rules.get("min_reputation").getAsInt();
+                    DatapackDeity deity = DatapackDeityManager.getDeity(getDeityForTask(tpl));
+                    double rep = deity != null ? deity.getPlayerReputation(player) : 0.0;
+                    if (rep < minRep) return false;
+                }
+                if (rules.has("required_dimension")) {
+                    String reqDim = rules.get("required_dimension").getAsString();
+                    if (!player.level().dimension().location().toString().equals(reqDim)) return false;
+                }
+                if (rules.has("required_items")) {
+                    com.google.gson.JsonArray items = rules.getAsJsonArray("required_items");
+                    for (com.google.gson.JsonElement itemEl : items) {
+                        com.google.gson.JsonObject obj = itemEl.getAsJsonObject();
+                        String itemId = obj.get("item").getAsString();
+                        int count = obj.has("count") ? obj.get("count").getAsInt() : 1;
+                        if (!hasItem(player, itemId, count)) return false;
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+        return true;
+    }
+
+    private static ResourceLocation getDeityForTask(TaskSystemConfig.TaskTemplate tpl) {
+        for (AIDeityConfig c : AIDeityManager.getInstance().getAllConfigs()) {
+            if (c.task_config != null && c.task_config.availableTasks.contains(tpl)) return c.deity_id;
+        }
+        return null;
+    }
+
+    private static boolean hasItem(ServerPlayer player, String itemId, int count) {
+        int total = 0;
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            net.minecraft.world.item.ItemStack stack = player.getInventory().getItem(i);
+            if (net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(stack.getItem()).toString().equals(itemId)) {
+                total += stack.getCount();
+                if (total >= count) return true;
+            }
+        }
+        return total >= count;
+    }
     
     /**
      * Process regular response handling (separated for hybrid integration)
@@ -495,8 +878,8 @@ public class DeityChat {
                 return;
             }
             
-            // Clean response for display (remove commands and technical mod IDs)
-            String cleanedResponse = CommandStringUtils.safeChatDisplay(cleanModIdLeakage(rawResponse));
+            // Clean response for display (remove commands/triggers and technical mod IDs)
+            String cleanedResponse = CommandStringUtils.safeChatDisplay(cleanModIdLeakage(removeAIMarkup(rawResponse)));
             
             // Add response to history (using cleaned version)
             if (history != null) {
@@ -538,8 +921,50 @@ public class DeityChat {
                 }
             }
             
+            // Check if this is a fate completion response for auto-close
+            boolean isFateCompletion = false;
+            com.google.gson.JsonObject autoCloseConfig = null;
+
+            // Check if the original message was a fate completion
+            if (history != null && !history.isEmpty()) {
+                String lastPlayerMessage = "";
+                for (int i = history.size() - 1; i >= 0; i--) {
+                    String msg = history.get(i);
+                    if (msg.startsWith("Player: ")) {
+                        lastPlayerMessage = msg.substring("Player: ".length());
+                        break;
+                    }
+                }
+
+                if (lastPlayerMessage.startsWith("FATE_COMPLETED:")) {
+                    isFateCompletion = true;
+                    String taskId = lastPlayerMessage.substring("FATE_COMPLETED:".length());
+
+                    // Get auto-close configuration from fate data
+                    try {
+                        com.google.gson.JsonObject fateData = com.bluelotuscoding.eidolonunchained.data.FateDataLoader.getFateData(taskId);
+                        if (fateData != null && fateData.has("ai_assignment_context")) {
+                            autoCloseConfig = fateData.getAsJsonObject("ai_assignment_context");
+                        }
+                    } catch (Exception e) {
+                        LOGGER.error("Error getting auto-close config for fate {}: {}", taskId, e.getMessage());
+                    }
+                }
+            }
+
             // Send deity response to player using prominent title/subtitle display
             sendDeityResponse(player, deity.getName(), cleanedResponse, onComplete);
+
+            // Parse AI-decided triggers AFTER sending narrative to keep chat snappy
+            try {
+                String nlMode = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.naturalLanguageTriggerMode.get();
+                boolean allowAiTriggers = "ai_only".equalsIgnoreCase(nlMode) || "both".equalsIgnoreCase(nlMode);
+                if (allowAiTriggers) {
+                    handleAITriggersFromResponse(player, deityId, rawResponse);
+                }
+            } catch (Exception ex) {
+                LOGGER.warn("Failed to handle AI triggers: {}", ex.getMessage());
+            }
             
             // Award reputation for meaningful conversations using Eidolon's reputation system
             player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE).ifPresent(reputation -> {
@@ -567,6 +992,81 @@ public class DeityChat {
         } catch (Exception e) {
             LOGGER.error("Error in processRegularResponse: {}", e.getMessage(), e);
             player.sendSystemMessage(Component.translatable("eidolonunchained.chat.connection_falters"));
+        }
+    }
+
+    // Remove any AI control markup from text shown to players
+    private static String removeAIMarkup(String text) {
+        if (text == null) return null;
+        // Remove [COMMAND:...], [ACTION:...], [TRIGGER:...]
+        return text.replaceAll("\\[(?:COMMAND|ACTION|TRIGGER):.*?]", "");
+    }
+
+    // Parse and perform AI-decided triggers included in AI responses
+    private static void handleAITriggersFromResponse(ServerPlayer player, ResourceLocation deityId, String rawResponse) {
+        if (rawResponse == null || rawResponse.isEmpty()) return;
+
+        // Collect all [TRIGGER:...] occurrences
+        java.util.regex.Pattern p = java.util.regex.Pattern.compile("\\[TRIGGER:(.*?)]", java.util.regex.Pattern.CASE_INSENSITIVE);
+        java.util.regex.Matcher m = p.matcher(rawResponse);
+
+        // Avoid spamming: handle at most one trigger per response
+        if (!m.find()) return;
+        String payload = m.group(1).trim();
+        if (payload.isEmpty()) return;
+
+        // Parse action and optional key=value pairs (very lightweight parser)
+        String action;
+        java.util.Map<String, String> kv = new java.util.HashMap<>();
+        int space = payload.indexOf(' ');
+        if (space > 0) {
+            action = payload.substring(0, space).trim();
+            String rest = payload.substring(space + 1).trim();
+            // Parse key=value tokens; values may be quoted
+            java.util.regex.Matcher kvMatcher = java.util.regex.Pattern
+                .compile("(\\w+)=\\\"([^\\\"]*)\\\"|(\\w+)=([^;]+)")
+                .matcher(rest);
+            while (kvMatcher.find()) {
+                if (kvMatcher.group(1) != null) {
+                    kv.put(kvMatcher.group(1), kvMatcher.group(2));
+                } else {
+                    kv.put(kvMatcher.group(3), kvMatcher.group(4).trim());
+                }
+            }
+        } else {
+            action = payload;
+        }
+
+        // Respect existing pending offers to avoid duplicates
+        var ctx = com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.getOrCreateContext(player.getUUID(), player);
+        boolean hasOffer = ctx != null && ctx.pendingFateOfferTaskId != null && deityId.equals(ctx.pendingFateOfferDeity);
+
+        switch (action.toLowerCase(java.util.Locale.ROOT)) {
+            case "offer_fate":
+                if (!hasOffer) {
+                    tryOfferFateToPlayer(player, deityId, "(ai-trigger)");
+                }
+                break;
+            case "send_message": {
+                String text = kv.getOrDefault("text", "");
+                if (!text.isEmpty()) {
+                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal(text));
+                }
+                break;
+            }
+            case "run_commands": {
+                String cmds = kv.getOrDefault("commands", "");
+                if (!cmds.isEmpty()) {
+                    java.util.List<String> list = new java.util.ArrayList<>();
+                    for (String c : cmds.split(";")) {
+                        if (c != null && !c.trim().isEmpty()) list.add(c.trim());
+                    }
+                    if (!list.isEmpty()) executeCommands(player, deityId, list);
+                }
+                break;
+            }
+            default:
+                LOGGER.debug("Unknown AI trigger action: {}", action);
         }
     }
     
@@ -698,7 +1198,20 @@ public class DeityChat {
         } catch (Exception e) {
             LOGGER.warn("Failed to build inter-deity context: {}", e.getMessage());
         }
-        
+
+        // 🐺 ADD NEARBY MOB AWARENESS CONTEXT
+        if (aiConfig != null && aiConfig.patron_config != null && !aiConfig.patron_config.supportedMobIds.isEmpty()) {
+            try {
+                String mobContext = buildNearbyMobContext(player, aiConfig.patron_config.supportedMobIds);
+                if (!mobContext.isEmpty()) {
+                    prompt.append("\n\n=== NEARBY CREATURES ===\n");
+                    prompt.append(mobContext);
+                }
+            } catch (Exception e) {
+                LOGGER.warn("Failed to build mob awareness context: {}", e.getMessage());
+            }
+        }
+
         // Add detailed player context using Universal AI Context Builder (for ALL providers)
         try {
             String playerContext = com.bluelotuscoding.eidolonunchained.ai.UniversalAIContextBuilder
@@ -734,8 +1247,54 @@ public class DeityChat {
             prompt.append("\n\nThis is your first conversation with this player.\n");
         }
         
-        // Add current player message with emphasis
-        prompt.append("\n\nPlayer's Current Message: \"").append(currentMessage).append("\"\n");
+        // Optionally expose blessing/trigger cooldowns so AI can avoid promising actions on cooldown
+        if (com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.exposeCooldownsInAIContext.get()) {
+            long remaining = getBlessingCooldownRemainingMs(player, deityId);
+            prompt.append("\n=== COOLDOWNS ===\n");
+            if (remaining > 0) {
+                prompt.append("Blessing cooldown active: ").append(formatShortDuration(remaining)).append(" remaining.\n");
+                prompt.append("If the player asks for a blessing while on cooldown, politely inform them to wait that long.\n");
+            } else {
+                prompt.append("Blessing cooldown: ready now.\n");
+            }
+        }
+
+        // Check if this is a fate completion message
+        if (currentMessage.startsWith("FATE_COMPLETED:")) {
+            String taskId = currentMessage.substring("FATE_COMPLETED:".length());
+            prompt.append("\n\n=== FATE COMPLETION CELEBRATION ===\n");
+            prompt.append("SPECIAL CONTEXT: The player has just completed a divine fate/task: ").append(taskId).append("\n");
+
+            // Get completion phrases from fate data if available
+            try {
+                com.google.gson.JsonObject fateData = com.bluelotuscoding.eidolonunchained.data.FateDataLoader.getFateData(taskId);
+                if (fateData != null) {
+                    prompt.append("Fate Description: ").append(fateData.get("description").getAsString()).append("\n");
+
+                    if (fateData.has("ai_assignment_context") &&
+                        fateData.getAsJsonObject("ai_assignment_context").has("completion_phrases")) {
+                        com.google.gson.JsonArray phrases = fateData.getAsJsonObject("ai_assignment_context")
+                                                                   .getAsJsonArray("completion_phrases");
+                        prompt.append("Suggested completion phrases: ");
+                        for (int i = 0; i < phrases.size(); i++) {
+                            if (i > 0) prompt.append(", ");
+                            prompt.append("\"").append(phrases.get(i).getAsString()).append("\"");
+                        }
+                        prompt.append("\n");
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error getting fate completion data: {}", e.getMessage());
+            }
+
+            prompt.append("RESPONSE REQUIRED: Acknowledge the completion with appropriate celebration, pride, and perhaps hints about future paths. ");
+            prompt.append("The player has proven their dedication and deserves recognition. Keep it conversational and in character.\n");
+            prompt.append("Player's Current Message: \"[Fate automatically completed - respond with celebration]\"");
+        } else {
+            // Add current player message with emphasis
+            prompt.append("\n\nPlayer's Current Message: \"").append(currentMessage).append("\"");
+        }
+        prompt.append("\n");
         
         // Enhanced proactive assistance with configuration-driven guidance
         prompt.append("\n\n=== RESPONSE INSTRUCTIONS ===\n");
@@ -998,11 +1557,29 @@ public class DeityChat {
     private static void sendDeityResponse(ServerPlayer player, String deityName, String message) {
         sendDeityResponse(player, deityName, message, null);
     }
-    
+
     /**
-     * Send deity response with improved formatting and display options with optional completion callback
+     * Send deity response with improved formatting and display options with optional completion callback and auto-close
      */
     private static void sendDeityResponse(ServerPlayer player, String deityName, String message, Runnable onComplete) {
+
+        // Generate TTS audio for deity response (async, non-blocking)
+        ResourceLocation currentDeityId = activeConversations.get(player.getUUID());
+        if (currentDeityId != null) {
+            try {
+                com.bluelotuscoding.eidolonunchained.ai.TTSManager.getInstance()
+                    .generateAndSendTTS(player, message, currentDeityId.getPath())
+                    .exceptionally(throwable -> {
+                        LOGGER.debug("TTS generation failed for player {}: {}",
+                            player.getName().getString(), throwable.getMessage());
+                        return false;
+                    });
+            } catch (Exception e) {
+                LOGGER.debug("Error initiating TTS for player {}: {}",
+                    player.getName().getString(), e.getMessage());
+            }
+        }
+
         // Get display configuration
         String displayMethod = EidolonUnchainedConfig.COMMON.displayMethod.get();
         boolean useProminentDisplay = EidolonUnchainedConfig.COMMON.useProminentDisplay.get();
@@ -1088,8 +1665,8 @@ public class DeityChat {
      * Breaks messages into complete sentences and displays each sentence sequentially
      * Starts new action bar lines at sentence endings (periods, exclamation points, question marks)
      */
-    private static void startActionBarTypingAnimation(ServerPlayer player, String deityName, String message, 
-                                                    int typingSpeed, int sentenceDelay, int fadeDelay, 
+    private static void startActionBarTypingAnimation(ServerPlayer player, String deityName, String message,
+                                                    int typingSpeed, int sentenceDelay, int fadeDelay,
                                                     int maxWidth, boolean centerText, boolean wrapText, Runnable onComplete) {
         
         // Split message into action bar-friendly chunks
@@ -1111,7 +1688,7 @@ public class DeityChat {
      * Display message chunks sequentially in action bar with typing animation
      */
     private static void startSequentialActionBarDisplay(ServerPlayer player, String deityName, List<String> messageChunks,
-                                                       int typingSpeed, int sentenceDelay, int fadeDelay, 
+                                                       int typingSpeed, int sentenceDelay, int fadeDelay,
                                                        int maxWidth, boolean centerText, Runnable onComplete) {
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
@@ -2358,6 +2935,38 @@ public class DeityChat {
     
     // Static map to track blessing cooldowns
     private static final java.util.Map<String, Long> lastBlessingTimes = new java.util.concurrent.ConcurrentHashMap<>();
+
+    
+
+    /**
+     * Public helper for AI context: get remaining blessing cooldown (ms) for this player/deity.
+     * Returns 0 when available now or if no cooldown is tracked yet.
+     */
+    public static long getBlessingCooldownRemainingMs(ServerPlayer player, ResourceLocation deityId) {
+        try {
+            if (player == null || deityId == null) return 0L;
+            DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
+            if (deity == null) return 0L;
+            String progressionLevel = getDynamicProgressionLevel(deity, player);
+            long cooldownMs = getBlessingCooldown(progressionLevel);
+            String cooldownKey = player.getUUID() + "_" + deityId;
+            Long last = lastBlessingTimes.get(cooldownKey);
+            if (last == null) return 0L;
+            long elapsed = System.currentTimeMillis() - last;
+            long remaining = cooldownMs - elapsed;
+            return Math.max(remaining, 0L);
+        } catch (Exception ignored) { return 0L; }
+    }
+
+    /** Format milliseconds as compact Xm Ys string for prompts */
+    public static String formatShortDuration(long ms) {
+        if (ms <= 0) return "0s";
+        long totalSeconds = ms / 1000L;
+        long minutes = totalSeconds / 60L;
+        long seconds = totalSeconds % 60L;
+        if (minutes > 0) return minutes + "m " + seconds + "s";
+        return seconds + "s";
+    }
     
     /**
      * Build comprehensive AI context with full game state awareness
@@ -2452,6 +3061,70 @@ public class DeityChat {
         
         return aiContext.toString();
     }
-    
-    
+
+    /**
+     * Build contextual information about nearby mobs that this deity supports/controls
+     */
+    private static String buildNearbyMobContext(ServerPlayer player, java.util.List<String> supportedMobIds) {
+        StringBuilder context = new StringBuilder();
+
+        // Search for nearby entities within 32 blocks
+        double searchRadius = 32.0;
+        java.util.List<net.minecraft.world.entity.Entity> nearbyEntities = player.level().getEntities(
+            player,
+            player.getBoundingBox().inflate(searchRadius),
+            entity -> entity instanceof net.minecraft.world.entity.LivingEntity
+        );
+
+        java.util.Map<String, Integer> supportedMobCounts = new java.util.HashMap<>();
+        java.util.Map<String, Integer> otherMobCounts = new java.util.HashMap<>();
+
+        for (net.minecraft.world.entity.Entity entity : nearbyEntities) {
+            if (entity instanceof net.minecraft.world.entity.LivingEntity livingEntity) {
+                String entityId = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE
+                    .getKey(livingEntity.getType()).toString();
+
+                if (supportedMobIds.contains(entityId)) {
+                    supportedMobCounts.put(entityId, supportedMobCounts.getOrDefault(entityId, 0) + 1);
+                } else {
+                    // Only track hostile mobs and important entities for context
+                    if (livingEntity instanceof net.minecraft.world.entity.monster.Monster ||
+                        livingEntity instanceof net.minecraft.world.entity.animal.Animal ||
+                        livingEntity instanceof net.minecraft.world.entity.npc.AbstractVillager) {
+                        otherMobCounts.put(entityId, otherMobCounts.getOrDefault(entityId, 0) + 1);
+                    }
+                }
+            }
+        }
+
+        // Add supported creatures context
+        if (!supportedMobCounts.isEmpty()) {
+            context.append("YOUR SUPPORTED CREATURES NEARBY:\n");
+            for (java.util.Map.Entry<String, Integer> entry : supportedMobCounts.entrySet()) {
+                String entityName = entry.getKey().replace("minecraft:", "");
+                context.append("- ").append(entry.getValue()).append(" ").append(entityName);
+                if (entry.getValue() > 1) context.append("s");
+                context.append(" (under your divine influence)\n");
+            }
+            context.append("IMPORTANT: These creatures are connected to your divine essence. ");
+            context.append("You can sense their presence and may reference them in conversation. ");
+            context.append("They represent your power in the mortal realm.\n\n");
+        }
+
+        // Add other notable creatures for context
+        if (!otherMobCounts.isEmpty() && otherMobCounts.size() <= 5) { // Limit to avoid spam
+            context.append("OTHER CREATURES NEARBY:\n");
+            for (java.util.Map.Entry<String, Integer> entry : otherMobCounts.entrySet()) {
+                String entityName = entry.getKey().replace("minecraft:", "");
+                context.append("- ").append(entry.getValue()).append(" ").append(entityName);
+                if (entry.getValue() > 1) context.append("s");
+                context.append("\n");
+            }
+            context.append("You are aware of these creatures but they are not directly under your influence.\n");
+        }
+
+        return context.toString();
+    }
+
+
 }

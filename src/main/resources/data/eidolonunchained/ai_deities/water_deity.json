@@ -17,6 +17,10 @@
         "minecraft:ocean": "The vast waters here resonate with your deepest essence.",
         "minecraft:river": "These flowing currents mirror your eternal movement.",
         "minecraft:frozen_ocean": "Even in ice, your waters hold their sacred power."
+      },
+      "environment": {
+        "underground": "Even beneath stone, hidden springs and seeped waters answer your call.",
+        "high_altitude": "Among mist and cloud, your tides still move with sovereign grace."
       }
     }
   },
@@ -58,7 +62,7 @@
         "effect give {player} minecraft:water_breathing 1200 0",
         "effect give {player} minecraft:regeneration 600 1",
         "effect give {player} minecraft:resistance 600 1",
-        "effect give {player} minecraft:dolphin_grace 600 1",
+  "effect give {player} minecraft:dolphins_grace 600 1",
         "effect give {player} minecraft:speed 600 1"
       ],
       "reputation_required": 15,
@@ -71,24 +75,140 @@
   "api_settings": {
     "temperature": 0.7,
     "max_tokens": 400,
-    "timeout_seconds": 30
+    "timeout_seconds": 30,
+    "generation_config": {
+      "temperature": 0.7,
+      "topK": 40,
+      "topP": 0.9,
+      "maxOutputTokens": 400
+    },
+    "safety_settings": {
+      "harassment": "BLOCK_MEDIUM_AND_ABOVE",
+      "hate_speech": "BLOCK_MEDIUM_AND_ABOVE",
+      "sexually_explicit": "BLOCK_MEDIUM_AND_ABOVE",
+      "dangerous_content": "BLOCK_MEDIUM_AND_ABOVE"
+    }
+  },
+
+  "tts_config": {
+    "voice_id": "water_nymph",
+    "backup_voice": "sophia",
+    "pitch": 1.0,
+    "speed": 0.9,
+    "volume": 1.0,
+    "emotion": "serene",
+    "accent": "oceanic",
+    "emphasis_level": 0,
+    "enabled": false,
+    "allow_player_override": true,
+    "funding_preference": "player_first",
+    "voice_aliases": {
+      "ocean_spirit": "female-flowing-1",
+      "tidal_whisper": "female-light-1",
+      "depths_call": "female-deep-1"
+    },
+    "reputation_voices": {
+      "0": "female-light-1",
+      "25": "female-flowing-1",
+      "75": "female-flowing-divine-1"
+    },
+    "time_voices": {
+      "day": "female-flowing-1",
+      "night": "female-deep-1"
+    },
+    "biome_voices": {
+      "minecraft:ocean": "female-flowing-1",
+      "minecraft:deep_ocean": "female-deep-1",
+      "minecraft:river": "female-light-1",
+      "minecraft:beach": "female-flowing-1"
+    },
+    "advanced_params": {
+      "water_echo": 0.3,
+      "tidal_resonance": 0.2,
+      "depth_filter": true
+    }
   },
   
   "patron_config": {
     "requires_patron_status": "any",
     "allied_deities": ["eidolonunchained:earth_deity"],
     "neutral_deities": ["eidolonunchained:air_deity"],
-    "deity_opinions": {
+  "deity_opinions": {
       "eidolonunchained:earth_deity": "Terra provides the vessels that contain my sacred waters. Together we nurture all growing things.",
       "eidolonunchained:fire_deity": "Ignis's flames can boil my waters, but steam returns as rain. We balance creation and change."
+    },
+    "cross_deity_interactions": {
+      "player_serves_ally": "Allies who respect the flow find safe harbors.",
+      "player_serves_enemy": "Riptides meet those who force the currents.",
+      "player_serves_neutral": "Tides turn—choose with grace, and I'll bear you onward.",
+      "mentions_allied_deity": "Stone banks guide rivers; together we nourish life.",
+      "mentions_enemy_deity": "Boiling wrath cools; balance returns with time."
+    },
+    "conversation_rules": {
+      "follower_restrictions": {
+        "can_speak_to_enemies": true,
+        "reputation_bonus_for_followers": 1
+      },
+      "enemy_restrictions": {
+        "reputation_penalty_on_contact": 0,
+        "hostile_response_probability": 0.05
+      }
     },
     "follower_personality_modifiers": {
       "Tide Touched": "A new soul learning water's wisdom, deserving patient guidance.",
       "Wave Walker": "A dedicated seeker growing wise in the tides' ways.",
       "Guardian of the Depths": "A trusted protector who understands water's sacred mysteries.",
-      "Tide Master": "A master of flowing wisdom, blessed with deep ocean authority.", 
+      "Tide Master": "A master of flowing wisdom, blessed with deep ocean authority.",
       "Ocean Sovereign": "Your chosen sovereign of waters, ultimate master of all tides.",
       "default": "A faithful seeker walking the flowing paths of water wisdom."
-    }
+    },
+
+    "assignsPlayersToTeam": true,
+    "teamName": "Tide Walkers",
+    "teamColor": "blue",
+
+    "supportedMobIds": [
+      "minecraft:dolphin",
+      "minecraft:turtle",
+      "minecraft:squid",
+      "minecraft:glow_squid",
+      "minecraft:cod",
+      "minecraft:salmon",
+      "minecraft:tropical_fish",
+      "minecraft:pufferfish",
+      "minecraft:axolotl",
+      "minecraft:guardian",
+      "minecraft:elder_guardian"
+    ],
+    "friendlyFire": false
   }
+  ,
+  "natural_language_triggers": [
+    {
+      "id": "breathe_water",
+      "contains": ["drowning", "can't breathe", "underwater"],
+      "min_reputation": 5,
+      "cooldown_seconds": 120,
+      "action": "run_commands",
+      "params": { "prayer_type": "blessing", "commands": [
+        "effect give {player} minecraft:water_breathing 600 0"
+      ]}
+    },
+    {
+      "id": "ocean_journey",
+      "contains": ["long swim", "cross the ocean"],
+      "min_reputation": 15,
+      "cooldown_seconds": 180,
+      "action": "run_commands",
+      "params": { "prayer_type": "blessing", "commands": [
+        "effect give {player} minecraft:dolphins_grace 300 0"
+      ]}
+    },
+    {
+      "id": "ask_task",
+      "contains": ["task", "quest", "fate"],
+      "cooldown_seconds": 60,
+      "action": "offer_fate"
+    }
+  ]
 }

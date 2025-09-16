@@ -1,0 +1,34 @@
+{
+  "linked_deity": "eidolonunchained:nature_deity",
+  "task_id": "rite_of_growth",
+  "display_name": "Rite of Growth",
+  "description": "Perform the growth patronage ritual to attune with living cycles.",
+  "progression_tier": "none",
+  "requirements": [
+    { "type": "complete_ritual", "rituals": [{ "ritual_id": "eidolonunchained:growth_patronage_ritual", "count": 1, "success_required": true }] }
+  ],
+  "rewards": {
+    "reputation": 8,
+    "commands": [
+      "title {player} title {\"text\":\"Roots take hold in your spirit\",\"color\":\"green\"}",
+      "playsound minecraft:block.composter.ready player {player} ~ ~ ~ 0.7 1.0",
+      "give {player} minecraft:oak_sapling 4"
+    ]
+  },
+  "progression_unlock": "nature_initiate",
+  "cooldown_hours": 0,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 0,
+      "max_reputation": 20,
+      "auto_assign_probability": 0.5,
+      "min_reputation_for_auto_assign": 0
+    },
+    "assignment_prompt": "Invite the seeker to sow life’s oath in the Rite of Growth.",
+    "completion_phrases": [
+      "Verdant whispers answer your vow.",
+      "Life stirs around you."
+    ]
+  }
+}

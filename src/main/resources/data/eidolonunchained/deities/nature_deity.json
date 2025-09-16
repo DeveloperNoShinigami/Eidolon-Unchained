@@ -11,17 +11,31 @@
     "max_reputation": 100,
     "stages": [
       {
-        "id": "nature_initiate",
+        "id": "nature_touched",
         "reputation": 0,
         "major": false,
-        "title": "Nature Initiate",
+        "title": "Nature Touched",
         "description": "A soul newly awakened to nature's call",
         "rewards": [
           "give @s minecraft:oak_sapling 4",
           "give @s minecraft:bone_meal 8",
           "effect give @s minecraft:saturation 300 0",
-          "title @s title {\"text\":\"Nature Initiate\",\"color\":\"green\"}",
+          "title @s title {\"text\":\"Nature Touched\",\"color\":\"green\"}",
           "playsound minecraft:block.grass.break master @s ~ ~ ~ 0.5 1.2"
+        ]
+      },
+      {
+        "id": "nature_initiate",
+        "reputation": 15,
+        "major": false,
+        "title": "Nature Initiate",
+        "description": "One who has pledged to nurture growth",
+        "rewards": [
+          "give @s minecraft:oak_sapling 8",
+          "give @s minecraft:bone_meal 16",
+          "effect give @s minecraft:regeneration 300 0",
+          "title @s title {\"text\":\"Nature Initiate\",\"color\":\"dark_green\"}",
+          "playsound minecraft:block.composter.ready master @s ~ ~ ~ 0.6 1.0"
         ]
       },
       {

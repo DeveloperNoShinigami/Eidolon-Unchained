@@ -36,9 +36,7 @@ import java.util.function.Supplier;
  */
 public class DatapackSyncPacket {
     // Custom Gson instance with Optional support to avoid reflection issues
-    private static final Gson GSON = new GsonBuilder()
-        .registerTypeAdapterFactory(new OptionalTypeAdapterFactory())
-        .create();
+    private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
 
     /**
      * Custom type adapter factory to handle Optional fields without reflection

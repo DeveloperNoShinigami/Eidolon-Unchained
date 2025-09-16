@@ -261,4 +261,23 @@ public class AIResponseProcessor {
             Commands executed silently: regeneration + resistance effects
             """;
     }
+
+    /**
+     * Guidance for AI-driven trigger decisions embedded in responses
+     */
+    public static String getTriggerMarkupGuide() {
+        return """
+            AI DECISION TRIGGERS (HIGH-LEVEL INTENT):
+            You can decide to trigger game systems based on what the player said by including trigger markup:
+
+            [TRIGGER:offer_fate] - Politely offer an appropriate fate/quest if the player seems ready or asks.
+            [TRIGGER:send_message text=\"short in-world hint or warning\"] - Send a short, immersive hint.
+            [TRIGGER:run_commands commands=\"/effect give {player} minecraft:resistance 300 1; /weather clear 6000\"] - Suggest helpful utility actions.
+
+            IMPORTANT:
+            - Triggers are intent signals. The game will validate all gating, cooldowns, and safety.
+            - Keep triggers to at most one per message. Prefer offer_fate when the player asks for a task/quest.
+            - Never expose the markup to the player; combine with narrative text naturally.
+        """;
+    }
 }

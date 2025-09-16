@@ -1,0 +1,39 @@
+{
+  "linked_deity": "eidolonunchained:air_deity",
+  "task_id": "air_wind_lord",
+  "display_name": "Wind Lord",
+  "description": "Command every breeze and gale as the crowned lord of winds",
+  "progression_tier": "wind_lord",
+  "requirements": [
+    "kill_entities:minecraft:phantom:8",
+    "use_items:minecraft:firework_rocket:32",
+    { "type": "location", "condition": "y>220" }
+  ],
+  "rewards": {
+    "reputation": 18,
+    "commands": [
+      "give {player} minecraft:elytra 1",
+      "give {player} minecraft:shulker_shell 2",
+      "effect give {player} minecraft:slow_falling 1800 0",
+      "effect give {player} minecraft:speed 1800 2",
+      "tellraw {player} {\"text\":\"\ud83d\udca8 You bear the mantle of the winds - rise, Wind Lord!\",\"color\":\"yellow\"}"
+    ],
+    "progression_unlock": "wind_lord"
+  },
+  "unlocked_progressions": ["storm_rider"],
+  "cooldown_hours": 48,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 50,
+      "unlocked_progressions": ["storm_rider"],
+      "auto_assign_probability": 0.15,
+      "min_reputation_for_auto_assign": 60
+    },
+    "assignment_prompt": "Wear the sky as your cloak and make the four winds heed your name.",
+    "completion_phrases": [
+      "Every gust carries your will.",
+      "Clouds circle to honor your reign."
+    ]
+  }
+}

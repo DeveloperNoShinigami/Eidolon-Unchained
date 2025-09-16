@@ -26,6 +26,19 @@
         ]
       },
       {
+        "id": "twilight_initiate",
+        "reputation": 15,
+        "major": false,
+        "title": "Twilight Initiate",
+        "description": "One who has pledged to walk between dawn and dusk",
+        "rewards": [
+          "give @s minecraft:glow_ink_sac 2",
+          "effect give @s minecraft:night_vision 300 0",
+          "title @s title {\"text\":\"Twilight Initiate\",\"color\":\"gray\"}",
+          "playsound minecraft:block.enchantment_table.use master @s ~ ~ ~ 0.6 1.0"
+        ]
+      },
+      {
         "id": "twilight_walker",
         "reputation": 25,
         "major": false,

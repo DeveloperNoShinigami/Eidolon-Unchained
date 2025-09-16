@@ -17,6 +17,10 @@
         "minecraft:mountains": "These soaring peaks touch the domain where your winds reign supreme.",
         "minecraft:windswept_hills": "The constant winds here sing your eternal song of freedom.",
         "minecraft:end_highlands": "In this alien sky, your winds dance with otherworldly power."
+      },
+      "environment": {
+        "underground": "Even in caverns, pockets of air carry whispers of your freedom.",
+        "high_altitude": "At great heights, your gales exult, urging mortals to soar."
       }
     }
   },
@@ -72,25 +76,127 @@
   "api_settings": {
     "temperature": 0.9,
     "max_tokens": 400,
-    "timeout_seconds": 30
+    "timeout_seconds": 30,
+    "generation_config": {
+      "temperature": 0.9,
+      "topK": 40,
+      "topP": 0.9,
+      "maxOutputTokens": 400
+    },
+    "safety_settings": {
+      "harassment": "BLOCK_MEDIUM_AND_ABOVE",
+      "hate_speech": "BLOCK_MEDIUM_AND_ABOVE",
+      "sexually_explicit": "BLOCK_MEDIUM_AND_ABOVE",
+      "dangerous_content": "BLOCK_MEDIUM_AND_ABOVE"
+    }
   },
   
   "patron_config": {
     "requires_patron_status": "any",
     "allied_deities": [],
     "neutral_deities": ["eidolonunchained:fire_deity", "eidolonunchained:water_deity", "eidolonunchained:earth_deity"],
-    "deity_opinions": {
+  "deity_opinions": {
       "eidolonunchained:fire_deity": "Ignis burns with passion, but fire needs my winds to truly roar. We dance together in controlled chaos.",
       "eidolonunchained:water_deity": "Aquaria flows steadily, but I bring the storms that make her waters truly alive with motion.",
       "eidolonunchained:earth_deity": "Terra stands firm, providing the mountains I love to dance around. Stability and freedom, eternal partners."
+    },
+    "cross_deity_interactions": {
+      "player_serves_ally": "Allies of the open sky are welcome—loosen your grip and ride the currents.",
+      "player_serves_enemy": "Those who chain the wind will find their plans scattered.",
+      "player_serves_neutral": "Winds blow where they will—choose a direction and I will carry you.",
+      "mentions_allied_deity": "Together we make storms that cleanse and renew.",
+      "mentions_enemy_deity": "No cage holds the sky for long."
+    },
+    "conversation_rules": {
+      "follower_restrictions": {
+        "can_speak_to_enemies": true,
+        "reputation_bonus_for_followers": 1
+      },
+      "enemy_restrictions": {
+        "reputation_penalty_on_contact": 0,
+        "hostile_response_probability": 0.1
+      }
     },
     "follower_personality_modifiers": {
       "Wind Touched": "A new soul learning wind's freedom, deserving joyful encouragement.",
       "Sky Walker": "A dedicated seeker growing wise in the ways of boundless sky.",
       "Rider of Storms": "A trusted rider who understands wind's wild mysteries.",
-      "Lord of All Winds": "A master of wind wisdom, blessed with sky's authority.", 
+      "Lord of All Winds": "A master of wind wisdom, blessed with sky's authority.",
       "Sovereign of Endless Sky": "Your chosen sovereign of winds, ultimate master of all that soars.",
       "default": "A faithful seeker walking the soaring paths of wind wisdom."
+    },
+
+    "assignsPlayersToTeam": true,
+    "teamName": "Wind Riders",
+    "teamColor": "light_blue",
+
+    "supportedMobIds": [
+      "minecraft:phantom",
+      "minecraft:parrot",
+      "minecraft:bat",
+      "minecraft:bee",
+      "minecraft:vex"
+    ],
+    "friendlyFire": false
+  }
+  ,
+  "natural_language_triggers": [
+    {
+      "id": "falling_help",
+      "contains": ["i'm falling", "cliff", "drop"],
+      "min_reputation": 0,
+      "cooldown_seconds": 180,
+      "action": "run_commands",
+      "params": { "prayer_type": "blessing", "commands": [
+        "effect give {player} minecraft:slow_falling 300 0"
+      ]}
+    },
+    {
+      "id": "swift_feet",
+      "contains": ["travel fast", "swift"],
+      "min_reputation": 5,
+      "cooldown_seconds": 240,
+      "action": "run_commands",
+      "params": { "prayer_type": "blessing", "commands": [
+        "effect give {player} minecraft:speed 600 1"
+      ]}
+    },
+    {
+      "id": "ask_task",
+      "contains": ["task", "quest", "fate"],
+      "cooldown_seconds": 60,
+      "action": "offer_fate"
     }
+  ],
+
+  "tts_config": {
+    "voice_id": "wind_whisper",
+    "backup_voice": "ava",
+    "pitch": 1.3,
+    "speed": 1.1,
+    "volume": 0.9,
+    "emotion": "ethereal",
+    "accent": "windy",
+    "emphasis_level": 0,
+    "enabled": false,
+    "allow_player_override": true,
+    "funding_preference": "player_first",
+    "voice_aliases": {
+      "wind_lord": "male-airy-1",
+      "sky_whisper": "male-light-1",
+      "storm_voice": "male-intense-1"
+    },
+    "reputation_voices": {
+      "0": "male-light-1",
+      "25": "male-airy-1",
+      "75": "male-airy-divine-1"
+    },
+    "biome_voices": {
+      "minecraft:windswept_hills": "male-airy-1",
+      "minecraft:mountains": "male-echo-1"
+    },
+    "audio_format": "wav",
+    "voice_language": "en_US",
+    "voice_gender": "male"
   }
 }

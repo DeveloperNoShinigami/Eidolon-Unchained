@@ -1,0 +1,33 @@
+{
+  "linked_deity": "eidolonunchained:myrkul",
+  "task_id": "myrkul_lord_of_undeath",
+  "display_name": "Lord of Undeath",
+  "description": "Cement your dominion over death and command the soul-flame as sovereign.",
+  "progression_tier": "lord_of_undeath",
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 85,
+      "max_reputation": 100,
+      "prayer_types": ["conversation", "blessing"],
+      "auto_assign_probability": 0.1,
+      "min_reputation_for_auto_assign": 90
+    },
+    "assignment_prompt": "Bind the greatest foes of life and bring quiet to their noise.",
+    "completion_phrases": ["Even legends cool to ash before your will."]
+  },
+  "requirements": [
+    "kill_entities:minecraft:ender_dragon:1",
+    { "type": "kill_entities", "entities": [ { "entity_type": "minecraft:wither_skeleton", "count": 20 } ] }
+  ],
+  "rewards": {
+    "reputation": 30,
+    "commands": [
+      "give {player} minecraft:totem_of_undying 1",
+      "effect give {player} minecraft:strength 1800 1",
+      "tellraw {player} {\"text\":\"You wear the cold flame as a crown.\",\"color\":\"aqua\"}"
+    ]
+  },
+  "unlocked_progressions": ["lord_of_undeath"],
+  "cooldown_hours": 72,
+  "repeatable": false
+}

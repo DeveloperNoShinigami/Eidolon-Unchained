@@ -1,0 +1,40 @@
+{
+  "linked_deity": "eidolonunchained:fire_deity",
+  "task_id": "fire_emperor_of_hellfire",
+  "display_name": "Emperor of Hellfire",
+  "description": "Claim ultimate mastery of the forge and flame to ascend as Emperor of Hellfire",
+  "progression_tier": "emperor_of_hellfire",
+  "requirements": [
+    "kill_entities:minecraft:wither:1",
+    "smelt_items:minecraft:ancient_debris:4",
+    { "type": "dimension", "value": "minecraft:the_nether" }
+  ],
+  "rewards": {
+    "reputation": 20,
+    "commands": [
+      "give {player} minecraft:netherite_block 1",
+      "give {player} minecraft:beacon 1",
+      "effect give {player} minecraft:strength 1800 2",
+      "effect give {player} minecraft:fire_resistance 3600 0",
+      "tellraw {player} {\"text\":\"\ud83d\udd25 BEHOLD! You are crowned Emperor of Hellfire\",\"color\":\"gold\"}"
+    ],
+    "progression_unlock": "emperor_of_hellfire"
+  },
+  "unlocked_progressions": ["lord_of_the_inferno"],
+  "cooldown_hours": 72,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 75,
+      "required_dimension": "minecraft:the_nether",
+      "unlocked_progressions": ["lord_of_the_inferno"],
+      "auto_assign_probability": 0.1,
+      "min_reputation_for_auto_assign": 90
+    },
+    "assignment_prompt": "Cement your dominion over forge and flame. Let all fires bow to your command.",
+    "completion_phrases": [
+      "The eternal forge bears your seal.",
+      "All flames answer as one."
+    ]
+  }
+}

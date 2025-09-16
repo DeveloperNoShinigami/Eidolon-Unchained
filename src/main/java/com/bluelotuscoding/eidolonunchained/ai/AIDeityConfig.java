@@ -4,6 +4,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
 import com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler;
+import com.google.gson.JsonObject;
 import java.util.*;
 
 /**
@@ -53,7 +54,13 @@ public class AIDeityConfig {
     
     // Ritual integration configuration for patron selection - populated from JSON only
     public Map<String, Object> ritual_integration = new HashMap<>();
-    
+
+    // Natural-language triggers (JSON-driven)
+    public List<NLTrigger> naturalLanguageTriggers = new ArrayList<>();
+
+    // TTS (Text-to-Speech) configuration - populated from JSON only
+    public TTSConfig tts_config = new TTSConfig();
+
     public AIDeityConfig() {
         // No defaults - safety settings must come from JSON configuration
         // Initialize empty collections to prevent null pointer exceptions
@@ -376,5 +383,133 @@ public class AIDeityConfig {
         
         // Response rules
         public Map<String, Object> conversationRules = new HashMap<>();
+
+        // Team/Faction System
+        public boolean assignsPlayersToTeam = true; // Whether this deity creates faction teams
+        public String teamName = ""; // Name of the faction team (e.g., "Shadows", "Nature's Guard")
+        public String teamColor = ""; // Team color for display (e.g., "dark_purple", "green")
+        public boolean friendlyFire = false; // Whether team members can damage each other (default: false)
+
+        // Supported Entities
+        public List<String> supportedMobIds = new ArrayList<>(); // Entities this deity supports/controls
+    }
+
+    /**
+     * JSON-driven natural language trigger definition.
+     */
+    public static class NLTrigger {
+        public String id;
+        public List<String> contains = new ArrayList<>(); // simple keyword list (case-insensitive)
+        public List<String> regex = new ArrayList<>(); // optional regex patterns
+        public int minReputation = 0; // optional
+        public long cooldownSeconds = 0; // optional
+        public String action; // e.g., "offer_fate", "run_commands", "send_message"
+        public JsonObject params; // action-specific parameters
+    }
+
+    /**
+     * TTS (Text-to-Speech) configuration for deity voice synthesis
+     */
+    public static class TTSConfig {
+        // Primary voice configuration
+        public String voice_id = "auto"; // Voice ID or "auto" for deity-appropriate voice
+        public String backup_voice = "neutral-1"; // Fallback voice if primary fails
+
+        // Voice characteristics
+        public float pitch = 1.0f; // Voice pitch adjustment (0.5-2.0)
+        public float speed = 1.0f; // Speech speed (0.5-2.0)
+        public float volume = 1.0f; // Volume level (0.0-2.0)
+
+        // Advanced voice settings
+        public String emotion = "neutral"; // Voice emotion: neutral, happy, sad, angry, calm, etc.
+        public String accent = "default"; // Voice accent if supported
+        public int emphasis_level = 0; // Speech emphasis (0-2): 0=normal, 1=moderate, 2=strong
+
+        // TTS behavior configuration
+        public boolean enabled = true; // Whether TTS is enabled for this deity
+        public boolean allow_player_override = true; // Allow players to change voice settings
+        public String funding_preference = "player_first"; // "player_first", "server_only", "player_only"
+
+    // Optional per-deity overrides for provider expectations
+    // If set in JSON, these take precedence over global config defaults
+    public String audio_format = null;     // e.g., mp3, opus, flac, wav, pcm
+    public String voice_gender = null;     // male | female | other
+    public String voice_language = null;   // e.g., en_US, ja_JP
+
+        // Custom voice files (for modpack creators)
+        public String custom_voice_file = ""; // Path to custom voice file (if supported)
+        public Map<String, String> voice_aliases = new HashMap<>(); // Custom voice name mappings
+
+        // Context-aware voice changes
+        public Map<String, String> reputation_voices = new HashMap<>(); // Different voices by reputation
+        public Map<String, String> time_voices = new HashMap<>(); // Different voices by time of day
+        public Map<String, String> biome_voices = new HashMap<>(); // Different voices by biome
+
+        // Voice generation parameters (for advanced TTS systems)
+        public Map<String, Object> advanced_params = new HashMap<>(); // Provider-specific parameters
+
+        public TTSConfig() {
+            // Initialize with safe defaults
+        }
+
+        /**
+         * Get the appropriate voice ID for current context
+         */
+        public String getVoiceForContext(ServerPlayer player, String currentBiome, int reputation) {
+            // Check reputation-based voices first
+            if (!reputation_voices.isEmpty()) {
+                for (Map.Entry<String, String> entry : reputation_voices.entrySet()) {
+                    try {
+                        int threshold = Integer.parseInt(entry.getKey());
+                        if (reputation >= threshold) {
+                            return entry.getValue();
+                        }
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+
+            // Check biome-based voices
+            if (currentBiome != null && biome_voices.containsKey(currentBiome)) {
+                return biome_voices.get(currentBiome);
+            }
+
+            // Check time-based voices
+            if (!time_voices.isEmpty() && player != null) {
+                long timeOfDay = player.level().getDayTime() % 24000;
+                String timeContext;
+                if (timeOfDay >= 0 && timeOfDay < 6000) {
+                    timeContext = "day";
+                } else if (timeOfDay >= 6000 && timeOfDay < 12000) {
+                    timeContext = "afternoon";
+                } else if (timeOfDay >= 12000 && timeOfDay < 18000) {
+                    timeContext = "evening";
+                } else {
+                    timeContext = "night";
+                }
+
+                if (time_voices.containsKey(timeContext)) {
+                    return time_voices.get(timeContext);
+                }
+            }
+
+            // Return primary voice or backup
+            return voice_id.equals("auto") ? null : voice_id;
+        }
+
+        /**
+         * Apply voice aliases for custom voice names
+         */
+        public String resolveVoiceAlias(String voiceId) {
+            // Deity-local alias first
+            String local = voice_aliases.getOrDefault(voiceId, null);
+            if (local != null) return local;
+            // Global registry fallback
+            try {
+                return com.bluelotuscoding.eidolonunchained.integration.tts.TTSVoiceRegistry
+                    .getInstance()
+                    .resolve(voiceId);
+            } catch (Exception ignored) {}
+            return voiceId;
+        }
     }
 }

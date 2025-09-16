@@ -11,8 +11,20 @@
     "max_reputation": 100,
     "stages": [
       {
-        "id": "shadow_initiate",
+        "id": "shadow_touched",
         "reputation": 0,
+        "major": false,
+        "title": "Shadow Touched",
+        "description": "A soul brushed by the edge of darkness",
+        "rewards": [
+          "give @s eidolon:soul_shard 1",
+          "title @s title {\"text\":\"The veil parts for a moment...\",\"color\":\"dark_purple\"}",
+          "playsound minecraft:ambient.soul_sand_valley.mood master @s ~ ~ ~ 0.3 0.7"
+        ]
+      },
+      {
+        "id": "shadow_initiate",
+        "reputation": 15,
         "major": false,
         "title": "Shadow Initiate",
         "description": "A new soul embraced by the shadows",

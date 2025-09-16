@@ -1,0 +1,39 @@
+{
+  "linked_deity": "eidolonunchained:earth_deity",
+  "task_id": "earth_forge_master",
+  "display_name": "Forge Master",
+  "description": "Master the art of crafting with the earth's bounty",
+  "progression_tier": "stone_guardian",
+  "requirements": [
+    "collect_items:minecraft:diamond:8",
+    "{\"type\": \"craft_items\", \"output_item\": \"minecraft:iron_ingot\", \"count\": 32}",
+    "{\"type\": \"use_blocks\", \"block\": \"minecraft:anvil\", \"count\": 10}"
+  ],
+  "rewards": {
+    "reputation": 15,
+    "commands": [
+      "give {player} minecraft:netherite_pickaxe 1",
+      "give {player} minecraft:diamond 4",
+      "effect give {player} minecraft:strength 1200 1",
+      "tellraw {player} {\"text\":\"🔨 You have mastered the forge of the earth - stone and metal bend to your will\",\"color\":\"gray\"}"
+    ],
+  "progression_unlock": "stone_guardian"
+  },
+  "cooldown_hours": 48,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 40,
+      "max_reputation": 75,
+      "prayer_types": ["conversation", "blessing"],
+      "unlocked_progressions": ["mountain_walker"],
+      "auto_assign_probability": 0.2,
+      "min_reputation_for_auto_assign": 50
+    },
+    "assignment_prompt": "Guardian, let your craft honor the mountain. Temper metal with patience and purpose.",
+    "completion_phrases": [
+      "Your forge rings with the earth's cadence.",
+      "Stone spirits nod at your workmanship."
+    ]
+  }
+}

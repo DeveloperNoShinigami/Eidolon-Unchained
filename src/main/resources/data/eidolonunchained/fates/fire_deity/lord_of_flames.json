@@ -1,0 +1,65 @@
+{
+  "linked_deity": "eidolonunchained:fire_deity",
+  "task_id": "fire_lord_of_flames",
+  "display_name": "Lord of Flames",
+  "description": "Achieve ultimate mastery over fire and become a true Lord of Flames",
+  "progression_tier": "lord_of_the_inferno",
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 50,
+      "max_reputation": 999,
+      "required_biomes": ["minecraft:the_nether"],
+      "prayer_types": ["conversation", "flame", "power", "mastery"],
+      "completed_tasks": ["fire_forge_basics", "fire_forge_mastery", "fire_hellfire_trials"],
+      "unlocked_progressions": ["champion_of_hellfire"],
+      "auto_assign_probability": 0.2,
+      "min_reputation_for_auto_assign": 50
+    },
+    "assignment_prompt": "You stand at the threshold of ultimate power, champion of flame. To become Lord of Flames, you must face the ultimate test - the Wither itself, master of death and decay. Show me that even death's herald bows before your blazing mastery.",
+    "completion_phrases": [
+      "The flames themselves bow to your supreme will - you are become Lord of Fire eternal...",
+      "Death fled before your blazing might, and all fire recognizes its true master..."
+    ]
+  },
+  "requirements": [
+    {
+      "type": "kill_entities",
+      "entities": [
+        {
+          "entity": "minecraft:wither",
+          "count": 1,
+          "display_name": "Herald of Death"
+        }
+      ]
+    },
+    {
+      "type": "use_items",
+      "items": [
+        {
+          "item": "minecraft:flint_and_steel",
+          "count": 50,
+          "display_name": "Flame Mastery Demonstration"
+        }
+      ]
+    },
+    {
+      "type": "location",
+      "location": "minecraft:the_nether",
+      "display_name": "Domain of Fire"
+    }
+  ],
+  "rewards": {
+    "reputation": 20,
+    "commands": [
+      "give {player} minecraft:netherite_ingot 3",
+      "give {player} minecraft:fire_charge 16",
+      "effect give {player} minecraft:strength 1800 2",
+      "effect give {player} minecraft:fire_resistance 3600 0",
+      "tellraw {player} {\"text\":\"🔥 You have achieved ultimate mastery - the flames bow to your will, Lord of Fire\",\"color\":\"dark_red\"}"
+    ],
+    "progression_unlock": "emperor_of_hellfire"
+  },
+  "unlocked_progressions": ["lord_of_the_inferno"],
+  "cooldown_hours": 72,
+  "repeatable": false
+}

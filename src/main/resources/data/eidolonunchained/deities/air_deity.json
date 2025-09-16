@@ -24,6 +24,20 @@
         ]
       },
       {
+        "id": "wind_initiate",
+        "reputation": 15,
+        "major": false,
+        "title": "Wind Initiate",
+        "description": "A novice lifted by friendly breezes",
+        "rewards": [
+          "give @s minecraft:feather 8",
+          "give @s minecraft:wind_charge 2",
+          "effect give @s minecraft:slow_falling 300 0",
+          "title @s title {\"text\":\"Wind Initiate\",\"color\":\"white\"}",
+          "playsound minecraft:entity.breeze.idle_air master @s ~ ~ ~ 0.6 1.3"
+        ]
+      },
+      {
         "id": "sky_walker",
         "reputation": 25,
         "major": false,
@@ -103,7 +117,7 @@
   "abandon": {
     "reputation_penalty": 0.75,
     "reset_reputation": false,
-    "message": "§fThe winds grow still around you. §7Zephyr's breezes fade, but the path through boundless skies remains open to those who dare to soar."
+    "message": "ï¿½fThe winds grow still around you. ï¿½7Zephyr's breezes fade, but the path through boundless skies remains open to those who dare to soar."
   },
   "prayer_types": ["conversation", "blessing", "guidance", "freedom"]
 }

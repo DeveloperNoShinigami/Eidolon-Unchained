@@ -43,6 +43,10 @@
         "minecraft:plains": "These peaceful lands reflect your serene nature.",
         "minecraft:flower_forest": "The beauty of creation here brings you great joy.",
         "minecraft:cherry_grove": "This sacred grove resonates with divine harmony."
+      },
+      "environment": {
+        "underground": "Though the sun is hidden, your inner light guides the faithful through the dark.",
+        "high_altitude": "From the heights above, your radiance shines as a beacon across the world."
       }
     }
   },
@@ -169,8 +173,46 @@
     "safety_settings": {
       "harassment": "BLOCK_MEDIUM_AND_ABOVE",
       "hate_speech": "BLOCK_MEDIUM_AND_ABOVE",
-      "sexually_explicit": "BLOCK_MEDIUM_AND_ABOVE", 
+      "sexually_explicit": "BLOCK_MEDIUM_AND_ABOVE",
       "dangerous_content": "BLOCK_MEDIUM_AND_ABOVE"
+    }
+  },
+
+  "tts_config": {
+    "voice_id": "divine_feminine",
+    "backup_voice": "charlotte",
+    "pitch": 1.1,
+    "speed": 1.0,
+    "volume": 1.0,
+    "emotion": "gentle",
+    "accent": "divine",
+    "emphasis_level": 0,
+    "enabled": false,
+    "allow_player_override": true,
+    "funding_preference": "player_first",
+    "voice_aliases": {
+      "sacred_guardian": "female-warm-1",
+      "divine_light": "female-light-1",
+      "healing_whisper": "female-flowing-1"
+    },
+    "reputation_voices": {
+      "0": "female-light-1",
+      "25": "female-warm-1",
+      "75": "female-warm-divine-1"
+    },
+    "time_voices": {
+      "day": "female-warm-1",
+      "night": "female-light-1"
+    },
+    "biome_voices": {
+      "minecraft:plains": "female-warm-1",
+      "minecraft:sunflower_plains": "female-light-1",
+      "minecraft:flower_forest": "female-flowing-1"
+    },
+    "advanced_params": {
+      "divine_resonance": 0.4,
+      "healing_harmony": 0.3,
+      "light_filter": true
     }
   },
   
@@ -248,216 +290,47 @@
     "enemy_personality_modifier": "Even to lost souls who serve darkness, you offer a chance at redemption.",
     "neutral_personality_modifier": "You regard this undecided soul with hopeful compassion.",
     "no_patron_personality_modifier": "A wandering spirit who has yet to find their divine calling.",
-    "allied_personality_modifier": "A cherished ally in the eternal fight against darkness."
+    "allied_personality_modifier": "A cherished ally in the eternal fight against darkness.",
+
+    "assignsPlayersToTeam": true,
+    "teamName": "Lightbringers",
+    "teamColor": "yellow",
+
+    "supportedMobIds": [
+      "minecraft:villager",
+      "minecraft:iron_golem",
+      "minecraft:snow_golem",
+      "minecraft:allay",
+      "minecraft:axolotl"
+    ],
+    "friendlyFire": false
   },
-  
-  "task_config": {
-    "enabled": true,
-    "max_active_tasks": 3,
-    "task_assignment_behavior": {
-      "auto_assign_probability": 0.3,
-      "min_reputation_for_auto_assign": 5,
-      "conversation_triggers": [
-        "first_conversation",
-        "reputation_milestone",
-        "completed_previous_task"
-      ],
-      "cooldown_between_assignments_hours": 24
+  "natural_language_triggers": [
+    {
+      "id": "heal_me",
+      "contains": ["heal me", "i'm hurt", "i'm injured"],
+  "min_reputation": 5,
+      "cooldown_seconds": 120,
+      "action": "run_commands",
+  "params": { "prayer_type": "blessing", "commands": [
+        "effect give {player} minecraft:regeneration 300 1"
+      ]}
     },
-    "available_tasks": [
-      {
-        "task_id": "light_purify_darkness",
-        "display_name": "Purify the Darkness",
-        "description": "Cleanse corrupted areas and bring light to dark places",
-        "progression_tier": "novice",
-        "ai_assignment_context": {
-          "trigger_conditions": {
-            "min_reputation": 0,
-            "max_reputation": 30,
-            "prayer_types": ["conversation"],
-            "completed_tasks": [],
-            "unlocked_progressions": []
-          },
-          "assignment_prompt": "Young seeker of light, prove your dedication by purifying the darkness around you. Gather {item_count} torches and place them in dark corners to earn {reputation_reward} divine favor.",
-          "completion_phrases": [
-            "Your light has begun to chase away the shadows - well done, faithful one.",
-            "The darkness retreats before your growing radiance.",
-            "You have taken the first step on the path of illumination."
-          ]
-        },
-        "requirements": [
-          {
-            "type": "collect_items",
-            "items": [
-              {
-                "item": "minecraft:torch",
-                "count": 16,
-                "display_name": "Sacred Flames"
-              }
-            ]
-          }
-        ],
-        "rewards": {
-          "reputation": 8,
-          "commands": [
-            "give {player} minecraft:golden_apple 2",
-            "effect give {player} minecraft:night_vision 600 0",
-            "tellraw {player} {\"text\":\"✦ Your inner light grows stronger with each torch lit\",\"color\":\"gold\"}"
-          ],
-          "progression_unlock": "light_initiate_complete"
-        },
-        "cooldown_hours": 24,
-        "repeatable": false
-      },
-      {
-        "task_id": "light_heal_others",
-        "display_name": "Heal the Wounded",
-        "description": "Use your growing powers to heal fellow travelers",
-        "progression_tier": "acolyte",
-        "ai_assignment_context": {
-          "trigger_conditions": {
-            "min_reputation": 15,
-            "max_reputation": 50,
-            "prayer_types": ["healing", "conversation"],
-            "completed_tasks": ["light_purify_darkness"],
-            "unlocked_progressions": ["light_initiate_complete"]
-          },
-          "assignment_prompt": "Your light now carries healing power, devoted acolyte. Use golden apples to heal {item_count} wounded souls or yourself when injured. This compassionate act will grant you {reputation_reward} divine blessing.",
-          "completion_phrases": [
-            "Your healing touch brings hope to the wounded - the divine light flows through you.",
-            "Each life you heal strengthens the bond between us.",
-            "Your compassion reflects the true nature of the light."
-          ]
-        },
-        "requirements": [
-          {
-            "type": "use_items",
-            "items": [
-              {
-                "item": "minecraft:golden_apple",
-                "count": 3,
-                "usage_type": "consume",
-                "display_name": "Divine Healing"
-              }
-            ]
-          }
-        ],
-        "rewards": {
-          "reputation": 12,
-          "commands": [
-            "give {player} minecraft:enchanted_golden_apple 1",
-            "effect give {player} minecraft:regeneration 300 1",
-            "give {player} minecraft:potion{Potion:\"minecraft:healing\"} 3",
-            "tellraw {player} {\"text\":\"✦ The gift of healing is yours to command\",\"color\":\"aqua\"}"
-          ],
-          "progression_unlock": "light_healer"
-        },
-        "cooldown_hours": 48,
-        "repeatable": false
-      },
-      {
-        "task_id": "light_sacred_construction",
-        "display_name": "Build a Sacred Shrine",
-        "description": "Construct a holy place dedicated to the light",
-        "progression_tier": "priest",
-        "ai_assignment_context": {
-          "trigger_conditions": {
-            "min_reputation": 30,
-            "max_reputation": 70,
-            "prayer_types": ["conversation", "blessing"],
-            "completed_tasks": ["light_heal_others"],
-            "unlocked_progressions": ["light_healer"]
-          },
-          "assignment_prompt": "The time has come to create a sacred space, faithful priest. Build a shrine using {block_count} blocks of light - gold, glowstone, and quartz - to create a beacon of hope. This holy work will earn you {reputation_reward} profound favor.",
-          "completion_phrases": [
-            "Your shrine radiates divine energy - a beacon for all who seek the light.",
-            "The sacred architecture pleases the divine - your devotion is manifest in stone and light.",
-            "This holy place will guide seekers to the path of righteousness for generations."
-          ]
-        },
-        "requirements": [
-          {
-            "type": "place_blocks",
-            "blocks": [
-              {
-                "block": "minecraft:gold_block",
-                "count": 4,
-                "display_name": "Sacred Foundation"
-              },
-              {
-                "block": "minecraft:glowstone",
-                "count": 8,
-                "display_name": "Divine Illumination"
-              },
-              {
-                "block": "minecraft:quartz_block",
-                "count": 12,
-                "display_name": "Pure Structure"
-              }
-            ]
-          }
-        ],
-        "rewards": {
-          "reputation": 18,
-          "commands": [
-            "give {player} minecraft:beacon 1",
-            "give {player} minecraft:diamond 4",
-            "effect give {player} minecraft:absorption 600 2",
-            "tellraw {player} {\"text\":\"✦ Your sacred shrine is blessed with eternal light\",\"color\":\"yellow\"}"
-          ],
-          "progression_unlock": "light_architect"
-        },
-        "cooldown_hours": 72,
-        "repeatable": false
-      },
-      {
-        "task_id": "light_ultimate_blessing",
-        "display_name": "Channel Ultimate Light",
-        "description": "Perform the most sacred ritual to become one with the divine light",
-        "progression_tier": "champion",
-        "ai_assignment_context": {
-          "trigger_conditions": {
-            "min_reputation": 75,
-            "max_reputation": 999,
-            "prayer_types": ["conversation"],
-            "completed_tasks": ["light_sacred_construction"],
-            "unlocked_progressions": ["light_architect"],
-            "required_research": ["eidolonunchained:divine_mastery"]
-          },
-          "assignment_prompt": "You have proven yourself worthy of the ultimate blessing, my champion. Channel the pure essence of divine light through the sacred beacon to achieve perfect unity with the divine. This transcendent act will grant you {reputation_reward} ultimate favor.",
-          "completion_phrases": [
-            "You are now one with the eternal light - a true vessel of divine power.",
-            "The ultimate blessing flows through you - you have achieved divine transcendence.",
-            "Your light now equals that of the divine - you are my perfect champion."
-          ]
-        },
-        "requirements": [
-          {
-            "type": "use_beacon",
-            "beacons": [
-              {
-                "effect": "minecraft:regeneration",
-                "level": 2,
-                "duration_minutes": 30,
-                "pyramid_level": 4
-              }
-            ]
-          }
-        ],
-        "rewards": {
-          "reputation": 25,
-          "commands": [
-            "give {player} minecraft:totem_of_undying 2",
-            "give {player} minecraft:elytra 1",
-            "effect give {player} minecraft:absorption 1800 4",
-            "effect give {player} minecraft:regeneration 1800 3",
-            "tellraw {player} {\"text\":\"✦ You are blessed with the eternal light of the divine\",\"color\":\"gold\"}"
-          ],
-          "progression_unlock": "light_transcendent"
-        },
-        "cooldown_hours": 168,
-        "repeatable": true
-      }
-    ]
-  }
+    {
+      "id": "bless_me",
+      "contains": ["bless me", "divine blessing"],
+      "min_reputation": 15,
+      "cooldown_seconds": 180,
+      "action": "run_commands",
+  "params": { "prayer_type": "blessing", "commands": [
+        "effect give {player} minecraft:absorption 300 1"
+      ]}
+    },
+    {
+      "id": "ask_task",
+      "contains": ["got a task", "any quest", "fate for me"],
+      "action": "offer_fate",
+      "cooldown_seconds": 60
+    }
+  ]
 }

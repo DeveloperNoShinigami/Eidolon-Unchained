@@ -3,12 +3,17 @@ package com.bluelotuscoding.eidolonunchained.patron;
 import com.bluelotuscoding.eidolonunchained.capability.IPatronData;
 import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
+import com.bluelotuscoding.eidolonunchained.ai.AIDeityManager;
+import com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig;
 import com.mojang.logging.LogUtils;
 import elucent.eidolon.capability.IReputation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.Scoreboard;
+import net.minecraft.ChatFormatting;
 
 /**
  * Dynamic Patron System that uses deity-specific configuration from JSON
@@ -68,8 +73,11 @@ public class PatronSystem {
                 }
             }
             
+            // 🏰 TEAM ASSIGNMENT SYSTEM
+            assignPlayerToDeityTeam(player, deityId);
+
             sendSuccess(player, "You are now a follower of " + deity.getDisplayName());
-            
+
             return true;
             
         } catch (Exception e) {
@@ -122,9 +130,12 @@ public class PatronSystem {
                 // Show deity-specific abandon message
                 sendError(player, deity.getAbandonMessage());
             }
-            
+
+            // 🏰 REMOVE FROM DEITY TEAM
+            removePlayerFromDeityTeam(player, currentPatron);
+
             patronData.setPatron(player, null);
-            
+
             return true;
             
         } catch (Exception e) {
@@ -219,5 +230,119 @@ public class PatronSystem {
     
     private static void sendError(ServerPlayer player, String message) {
         player.sendSystemMessage(Component.literal("§c" + message));
+    }
+
+    // 🏰 TEAM MANAGEMENT SYSTEM
+
+    /**
+     * Assigns a player to their deity's faction team
+     */
+    private static void assignPlayerToDeityTeam(ServerPlayer player, ResourceLocation deityId) {
+        try {
+            // Get AI deity configuration to check if team assignment is enabled
+            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deityId);
+            if (aiConfig == null || aiConfig.patron_config == null || !aiConfig.patron_config.assignsPlayersToTeam) {
+                LOGGER.debug("Team assignment disabled for deity: {}", deityId);
+                return;
+            }
+
+            if (aiConfig.patron_config.teamName == null || aiConfig.patron_config.teamName.isEmpty()) {
+                LOGGER.warn("Deity {} has team assignment enabled but no team name configured", deityId);
+                return;
+            }
+
+            Scoreboard scoreboard = player.server.getScoreboard();
+            String teamName = "deity_" + deityId.getPath(); // Unique team name based on deity
+
+            // Create or get the team
+            PlayerTeam team = scoreboard.getPlayerTeam(teamName);
+            if (team == null) {
+                team = scoreboard.addPlayerTeam(teamName);
+
+                // Configure team display name and color
+                team.setDisplayName(Component.literal(aiConfig.patron_config.teamName));
+
+                // Set team color
+                ChatFormatting color = parseTeamColor(aiConfig.patron_config.teamColor);
+                team.setColor(color);
+
+                // Configure friendly fire based on deity config
+                team.setAllowFriendlyFire(aiConfig.patron_config.friendlyFire);
+
+                // Enable seeing invisible teammates
+                team.setSeeFriendlyInvisibles(true);
+
+                LOGGER.info("Created deity team '{}' for {} with friendly fire: {}",
+                    teamName, deityId, aiConfig.patron_config.friendlyFire);
+            }
+
+            // Remove player from any existing team first
+            if (scoreboard.getPlayersTeam(player.getScoreboardName()) != null) {
+                scoreboard.removePlayerFromTeam(player.getScoreboardName());
+            }
+
+            // Add player to deity team
+            scoreboard.addPlayerToTeam(player.getScoreboardName(), team);
+
+            sendSuccess(player, "§6Joined faction: " + aiConfig.patron_config.teamName);
+            LOGGER.info("Player {} joined deity team {} ({})",
+                player.getName().getString(), teamName, aiConfig.patron_config.teamName);
+
+        } catch (Exception e) {
+            LOGGER.error("Failed to assign player {} to deity team {}: {}",
+                player.getName().getString(), deityId, e.getMessage());
+        }
+    }
+
+    /**
+     * Removes a player from their deity's faction team
+     */
+    private static void removePlayerFromDeityTeam(ServerPlayer player, ResourceLocation deityId) {
+        try {
+            Scoreboard scoreboard = player.server.getScoreboard();
+            PlayerTeam currentTeam = scoreboard.getPlayersTeam(player.getScoreboardName());
+
+            if (currentTeam != null) {
+                String expectedTeamName = "deity_" + deityId.getPath();
+                if (currentTeam.getName().equals(expectedTeamName)) {
+                    scoreboard.removePlayerFromTeam(player.getScoreboardName());
+                    sendWarning(player, "§6Left faction: " + currentTeam.getDisplayName().getString());
+                    LOGGER.info("Player {} left deity team {}",
+                        player.getName().getString(), currentTeam.getName());
+                }
+            }
+
+        } catch (Exception e) {
+            LOGGER.error("Failed to remove player {} from deity team {}: {}",
+                player.getName().getString(), deityId, e.getMessage());
+        }
+    }
+
+    /**
+     * Parse team color from config string to ChatFormatting
+     */
+    private static ChatFormatting parseTeamColor(String colorStr) {
+        if (colorStr == null || colorStr.isEmpty()) {
+            return ChatFormatting.WHITE;
+        }
+
+        // Handle common color names
+        switch (colorStr.toLowerCase()) {
+            case "red": return ChatFormatting.RED;
+            case "blue": return ChatFormatting.BLUE;
+            case "green": return ChatFormatting.GREEN;
+            case "yellow": return ChatFormatting.YELLOW;
+            case "purple": return ChatFormatting.LIGHT_PURPLE;
+            case "dark_purple": return ChatFormatting.DARK_PURPLE;
+            case "dark_red": return ChatFormatting.DARK_RED;
+            case "dark_blue": return ChatFormatting.DARK_BLUE;
+            case "dark_green": return ChatFormatting.DARK_GREEN;
+            case "gold": return ChatFormatting.GOLD;
+            case "gray": return ChatFormatting.GRAY;
+            case "dark_gray": return ChatFormatting.DARK_GRAY;
+            case "light_blue": return ChatFormatting.AQUA;
+            case "black": return ChatFormatting.BLACK;
+            default: return ChatFormatting.WHITE;
+        }
     }
 }

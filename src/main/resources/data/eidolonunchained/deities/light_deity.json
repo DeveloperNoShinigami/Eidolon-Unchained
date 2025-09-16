@@ -11,8 +11,21 @@
     "max_reputation": 100,
     "stages": [
       {
-        "id": "light_initiate",
+        "id": "light_touched",
         "reputation": 0,
+        "major": false,
+        "title": "Light Touched",
+        "description": "A soul brushed by gentle radiance",
+        "rewards": [
+          "give @s minecraft:glow_berries 4",
+          "effect give @s minecraft:regeneration 200 0",
+          "title @s title {\"text\":\"The light notices you...\",\"color\":\"yellow\"}",
+          "playsound minecraft:block.beacon.ambient master @s ~ ~ ~ 0.2 1.4"
+        ]
+      },
+      {
+        "id": "light_initiate",
+        "reputation": 15,
         "major": false,
         "title": "Light Initiate",
         "description": "A soul touched by divine radiance",

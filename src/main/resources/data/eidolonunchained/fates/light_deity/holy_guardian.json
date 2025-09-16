@@ -1,0 +1,41 @@
+{
+  "linked_deity": "eidolonunchained:light_deity",
+  "task_id": "light_holy_guardian",
+  "display_name": "Holy Guardian",
+  "description": "Become a guardian of the light, protecting others with sacred magic",
+  "progression_tier": "light_priest",
+  "requirements": [
+    "collect_items:minecraft:beacon:1",
+    "{\"type\": \"protect_players\", \"damage_prevented\": 100, \"method\": \"healing\"}",
+    "{\"type\": \"visit_location_during_time\", \"location\": \"surface\", \"time\": \"sunrise\", \"count\": 3}"
+  ],
+  
+  "rewards": {
+    "reputation": 15,
+    "commands": [
+      "give {player} minecraft:totem_of_undying 1",
+      "give {player} minecraft:glowstone 16",
+      "effect give {player} minecraft:absorption 1200 2",
+      "tellraw {player} {\"text\":\"🛡️ You are now a Guardian of the Light - protector of the innocent\",\"color\":\"yellow\"}"
+    ],
+    "progression_unlock": "light_priest"
+  },
+  "unlocked_progressions": ["light_acolyte"],
+  "cooldown_hours": 48,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 40,
+      "max_reputation": 75,
+      "prayer_types": ["conversation", "blessing"],
+      "unlocked_progressions": ["light_acolyte"],
+      "auto_assign_probability": 0.2,
+      "min_reputation_for_auto_assign": 50
+    },
+    "assignment_prompt": "Priest of Light, shield the weak and stand as a bulwark against darkness.",
+    "completion_phrases": [
+      "The blessed stand taller in your presence.",
+      "Your guardianship glows with righteous fire."
+    ]
+  }
+}

@@ -17,6 +17,10 @@
         "minecraft:the_end": "In your own realm, your power resonates through every particle of void.",
         "minecraft:end_highlands": "These floating islands drift in your endless domain.",
         "minecraft:small_end_islands": "These scattered fragments dance in your cosmic ballet."
+      },
+      "environment": {
+        "underground": "Even where void pockets and End stone enclose, emptiness speaks in echoes.",
+        "high_altitude": "Suspended above the abyss, the truth of endless space becomes crystal clear."
       }
     }
   },
@@ -72,24 +76,125 @@
   "api_settings": {
     "temperature": 0.8,
     "max_tokens": 400,
-    "timeout_seconds": 30
+    "timeout_seconds": 30,
+    "generation_config": {
+      "temperature": 0.8,
+      "topK": 40,
+      "topP": 0.9,
+      "maxOutputTokens": 400
+    },
+    "safety_settings": {
+      "harassment": "BLOCK_MEDIUM_AND_ABOVE",
+      "hate_speech": "BLOCK_MEDIUM_AND_ABOVE",
+      "sexually_explicit": "BLOCK_MEDIUM_AND_ABOVE",
+      "dangerous_content": "BLOCK_MEDIUM_AND_ABOVE"
+    }
   },
   
   "patron_config": {
     "requires_patron_status": "any",
     "allied_deities": ["eidolonunchained:twilight_deity"],
     "neutral_deities": ["eidolonunchained:air_deity"],
-    "deity_opinions": {
+  "deity_opinions": {
       "eidolonunchained:twilight_deity": "Umbral understands the spaces between light and dark, as I comprehend the void between existence and non-existence.",
       "eidolonunchained:air_deity": "Zephyr knows the freedom of boundless space, though they cling to material winds where I embrace pure void."
+    },
+    "cross_deity_interactions": {
+      "player_serves_ally": "Those who stand at thresholds may cross them with grace.",
+      "player_serves_enemy": "Clinging to warmth or growth blinds you to endings.",
+      "player_serves_neutral": "Empty space is choice itself—step, and the path appears.",
+      "mentions_allied_deity": "Between light and dark lies the door; I am the hall beyond.",
+      "mentions_enemy_deity": "Fear of endings is fear of truth."
+    },
+    "conversation_rules": {
+      "follower_restrictions": {
+        "can_speak_to_enemies": true,
+        "reputation_bonus_for_followers": 1
+      },
+      "enemy_restrictions": {
+        "reputation_penalty_on_contact": 0,
+        "hostile_response_probability": 0.05
+      }
     },
     "follower_personality_modifiers": {
       "Void Touched": "A new soul learning void's mysteries, deserving patient transcendence.",
       "Void Walker": "A dedicated seeker growing wise in the ways of endless space.",
       "Master of the Void": "A trusted master who understands void's infinite mysteries.",
-      "Sovereign of Endings": "A sovereign of transcendent wisdom, blessed with void's authority.", 
+      "Sovereign of Endings": "A sovereign of transcendent wisdom, blessed with void's authority.",
       "Transcendent of the Void": "Your chosen transcendent, ultimate master of all that exists beyond.",
       "default": "A faithful seeker walking the transcendent paths of void wisdom."
+    },
+
+    "assignsPlayersToTeam": true,
+    "teamName": "Void Touched",
+    "teamColor": "dark_purple",
+
+    "supportedMobIds": [
+      "minecraft:enderman",
+      "minecraft:ender_dragon",
+      "minecraft:endermite",
+      "minecraft:shulker"
+    ],
+    "friendlyFire": false
+  }
+  ,
+  "natural_language_triggers": [
+    {
+      "id": "void_safety",
+      "contains": ["end islands", "void scary"],
+      "min_reputation": 0,
+      "cooldown_seconds": 240,
+      "action": "run_commands",
+      "params": { "prayer_type": "blessing", "commands": [
+        "effect give {player} minecraft:slow_falling 300 0"
+      ]}
+    },
+    {
+      "id": "reach_city",
+      "contains": ["end city", "elytra hunt"],
+      "min_reputation": 5,
+      "cooldown_seconds": 300,
+      "action": "run_commands",
+      "params": { "commands": [
+        "give {player} minecraft:ender_pearl 8"
+      ]}
+    },
+    {
+      "id": "ask_task",
+      "contains": ["task", "quest", "fate"],
+      "cooldown_seconds": 60,
+      "action": "offer_fate"
     }
+  ],
+
+  "tts_config": {
+    "voice_id": "void_entity",
+    "backup_voice": "logan",
+    "pitch": 0.7,
+    "speed": 0.8,
+    "volume": 1.1,
+    "emotion": "mysterious",
+    "accent": "otherworldly",
+    "emphasis_level": 1,
+    "enabled": false,
+    "allow_player_override": true,
+    "funding_preference": "player_first",
+    "voice_aliases": {
+      "void_lord": "male-void-1",
+      "end_whisper": "male-whisper-1",
+      "dragon_voice": "male-ancient-1"
+    },
+    "reputation_voices": {
+      "0": "male-whisper-1",
+      "25": "male-void-1",
+      "75": "male-void-divine-1"
+    },
+    "biome_voices": {
+      "minecraft:the_end": "male-void-1",
+      "minecraft:end_highlands": "male-ancient-1"
+    },
+    "audio_format": "wav",
+    "voice_language": "en_US",
+    "voice_gender": "male"
   }
 }

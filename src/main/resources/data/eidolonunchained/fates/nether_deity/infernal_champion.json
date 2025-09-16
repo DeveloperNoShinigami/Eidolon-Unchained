@@ -1,0 +1,40 @@
+{
+  "linked_deity": "eidolonunchained:nether_deity",
+  "task_id": "nether_hellfire_emperor",
+  "display_name": "Hellfire Emperor",
+  "description": "Crown your reign over the inferno and command every flame of the nether",
+  "progression_tier": "hellfire_emperor",
+  "requirements": [
+    "kill_entities:minecraft:ghast:10",
+    "kill_entities:minecraft:wither:1",
+    "{\"type\": \"survive_in_lava\", \"duration_seconds\": 300}",
+    "{\"type\": \"dimension_mastery\", \"dimension\": \"minecraft:the_nether\", \"exploration_percentage\": 75}"
+  ],
+  "rewards": {
+    "reputation": 25,
+    "commands": [
+      "give {player} minecraft:netherite_ingot 2",
+      "give {player} minecraft:fire_charge 16",
+      "effect give {player} minecraft:fire_resistance 2400 0",
+      "tellraw {player} {\"text\":\"\ud83d\udd25 You are now Champion of the Inferno - hellfire burns at your command\",\"color\":\"red\"}"
+    ],
+  "progression_unlock": "hellfire_emperor"
+  },
+  "cooldown_hours": 72,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 60,
+      "required_dimension": "minecraft:the_nether",
+      "prayer_types": ["conversation", "blessing"],
+      "unlocked_progressions": ["infernal_lord"],
+      "auto_assign_probability": 0.1,
+      "min_reputation_for_auto_assign": 75
+    },
+    "assignment_prompt": "Emperor, command the infernal realm as your dominion. Let hellfire itself bow to your will.",
+    "completion_phrases": [
+      "The nether bends to your supremacy.",
+      "You wear flames like a crown."
+    ]
+  }
+}

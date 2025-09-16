@@ -2,7 +2,6 @@ package com.bluelotuscoding.eidolonunchained.chant;
 
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonElement;
 import com.mojang.logging.LogUtils;
@@ -51,7 +50,7 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = "eidolonunchained", bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class DatapackChantManager extends SimpleJsonResourceReloadListener {
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
     private static DatapackChantManager INSTANCE;
     
     // Store loaded chants

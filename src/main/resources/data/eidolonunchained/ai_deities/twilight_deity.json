@@ -46,6 +46,10 @@
         "minecraft:forest": "Here light filters through leaves, creating perfect patterns of balance.",
         "minecraft:desert": "Even harsh light eventually yields to the cooling shadows of dusk.",
         "minecraft:mountains": "High peaks where sunrise and sunset paint the eternal dance of balance."
+      },
+      "environment": {
+        "underground": "Where light fades and shadow grows, balance becomes an intimate companion.",
+        "high_altitude": "Between earth and sky, twilight shows how boundaries blur into harmony."
       }
     }
   },
@@ -175,6 +179,16 @@
       "mentions_allied_deity": "Speak with reverence of light and darkness - they are my eternal partners in balance.",
       "mentions_enemy_deity": "All deities serve their purpose in the cosmic equilibrium I maintain."
     },
+    "conversation_rules": {
+      "follower_restrictions": {
+        "can_speak_to_enemies": true,
+        "reputation_bonus_for_followers": 1
+      },
+      "enemy_restrictions": {
+        "reputation_penalty_on_contact": 0,
+        "hostile_response_probability": 0.05
+      }
+    },
     
     "follower_personality_modifiers": {
       "Balance Seeker": "A new soul learning to see truth in both light and shadow, deserving patient guidance.",
@@ -183,6 +197,71 @@
       "Keeper of Harmony": "A master of twilight wisdom, blessed with equilibrium authority.",
       "Sovereign of Equilibrium": "Your chosen ruler of balance itself, ultimate keeper of cosmic harmony.",
       "default": "A faithful seeker walking the balanced paths of twilight wisdom."
+    },
+
+    "assignsPlayersToTeam": true,
+    "teamName": "Twilight Court",
+    "teamColor": "purple",
+
+    "supportedMobIds": [
+      "minecraft:bat",
+      "minecraft:phantom",
+      "minecraft:spider",
+      "minecraft:cave_spider",
+      "minecraft:witch",
+      "minecraft:cat"
+    ],
+    "friendlyFire": false
+  }
+  ,
+  "natural_language_triggers": [
+    {
+      "id": "night_vision",
+      "contains": ["nightfall", "dusk"],
+      "min_reputation": 0,
+      "cooldown_seconds": 180,
+      "action": "run_commands",
+      "params": { "prayer_type": "blessing", "commands": [
+        "effect give {player} minecraft:night_vision 600 0"
+      ]}
+    },
+    {
+      "id": "ask_task",
+      "contains": ["task", "quest", "fate"],
+      "cooldown_seconds": 60,
+      "action": "offer_fate"
     }
+  ],
+
+  "tts_config": {
+    "voice_id": "twilight_oracle",
+    "backup_voice": "evelyn",
+    "pitch": 1.1,
+    "speed": 0.9,
+    "volume": 0.95,
+    "emotion": "serene",
+    "accent": "ethereal",
+    "emphasis_level": 0,
+    "enabled": false,
+    "allow_player_override": true,
+    "funding_preference": "player_first",
+    "voice_aliases": {
+      "dusk_guardian": "female-twilight-1",
+      "shadow_whisper": "female-mystic-1",
+      "evening_voice": "female-gentle-1"
+    },
+    "reputation_voices": {
+      "0": "female-mystic-1",
+      "25": "female-twilight-1",
+      "75": "female-twilight-divine-1"
+    },
+    "time_voices": {
+      "dawn": "female-gentle-1",
+      "dusk": "female-twilight-1",
+      "night": "female-mystic-1"
+    },
+    "audio_format": "wav",
+    "voice_language": "en_US",
+    "voice_gender": "female"
   }
 }

@@ -11,8 +11,21 @@
     "max_reputation": 100,
     "stages": [
       {
-        "id": "hellfire_initiate",
+        "id": "infernal_touched",
         "reputation": 0,
+        "major": false,
+        "title": "Infernal Touched",
+        "description": "One brushed by the burning realm",
+        "rewards": [
+          "give @s minecraft:netherrack 8",
+          "effect give @s minecraft:fire_resistance 120 0",
+          "title @s title {\"text\":\"The inferno notes your presence...\",\"color\":\"red\"}",
+          "playsound minecraft:entity.blaze.ambient master @s ~ ~ ~ 0.3 1.1"
+        ]
+      },
+      {
+        "id": "hellfire_initiate",
+        "reputation": 15,
         "major": false,
         "title": "Hellfire Initiate",
         "description": "One tested by the burning realm",
@@ -39,7 +52,7 @@
         ]
       },
       {
-        "id": "infernal_champion",
+  "id": "infernal_champion",
         "reputation": 50,
         "major": true,
         "title": "Champion of Hellfire",

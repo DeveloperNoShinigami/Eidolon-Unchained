@@ -1,0 +1,33 @@
+{
+  "linked_deity": "eidolonunchained:myrkul",
+  "task_id": "myrkul_grave_initiate",
+  "display_name": "Grave Initiate",
+  "description": "Begin your path by gathering tokens of the veil.",
+  "progression_tier": "grave_initiate",
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 0,
+      "max_reputation": 20,
+      "prayer_types": ["conversation", "guidance"],
+      "auto_assign_probability": 0.35,
+      "min_reputation_for_auto_assign": 0
+    },
+    "assignment_prompt": "Collect what the cold flame asks of you.",
+    "completion_phrases": ["A first step upon frost."]
+  },
+  "requirements": [
+    { "type": "collect_items", "items": [
+      { "item": "minecraft:bone", "count": 16, "display_name": "Bones" },
+      { "item": "minecraft:soul_sand", "count": 1, "display_name": "Soul Sand" }
+    ]}
+  ],
+  "rewards": {
+    "reputation": 10,
+    "commands": [
+      "effect give {player} minecraft:night_vision 300 0"
+    ]
+  },
+  "unlocked_progressions": ["grave_initiate"],
+  "cooldown_hours": 12,
+  "repeatable": false
+}

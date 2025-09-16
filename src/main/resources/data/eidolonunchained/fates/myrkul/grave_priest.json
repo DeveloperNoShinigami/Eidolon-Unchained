@@ -1,0 +1,32 @@
+{
+  "linked_deity": "eidolonunchained:myrkul",
+  "task_id": "myrkul_grave_priest",
+  "display_name": "Grave Priest",
+  "description": "Prove your stewardship by guiding wandering dead and honoring the veil.",
+  "progression_tier": "grave_priest",
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 30,
+      "max_reputation": 65,
+      "prayer_types": ["conversation", "guidance"],
+      "auto_assign_probability": 0.2,
+      "min_reputation_for_auto_assign": 40
+    },
+    "assignment_prompt": "Tend to the places where souls gather and set the restless at ease.",
+    "completion_phrases": ["Silence returns; the cold flame approves."]
+  },
+  "requirements": [
+    { "type": "visit_biomes", "biomes": ["minecraft:soul_sand_valley"], "display_name": "Walk the Soul Sand Valley" },
+    { "type": "kill_entities", "entities": [ { "entity_type": "minecraft:phantom", "count": 6 } ], "time": "night" }
+  ],
+  "rewards": {
+    "reputation": 12,
+    "commands": [
+      "give {player} eidolon:arcane_gold_ingot 1",
+      "effect give {player} minecraft:resistance 900 0"
+    ]
+  },
+  "unlocked_progressions": ["grave_priest"],
+  "cooldown_hours": 36,
+  "repeatable": false
+}

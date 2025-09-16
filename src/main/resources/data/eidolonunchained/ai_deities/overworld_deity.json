@@ -17,6 +17,10 @@
         "minecraft:plains": "These fertile plains reflect your nurturing essence perfectly.",
         "minecraft:forest": "The diverse life here sings in harmony with your will.",
         "minecraft:flower_forest": "This blooming paradise embodies your love of growth and beauty."
+      },
+      "environment": {
+        "underground": "In root and soil below, the cycle of life continues unseen yet strong.",
+        "high_altitude": "From hill and peak, you watch life spread in patchwork across the world."
       }
     }
   },
@@ -72,25 +76,121 @@
   "api_settings": {
     "temperature": 0.7,
     "max_tokens": 400,
-    "timeout_seconds": 30
+    "timeout_seconds": 30,
+    "generation_config": {
+      "temperature": 0.7,
+      "topK": 40,
+      "topP": 0.9,
+      "maxOutputTokens": 400
+    },
+    "safety_settings": {
+      "harassment": "BLOCK_MEDIUM_AND_ABOVE",
+      "hate_speech": "BLOCK_MEDIUM_AND_ABOVE",
+      "sexually_explicit": "BLOCK_MEDIUM_AND_ABOVE",
+      "dangerous_content": "BLOCK_MEDIUM_AND_ABOVE"
+    }
   },
   
   "patron_config": {
     "requires_patron_status": "any",
     "allied_deities": ["eidolonunchained:water_deity", "eidolonunchained:earth_deity"],
     "neutral_deities": ["eidolonunchained:air_deity"],
-    "deity_opinions": {
+  "deity_opinions": {
       "eidolonunchained:water_deity": "Aquaria provides the life-giving waters that nourish all my children. Together we sustain existence.",
       "eidolonunchained:earth_deity": "Terra offers the foundation upon which all life grows. Our partnership creates the perfect conditions for abundance.",
       "eidolonunchained:air_deity": "Zephyr brings the winds that spread seeds and carry life to new places. Freedom and growth dance together."
+    },
+    "cross_deity_interactions": {
+      "player_serves_ally": "Allies who tend life are welcome in every grove and field.",
+      "player_serves_enemy": "Those who blight the living earth will face patient correction.",
+      "player_serves_neutral": "Balance invites choice—commit to harmony, and I will help you thrive.",
+      "mentions_allied_deity": "Water and earth are the cradle of life; wind carries it forward.",
+      "mentions_enemy_deity": "Fire that consumes without care leaves only silence."
+    },
+    "conversation_rules": {
+      "follower_restrictions": {
+        "can_speak_to_enemies": true,
+        "reputation_bonus_for_followers": 1
+      },
+      "enemy_restrictions": {
+        "reputation_penalty_on_contact": 0,
+        "hostile_response_probability": 0.05
+      }
     },
     "follower_personality_modifiers": {
       "Nature's Child": "A new soul learning life's balance, deserving gentle nurturing guidance.",
       "World Tender": "A dedicated caretaker growing wise in the ways of natural harmony.",
       "Guardian of Life": "A trusted protector who understands life's sacred mysteries.",
-      "Keeper of the World": "A keeper of natural wisdom, blessed with life's authority.", 
+      "Keeper of the World": "A keeper of natural wisdom, blessed with life's authority.",
       "Sovereign of All Worlds": "Your chosen sovereign, ultimate master of all living worlds.",
       "default": "A faithful nurturer walking the growing paths of life wisdom."
+    },
+
+    "assignsPlayersToTeam": true,
+    "teamName": "Realm Keepers",
+    "teamColor": "gold",
+
+    "supportedMobIds": [
+      "minecraft:villager",
+      "minecraft:iron_golem",
+      "minecraft:wolf",
+      "minecraft:horse",
+      "minecraft:cow",
+      "minecraft:sheep",
+      "minecraft:pig",
+      "minecraft:chicken"
+    ],
+    "friendlyFire": false
+  }
+  ,
+  "natural_language_triggers": [
+    {
+      "id": "safe_journey",
+      "contains": ["heading home", "safe travels"],
+      "min_reputation": 0,
+      "cooldown_seconds": 240,
+      "action": "run_commands",
+      "params": { "commands": [
+        "give {player} minecraft:bread 6"
+      ]}
+    },
+    {
+      "id": "ask_task",
+      "contains": ["task", "quest", "fate"],
+      "cooldown_seconds": 60,
+      "action": "offer_fate"
     }
+  ],
+
+  "tts_config": {
+    "voice_id": "divine_masculine",
+    "backup_voice": "benjamin",
+    "pitch": 1.0,
+    "speed": 1.0,
+    "volume": 1.0,
+    "emotion": "wise",
+    "accent": "universal",
+    "emphasis_level": 1,
+    "enabled": false,
+    "allow_player_override": true,
+    "funding_preference": "player_first",
+    "voice_aliases": {
+      "world_guardian": "male-balanced-1",
+      "realm_voice": "male-warm-1",
+      "creation_echo": "male-ancient-1"
+    },
+    "reputation_voices": {
+      "0": "male-warm-1",
+      "25": "male-balanced-1",
+      "75": "male-balanced-divine-1"
+    },
+    "biome_voices": {
+      "minecraft:plains": "male-balanced-1",
+      "minecraft:forest": "male-natural-1",
+      "minecraft:desert": "male-dry-1"
+    },
+    "audio_format": "wav",
+    "voice_language": "en_US",
+    "voice_gender": "male"
   }
 }

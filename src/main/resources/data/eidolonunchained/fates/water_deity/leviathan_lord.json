@@ -1,0 +1,40 @@
+{
+  "linked_deity": "eidolonunchained:water_deity",
+  "task_id": "water_leviathan_lord",
+  "display_name": "Leviathan Lord",
+  "description": "Achieve ultimate dominion over the seas and become Lord of the Depths",
+  "progression_tier": "ocean_sovereign",
+  "requirements": [
+    "kill_entities:minecraft:wither:1",
+    "visit_structures:minecraft:monument",
+    { "type": "time", "condition": "night" }
+  ],
+  "rewards": {
+    "reputation": 25,
+    "commands": [
+      "give {player} minecraft:trident 1",
+      "give {player} minecraft:elytra 1",
+      "effect give {player} minecraft:water_breathing 3600 0",
+      "effect give {player} minecraft:dolphins_grace 3600 0",
+      "tellraw {player} {\"text\":\"🌊 The depths themselves obey your command - rise, Leviathan Lord of the Seas!\",\"color\":\"dark_blue\"}"
+    ],
+    "progression_unlock": "ocean_sovereign"
+  },
+  "unlocked_progressions": ["tide_master"],
+  "cooldown_hours": 72,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 60,
+      "required_dimension": "minecraft:overworld",
+      "unlocked_progressions": ["tide_master"],
+      "auto_assign_probability": 0.1,
+      "min_reputation_for_auto_assign": 75
+    },
+    "assignment_prompt": "Crown yourself with the depths. Command every current as the ocean's sovereign.",
+    "completion_phrases": [
+      "Whales sing of your reign.",
+      "The abyss bows in silence."
+    ]
+  }
+}

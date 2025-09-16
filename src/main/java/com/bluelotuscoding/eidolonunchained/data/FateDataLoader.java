@@ -26,11 +26,14 @@ import java.util.*;
 public class FateDataLoader extends SimpleJsonResourceReloadListener {
 
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
     private static FateDataLoader INSTANCE;
 
     // Pending fates if AI configs are not yet linked
     private static final Map<ResourceLocation, List<TaskSystemConfig.TaskTemplate>> PENDING = new HashMap<>();
+
+    // Store original JSON data for fate lookup
+    private static final Map<String, JsonObject> FATE_DATA_CACHE = new HashMap<>();
 
     public FateDataLoader() {
         super(GSON, "fates");
@@ -53,6 +56,7 @@ public class FateDataLoader extends SimpleJsonResourceReloadListener {
         int loaded = 0;
         int errors = 0;
         PENDING.clear();
+        FATE_DATA_CACHE.clear();
 
         for (Map.Entry<ResourceLocation, JsonElement> entry : map.entrySet()) {
             ResourceLocation location = entry.getKey();
@@ -79,6 +83,11 @@ public class FateDataLoader extends SimpleJsonResourceReloadListener {
                 if (t == null) {
                     LOGGER.warn("Fate {} could not be parsed", location);
                     continue;
+                }
+
+                // Cache the original JSON data for later lookup
+                if (t.taskId != null) {
+                    FATE_DATA_CACHE.put(t.taskId, json);
                 }
 
                 // Try to attach to existing AI config
@@ -143,6 +152,9 @@ public class FateDataLoader extends SimpleJsonResourceReloadListener {
                     task.rewardCommands.add(cmd.getAsString());
                 }
             }
+            if (rewards.has("progression_unlock")) {
+                task.progressionUnlock = rewards.get("progression_unlock").getAsString();
+            }
         }
 
         if (json.has("cooldown_hours")) task.cooldownHours = json.get("cooldown_hours").getAsLong();
@@ -153,5 +165,18 @@ public class FateDataLoader extends SimpleJsonResourceReloadListener {
 
         return task;
     }
-}
 
+    /**
+     * Get the original JSON data for a fate by task ID
+     */
+    public static JsonObject getFateData(String taskId) {
+        return FATE_DATA_CACHE.get(taskId);
+    }
+
+    /**
+     * Clear the fate data cache
+     */
+    public static void clearCache() {
+        FATE_DATA_CACHE.clear();
+    }
+}

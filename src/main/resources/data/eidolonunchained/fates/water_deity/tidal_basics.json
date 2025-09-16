@@ -1,0 +1,62 @@
+{
+  "linked_deity": "eidolonunchained:water_deity",
+  "task_id": "water_tidal_basics",
+  "display_name": "Tidal Basics",
+  "description": "Learn to commune with the waters and their mysteries",
+  "progression_tier": "tide_initiate",
+  "ai_assignment_context": {
+    "trigger_conditions": {
+  "min_reputation": 15,
+  "max_reputation": 40,
+      "required_biomes": ["minecraft:ocean", "minecraft:deep_ocean"],
+      "prayer_types": ["conversation", "depth"],
+      "completed_tasks": [],
+      "unlocked_progressions": [],
+  "auto_assign_probability": 0.35,
+  "min_reputation_for_auto_assign": 15
+    },
+    "assignment_prompt": "Young seeker of the depths, the ocean calls to those who would learn her mysteries. Show me you can commune with water's essence and draw sustenance from her depths.",
+    "completion_phrases": [
+      "The tides welcome a new seeker into their eternal dance...",
+      "Ocean's depths have tested you and found you worthy of deeper mysteries..."
+    ]
+  },
+  "requirements": [
+    {
+      "type": "collect_items",
+      "items": [
+        {
+          "item": "minecraft:water_bucket",
+          "count": 4,
+          "display_name": "Sacred Waters"
+        }
+      ]
+    },
+    {
+      "type": "explore_biomes",
+      "biomes": ["minecraft:ocean"],
+      "display_name": "Ocean Pilgrimage"
+    },
+    {
+      "type": "use_items",
+      "items": [
+        {
+          "item": "minecraft:fishing_rod",
+          "count": 10,
+          "display_name": "Tidal Communion"
+        }
+      ]
+    }
+  ],
+  "rewards": {
+    "reputation": 5,
+    "commands": [
+      "give {player} minecraft:trident 1",
+      "effect give {player} minecraft:water_breathing 600 0",
+      "tellraw {player} {\"text\":\"🌊 The tides welcome a new seeker of depths\",\"color\":\"aqua\"}"
+    ]
+  },
+  "unlocked_progressions": [],
+  "cooldown_hours": 12,
+  "repeatable": false
+}

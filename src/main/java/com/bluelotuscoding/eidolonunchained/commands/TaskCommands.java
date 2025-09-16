@@ -1,78 +1,37 @@
 package com.bluelotuscoding.eidolonunchained.commands;
 
-import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker;
 import com.bluelotuscoding.eidolonunchained.ai.AIDeityManager;
 import com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig;
 import com.bluelotuscoding.eidolonunchained.ai.TaskSystemConfig;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Command handlers for the deity task system
  */
-@Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class TaskCommands {
-    
-    @SubscribeEvent
-    public static void registerCommands(RegisterCommandsEvent event) {
-        CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
-        
-        dispatcher.register(Commands.literal("dtask")
-            .then(Commands.literal("assign")
-                .then(Commands.argument("player", EntityArgument.player())
-                    .then(Commands.argument("deity", StringArgumentType.string())
-                        .then(Commands.argument("taskId", StringArgumentType.string())
-                            .executes(TaskCommands::assignTask)))))
-            .then(Commands.literal("assignany")
-                .then(Commands.argument("player", EntityArgument.player())
-                    .then(Commands.argument("taskId", StringArgumentType.string())
-                        .executes(TaskCommands::assignAnyTask))))
-            .then(Commands.literal("complete")
-                .then(Commands.argument("player", EntityArgument.player())
-                    .then(Commands.argument("taskId", StringArgumentType.string())
-                        .executes(TaskCommands::completeTask))))
-            .then(Commands.literal("list")
-                .then(Commands.argument("player", EntityArgument.player())
-                    .executes(TaskCommands::listTasks)))
-            .then(Commands.literal("reputation")
-                .then(Commands.argument("player", EntityArgument.player())
-                    .then(Commands.argument("deity", StringArgumentType.string())
-                        .executes(TaskCommands::checkSpecificReputation))))
-            .then(Commands.literal("repall")
-                .then(Commands.argument("player", EntityArgument.player())
-                    .executes(TaskCommands::checkAllReputation)))
-            .then(Commands.literal("ritual")
-                .then(Commands.argument("player", EntityArgument.player())
-                    .then(Commands.argument("ritualId", StringArgumentType.string())
-                        .executes(TaskCommands::markRitualComplete))))
-        );
-    }
+    private static final com.google.gson.Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
+
     
     public static int assignTask(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
-            String taskId = StringArgumentType.getString(context, "taskId");
-            String deityIdStr = StringArgumentType.getString(context, "deity");
-            ResourceLocation deityId = new ResourceLocation(deityIdStr);
+            String taskId = getTaskOrFateId(context);
+            ResourceLocation deityId = ResourceLocationArgument.getId(context, "deity");
             
             // Get AI config to find task template
             AIDeityConfig config = AIDeityManager.getInstance().getAIConfig(deityId);
             if (config == null) {
-                context.getSource().sendFailure(Component.literal("Unknown deity: " + deityIdStr));
+                context.getSource().sendFailure(Component.literal("Unknown deity: " + deityId));
                 return 0;
             }
             
@@ -86,7 +45,7 @@ public class TaskCommands {
             }
             
             if (taskTemplate == null) {
-                context.getSource().sendFailure(Component.literal("Unknown task: " + taskId));
+                context.getSource().sendFailure(Component.literal("Unknown fate/task: " + taskId));
                 return 0;
             }
             
@@ -97,13 +56,19 @@ public class TaskCommands {
                 return 0;
             }
             
+            // Enforce basic assignment gating from ai_assignment_context (progression)
+            if (!meetsAssignmentConditions(targetPlayer, taskTemplate)) {
+                context.getSource().sendFailure(Component.literal("Assignment conditions not met (progression/reputation)"));
+                return 0;
+            }
+
             // Assign the task
             PlayerContextTracker.assignTask(targetPlayer, taskId, taskTemplate.description, deityId, taskTemplate.reputationReward);
             
-            targetPlayer.sendSystemMessage(Component.translatable("eidolonunchained.task.assigned", taskTemplate.description));
-            targetPlayer.sendSystemMessage(Component.translatable("eidolonunchained.task.reward", taskTemplate.reputationReward));
+            targetPlayer.sendSystemMessage(Component.translatable("eidolonunchained.fate.assigned", taskTemplate.description));
+            targetPlayer.sendSystemMessage(Component.translatable("eidolonunchained.fate.reward", taskTemplate.reputationReward));
             
-            context.getSource().sendSuccess(() -> Component.literal("Assigned task '" + taskId + "' to " + targetPlayer.getName().getString()), true);
+            context.getSource().sendSuccess(() -> Component.literal("Assigned fate/task '" + taskId + "' to " + targetPlayer.getName().getString()), true);
             
             return 1;
         } catch (Exception e) {
@@ -115,7 +80,7 @@ public class TaskCommands {
     public static int assignAnyTask(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
-            String taskId = StringArgumentType.getString(context, "taskId");
+            String taskId = getTaskOrFateId(context);
             
             // Search all deities for this task
             TaskSystemConfig.TaskTemplate taskTemplate = null;
@@ -132,15 +97,21 @@ public class TaskCommands {
             }
             
             if (taskTemplate == null) {
-                context.getSource().sendFailure(Component.literal("Unknown task: " + taskId));
+                context.getSource().sendFailure(Component.literal("Unknown fate/task: " + taskId));
                 return 0;
             }
             
+            // Enforce basic assignment gating from ai_assignment_context (progression)
+            if (!meetsAssignmentConditions(targetPlayer, taskTemplate)) {
+                context.getSource().sendFailure(Component.literal("Assignment conditions not met (progression/reputation)"));
+                return 0;
+            }
+
             // Assign the task
             PlayerContextTracker.assignTask(targetPlayer, taskId, taskTemplate.description, foundDeityId, taskTemplate.reputationReward);
             
-            targetPlayer.sendSystemMessage(Component.translatable("eidolonunchained.task.assigned", taskTemplate.description));
-            targetPlayer.sendSystemMessage(Component.translatable("eidolonunchained.task.reward", taskTemplate.reputationReward));
+            targetPlayer.sendSystemMessage(Component.translatable("eidolonunchained.fate.assigned", taskTemplate.description));
+            targetPlayer.sendSystemMessage(Component.translatable("eidolonunchained.fate.reward", taskTemplate.reputationReward));
             
             return 1;
         } catch (Exception e) {
@@ -152,7 +123,7 @@ public class TaskCommands {
     public static int completeTask(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer player = EntityArgument.getPlayer(context, "player");
-            String taskId = StringArgumentType.getString(context, "taskId");
+            String taskId = getTaskOrFateId(context);
             
             PlayerContextTracker.EnhancedPlayerContext playerContext = PlayerContextTracker.getContext(player.getUUID());
             if (playerContext == null || !playerContext.activeTasks.containsKey(taskId)) {
@@ -173,7 +144,7 @@ public class TaskCommands {
             
             if (canComplete) {
                 PlayerContextTracker.completeTask(player, taskId);
-                player.sendSystemMessage(Component.translatable("eidolonunchained.task.completed_reputation", task.reputationReward));
+                player.sendSystemMessage(Component.translatable("eidolonunchained.fate.completed_reputation", task.reputationReward));
                 
                 // Execute task rewards
                 executeTaskRewards(player, taskId);
@@ -196,11 +167,11 @@ public class TaskCommands {
             PlayerContextTracker.EnhancedPlayerContext playerContext = PlayerContextTracker.getContext(player.getUUID());
             
             if (playerContext == null || playerContext.activeTasks.isEmpty()) {
-                player.sendSystemMessage(Component.translatable("eidolonunchained.task.no_active"));
+                player.sendSystemMessage(Component.translatable("eidolonunchained.fate.no_active"));
                 return 1;
             }
             
-            player.sendSystemMessage(Component.translatable("eidolonunchained.task.header"));
+            player.sendSystemMessage(Component.translatable("eidolonunchained.fate.header"));
             for (PlayerContextTracker.PlayerTask task : playerContext.activeTasks.values()) {
                 player.sendSystemMessage(Component.literal("§e" + task.description));
                 player.sendSystemMessage(Component.literal("  §7Reward: §6" + task.reputationReward + " reputation points"));
@@ -216,27 +187,26 @@ public class TaskCommands {
     public static int checkSpecificReputation(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer player = EntityArgument.getPlayer(context, "player");
-            String deityIdStr = StringArgumentType.getString(context, "deity");
-            ResourceLocation deityId = new ResourceLocation(deityIdStr);
+            ResourceLocation deityId = ResourceLocationArgument.getId(context, "deity");
             
             com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = 
                 com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(deityId);
             
             if (deity != null) {
                 double reputation = deity.getPlayerReputation(player);
-                player.sendSystemMessage(Component.literal("§6Reputation with " + deityIdStr + ": §e" + (int)reputation + " points"));
+                player.sendSystemMessage(Component.literal("§6Reputation with " + deityId + ": §e" + (int)reputation + " points"));
             } else {
                 // Try Eidolon reputation system
                 try {
-                    elucent.eidolon.capability.IReputation reputationCap = player.level().getCapability(elucent.eidolon.capability.IReputation.INSTANCE).orElse(null);
-                    if (reputationCap != null) {
-                        double reputation = reputationCap.getReputation(player, deityId);
-                        player.sendSystemMessage(Component.literal("§6Reputation with " + deityIdStr + ": §e" + (int)reputation + " points"));
+                    var repCap = player.level().getCapability(elucent.eidolon.capability.IReputation.INSTANCE);
+                    if (repCap.isPresent()) {
+                        double reputation = repCap.map(cap -> cap.getReputation(player, deityId)).orElse(0.0);
+                        player.sendSystemMessage(Component.literal("§6Reputation with " + deityId + ": §e" + (int)reputation + " points"));
                     } else {
                         player.sendSystemMessage(Component.literal("§cCould not access reputation data"));
                     }
                 } catch (Exception e) {
-                    player.sendSystemMessage(Component.literal("§cUnknown deity: " + deityIdStr));
+                    player.sendSystemMessage(Component.literal("§cUnknown deity: " + deityId));
                 }
             }
             
@@ -257,7 +227,7 @@ public class TaskCommands {
                 return 0;
             }
             
-            player.sendSystemMessage(Component.translatable("eidolonunchained.task.reputation_header"));
+            player.sendSystemMessage(Component.translatable("eidolonunchained.fate.reputation_header"));
             
             // Check datapack deities
             for (com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity : com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getAllDeities().values()) {
@@ -277,18 +247,29 @@ public class TaskCommands {
     public static int markRitualComplete(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
-            String ritualIdString = StringArgumentType.getString(context, "ritualId");
-            
-            ResourceLocation ritualId = new ResourceLocation(ritualIdString);
+            ResourceLocation ritualId = ResourceLocationArgument.getId(context, "ritualId");
             
             // Fire our custom ritual completion event
             com.bluelotuscoding.eidolonunchained.events.RitualEventHandler.fireRitualCompletion(targetPlayer, ritualId);
             
-            context.getSource().sendSuccess(() -> Component.literal("Marked ritual '" + ritualIdString + "' as completed for " + targetPlayer.getName().getString()), true);
+            context.getSource().sendSuccess(() -> Component.literal("Marked ritual '" + ritualId + "' as completed for " + targetPlayer.getName().getString()), true);
             return 1;
         } catch (Exception e) {
             context.getSource().sendFailure(Component.literal("Error marking ritual complete: " + e.getMessage()));
             return 0;
+        }
+    }
+
+    // Accept both "taskId" and "fateId" argument names
+    private static String getTaskOrFateId(CommandContext<CommandSourceStack> context) {
+        try {
+            return StringArgumentType.getString(context, "taskId");
+        } catch (IllegalArgumentException ignored) {
+            try {
+                return StringArgumentType.getString(context, "fateId");
+            } catch (IllegalArgumentException e) {
+                throw e;
+            }
         }
     }
     
@@ -305,24 +286,126 @@ public class TaskCommands {
     }
     
     private static boolean validateRequirement(ServerPlayer player, String requirement) {
+        // Try JSON parsing first for complex requirements
+        try {
+            com.google.gson.JsonObject reqJson = GSON.fromJson(requirement, com.google.gson.JsonObject.class);
+            return validateJsonRequirement(player, reqJson);
+        } catch (Exception e) {
+            // Fall back to string parsing for simple requirements
+        }
+        
         String[] parts = requirement.split(":");
         if (parts.length >= 2) {
             String type = parts[0];
             
-            if (type.equals("item") && parts.length >= 4) {
+            if (type.equals("item") || type.equals("collect_items")) {
                 // Item count requirement: "item:minecraft:wheat:16"
-                String itemName = parts[1] + ":" + parts[2];
-                int requiredCount = Integer.parseInt(parts[3]);
-                
-                int playerCount = 0;
-                for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
-                    net.minecraft.world.item.ItemStack stack = player.getInventory().getItem(i);
-                    if (net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(stack.getItem()).toString().equals(itemName)) {
-                        playerCount += stack.getCount();
+                if (parts.length >= 4) {
+                    String itemName = parts[1] + ":" + parts[2];
+                    int requiredCount = Integer.parseInt(parts[3]);
+                    return hasItem(player, itemName, requiredCount);
+                }
+            } else if (type.equals("kill_entities") && parts.length >= 4) {
+                // Kill entities requirement: "kill_entities:minecraft:zombie:10"
+                String entityType = parts[1] + ":" + parts[2];
+                int requiredKills = Integer.parseInt(parts[3]);
+                return getKillCount(player, entityType) >= requiredKills;
+            } else if (type.equals("mine_blocks") && parts.length >= 4) {
+                // Mine blocks requirement: "mine_blocks:minecraft:stone:64"
+                String blockType = parts[1] + ":" + parts[2];
+                int requiredMines = Integer.parseInt(parts[3]);
+                return getMineCount(player, blockType) >= requiredMines;
+            } else if (type.equals("use_items") && parts.length >= 4) {
+                // Use items requirement: "use_items:minecraft:ender_pearl:5"
+                String itemType = parts[1] + ":" + parts[2];
+                int requiredUses = Integer.parseInt(parts[3]);
+                return getUseCount(player, itemType) >= requiredUses;
+            } else if (type.equals("dimension") && parts.length >= 3) {
+                // Dimension requirement: "dimension:minecraft:nether"
+                String requiredDim = parts[1] + ":" + parts[2];
+                String currentDim = player.level().dimension().location().toString();
+                return currentDim.equals(requiredDim);
+            } else if (type.equals("time") && parts.length >= 2) {
+                // Time requirement: "time:day" or "time:night"
+                String timeType = parts[1];
+                long dayTime = player.level().getDayTime() % 24000;
+                if (timeType.equals("day")) {
+                    return dayTime >= 0 && dayTime < 12000;
+                } else if (timeType.equals("night")) {
+                    return dayTime >= 12000 && dayTime < 24000;
+                }
+            } else if (type.equals("location")) {
+                // Supported forms:
+                // - "location:x:y:z[:radius]" (numeric position with optional radius, default 5)
+                // - "location:underground" (y < 50 OR not sky-visible)
+                // - "location:y>NUMBER" or "location:y<NUMBER" (Y range)
+                // - "location:<namespace>:<biome>" (biome id)
+                if (parts.length >= 4) {
+                    // Numeric position
+                    try {
+                        double reqX = Double.parseDouble(parts[1]);
+                        double reqY = Double.parseDouble(parts[2]);  
+                        double reqZ = Double.parseDouble(parts[3]);
+                        double radius = parts.length >= 5 ? Double.parseDouble(parts[4]) : 5.0;
+
+                        double distance = player.position().distanceTo(new net.minecraft.world.phys.Vec3(reqX, reqY, reqZ));
+                        return distance <= radius;
+                    } catch (NumberFormatException e) {
+                        return false;
+                    }
+                } else if (parts.length == 3) {
+                    // Biome id
+                    String biomeId = parts[1] + ":" + parts[2];
+                    String currentBiome = player.level().getBiome(player.blockPosition()).unwrapKey()
+                        .map(key -> key.location().toString()).orElse("");
+                    return currentBiome.equals(biomeId);
+                } else if (parts.length == 2) {
+                    String expr = parts[1].toLowerCase();
+                    // Underground shorthand
+                    if ("underground".equals(expr)) {
+                        boolean yThreshold = player.blockPosition().getY() < 50;
+                        boolean skyVisible = player.level().canSeeSky(player.blockPosition());
+                        return yThreshold || !skyVisible;
+                    }
+                    // Y-range expressions
+                    if (expr.startsWith("y>")) {
+                        try {
+                            int minY = Integer.parseInt(expr.substring(2));
+                            return player.blockPosition().getY() > minY;
+                        } catch (NumberFormatException e) {
+                            return false;
+                        }
+                    } else if (expr.startsWith("y<")) {
+                        try {
+                            int maxY = Integer.parseInt(expr.substring(2));
+                            return player.blockPosition().getY() < maxY;
+                        } catch (NumberFormatException e) {
+                            return false;
+                        }
                     }
                 }
-                
-                return playerCount >= requiredCount;
+            } else if (type.equals("explore_biomes")) {
+                // Explore biomes requirement: "explore_biomes:minecraft:desert:minecraft:jungle"
+                for (int i = 1; i < parts.length; i += 2) {
+                    if (i + 1 < parts.length) {
+                        String biome = parts[i] + ":" + parts[i + 1];
+                        if (!hasExploredBiome(player, biome)) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            } else if (type.equals("visit_structures")) {
+                // Visit structures requirement: "visit_structures:minecraft:village:minecraft:stronghold"
+                for (int i = 1; i < parts.length; i += 2) {
+                    if (i + 1 < parts.length) {
+                        String structure = parts[i] + ":" + parts[i + 1];
+                        if (!hasVisitedStructure(player, structure)) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
             } else if (type.equals("ritual") && parts.length >= 3) {
                 // Ritual requirement: "ritual:eidolonunchained:nature_blessing"
                 ResourceLocation ritualId = new ResourceLocation(parts[1] + ":" + parts[2]);
@@ -337,6 +420,156 @@ public class TaskCommands {
         return false;
     }
     
+    private static boolean validateJsonRequirement(ServerPlayer player, com.google.gson.JsonObject requirement) {
+        String type = requirement.get("type").getAsString();
+        
+        switch (type) {
+            case "kill_entities":
+                String entity = requirement.get("entity").getAsString();
+                int killCount = requirement.get("count").getAsInt();
+                return getKillCount(player, entity) >= killCount;
+                
+            case "mine_blocks":
+                String block = requirement.get("block").getAsString();
+                int mineCount = requirement.get("count").getAsInt();
+                return getMineCount(player, block) >= mineCount;
+                
+            case "collect_items":
+                String item = requirement.get("item").getAsString();
+                int itemCount = requirement.get("count").getAsInt();
+                return hasItem(player, item, itemCount);
+                
+            case "use_items":
+                String useItem = requirement.get("item").getAsString();
+                int useCount = requirement.get("count").getAsInt();
+                return getUseCount(player, useItem) >= useCount;
+                
+            case "dimension":
+                String dimension = requirement.get("dimension").getAsString();
+                return player.level().dimension().location().toString().equals(dimension);
+                
+            case "time":
+                String timeType = requirement.get("time").getAsString();
+                long dayTime = player.level().getDayTime() % 24000;
+                switch (timeType) {
+                    case "day": return dayTime >= 0 && dayTime < 12000;
+                    case "night": return dayTime >= 12000 && dayTime < 24000;
+                    case "dawn": return dayTime >= 23000 || dayTime < 1000;
+                    case "dusk": return dayTime >= 11000 && dayTime < 13000;
+                }
+                break;
+                
+            case "location":
+                // JSON forms supported:
+                // { "type":"location", "pos":[x,y,z], "radius":5 }
+                // { "type":"location", "value":"underground" }
+                // { "type":"location", "y_greater_than":60 } or { "y_less_than":20 }
+                // { "type":"location", "biome":"minecraft:deep_ocean" }
+                if (requirement.has("pos")) {
+                    com.google.gson.JsonArray pos = requirement.getAsJsonArray("pos");
+                    double x = pos.get(0).getAsDouble();
+                    double y = pos.get(1).getAsDouble();
+                    double z = pos.get(2).getAsDouble();
+                    double radius = requirement.has("radius") ? requirement.get("radius").getAsDouble() : 5.0;
+
+                    double distance = player.position().distanceTo(new net.minecraft.world.phys.Vec3(x, y, z));
+                    return distance <= radius;
+                }
+                if (requirement.has("value")) {
+                    String value = requirement.get("value").getAsString().toLowerCase();
+                    if ("underground".equals(value)) {
+                        boolean yThreshold = player.blockPosition().getY() < 50;
+                        boolean skyVisible = player.level().canSeeSky(player.blockPosition());
+                        return yThreshold || !skyVisible;
+                    }
+                }
+                if (requirement.has("y_greater_than")) {
+                    int minY = requirement.get("y_greater_than").getAsInt();
+                    return player.blockPosition().getY() > minY;
+                }
+                if (requirement.has("y_less_than")) {
+                    int maxY = requirement.get("y_less_than").getAsInt();
+                    return player.blockPosition().getY() < maxY;
+                }
+                if (requirement.has("biome")) {
+                    String biomeId = requirement.get("biome").getAsString();
+                    String currentBiome = player.level().getBiome(player.blockPosition()).unwrapKey()
+                        .map(key -> key.location().toString()).orElse("");
+                    return currentBiome.equals(biomeId);
+                }
+                break;
+                
+            case "explore_biomes":
+                if (requirement.has("biomes")) {
+                    com.google.gson.JsonArray biomes = requirement.getAsJsonArray("biomes");
+                    for (com.google.gson.JsonElement biomeEl : biomes) {
+                        String biome = biomeEl.getAsString();
+                        if (!hasExploredBiome(player, biome)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                break;
+                
+            case "visit_structures":
+                if (requirement.has("structures")) {
+                    com.google.gson.JsonArray structures = requirement.getAsJsonArray("structures");
+                    for (com.google.gson.JsonElement structureEl : structures) {
+                        String structure = structureEl.getAsString();
+                        if (!hasVisitedStructure(player, structure)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                break;
+        }
+        
+        return false;
+    }
+    
+    // Helper methods for tracking statistics
+    private static int getKillCount(ServerPlayer player, String entityType) {
+        PlayerContextTracker.EnhancedPlayerContext context = PlayerContextTracker.getContext(player.getUUID());
+        if (context != null && context.killsByEntity != null) {
+            return context.killsByEntity.getOrDefault(entityType, 0);
+        }
+        return 0;
+    }
+    
+    private static int getMineCount(ServerPlayer player, String blockType) {
+        PlayerContextTracker.EnhancedPlayerContext context = PlayerContextTracker.getContext(player.getUUID());
+        if (context != null && context.minedBlocks != null) {
+            return context.minedBlocks.getOrDefault(blockType, 0);
+        }
+        return 0;
+    }
+    
+    private static int getUseCount(ServerPlayer player, String itemType) {
+        PlayerContextTracker.EnhancedPlayerContext context = PlayerContextTracker.getContext(player.getUUID());
+        if (context != null && context.itemsUsed != null) {
+            return context.itemsUsed.getOrDefault(itemType, 0);
+        }
+        return 0;
+    }
+    
+    private static boolean hasExploredBiome(ServerPlayer player, String biome) {
+        PlayerContextTracker.EnhancedPlayerContext context = PlayerContextTracker.getContext(player.getUUID());
+        if (context != null && context.visitedBiomes != null) {
+            return context.visitedBiomes.contains(biome);
+        }
+        return false;
+    }
+    
+    private static boolean hasVisitedStructure(ServerPlayer player, String structure) {
+        PlayerContextTracker.EnhancedPlayerContext context = PlayerContextTracker.getContext(player.getUUID());
+        if (context != null && context.visitedStructures != null) {
+            return context.visitedStructures.contains(structure);
+        }
+        return false;
+    }
+    
     private static void executeTaskRewards(ServerPlayer player, String taskId) {
         for (AIDeityConfig config : AIDeityManager.getInstance().getAllConfigs()) {
             for (TaskSystemConfig.TaskTemplate template : config.task_config.availableTasks) {
@@ -344,10 +577,13 @@ public class TaskCommands {
                     for (String command : template.rewardCommands) {
                         String processedCommand = command.replace("{player}", player.getName().getString());
                         try {
-                            player.getServer().getCommands().performPrefixedCommand(
-                                player.getServer().createCommandSourceStack(),
-                                processedCommand
-                            );
+                            var server = player.getServer();
+                            if (server != null) {
+                                server.getCommands().performPrefixedCommand(
+                                    server.createCommandSourceStack(),
+                                    processedCommand
+                                );
+                            }
                         } catch (Exception e) {
                             System.err.println("Failed to execute reward command: " + processedCommand + " - " + e.getMessage());
                         }
@@ -356,5 +592,87 @@ public class TaskCommands {
                 }
             }
         }
+    }
+    
+    private static boolean meetsAssignmentConditions(ServerPlayer player, TaskSystemConfig.TaskTemplate taskTemplate) {
+        // Check progression tier requirements (assignment gate)
+        // Special-case: progression_tier == "none" means no attunement/progression required
+        if (taskTemplate.progressionTier != null && !taskTemplate.progressionTier.isEmpty()) {
+            if (!"none".equalsIgnoreCase(taskTemplate.progressionTier)) {
+                PlayerContextTracker.EnhancedPlayerContext context = PlayerContextTracker.getContext(player.getUUID());
+                if (context == null || !context.unlockedProgressions.contains(taskTemplate.progressionTier)) {
+                    return false;
+                }
+            }
+        }
+        
+        // Check AI assignment context if present
+        if (taskTemplate.aiAssignmentContext != null && !taskTemplate.aiAssignmentContext.isEmpty()) {
+            try {
+                com.google.gson.JsonObject assignmentRules = GSON.fromJson(taskTemplate.aiAssignmentContext, com.google.gson.JsonObject.class);
+                
+                // Check minimum reputation
+                if (assignmentRules.has("min_reputation")) {
+                    int minRep = assignmentRules.get("min_reputation").getAsInt();
+                    if (getPlayerReputationForTask(player, taskTemplate) < minRep) {
+                        return false;
+                    }
+                }
+                
+                // Check required items
+                if (assignmentRules.has("required_items")) {
+                    com.google.gson.JsonArray items = assignmentRules.getAsJsonArray("required_items");
+                    for (com.google.gson.JsonElement item : items) {
+                        com.google.gson.JsonObject itemReq = item.getAsJsonObject();
+                        String itemId = itemReq.get("item").getAsString();
+                        int count = itemReq.has("count") ? itemReq.get("count").getAsInt() : 1;
+                        
+                        if (!hasItem(player, itemId, count)) {
+                            return false;
+                        }
+                    }
+                }
+                
+                // Check dimension requirements
+                if (assignmentRules.has("required_dimension")) {
+                    String reqDimension = assignmentRules.get("required_dimension").getAsString();
+                    String currentDim = player.level().dimension().location().toString();
+                    if (!currentDim.equals(reqDimension)) {
+                        return false;
+                    }
+                }
+                
+            } catch (Exception e) {
+                System.err.println("Failed to parse aiAssignmentContext: " + e.getMessage());
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    private static double getPlayerReputationForTask(ServerPlayer player, TaskSystemConfig.TaskTemplate taskTemplate) {
+        // Try to find the deity associated with this task
+        for (AIDeityConfig config : AIDeityManager.getInstance().getAllConfigs()) {
+            if (config.task_config.availableTasks.contains(taskTemplate)) {
+                com.bluelotuscoding.eidolonunchained.deity.DatapackDeity deity = 
+                    com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getDeity(config.deity_id);
+                if (deity != null) {
+                    return deity.getPlayerReputation(player);
+                }
+            }
+        }
+        return 0.0;
+    }
+    
+    private static boolean hasItem(ServerPlayer player, String itemId, int count) {
+        int totalCount = 0;
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            net.minecraft.world.item.ItemStack stack = player.getInventory().getItem(i);
+            if (net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(stack.getItem()).toString().equals(itemId)) {
+                totalCount += stack.getCount();
+            }
+        }
+        return totalCount >= count;
     }
 }

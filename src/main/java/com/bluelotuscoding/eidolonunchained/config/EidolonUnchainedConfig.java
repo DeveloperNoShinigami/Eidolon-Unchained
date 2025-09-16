@@ -43,6 +43,9 @@ public class EidolonUnchainedConfig {
         public final ForgeConfigSpec.IntValue maxTokens;
         public final ForgeConfigSpec.BooleanValue enableAIDeities;
         public final ForgeConfigSpec.BooleanValue logAIInteractions;
+    // Natural-language trigger mode and AI context hints
+    public final ForgeConfigSpec.ConfigValue<String> naturalLanguageTriggerMode;
+    public final ForgeConfigSpec.BooleanValue exposeCooldownsInAIContext;
         
         // Retry system configuration
         public final ForgeConfigSpec.BooleanValue enableApiRetry;
@@ -149,6 +152,18 @@ public class EidolonUnchainedConfig {
         public final ForgeConfigSpec.BooleanValue verboseLogging;
         public final ForgeConfigSpec.BooleanValue enableDataGeneration;
         public final ForgeConfigSpec.BooleanValue validateJsonFiles;
+
+    // ===========================================
+    // TTS CONFIGURATION
+    // ===========================================
+    public final ForgeConfigSpec.BooleanValue enableTTS; // Master TTS enable/disable
+    public final ForgeConfigSpec.ConfigValue<String> ttsProvider; // player2 | webapi
+    public final ForgeConfigSpec.ConfigValue<String> webttsBaseUrl;
+    public final ForgeConfigSpec.ConfigValue<String> webttsApiKey;
+    public final ForgeConfigSpec.ConfigValue<String> ttsDefaultAudioFormat; // mp3|opus|flac|wav|pcm
+    public final ForgeConfigSpec.DoubleValue ttsDefaultSpeed; // 0.25 .. 4.0
+    public final ForgeConfigSpec.ConfigValue<String> ttsDefaultGender; // male|female|other
+    public final ForgeConfigSpec.ConfigValue<String> ttsDefaultLanguage; // en_US|...
         
         CommonConfig(ForgeConfigSpec.Builder builder) {
             
@@ -184,7 +199,7 @@ public class EidolonUnchainedConfig {
             
             // Player2AI Configuration
             player2aiApiKey = builder
-                .comment("Player2AI API key (leave empty to use environment variable EIDOLON_PLAYER2AI_API_KEY)")
+                .comment("Player2AI API key (automatically obtained from Player2 App - leave empty for auto-detection)")
                 .define("player2ai_api_key", "");
             
             enableMemoryPersistence = builder
@@ -215,6 +230,21 @@ public class EidolonUnchainedConfig {
             logAIInteractions = builder
                 .comment("Log AI interactions for debugging (API keys are never logged)")
                 .define("log_ai_interactions", false);
+
+            // Natural-language trigger behavior
+            naturalLanguageTriggerMode = builder
+                .comment(
+                    "Natural-language trigger mode:",
+                    "json_only - Only evaluate JSON-defined triggers pre-AI",
+                    "ai_only   - Only allow AI-decided [TRIGGER:...] post-AI",
+                    "both      - Allow both flows (JSON pre-AI + AI post-AI)"
+                )
+                .defineInList("natural_language_trigger_mode", "ai_only",
+                    java.util.Arrays.asList("json_only", "ai_only", "both"));
+
+            exposeCooldownsInAIContext = builder
+                .comment("Include cooldown status (e.g., blessing cooldown remaining) in AI context so it can respond appropriately")
+                .define("expose_cooldowns_in_ai_context", true);
             
             // Retry system configuration
             enableApiRetry = builder
@@ -454,6 +484,52 @@ public class EidolonUnchainedConfig {
             builder.pop();
             
             // ===========================================
+            // TTS CONFIGURATION
+            // ===========================================
+            builder.comment(
+                "═══════════════════════════════════════════════════════════════════════",
+                " TTS CONFIGURATION",
+                " Configure Text-To-Speech provider and defaults",
+                "═══════════════════════════════════════════════════════════════════════"
+            ).push("tts");
+
+            enableTTS = builder
+                .comment("Enable/disable TTS system globally (default: false - user must opt-in)")
+                .define("enabled", false);
+
+            ttsProvider = builder
+                .comment("TTS provider to use: player2 (Player2App/API) or webapi (custom /tts endpoints)")
+                .defineInList("provider", "player2", java.util.Arrays.asList("player2", "webapi"));
+
+            webttsBaseUrl = builder
+                .comment("Base URL for Web TTS API (must expose /tts/voices and /tts/speak)")
+                .define("webapi_base_url", "http://localhost:3000");
+
+            webttsApiKey = builder
+                .comment("Bearer API key for Web TTS API (leave empty if not required)")
+                .define("webapi_api_key", "");
+
+            ttsDefaultAudioFormat = builder
+                .comment("Default audio format for TTS output")
+                .defineInList("default_audio_format", "mp3",
+                    java.util.Arrays.asList("mp3", "opus", "flac", "wav", "pcm"));
+
+            ttsDefaultSpeed = builder
+                .comment("Default TTS speaking speed (0.25 - 4.0)")
+                .defineInRange("default_speed", 1.0D, 0.25D, 4.0D);
+
+            ttsDefaultGender = builder
+                .comment("Default voice gender if provider chooses a default")
+                .defineInList("default_gender", "other", java.util.Arrays.asList("male", "female", "other"));
+
+            ttsDefaultLanguage = builder
+                .comment("Default voice language if provider chooses a default")
+                .defineInList("default_language", "en_US",
+                    java.util.Arrays.asList("en_US", "en_GB", "ja_JP", "zh_CN", "es_ES", "fr_FR", "hi_IN", "it_IT", "pt_BR"));
+
+            builder.pop();
+
+            // ===========================================
             // DEITY INTERACTION CONFIGURATION
             // ===========================================
             builder.comment(
@@ -614,4 +690,15 @@ public class EidolonUnchainedConfig {
             builder.pop();
         }
     }
+
+    // Static accessors for commonly used config values
+    public static final ForgeConfigSpec.ConfigValue<String> PLAYER2_API_KEY = COMMON.player2aiApiKey;
+    public static final ForgeConfigSpec.BooleanValue ENABLE_TTS = COMMON.enableTTS;
+    public static final ForgeConfigSpec.ConfigValue<String> TTS_PROVIDER = COMMON.ttsProvider;
+    public static final ForgeConfigSpec.ConfigValue<String> WEBTTS_BASE_URL = COMMON.webttsBaseUrl;
+    public static final ForgeConfigSpec.ConfigValue<String> WEBTTS_API_KEY = COMMON.webttsApiKey;
+    public static final ForgeConfigSpec.ConfigValue<String> TTS_DEFAULT_AUDIO_FORMAT = COMMON.ttsDefaultAudioFormat;
+    public static final ForgeConfigSpec.DoubleValue TTS_DEFAULT_SPEED = COMMON.ttsDefaultSpeed;
+    public static final ForgeConfigSpec.ConfigValue<String> TTS_DEFAULT_GENDER = COMMON.ttsDefaultGender;
+    public static final ForgeConfigSpec.ConfigValue<String> TTS_DEFAULT_LANGUAGE = COMMON.ttsDefaultLanguage;
 }

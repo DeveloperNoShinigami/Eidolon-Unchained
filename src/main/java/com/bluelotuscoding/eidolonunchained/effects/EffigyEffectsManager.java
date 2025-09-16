@@ -242,9 +242,9 @@ public class EffigyEffectsManager {
         Vec3 center = Vec3.atCenterOf(pos);
         RandomSource random = world.getRandom();
 
-        float red = deity != null ? deity.getRed() : 1.0f;
-        float green = deity != null ? deity.getGreen() : 0.7f;
-        float blue = deity != null ? deity.getBlue() : 0.3f;
+    float red = deity != null ? deity.getRed() : 1.0f;
+    float green = deity != null ? deity.getGreen() : 0.7f;
+    float blue = deity != null ? deity.getBlue() : 0.3f;
 
         // Place two colored flame clusters at the effigy front corners (matches PrayerSpell look)
         var state = world.getBlockState(pos);
@@ -301,9 +301,9 @@ public class EffigyEffectsManager {
     private static void createFlameParticles(ServerLevel world, BlockPos pos, DatapackDeity deity, float intensity) {
         Vec3 center = Vec3.atCenterOf(pos);
         RandomSource random = world.getRandom();
-        float red = deity != null ? deity.getRed() : 1.0f;
-        float green = deity != null ? deity.getGreen() : 0.7f;
-        float blue = deity != null ? deity.getBlue() : 0.3f;
+    float red = deity != null ? deity.getRed() : 1.0f;
+    float green = deity != null ? deity.getGreen() : 0.7f;
+    float blue = deity != null ? deity.getBlue() : 0.3f;
         int particleCount = Math.max(1, (int)(intensity * 4));
         for (int i = 0; i < particleCount; i++) {
             double angle = random.nextDouble() * 2 * Math.PI;

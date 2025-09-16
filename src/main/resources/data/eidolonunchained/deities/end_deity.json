@@ -24,6 +24,19 @@
         ]
       },
       {
+        "id": "void_initiate",
+        "reputation": 15,
+        "major": false,
+        "title": "Void Initiate",
+        "description": "One who studies the edges of nothingness",
+        "rewards": [
+          "give @s minecraft:chorus_fruit 2",
+          "effect give @s minecraft:levitation 5 0",
+          "title @s title {\"text\":\"Void Initiate\",\"color\":\"light_purple\"}",
+          "playsound minecraft:block.end_portal_frame.fill master @s ~ ~ ~ 0.6 1.2"
+        ]
+      },
+      {
         "id": "void_walker",
         "reputation": 25,
         "major": false,

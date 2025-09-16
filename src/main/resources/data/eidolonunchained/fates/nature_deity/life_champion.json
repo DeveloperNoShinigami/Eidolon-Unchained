@@ -1,0 +1,65 @@
+{
+  "linked_deity": "eidolonunchained:nature_deity",
+  "task_id": "nature_life_champion",
+  "display_name": "Champion of Life",
+  "description": "Achieve mastery over the ultimate forces of life itself",
+  "progression_tier": "nature_champion",
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 60,
+      "max_reputation": 999,
+      "required_biomes": ["minecraft:dark_forest", "minecraft:flower_forest"],
+      "prayer_types": ["conversation", "growth", "ritual", "mastery", "life"],
+      "completed_tasks": ["nature_sacred_gathering", "nature_grove_tender", "nature_ritual_master"],
+      "unlocked_progressions": ["nature_high_priest"],
+      "auto_assign_probability": 0.1,
+      "min_reputation_for_auto_assign": 75
+    },
+    "assignment_prompt": "Ritual master, you stand at the threshold of life's greatest mystery. The Wither brings death to all things, but you must prove that life conquers even death itself. Take up the totem of the woodland guardians and show that nature's champion fears no darkness.",
+    "completion_phrases": [
+      "Life eternal flows through your very being - you are become nature's ultimate champion...",
+      "Death itself bows before your mastery of life's sacred mysteries..."
+    ]
+  },
+  "requirements": [
+    {
+      "type": "kill_entities",
+      "entities": [
+        {
+          "entity": "minecraft:wither",
+          "count": 1,
+          "display_name": "Herald of Death"
+        }
+      ]
+    },
+    {
+      "type": "use_items",
+      "items": [
+        {
+          "item": "minecraft:totem_of_undying",
+          "count": 1,
+          "display_name": "Life's Sacred Anchor"
+        }
+      ]
+    },
+    {
+      "type": "visit_structures",
+      "structures": ["minecraft:woodland_mansion"],
+      "display_name": "Woodland Guardian's Sanctum"
+    }
+  ],
+  "rewards": {
+    "reputation": 25,
+    "commands": [
+      "give {player} minecraft:totem_of_undying 1",
+      "give {player} minecraft:enchanted_golden_apple 2",
+      "effect give {player} minecraft:absorption 1800 3",
+      "effect give {player} minecraft:regeneration 1800 2",
+      "tellraw {player} {\"text\":\"🌿 You are blessed with the ultimate power of life itself - Champion of Nature\",\"color\":\"dark_green\"}"
+    ],
+    "progression_unlock": "nature_champion"
+  },
+  "unlocked_progressions": ["nature_high_priest"],
+  "cooldown_hours": 72,
+  "repeatable": false
+}

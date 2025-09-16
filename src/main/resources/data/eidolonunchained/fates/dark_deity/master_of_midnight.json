@@ -1,0 +1,33 @@
+{
+  "linked_deity": "eidolonunchained:dark_deity",
+  "task_id": "master_of_midnight",
+  "display_name": "Master of Midnight",
+  "description": "Defeat a raid at midnight and collect 3 wither roses.",
+  "progression_tier": "void_master",
+  "requirements": [
+    { "type": "event", "value": "defeat_raid", "time": "midnight" },
+    { "type": "collect_items", "items": [{ "item": "minecraft:wither_rose", "count": 3 }] }
+  ],
+  "rewards": {
+    "reputation": 16,
+    "commands": [
+      "effect give {player} minecraft:strength 600 1",
+      "give {player} eidolon:shadow_gem 1"
+    ]
+  },
+  "cooldown_hours": 24,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 60,
+      "max_reputation": 90,
+      "auto_assign_probability": 0.2,
+      "min_reputation_for_auto_assign": 65
+    },
+    "assignment_prompt": "Master, let the village live to remember midnight by your name.",
+    "completion_phrases": [
+      "Midnight keeps your counsel.",
+      "The bell tolls for your shadow."
+    ]
+  }
+}

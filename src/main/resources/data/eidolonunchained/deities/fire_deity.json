@@ -11,8 +11,21 @@
     "max_reputation": 100,
     "stages": [
       {
-        "id": "hellfire_initiate",
+        "id": "flame_touched",
         "reputation": 0,
+        "major": false,
+        "title": "Flame Touched",
+        "description": "One brushed by the forge-fire",
+        "rewards": [
+          "give @s minecraft:coal 8",
+          "effect give @s minecraft:fire_resistance 120 0",
+          "title @s title {\"text\":\"The embers stir around you...\",\"color\":\"red\"}",
+          "playsound minecraft:entity.blaze.ambient master @s ~ ~ ~ 0.3 1.0"
+        ]
+      },
+      {
+        "id": "hellfire_initiate",
+        "reputation": 15,
         "major": false,
         "title": "Hellfire Initiate",
         "description": "One tested by the forge-fire",

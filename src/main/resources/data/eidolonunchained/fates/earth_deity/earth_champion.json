@@ -1,0 +1,39 @@
+{
+  "linked_deity": "eidolonunchained:earth_deity",
+  "task_id": "earth_champion",
+  "display_name": "Earth Champion",
+  "description": "Become the ultimate champion of earth and stone, commanding the deepest secrets",
+  "progression_tier": "earth_sovereign",
+  "requirements": [
+    "collect_items:minecraft:emerald:16",
+    "{\"type\": \"mine_blocks_at_depth\", \"block\": \"minecraft:diamond_ore\", \"min_depth\": -50, \"count\": 8}",
+    "{\"type\": \"craft_items\", \"output_item\": \"minecraft:netherite_ingot\", \"count\": 4}"
+  ],
+  "rewards": {
+    "reputation": 25,
+    "commands": [
+      "give {player} minecraft:mending 1",
+      "give {player} minecraft:netherite_block 2",
+      "give {player} minecraft:enchanted_golden_apple 1",
+      "effect give {player} minecraft:resistance 2400 2",
+      "tellraw {player} {\"text\":\"👑 You are now Champion of Earth - the very mountains bow before you\",\"color\":\"gold\"}"
+    ],
+  "progression_unlock": "earth_sovereign"
+  },
+  "cooldown_hours": 72,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 80,
+      "prayer_types": ["conversation", "blessing"],
+      "unlocked_progressions": ["mountain_lord"],
+      "auto_assign_probability": 0.1,
+      "min_reputation_for_auto_assign": 75
+    },
+    "assignment_prompt": "Sovereign, command stone and soil as your dominion. Etch your reign in bedrock.",
+    "completion_phrases": [
+      "Mountains bow in silent respect.",
+      "Your legacy runs deep as the world-roots."
+    ]
+  }
+}

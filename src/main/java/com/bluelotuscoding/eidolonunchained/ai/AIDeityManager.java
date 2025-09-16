@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class AIDeityManager extends SimpleJsonResourceReloadListener {
     private static final org.slf4j.Logger LOGGER = LogUtils.getLogger();
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
     private static AIDeityManager INSTANCE;
     
     // Map deity IDs to their AI configurations
@@ -190,6 +190,11 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             loadAPISettings(config, json.getAsJsonObject("api_settings"));
         }
         
+        // Patron config
+        if (json.has("patron_config")) {
+            loadPatronConfig(config, json.getAsJsonObject("patron_config"));
+        }
+
         // Store the configuration
         aiConfigs.put(deityId, config);
         LOGGER.info("Loaded AI configuration for deity: {}", deityId);
@@ -268,6 +273,38 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                     loadAPISettings(config, json.getAsJsonObject("api_settings"));
                 }
                 
+                // Parse patron configuration
+                if (json.has("patron_config")) {
+                    loadPatronConfig(config, json.getAsJsonObject("patron_config"));
+                }
+
+                // Parse natural language triggers
+                if (json.has("natural_language_triggers")) {
+                    try {
+                        JsonArray arr = json.getAsJsonArray("natural_language_triggers");
+                        config.naturalLanguageTriggers.clear();
+                        for (JsonElement el : arr) {
+                            if (!el.isJsonObject()) continue;
+                            JsonObject t = el.getAsJsonObject();
+                            AIDeityConfig.NLTrigger trig = new AIDeityConfig.NLTrigger();
+                            if (t.has("id")) trig.id = t.get("id").getAsString();
+                            if (t.has("contains")) {
+                                for (JsonElement s : t.getAsJsonArray("contains")) trig.contains.add(s.getAsString());
+                            }
+                            if (t.has("regex")) {
+                                for (JsonElement s : t.getAsJsonArray("regex")) trig.regex.add(s.getAsString());
+                            }
+                            if (t.has("min_reputation")) trig.minReputation = t.get("min_reputation").getAsInt();
+                            if (t.has("cooldown_seconds")) trig.cooldownSeconds = t.get("cooldown_seconds").getAsLong();
+                            if (t.has("action")) trig.action = t.get("action").getAsString();
+                            if (t.has("params")) trig.params = t.getAsJsonObject("params");
+                            config.naturalLanguageTriggers.add(trig);
+                        }
+                    } catch (Exception ex) {
+                        LOGGER.warn("Failed parsing natural_language_triggers for {}: {}", deityId, ex.getMessage());
+                    }
+                }
+
                 // Parse task configuration
                 if (json.has("task_config")) {
                     loadTaskConfig(config, json.getAsJsonObject("task_config"));
@@ -489,6 +526,20 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
         if (apiSettings.has("timeout_seconds")) {
             config.timeout_seconds = apiSettings.get("timeout_seconds").getAsInt();
         }
+
+        // Support top-level temperature/max_tokens for backward compatibility
+        if (apiSettings.has("temperature")) {
+            try {
+                config.temperature = apiSettings.get("temperature").getAsFloat();
+                config.api_settings.generationConfig.temperature = config.temperature;
+            } catch (Exception ignored) {}
+        }
+        if (apiSettings.has("max_tokens")) {
+            try {
+                config.max_output_tokens = apiSettings.get("max_tokens").getAsInt();
+                config.api_settings.generationConfig.max_output_tokens = config.max_output_tokens;
+            } catch (Exception ignored) {}
+        }
         
         if (apiSettings.has("safety_settings")) {
             JsonObject safety = apiSettings.getAsJsonObject("safety_settings");
@@ -515,6 +566,124 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             }
         }
     }
+
+    private void loadPatronConfig(AIDeityConfig config, JsonObject patron) {
+        if (patron == null) return;
+
+        // Basic flags
+        if (patron.has("accepts_followers")) {
+            try { config.patron_config.acceptsFollowers = patron.get("accepts_followers").getAsBoolean(); } catch (Exception ignored) {}
+        }
+        if (patron.has("requires_patron_status")) {
+            try { config.patron_config.requiresPatronStatus = patron.get("requires_patron_status").getAsString(); } catch (Exception ignored) {}
+        }
+
+        // Relationships
+        if (patron.has("opposing_deities")) {
+            try {
+                config.patron_config.opposingDeities.clear();
+                for (JsonElement e : patron.getAsJsonArray("opposing_deities")) {
+                    config.patron_config.opposingDeities.add(e.getAsString());
+                }
+            } catch (Exception ignored) {}
+        }
+        if (patron.has("allied_deities")) {
+            try {
+                config.patron_config.alliedDeities.clear();
+                for (JsonElement e : patron.getAsJsonArray("allied_deities")) {
+                    config.patron_config.alliedDeities.add(e.getAsString());
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // Personality modifiers
+        if (patron.has("follower_personality_modifiers")) {
+            try {
+                config.patron_config.followerPersonalityModifiers.clear();
+                JsonObject mods = patron.getAsJsonObject("follower_personality_modifiers");
+                for (Map.Entry<String, JsonElement> e : mods.entrySet()) {
+                    config.patron_config.followerPersonalityModifiers.put(e.getKey(), e.getValue().getAsString());
+                }
+            } catch (Exception ignored) {}
+        }
+        if (patron.has("enemy_personality_modifier")) {
+            try { config.patron_config.enemyPersonalityModifier = patron.get("enemy_personality_modifier").getAsString(); } catch (Exception ignored) {}
+        }
+        if (patron.has("neutral_personality_modifier")) {
+            try { config.patron_config.neutralPersonalityModifier = patron.get("neutral_personality_modifier").getAsString(); } catch (Exception ignored) {}
+        }
+        if (patron.has("no_patron_personality_modifier")) {
+            try { config.patron_config.noPatronPersonalityModifier = patron.get("no_patron_personality_modifier").getAsString(); } catch (Exception ignored) {}
+        }
+        if (patron.has("allied_personality_modifier")) {
+            try { config.patron_config.alliedPersonalityModifier = patron.get("allied_personality_modifier").getAsString(); } catch (Exception ignored) {}
+        }
+
+    // Conversation rules (convert JSON to Java maps/lists/primitives)
+        if (patron.has("conversation_rules")) {
+            try {
+                JsonObject rules = patron.getAsJsonObject("conversation_rules");
+                config.patron_config.conversationRules.clear();
+                for (Map.Entry<String, JsonElement> e : rules.entrySet()) {
+            config.patron_config.conversationRules.put(e.getKey(), toJava(e.getValue()));
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // Team/faction
+        if (patron.has("assignsPlayersToTeam")) {
+            try { config.patron_config.assignsPlayersToTeam = patron.get("assignsPlayersToTeam").getAsBoolean(); } catch (Exception ignored) {}
+        }
+        if (patron.has("teamName")) {
+            try { config.patron_config.teamName = patron.get("teamName").getAsString(); } catch (Exception ignored) {}
+        }
+        if (patron.has("teamColor")) {
+            try { config.patron_config.teamColor = patron.get("teamColor").getAsString(); } catch (Exception ignored) {}
+        }
+        if (patron.has("friendlyFire")) {
+            try { config.patron_config.friendlyFire = patron.get("friendlyFire").getAsBoolean(); } catch (Exception ignored) {}
+        }
+
+        // Supported entities
+        if (patron.has("supportedMobIds")) {
+            try {
+                config.patron_config.supportedMobIds.clear();
+                for (JsonElement e : patron.getAsJsonArray("supportedMobIds")) {
+                    config.patron_config.supportedMobIds.add(e.getAsString());
+                }
+            } catch (Exception ignored) {}
+        }
+    }
+
+    // Recursively convert JsonElement to Java types expected by downstream code
+    private Object toJava(JsonElement el) {
+        if (el == null || el.isJsonNull()) return null;
+        if (el.isJsonObject()) {
+            Map<String, Object> map = new java.util.HashMap<>();
+            for (Map.Entry<String, JsonElement> e : el.getAsJsonObject().entrySet()) {
+                map.put(e.getKey(), toJava(e.getValue()));
+            }
+            return map;
+        }
+        if (el.isJsonArray()) {
+            java.util.List<Object> list = new java.util.ArrayList<>();
+            for (JsonElement e : el.getAsJsonArray()) list.add(toJava(e));
+            return list;
+        }
+        if (el.isJsonPrimitive()) {
+            JsonPrimitive p = el.getAsJsonPrimitive();
+            if (p.isBoolean()) return p.getAsBoolean();
+            if (p.isNumber()) {
+                double d = p.getAsDouble();
+                if (Math.floor(d) == d) {
+                    try { return p.getAsInt(); } catch (Exception ex) { return (long) d; }
+                }
+                return d;
+            }
+            return p.getAsString();
+        }
+        return null;
+    }
     
     private void loadTaskConfig(AIDeityConfig config, JsonObject taskConfig) {
         // Clear hardcoded tasks - everything should come from JSON
@@ -528,6 +697,19 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             config.task_config.maxActiveTasks = taskConfig.get("max_active_tasks").getAsInt();
         }
         
+        if (taskConfig.has("task_assignment_behavior")) {
+            JsonObject behavior = taskConfig.getAsJsonObject("task_assignment_behavior");
+            if (behavior.has("auto_assign_probability")) {
+                try { config.task_config.taskAssignmentBehavior.autoAssignProbability = behavior.get("auto_assign_probability").getAsFloat(); } catch (Exception ignored) {}
+            }
+            if (behavior.has("min_reputation_for_auto_assign")) {
+                try { config.task_config.taskAssignmentBehavior.minReputationForAutoAssign = behavior.get("min_reputation_for_auto_assign").getAsInt(); } catch (Exception ignored) {}
+            }
+            if (behavior.has("cooldown_between_assignments_hours")) {
+                try { config.task_config.taskAssignmentBehavior.cooldownBetweenAssignmentsHours = behavior.get("cooldown_between_assignments_hours").getAsLong(); } catch (Exception ignored) {}
+            }
+        }
+
         if (taskConfig.has("available_tasks")) {
             JsonArray tasks = taskConfig.getAsJsonArray("available_tasks");
             for (JsonElement taskElement : tasks) {
@@ -570,6 +752,9 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                         for (JsonElement cmd : commands) {
                             task.rewardCommands.add(cmd.getAsString());
                         }
+                    }
+                    if (rewards.has("progression_unlock")) {
+                        task.progressionUnlock = rewards.get("progression_unlock").getAsString();
                     }
                 }
                 

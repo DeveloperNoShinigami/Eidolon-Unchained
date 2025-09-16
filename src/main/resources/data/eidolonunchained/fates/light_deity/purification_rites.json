@@ -1,0 +1,41 @@
+{
+  "linked_deity": "eidolonunchained:light_deity",
+  "task_id": "light_purification_rites",
+  "display_name": "Purification Rites",
+  "description": "Master the sacred rites of purification and cleansing",
+  "progression_tier": "light_acolyte",
+  "requirements": [
+    "kill_entities:minecraft:zombie:12",
+    "kill_entities:minecraft:skeleton:8",
+    "{\"type\": \"use_during_time\", \"time\": \"day\", \"action\": \"cast_spell\", \"count\": 10}"
+  ],
+  "rewards": {
+    "reputation": 10,
+    "commands": [
+      "give {player} minecraft:enchanted_golden_apple 1",
+      "give {player} minecraft:glowstone_dust 8",
+      "effect give {player} minecraft:glowing 600 0",
+      "tellraw {player} {\"text\":\"☀️ Your light burns away darkness and corruption\",\"color\":\"yellow\"}"
+    ],
+  "progression_unlock": "light_acolyte"
+  },
+  "unlocked_progressions": [],
+  "cooldown_hours": 24,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 15,
+      "max_reputation": 45,
+      "prayer_types": ["conversation", "blessing"],
+      "required_time": "day",
+      "unlocked_progressions": ["light_initiate"],
+      "auto_assign_probability": 0.3,
+      "min_reputation_for_auto_assign": 25
+    },
+    "assignment_prompt": "Acolyte, purge darkness and refine your spirit in the rites of cleansing.",
+    "completion_phrases": [
+      "The shadows retreat before your faith.",
+      "Purity strengthens your resolve."
+    ]
+  }
+}

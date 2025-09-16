@@ -43,6 +43,10 @@
         "minecraft:badlands": "These fire-touched mesas please your volcanic nature.",
         "minecraft:nether_wastes": "The hellish flames here sing in harmony with your power.",
         "minecraft:basalt_deltas": "This volcanic realm resonates with your forge-fire."
+      },
+      "environment": {
+        "underground": "In the furnace of the deep earth, your forge burns hottest and true.",
+        "high_altitude": "Upon windswept peaks, your flames lick at the sky with fierce joy."
       }
     }
   },
@@ -137,72 +141,6 @@
     }
   },
   
-  "task_config": {
-    "enabled": true,
-    "max_active_tasks": 3,
-    "task_assignment_behavior": {
-      "auto_assign_probability": 0.4,
-      "min_reputation_for_auto_assign": 5,
-      "conversation_triggers": [
-        "first_conversation",
-        "reputation_milestone",
-        "completed_previous_task",
-        "forge_prayer",
-        "fire_communion"
-      ],
-      "cooldown_between_assignments_hours": 20
-    },
-    
-    "available_tasks": [
-      {
-        "task_id": "fire_forge_mastery",
-        "display_name": "Master the Forge",
-        "description": "Prove your dedication to fire and forge by smelting materials",
-        "progression_tier": "initiate",
-        "ai_assignment_context": {
-          "trigger_conditions": {
-            "min_reputation": 0,
-            "max_reputation": 30,
-            "prayer_types": ["conversation", "fire"],
-            "completed_tasks": [],
-            "unlocked_progressions": []
-          },
-          "assignment_prompt": "Young flame-seeker, prove your dedication by mastering the art of smelting. Transform {item_count} raw materials in the fires of creation. This forging will earn you {reputation_reward} fiery favor.",
-          "completion_phrases": [
-            "Your forge burns bright with dedication - the flames recognize your growing mastery.",
-            "You have proven yourself worthy of the sacred fire that transforms all things.",
-            "Your smelting skills honor the ancient traditions of forge and flame."
-          ]
-        },
-        "requirements": [
-          {
-            "type": "smelt_items",
-            "items": [
-              {
-                "input_item": "minecraft:iron_ore",
-                "output_item": "minecraft:iron_ingot",
-                "count": 16,
-                "display_name": "Forged Iron"
-              }
-            ]
-          }
-        ],
-        "rewards": {
-          "reputation": 8,
-          "commands": [
-            "give {player} minecraft:lava_bucket 2",
-            "effect give {player} minecraft:fire_resistance 600 0",
-            "give {player} minecraft:blaze_powder 4",
-            "tellraw {player} {\"text\":\"🔥 Your forge burns with sacred flame - fire bends to your will\",\"color\":\"red\"}"
-          ],
-          "progression_unlock": "forge_apprentice"
-        },
-        "cooldown_hours": 24,
-        "repeatable": false
-      }
-    ]
-  },
-  
   "api_settings": {
     "temperature": 0.8,
     "max_tokens": 400,
@@ -215,9 +153,48 @@
     },
     "safety_settings": {
       "harassment": "BLOCK_MEDIUM_AND_ABOVE",
-      "hate_speech": "BLOCK_MEDIUM_AND_ABOVE", 
+      "hate_speech": "BLOCK_MEDIUM_AND_ABOVE",
       "sexually_explicit": "BLOCK_MEDIUM_AND_ABOVE",
       "dangerous_content": "BLOCK_MEDIUM_AND_ABOVE"
+    }
+  },
+
+  "tts_config": {
+        "voice_id": "fire_spirit",
+    "backup_voice": "jackson",
+    "pitch": 1.2,
+    "speed": 1.1,
+    "volume": 1.2,
+    "emotion": "passionate",
+    "accent": "elemental",
+    "emphasis_level": 2,
+    "enabled": false,
+    "allow_player_override": true,
+    "funding_preference": "player_first",
+    "voice_aliases": {
+      "flame_lord": "male-intense-1",
+      "burning_rage": "male-deep-2",
+      "ember_whisper": "male-whisper-1"
+    },
+    "reputation_voices": {
+      "0": "male-whisper-1",
+      "25": "male-intense-1",
+      "75": "male-intense-divine-1"
+    },
+    "time_voices": {
+      "day": "male-intense-1",
+      "night": "male-deep-1"
+    },
+    "biome_voices": {
+      "minecraft:nether_wastes": "male-intense-2",
+      "minecraft:crimson_forest": "male-deep-1",
+      "minecraft:basalt_deltas": "male-intense-1",
+      "minecraft:desert": "male-intense-1"
+    },
+    "advanced_params": {
+      "flame_crackle": 0.3,
+      "heat_distortion": 0.2,
+      "intensity_boost": 1.1
     }
   },
   
@@ -241,6 +218,16 @@
       "mentions_allied_deity": "Speak with respect of those who understand the balance of creation and strength.",
       "mentions_enemy_deity": "All elements serve their purpose in the great cycle of creation and destruction."
     },
+    "conversation_rules": {
+      "follower_restrictions": {
+        "can_speak_to_enemies": true,
+        "reputation_bonus_for_followers": 1
+      },
+      "enemy_restrictions": {
+        "reputation_penalty_on_contact": 0,
+        "hostile_response_probability": 0.05
+      }
+    },
     
     "follower_personality_modifiers": {
       "Hellfire Initiate": "A new soul learning to walk through flame, deserving of patient forge instruction.",
@@ -249,6 +236,49 @@
       "Lord of the Inferno": "A master of fire mastery, blessed with deep forge authority.",
       "Emperor of Hellfire": "Your chosen emperor of flame, ultimate master of forge and fire.",
       "default": "A faithful seeker walking the blazing paths of forge mastery."
-    }
+    },
+
+    "assignsPlayersToTeam": true,
+    "teamName": "Forge Brotherhood",
+    "teamColor": "red",
+
+    "supportedMobIds": [
+      "minecraft:blaze",
+      "minecraft:magma_cube",
+      "minecraft:ghast",
+      "minecraft:strider",
+      "minecraft:wither_skeleton"
+    ],
+    "friendlyFire": false
   }
+  ,
+  
+  "natural_language_triggers": [
+    {
+      "id": "resist_flames",
+      "contains": ["it's hot", "burning", "lava"],
+      "min_reputation": 5,
+      "cooldown_seconds": 180,
+      "action": "run_commands",
+      "params": { "prayer_type": "blessing", "commands": [
+        "effect give {player} minecraft:fire_resistance 600 0"
+      ]}
+    },
+    {
+      "id": "ignite",
+      "contains": ["ignite", "let there be fire"],
+      "min_reputation": 15,
+      "cooldown_seconds": 300,
+      "action": "run_commands",
+      "params": { "commands": [
+        "give {player} minecraft:flint_and_steel 1"
+      ]}
+    },
+    {
+      "id": "ask_task",
+      "contains": ["task", "quest", "fate"],
+      "cooldown_seconds": 60,
+      "action": "offer_fate"
+    }
+  ]
 }

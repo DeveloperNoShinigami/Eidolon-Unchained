@@ -30,6 +30,8 @@ public class UniversalAIContextBuilder {
             // 3. Command execution system guidance
             context.append("\n=== COMMAND EXECUTION SYSTEM ===\n");
             context.append(AIResponseProcessor.getCommandMarkupGuide());
+            context.append("\n");
+            context.append(AIResponseProcessor.getTriggerMarkupGuide());
             
             // 4. Prayer-specific configuration if available
             if (prayerConfig != null) {

@@ -230,7 +230,9 @@
   
   "eidolonunchained.command.deity.reload_success": "Deities reloaded successfully",
   "eidolonunchained.command.deity.reload_failed": "Failed to reload deities: %s",
-  "eidolonunchained.command.deity.status": "Showing status for deity: %s",  "_comment_keybind_system": "=== KEYBIND SYSTEM ===",
+  "eidolonunchained.command.deity.status": "Showing status for deity: %s",  
+  
+  "_comment_keybind_system": "=== KEYBIND SYSTEM ===",
   "eidolonunchained.keybind.category": "Eidolon Unchained",
   "eidolonunchained.keybind.chant_slot_1": "Sign/Chant Slot 1",
   "eidolonunchained.keybind.chant_slot_2": "Sign/Chant Slot 2",

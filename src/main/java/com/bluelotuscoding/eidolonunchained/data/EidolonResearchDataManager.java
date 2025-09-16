@@ -2,16 +2,12 @@ package com.bluelotuscoding.eidolonunchained.data;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import elucent.eidolon.api.research.Research;
 import elucent.eidolon.api.research.ResearchTask;
-import elucent.eidolon.api.spells.Spell;
-import elucent.eidolon.capability.IKnowledge;
 import elucent.eidolon.registries.Researches;
-import elucent.eidolon.registries.Spells;
 // import elucent.eidolon.util.KnowledgeUtil;  // TODO: Find correct class name
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
@@ -21,14 +17,13 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.entity.player.Player;
@@ -41,9 +36,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,7 +48,7 @@ import java.util.Map;
 public class EidolonResearchDataManager extends SimpleJsonResourceReloadListener {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(EidolonResearchDataManager.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
     
     private static EidolonResearchDataManager INSTANCE;
     
@@ -78,6 +71,7 @@ public class EidolonResearchDataManager extends SimpleJsonResourceReloadListener
     }
     
     @Override
+    @SuppressWarnings({"null", "all"})
     protected void apply(Map<ResourceLocation, JsonElement> resourceLocationJsonElementMap, 
                          ResourceManager resourceManager, ProfilerFiller profilerFiller) {
         
@@ -431,6 +425,7 @@ public class EidolonResearchDataManager extends SimpleJsonResourceReloadListener
         if (player == null || player.getServer() == null) return;
 
         try {
+            LOGGER.info("[Research] Executing command reward for {}: {}", player.getName().getString(), command);
             String processed = command
                 .replace("{player}", player.getName().getString())
                 .replace("{uuid}", player.getUUID().toString())
@@ -445,10 +440,16 @@ public class EidolonResearchDataManager extends SimpleJsonResourceReloadListener
                 processed = processed.substring(1);
             }
 
-            player.getServer().getCommands().performPrefixedCommand(
-                player.getServer().createCommandSourceStack(),
-                processed
-            );
+            MinecraftServer server = player.getServer();
+            if (server != null) {
+                int result = server.getCommands().performPrefixedCommand(
+                    server.createCommandSourceStack(),
+                    processed
+                );
+                LOGGER.info("[Research] Command result={} for processed='{}'", result, processed);
+            } else {
+                LOGGER.warn("[Research] Skipped command execution; server was null for player {}", player.getName().getString());
+            }
         } catch (Exception e) {
             LOGGER.error("Failed to execute research command reward '{}': {}", command, e.getMessage());
         }
@@ -491,6 +492,7 @@ public class EidolonResearchDataManager extends SimpleJsonResourceReloadListener
             }
 
             if (player instanceof ServerPlayer sp) {
+                LOGGER.info("[Research] Task '{}' completed. Executing {} command reward(s).", delegate.getClass().getSimpleName(), commands.size());
                 for (String cmd : commands) {
                     executeCommandReward(sp, cmd);
                 }
@@ -523,7 +525,7 @@ public class EidolonResearchDataManager extends SimpleJsonResourceReloadListener
         try {
             // Try to find the sign in Signs registry using reflection
             Class<?> signsClass = Class.forName("elucent.eidolon.registries.Signs");
-            Object sign = signsClass.getField(signName.toUpperCase() + "_SIGN").get(null);
+            signsClass.getField(signName.toUpperCase() + "_SIGN").get(null);
             
             // Grant the sign using KnowledgeUtil (correct method signature: Entity, Sign)
             // TODO: Re-enable when KnowledgeUtil class is available

@@ -25,7 +25,7 @@ import java.util.concurrent.CompletableFuture;
 public class OpenRouterClient {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    private static final Gson GSON = new Gson();
+    private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
 
     private final String apiKey;
     private final String model;

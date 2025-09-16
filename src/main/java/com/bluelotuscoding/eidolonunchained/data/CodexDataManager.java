@@ -3,7 +3,7 @@ package com.bluelotuscoding.eidolonunchained.data;
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.codex.CodexEntry;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+// import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonArray;
@@ -47,7 +47,7 @@ import java.util.*;
 public class CodexDataManager extends SimpleJsonResourceReloadListener {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(CodexDataManager.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
     
     // Storage for loaded codex entries and custom chapters
     private static final Map<ResourceLocation, List<CodexEntry>> CHAPTER_EXTENSIONS = new HashMap<>();

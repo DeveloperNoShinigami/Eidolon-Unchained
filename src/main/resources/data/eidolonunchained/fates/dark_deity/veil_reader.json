@@ -1,0 +1,34 @@
+{
+  "linked_deity": "eidolonunchained:dark_deity",
+  "task_id": "veil_reader",
+  "display_name": "Reader of the Veil",
+  "description": "Obtain an Enchanted Book (any) and spend a night in deep caves.",
+  "progression_tier": "dark_acolyte",
+  "requirements": [
+    { "type": "collect_items", "items": [{ "item": "minecraft:enchanted_book", "count": 1 }] },
+    { "type": "location", "value": "underground" },
+    { "type": "time", "value": "night" }
+  ],
+  "rewards": {
+    "reputation": 10,
+    "commands": [
+      "effect give {player} minecraft:night_vision 600 0",
+      "give {player} eidolon:unholy_symbol 1"
+    ]
+  },
+  "cooldown_hours": 18,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 15,
+      "max_reputation": 45,
+      "auto_assign_probability": 0.3,
+      "min_reputation_for_auto_assign": 25
+    },
+    "assignment_prompt": "Acolyte, read where the sun cannot reach and learn the veiled script.",
+    "completion_phrases": [
+      "The ink drinks the light for you.",
+      "You hear what the dark does not say."
+    ]
+  }
+}

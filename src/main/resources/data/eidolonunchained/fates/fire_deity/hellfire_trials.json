@@ -1,0 +1,41 @@
+{
+  "linked_deity": "eidolonunchained:fire_deity",
+  "task_id": "fire_hellfire_trials",
+  "display_name": "Hellfire Trials",
+  "description": "Survive the trials of hellfire to prove your dedication",
+  "progression_tier": "champion_of_hellfire",
+  "requirements": [
+    "dimension:minecraft:the_nether",
+    "kill_entities:minecraft:magma_cube:12",
+    "explore_biomes:minecraft:nether_wastes,minecraft:basalt_deltas"
+  ],
+  "rewards": {
+    "reputation": 12,
+    "commands": [
+      "give {player} minecraft:netherite_scrap 2",
+      "effect give {player} minecraft:strength 600 1",
+      "effect give {player} minecraft:resistance 600 1",
+      "tellraw {player} {\"text\":\"\ud83d\udd25 Hellfire courses through your veins - you are forged in flame\",\"color\":\"gold\"}"
+    ],
+    "progression_unlock": "champion_of_hellfire"
+  },
+  "unlocked_progressions": ["hellfire_warrior"],
+  "cooldown_hours": 48,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 25,
+      "max_reputation": 70,
+      "required_dimension": "minecraft:the_nether",
+      "completed_tasks": ["fire_forge_basics", "fire_forge_mastery"],
+      "unlocked_progressions": ["hellfire_warrior"],
+      "auto_assign_probability": 0.2,
+      "min_reputation_for_auto_assign": 50
+    },
+    "assignment_prompt": "Endure the deltas and wastes; let magma shape your will.",
+    "completion_phrases": [
+      "Hellfire tempers your resolve.",
+      "Flame has not consumed you; it obeys."
+    ]
+  }
+}

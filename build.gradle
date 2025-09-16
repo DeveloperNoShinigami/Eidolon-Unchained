@@ -42,7 +42,7 @@ minecraft {
             }
         }
 
-        client {
+    client {
             property 'forge.enabledGameTestNamespaces', mod_id
             
             // Mixin configuration
@@ -53,16 +53,16 @@ minecraft {
             arg '-mixin'
             arg 'eidolonunchained.mixins.json'
             
-            // Memory settings
-            jvmArgs '-Xmx4G', '-Xms2G'
+    // Memory settings
+    jvmArgs '-Xmx4G', '-Xms2G', '-XX:+IgnoreUnrecognizedVMOptions'
         }
 
-        server {
+    server {
             property 'forge.enabledGameTestNamespaces', mod_id
             args '--nogui'
             
-            // Memory settings
-            jvmArgs '-Xmx4G', '-Xms2G'
+    // Memory settings only; reflection opens no longer needed due to safe Gson config
+    jvmArgs '-Xmx4G', '-Xms2G', '-XX:+IgnoreUnrecognizedVMOptions'
             
             // Curios mixin configuration
             property 'mixin.env.remapRefMap', 'true'
@@ -70,20 +70,23 @@ minecraft {
         }
 
         
-        gameTestServer {
+    gameTestServer {
             property 'forge.enabledGameTestNamespaces', mod_id
             
             // Curios mixin configuration
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+    // No special reflection opens needed
         }
 
-        data {
+    data {
             // example of overriding the workingDirectory set in configureEach above
             workingDirectory project.file('run-data')
 
             // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+        args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+
+    // No special reflection opens needed for data run
         }
     }
 }
@@ -115,6 +118,24 @@ repositories {
         }
     }
 
+    // Simple Voice Chat API repository (public)
+    maven {
+        name = "henkelmax-public"
+        url = "https://maven.maxhenkel.de/repository/public"
+    }
+
+    // Modrinth for VoiceChat runtime dependency in development
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
+
+
+    // If you have mod jar dependencies in ./libs, you can declare them as a repository like so.
+    // See https://docs.gradle.org/current/userguide/declaring_repositories.html#sub:flat_dir_resolver
     // If you have mod jar dependencies in ./libs, you can declare them as a repository like so.
     // See https://docs.gradle.org/current/userguide/declaring_repositories.html#sub:flat_dir_resolver
     // flatDir {
@@ -144,6 +165,13 @@ dependencies {
     // Mixin for codex integration
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
+    // Simple Voice Chat API (official integration pattern)
+    // Compile-time dependency only - users provide their own VoiceChat mod
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:${voicechat_api_version}"
+
+    // Development runtime for testing (removed manual jar, using gradle-managed version)
+    runtimeOnly fg.deobf("maven.modrinth:simple-voice-chat:forge-1.20.1-${voicechat_api_version}")
+
 
 
 
@@ -155,7 +183,7 @@ tasks.named('processResources', ProcessResources).configure {
             forge_version: forge_version, forge_version_range: forge_version_range,
             loader_version_range: loader_version_range,
             mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
-            mod_authors: mod_authors, mod_description: mod_description,
+            mod_authors: mod_authors, mod_description: mod_description, voicechat_api_version: voicechat_api_version,
     ]
     inputs.properties replaceProperties
 
@@ -199,3 +227,4 @@ publishing {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
+

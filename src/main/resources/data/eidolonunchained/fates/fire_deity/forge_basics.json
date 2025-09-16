@@ -1,0 +1,57 @@
+{
+  "linked_deity": "eidolonunchained:fire_deity",
+  "task_id": "fire_forge_basics",
+  "display_name": "Forge Basics",
+  "description": "Learn the fundamental arts of flame and forge",
+  "progression_tier": "hellfire_initiate",
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 0,
+      "max_reputation": 30,
+      "required_biomes": ["minecraft:plains", "minecraft:desert"],
+      "prayer_types": ["conversation", "flame"],
+      "completed_tasks": [],
+      "unlocked_progressions": [],
+      "auto_assign_probability": 0.4,
+      "min_reputation_for_auto_assign": 0
+    },
+    "assignment_prompt": "Seeker of flame, the ancient forges call to you. To walk the path of fire, you must first master the basic arts of coal and furnace. Show me your dedication to the sacred flames.",
+    "completion_phrases": [
+      "The forge recognizes your first steps on the path of flame...",
+      "Your dedication to the sacred arts has been noted by the fire spirits..."
+    ]
+  },
+  "requirements": [
+    {
+      "type": "collect_items",
+      "items": [
+        {
+          "item": "minecraft:coal",
+          "count": 16,
+          "display_name": "Sacred Coal"
+        }
+      ]
+    },
+    {
+      "type": "use_items",
+      "items": [
+        {
+          "item": "minecraft:furnace",
+          "count": 5,
+          "display_name": "Forge Operations"
+        }
+      ]
+    }
+  ],
+  "rewards": {
+    "reputation": 5,
+    "commands": [
+      "give {player} minecraft:lava_bucket 1",
+      "effect give {player} minecraft:fire_resistance 300 0",
+      "tellraw {player} {\"text\":\"🔥 The forge welcomes a new seeker of flame\",\"color\":\"red\"}"
+  ]
+  },
+  "unlocked_progressions": [],
+  "cooldown_hours": 12,
+  "repeatable": false
+}

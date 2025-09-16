@@ -40,7 +40,7 @@ import java.util.HashMap;
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
     private static final org.slf4j.Logger LOGGER = LogUtils.getLogger();
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
     private static DatapackDeityManager INSTANCE;
     
     // Store loaded deities

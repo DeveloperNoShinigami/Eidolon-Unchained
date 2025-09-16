@@ -245,15 +245,10 @@ public class SlotAssignmentManager {
      */
     public static void listAvailableSigns(ServerPlayer player) {
         player.sendSystemMessage(Component.literal("§6Available Signs:"));
-        player.sendSystemMessage(Component.literal("§f• eidolon:wicked - Wicked"));
-        player.sendSystemMessage(Component.literal("§f• eidolon:sacred - Sacred"));
-        player.sendSystemMessage(Component.literal("§f• eidolon:blood - Blood"));
-        player.sendSystemMessage(Component.literal("§f• eidolon:soul - Soul"));
-        player.sendSystemMessage(Component.literal("§f• eidolon:mind - Mind"));
-        player.sendSystemMessage(Component.literal("§f• eidolon:flame - Flame"));
-        player.sendSystemMessage(Component.literal("§f• eidolon:harmony - Harmony"));
-        player.sendSystemMessage(Component.literal("§f• eidolon:death - Death"));
-        player.sendSystemMessage(Component.literal("§f• eidolon:magic - Magic"));
-        player.sendSystemMessage(Component.literal("§f• eidolon:warding - Warding"));
+        for (elucent.eidolon.api.spells.Sign sign : elucent.eidolon.registries.Signs.getSigns()) {
+            ResourceLocation id = sign.getRegistryName();
+            String name = id.getPath().substring(0, 1).toUpperCase() + id.getPath().substring(1).replace('_', ' ');
+            player.sendSystemMessage(Component.literal("§f• " + id + " - " + name));
+        }
     }
 }

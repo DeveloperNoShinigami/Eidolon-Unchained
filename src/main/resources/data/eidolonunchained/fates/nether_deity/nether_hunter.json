@@ -3,7 +3,7 @@
   "task_id": "nether_hunter",
   "display_name": "Nether Hunter",
   "description": "Slay 6 Wither Skeletons in the Nether fortresses.",
-  "progression_tier": "champion",
+  "progression_tier": "infernal_champion",
   "requirements": [
     { "type": "kill_entities", "entities": [{ "entity_type": "minecraft:wither_skeleton", "count": 6 }] },
     { "type": "dimension", "value": "minecraft:the_nether" }
@@ -13,8 +13,22 @@
     "commands": [
       "give {player} minecraft:wither_skeleton_skull 1"
     ],
-    "progression_unlock": "nether_champion"
+    "progression_unlock": "infernal_champion"
   },
   "cooldown_hours": 24,
-  "repeatable": false
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 45,
+      "required_dimension": "minecraft:the_nether",
+      "unlocked_progressions": [],
+      "auto_assign_probability": 0.2,
+      "min_reputation_for_auto_assign": 50
+    },
+    "assignment_prompt": "Champion, cull the nether's fiercest to prove your command over the burning realm.",
+    "completion_phrases": [
+      "Ashes mark your triumph.",
+      "The inferno whispers your name."
+    ]
+  }
 }

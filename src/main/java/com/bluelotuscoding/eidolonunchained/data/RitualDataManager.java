@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID)
 public class RitualDataManager extends SimpleJsonResourceReloadListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(RitualDataManager.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
     
     // Server-side storage
     private static final Map<ResourceLocation, JsonObject> rituals = new ConcurrentHashMap<>();

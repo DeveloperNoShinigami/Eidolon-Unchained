@@ -25,18 +25,20 @@ public class CodexDebugCommands {
     @SubscribeEvent
     public static void registerCommands(RegisterCommandsEvent event) {
         event.getDispatcher().register(
-            Commands.literal("eidolonunchained")
+            Commands.literal("eidolon-unchained")
                 .requires(source -> source.hasPermission(2))
-                .then(Commands.literal("test_translations")
-                    .executes(context -> {
-                        testTranslations(context.getSource());
-                        return 1;
-                    }))
-                .then(Commands.literal("reload_codex")
-                    .executes(context -> {
-                        reloadCodex(context.getSource());
-                        return 1;
-                    }))
+                .then(Commands.literal("codex")
+                    .then(Commands.literal("test_translations")
+                        .executes(context -> {
+                            testTranslations(context.getSource());
+                            return 1;
+                        }))
+                    .then(Commands.literal("reload")
+                        .executes(context -> {
+                            reloadCodex(context.getSource());
+                            return 1;
+                        }))
+                )
         );
     }
 

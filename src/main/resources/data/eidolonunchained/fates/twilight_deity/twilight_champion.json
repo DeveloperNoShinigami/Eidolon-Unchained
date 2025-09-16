@@ -1,0 +1,39 @@
+{
+  "linked_deity": "eidolonunchained:twilight_deity",
+  "task_id": "twilight_champion",
+  "display_name": "Twilight Champion",
+  "description": "Ascend to become the ultimate champion of twilight balance",
+  "progression_tier": "equilibrium_sovereign",
+  "requirements": [
+    "{\"type\": \"balance_achievement\", \"day_actions\": 50, \"night_actions\": 50, \"twilight_rituals\": 10}",
+    "{\"type\": \"time_mastery\", \"transitions_witnessed\": 100, \"type\": \"dawn_and_dusk\"}",
+    "collect_items:minecraft:amethyst_shard:32"
+  ],
+  "rewards": {
+    "reputation": 25,
+    "commands": [
+      "give {player} minecraft:clock 1",
+      "give {player} minecraft:amethyst_block 4",
+      "give {player} minecraft:spyglass 1",
+      "effect give {player} minecraft:night_vision 2400 0",
+      "tellraw {player} {\"text\":\"\ud83d\udc51 You are now Champion of Twilight - master of the eternal balance\",\"color\":\"light_purple\"}"
+    ],
+  "progression_unlock": "equilibrium_sovereign"
+  },
+  "cooldown_hours": 72,
+  "repeatable": false,
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 80,
+      "prayer_types": ["conversation", "mystery"],
+      "unlocked_progressions": ["harmony_keeper"],
+      "auto_assign_probability": 0.1,
+      "min_reputation_for_auto_assign": 75
+    },
+    "assignment_prompt": "Sovereign, let all cycles turn at your will and hold light and shadow in perfect stillness.",
+    "completion_phrases": [
+      "Equilibrium crowns your journey.",
+      "The universe breathes in your cadence."
+    ]
+  }
+}

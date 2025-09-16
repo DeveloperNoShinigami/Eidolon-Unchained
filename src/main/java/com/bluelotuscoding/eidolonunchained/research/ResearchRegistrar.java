@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public class ResearchRegistrar {
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final Gson GSON = new Gson();
+    private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
     private static final String MODID = EidolonUnchained.MODID;
 
     /**

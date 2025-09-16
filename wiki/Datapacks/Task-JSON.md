@@ -107,7 +107,7 @@ Notes
 
 **Related Docs**
 - AI Deity JSON: wiki/Datapacks/AI-Deity-JSON.md
-- Commands: wiki/Systems/Tasks-Reputation.md
+- Commands: wiki/Systems/Fates-Reputation.md
 
 **Assignment Strategy (task_assignment_behavior)**
 - Optional policy block under `task_config` for AI auto‑assignment heuristics (not strictly parsed yet; used by prompts/UX):

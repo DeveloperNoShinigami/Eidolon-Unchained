@@ -14,5 +14,23 @@
     ]
   },
   "cooldown_hours": 12,
-  "repeatable": true
+  "repeatable": true,
+  "unlocked_progressions": [],
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 0,
+      "max_reputation": 20,
+      "required_time": "night",
+      "prayer_types": ["conversation", "knowledge"],
+      "auto_assign_probability": 0.4,
+      "min_reputation_for_auto_assign": 0
+    },
+    "assignment_prompt": "Taste the dusk. Gather what the night offers and learn its essence.",
+    "completion_phrases": [
+      "Shadows cling a little closer.",
+      "The night recognizes your intent."
+    ],
+    "auto_close_conversation": true,
+    "auto_close_delay_seconds": 3
+  }
 }

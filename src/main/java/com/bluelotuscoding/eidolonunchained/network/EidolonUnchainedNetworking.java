@@ -104,11 +104,42 @@ public class EidolonUnchainedNetworking {
             );
             
             // Effigy effects now handled by EffigyEffectsManager (no packets needed)
-            
+
+            // Register TTS audio packet for deity voice synthesis
+            INSTANCE.registerMessage(
+                ++packetId,
+                TTSAudioPacket.class,
+                TTSAudioPacket::encode,
+                TTSAudioPacket::new,
+                TTSAudioPacket::handle
+            );
+
             // Add more packets here as needed
         } catch (Exception e) {
             // Log but don't crash - networking is optional for core functionality
             System.err.println("Failed to register Eidolon Unchained packets: " + e.getMessage());
         }
+    }
+
+    /**
+     * Send a packet to a specific player
+     */
+    public static <T> void sendToPlayer(net.minecraft.server.level.ServerPlayer player, T packet) {
+        INSTANCE.sendTo(packet, player.connection.connection, net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT);
+    }
+
+    /**
+     * Send a packet to all players
+     */
+    public static <T> void sendToAll(T packet) {
+        INSTANCE.send(net.minecraftforge.network.PacketDistributor.ALL.noArg(), packet);
+    }
+
+    /**
+     * Send a packet to players around a specific location
+     */
+    public static <T> void sendToPlayersAround(net.minecraft.world.level.Level level, net.minecraft.core.BlockPos pos, double radius, T packet) {
+        INSTANCE.send(net.minecraftforge.network.PacketDistributor.NEAR.with(() ->
+            new net.minecraftforge.network.PacketDistributor.TargetPoint(pos.getX(), pos.getY(), pos.getZ(), radius, level.dimension())), packet);
     }
 }

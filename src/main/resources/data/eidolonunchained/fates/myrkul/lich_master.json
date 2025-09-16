@@ -1,0 +1,32 @@
+{
+  "linked_deity": "eidolonunchained:myrkul",
+  "task_id": "myrkul_lich_master",
+  "display_name": "Lich Master",
+  "description": "Demonstrate mastery of death by overcoming its champions and perfecting soul-binding.",
+  "progression_tier": "lich_master",
+  "ai_assignment_context": {
+    "trigger_conditions": {
+      "min_reputation": 60,
+      "max_reputation": 90,
+      "prayer_types": ["conversation", "blessing"],
+      "auto_assign_probability": 0.15,
+      "min_reputation_for_auto_assign": 70
+    },
+    "assignment_prompt": "Prove the cold flame crowns you, not consumes you.",
+    "completion_phrases": ["The crown of frost does not melt in your grasp."]
+  },
+  "requirements": [
+    "kill_entities:minecraft:wither:1",
+    { "type": "collect_items", "items": [ { "item": "eidolon:greater_soul_gem", "count": 1 } ] }
+  ],
+  "rewards": {
+    "reputation": 20,
+    "commands": [
+      "give {player} eidolon:shadow_gem 1",
+      "effect give {player} minecraft:resistance 1800 1"
+    ]
+  },
+  "unlocked_progressions": ["lich_master"],
+  "cooldown_hours": 48,
+  "repeatable": false
+}

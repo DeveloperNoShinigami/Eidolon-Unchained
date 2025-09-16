@@ -1,15 +1,11 @@
 package com.bluelotuscoding.eidolonunchained.integration.ai;
 
-import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -295,14 +291,13 @@ public class EnhancedCommandExtractor {
      * 🔥 DYNAMIC ITEM ID NORMALIZATION - Uses actual registries!
      * Backward compatibility version that uses default mods
      */
-    private static String normalizeItemId(String item) {
-        return normalizeItemId(item, Arrays.asList("minecraft", "eidolon", "eidolonunchained"));
-    }
+    // Removed unused overload to reduce warnings
     
     /**
      * 🔥 DYNAMIC ITEM ID NORMALIZATION - Uses actual registries!
      * Full version with mod context control
      */
+    @SuppressWarnings("deprecation")
     private static String normalizeItemId(String item, List<String> modContextIds) {
         if (item == null || item.trim().isEmpty()) return null;
         
@@ -356,14 +351,13 @@ public class EnhancedCommandExtractor {
      * 🔥 DYNAMIC EFFECT ID NORMALIZATION - Uses actual registries!
      * Backward compatibility version
      */
-    private static String normalizeEffectId(String effect) {
-        return normalizeEffectId(effect, Arrays.asList("minecraft", "eidolon", "eidolonunchained"));
-    }
+    // Removed unused overload to reduce warnings
     
     /**
      * 🔥 DYNAMIC EFFECT ID NORMALIZATION - Uses actual registries!
      * Full version with mod context control
      */
+    @SuppressWarnings("deprecation")
     private static String normalizeEffectId(String effect, List<String> modContextIds) {
         if (effect == null || effect.trim().isEmpty()) return null;
         
@@ -411,33 +405,7 @@ public class EnhancedCommandExtractor {
      * Generic method to find ResourceLocation in any registry
      * This can be used for biomes, entities, enchantments, etc.
      */
-    private static String findInRegistry(String name, String registryType) {
-        if (name == null || name.trim().isEmpty()) return null;
-        
-        name = name.toLowerCase().trim().replace(" ", "_");
-        
-        // Already properly formatted with namespace
-        if (name.contains(":")) {
-            ResourceLocation resourceId = ResourceLocation.tryParse(name);
-            if (resourceId != null) {
-                return name; // Assume valid if properly formatted
-            }
-            return null;
-        }
-        
-        // Try common namespaces
-        String[] namespaces = {"minecraft", "eidolon", "eidolonunchained", "forge"};
-        
-        for (String namespace : namespaces) {
-            ResourceLocation testId = new ResourceLocation(namespace, name);
-            // Note: We can't easily check all registries generically,
-            // but this method can be expanded for specific registry types
-            LOGGER.info("🔥 Checking {} registry for: {} -> {}", registryType, name, testId);
-        }
-        
-        // Default to minecraft namespace as last resort
-        return "minecraft:" + name;
-    }
+    // Removed unused generic registry helper to reduce warnings
     
     /**
      * Clean response for display by removing command patterns but keeping conversational content
@@ -738,7 +706,8 @@ public class EnhancedCommandExtractor {
             
             // Determine progression level based on reputation (matching JSON base_prompts)
             String progressionLevel = determineProgressionLevel(reputation);
-            int commandCount = determineCommandCount(reputation, prayerConfig.max_commands);
+            // Enforce exactly max_commands as the number of blessings to apply
+            int commandCount = Math.max(0, prayerConfig.max_commands);
             
             LOGGER.info("🔥 Player reputation: {}, progression: {}, command count: {}", 
                 reputation, progressionLevel, commandCount);
@@ -793,11 +762,7 @@ public class EnhancedCommandExtractor {
     /**
      * Determine how many commands to execute based on reputation and config
      */
-    private static int determineCommandCount(double reputation, int maxCommands) {
-        if (reputation >= 75) return Math.min(2, maxCommands);  // High tier: 2 commands
-        if (reputation >= 25) return Math.min(2, maxCommands);  // Mid tier: 1-2 commands  
-        return Math.min(1, maxCommands);                        // Low tier: 1 command
-    }
+    // Removed unused legacy command count helper (now enforced by max_commands)
     
     /**
      * Select appropriate commands for the player's progression level
@@ -939,8 +904,7 @@ public class EnhancedCommandExtractor {
      */
     @Deprecated
     public static String determinePrayerType(String playerMessage, String aiResponse) {
-        String lowerMessage = playerMessage.toLowerCase();
-        String lowerResponse = aiResponse.toLowerCase();
+    // Deprecated method retained for API compatibility
         
         // Get the active deity to check THEIR prayer types
         try {

@@ -199,10 +199,157 @@ public class UniversalAIContext {
         if (!player.getMainHandItem().isEmpty()) {
             status.append("Main Hand: ").append(player.getMainHandItem().getDisplayName().getString()).append("\n");
         }
-        
+
+        // Include active tasks and fate information
+        status.append(buildPlayerTaskContext(player));
+
         return status.toString();
     }
-    
+
+    /**
+     * Build player task/fate context with completion detection
+     */
+    private static String buildPlayerTaskContext(ServerPlayer player) {
+        StringBuilder taskContext = new StringBuilder();
+
+        try {
+            PlayerContextTracker.EnhancedPlayerContext context =
+                PlayerContextTracker.getOrCreateContext(player.getUUID(), player);
+
+            if (context != null && !context.activeTasks.isEmpty()) {
+                taskContext.append("\n=== ACTIVE DIVINE FATES ===\n");
+
+                for (Map.Entry<String, PlayerContextTracker.PlayerTask> entry : context.activeTasks.entrySet()) {
+                    String taskId = entry.getKey();
+                    PlayerContextTracker.PlayerTask task = entry.getValue();
+
+                    taskContext.append("- ").append(task.description);
+
+                    // Add progress information if available
+                    String progressInfo = getTaskProgressInfo(player, taskId);
+                    if (!progressInfo.isEmpty()) {
+                        taskContext.append(" [").append(progressInfo).append("]");
+                    }
+
+                    taskContext.append("\n");
+                }
+
+                taskContext.append("IMPORTANT: Player may mention completing fates or ask about progress. ");
+                taskContext.append("Check requirements carefully and acknowledge completion appropriately.\n");
+            }
+
+        } catch (Exception e) {
+            LOGGER.error("Error building task context: {}", e.getMessage());
+        }
+
+        return taskContext.toString();
+    }
+
+    /**
+     * Get progress information for a specific task
+     */
+    private static String getTaskProgressInfo(ServerPlayer player, String taskId) {
+        try {
+            // Get fate data to check requirements
+            com.bluelotuscoding.eidolonunchained.data.FateDataLoader fateLoader =
+                new com.bluelotuscoding.eidolonunchained.data.FateDataLoader();
+            com.google.gson.JsonObject fateData = com.bluelotuscoding.eidolonunchained.data.FateDataLoader.getFateData(taskId);
+
+            if (fateData != null && fateData.has("requirements")) {
+                com.google.gson.JsonArray requirements = fateData.getAsJsonArray("requirements");
+                StringBuilder progress = new StringBuilder();
+
+                for (com.google.gson.JsonElement requirement : requirements) {
+                    String reqProgress = checkRequirementProgress(player, requirement);
+                    if (!reqProgress.isEmpty()) {
+                        if (progress.length() > 0) progress.append(", ");
+                        progress.append(reqProgress);
+                    }
+                }
+
+                return progress.toString();
+            }
+
+        } catch (Exception e) {
+            LOGGER.error("Error getting task progress for {}: {}", taskId, e.getMessage());
+        }
+
+        return "";
+    }
+
+    /**
+     * Check progress on a specific requirement
+     */
+    private static String checkRequirementProgress(ServerPlayer player, com.google.gson.JsonElement requirement) {
+        try {
+            if (requirement.isJsonPrimitive()) {
+                String reqString = requirement.getAsString();
+                if (reqString.startsWith("item:")) {
+                    // Format: "item:namespace:item_name:count"
+                    String[] parts = reqString.split(":");
+                    if (parts.length >= 4) {
+                        String namespace = parts[1];
+                        String itemName = parts[2];
+                        int requiredCount = Integer.parseInt(parts[3]);
+
+                        ResourceLocation itemId = new ResourceLocation(namespace, itemName);
+                        int currentCount = countPlayerItems(player, itemId);
+
+                        return currentCount + "/" + requiredCount + " " + itemName;
+                    }
+                }
+            } else if (requirement.isJsonObject()) {
+                com.google.gson.JsonObject reqObj = requirement.getAsJsonObject();
+                if (reqObj.has("type")) {
+                    String type = reqObj.get("type").getAsString();
+                    if ("time".equals(type) && reqObj.has("value")) {
+                        String timeValue = reqObj.get("value").getAsString();
+                        boolean timeMatches = checkTimeRequirement(player, timeValue);
+                        return timeValue + ": " + (timeMatches ? "✓" : "✗");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error checking requirement progress: {}", e.getMessage());
+        }
+
+        return "";
+    }
+
+    /**
+     * Count how many of a specific item the player has
+     */
+    private static int countPlayerItems(ServerPlayer player, ResourceLocation itemId) {
+        int totalCount = 0;
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            net.minecraft.world.item.ItemStack stack = player.getInventory().getItem(i);
+            if (!stack.isEmpty() && ForgeRegistries.ITEMS.getKey(stack.getItem()).equals(itemId)) {
+                totalCount += stack.getCount();
+            }
+        }
+        return totalCount;
+    }
+
+    /**
+     * Check if time requirement is currently met
+     */
+    private static boolean checkTimeRequirement(ServerPlayer player, String timeValue) {
+        long dayTime = player.level().getDayTime() % 24000;
+
+        switch (timeValue.toLowerCase()) {
+            case "night":
+                return dayTime >= 13000 && dayTime <= 23000;
+            case "day":
+                return dayTime >= 1000 && dayTime <= 13000;
+            case "dawn":
+                return dayTime >= 23000 || dayTime <= 1000;
+            case "dusk":
+                return dayTime >= 12000 && dayTime <= 14000;
+            default:
+                return false;
+        }
+    }
+
     /**
      * Build world/environment context
      */
