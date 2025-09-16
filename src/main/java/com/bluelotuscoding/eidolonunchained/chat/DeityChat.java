@@ -1563,9 +1563,12 @@ public class DeityChat {
      */
     private static void sendDeityResponse(ServerPlayer player, String deityName, String message, Runnable onComplete) {
 
+        // Check if TTS is enabled globally
+        boolean isTTSEnabled = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.ENABLE_TTS.get();
+
         // Generate TTS audio for deity response (async, non-blocking)
         ResourceLocation currentDeityId = activeConversations.get(player.getUUID());
-        if (currentDeityId != null) {
+        if (currentDeityId != null && isTTSEnabled) {
             try {
                 com.bluelotuscoding.eidolonunchained.ai.TTSManager.getInstance()
                     .generateAndSendTTS(player, message, currentDeityId.getPath())
@@ -1580,40 +1583,77 @@ public class DeityChat {
             }
         }
 
-        // Get display configuration
-        String displayMethod = EidolonUnchainedConfig.COMMON.displayMethod.get();
-        boolean useProminentDisplay = EidolonUnchainedConfig.COMMON.useProminentDisplay.get();
-        int maxSubtitleLength = EidolonUnchainedConfig.COMMON.maxSubtitleLength.get();
-        
-        // 🔥 FIX: Only auto-select if explicitly set to AUTO
-        if ("AUTO".equals(displayMethod)) {
-            if (message.length() > maxSubtitleLength) {
-                displayMethod = "ENHANCED_CHAT";
-            } else {
-                displayMethod = "TITLE_SUBTITLE"; // Default to title/subtitle, not action bar
+        // 🔥 TTS-AWARE VISUAL DISPLAY: Different display logic based on TTS status
+        if (isTTSEnabled) {
+            // TTS Mode: Minimal visual feedback - just show deity is speaking
+            sendMinimalTTSFeedback(player, deityName, onComplete);
+        } else {
+            // No TTS Mode: Full visual display with typing animation
+            // Get display configuration
+            String displayMethod = EidolonUnchainedConfig.COMMON.displayMethod.get();
+            int maxSubtitleLength = EidolonUnchainedConfig.COMMON.maxSubtitleLength.get();
+            
+            // Only auto-select if explicitly set to AUTO
+            if ("AUTO".equals(displayMethod)) {
+                if (message.length() > maxSubtitleLength) {
+                    displayMethod = "ENHANCED_CHAT";
+                } else {
+                    displayMethod = "TITLE_SUBTITLE";
+                }
+            }
+            
+            // Route to appropriate display method for full visual experience
+            switch (displayMethod) {
+                case "TITLE_SUBTITLE":
+                    sendPureActionBarDisplay(player, deityName, message, onComplete);
+                    break;
+                case "ACTION_BAR":
+                    sendPureActionBarDisplay(player, deityName, message, onComplete);
+                    break;
+                case "ENHANCED_CHAT":
+                    sendEnhancedChatMessage(player, deityName, message);
+                    if (onComplete != null) {
+                        onComplete.run();
+                    }
+                    break;
+                default:
+                    sendPureActionBarDisplay(player, deityName, message, onComplete);
             }
         }
+    }
+
+    /**
+     * 🔥 MINIMAL TTS FEEDBACK: Simple visual indicator that deity is speaking via TTS
+     */
+    private static void sendMinimalTTSFeedback(ServerPlayer player, String deityName, Runnable onComplete) {
+        // Simple action bar message indicating deity is speaking
+        Component feedbackMessage = Component.literal("🎙️ ")
+            .append(Component.literal(deityName))
+            .append(Component.literal(" is speaking..."));
+
+        // Send immediate feedback via action bar
+        player.sendSystemMessage(feedbackMessage, true);
         
-        // 🔥 FIX: Route to appropriate display method - Enhanced Action Bar by default
-        switch (displayMethod) {
-            case "TITLE_SUBTITLE":
-                // Use enhanced action bar instead of problematic title system
-                sendPureActionBarDisplay(player, deityName, message, onComplete);
-                break;
-            case "ACTION_BAR":
-                sendPureActionBarDisplay(player, deityName, message, onComplete); // Pure action bar only
-                break;
-            case "ENHANCED_CHAT":
-                sendEnhancedChatMessage(player, deityName, message);
-                // Execute callback immediately for chat messages since they don't have timing
+        // Brief display duration (2 seconds), then clear and run callback
+        new Thread(() -> {
+            try {
+                Thread.sleep(2000);
+                // Clear action bar on server thread
+                if (player.getServer() != null) {
+                    player.getServer().execute(() -> {
+                        player.sendSystemMessage(Component.empty(), true);
+                        if (onComplete != null) {
+                            onComplete.run();
+                        }
+                    });
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 if (onComplete != null) {
                     onComplete.run();
                 }
-                break;
-            default:
-                // Fallback to enhanced action bar for best experience
-                sendPureActionBarDisplay(player, deityName, message, onComplete);
-        }
+            }
+        }).start();
     }
     
     /**
