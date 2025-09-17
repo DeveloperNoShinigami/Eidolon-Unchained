@@ -57,6 +57,11 @@ public class TTSCommands {
                     .then(Commands.literal("speed")
                         .then(Commands.argument("speed", FloatArgumentType.floatArg(0.5f, 2.0f))
                             .executes(TTSCommands::setSpeed)))
+                    .then(Commands.literal("mode")
+                        .then(Commands.literal("hybrid")
+                            .executes(TTSCommands::setHybridMode))
+                        .then(Commands.literal("tts-only")
+                            .executes(TTSCommands::setTTSOnlyMode)))
                     .then(Commands.literal("stats")
                         .executes(TTSCommands::showStats)
                         .requires(source -> source.hasPermission(2))) // OP only
@@ -323,6 +328,40 @@ public class TTSCommands {
     private static int resetStats(CommandContext<CommandSourceStack> context) {
         TTSManager.getInstance().resetStats();
         context.getSource().sendSuccess(() -> Component.literal("§a✓ TTS statistics reset"), false);
+        return 1;
+    }
+    
+    private static int setHybridMode(CommandContext<CommandSourceStack> context) {
+        if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+            context.getSource().sendFailure(Component.literal("This command can only be used by players"));
+            return 0;
+        }
+
+        TTSManager.TTSSettings settings = TTSManager.getInstance().getPlayerSettings(player);
+        settings.ttsOnly = false;
+        
+        context.getSource().sendSuccess(() -> Component.literal("§a✓ Hybrid Mode enabled: LLM generates text + TTS speaks it"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§e⚠ Warning: This uses BOTH LLM and TTS API calls (double billing)"), false);
+        return 1;
+    }
+    
+    private static int setTTSOnlyMode(CommandContext<CommandSourceStack> context) {
+        if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+            context.getSource().sendFailure(Component.literal("This command can only be used by players"));
+            return 0;
+        }
+
+        TTSManager.TTSSettings settings = TTSManager.getInstance().getPlayerSettings(player);
+        settings.ttsOnly = true;
+        
+        // Automatically enable TTS if it's not already enabled
+        if (!settings.enabled) {
+            settings.enabled = true;
+            context.getSource().sendSuccess(() -> Component.literal("§a✓ TTS automatically enabled for TTS-only mode"), false);
+        }
+        
+        context.getSource().sendSuccess(() -> Component.literal("§a✓ TTS-Only Mode enabled: Skip LLM, direct to TTS"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§2💰 Money saver: Only TTS API calls, no LLM charges!"), false);
         return 1;
     }
 }

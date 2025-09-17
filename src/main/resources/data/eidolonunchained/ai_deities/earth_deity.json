@@ -168,8 +168,8 @@
   ],
 
   "tts_config": {
-        "voice_id": "earth_guardian",
-    "backup_voice": "mason",
+        "voice_id": "Mason",
+    "backup_voice": "Mason",
     "pitch": 0.8,
     "speed": 0.85,
     "volume": 1.2,
@@ -180,19 +180,19 @@
     "allow_player_override": true,
     "funding_preference": "player_first",
     "voice_aliases": {
-      "stone_lord": "male-deep-earth-1",
-      "mountain_voice": "male-rumbling-1",
-      "cave_echo": "male-deep-1"
+      "stone_lord": "Mason",
+      "mountain_voice": "Caleb",
+      "cave_echo": "Benjamin"
     },
     "reputation_voices": {
-      "0": "male-rumbling-1",
-      "25": "male-deep-earth-1",
-      "75": "male-earth-divine-1"
+      "0": "Caleb",
+      "25": "Mason",
+      "75": "Mason"
     },
     "biome_voices": {
-      "minecraft:mountains": "male-deep-earth-1",
-      "minecraft:caves": "male-echo-1",
-      "minecraft:stone_shore": "male-rumbling-1"
+      "minecraft:mountains": "Mason",
+      "minecraft:caves": "Benjamin",
+      "minecraft:stone_shore": "Caleb"
     },
     "audio_format": "wav",
     "voice_language": "en_US",

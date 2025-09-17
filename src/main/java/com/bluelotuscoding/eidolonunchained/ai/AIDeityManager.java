@@ -195,6 +195,11 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             loadPatronConfig(config, json.getAsJsonObject("patron_config"));
         }
 
+        // TTS config
+        if (json.has("tts_config")) {
+            loadTTSConfig(config, json.getAsJsonObject("tts_config"));
+        }
+
         // Store the configuration
         aiConfigs.put(deityId, config);
         LOGGER.info("Loaded AI configuration for deity: {}", deityId);
@@ -774,6 +779,61 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 config.task_config.availableTasks.add(task);
             }
         }
+    }
+
+    /**
+     * Load TTS configuration from JSON
+     */
+    private void loadTTSConfig(AIDeityConfig config, JsonObject ttsConfig) {
+        LOGGER.info("🎵 Loading TTS config for deity: {}", config.deity_id);
+        
+        if (config.tts_config == null) {
+            config.tts_config = new AIDeityConfig.TTSConfig();
+        }
+        
+        // Load reputation-based voices
+        if (ttsConfig.has("reputation_voices")) {
+            JsonObject repVoices = ttsConfig.getAsJsonObject("reputation_voices");
+            for (Map.Entry<String, JsonElement> entry : repVoices.entrySet()) {
+                String repLevel = entry.getKey();
+                String voiceName = entry.getValue().getAsString();
+                config.tts_config.reputation_voices.put(repLevel, voiceName);
+                LOGGER.info("🎵 Added reputation voice: {} -> {}", repLevel, voiceName);
+            }
+        }
+        
+        // Load biome-based voices
+        if (ttsConfig.has("biome_voices")) {
+            JsonObject biomeVoices = ttsConfig.getAsJsonObject("biome_voices");
+            for (Map.Entry<String, JsonElement> entry : biomeVoices.entrySet()) {
+                String biome = entry.getKey();
+                String voiceName = entry.getValue().getAsString();
+                config.tts_config.biome_voices.put(biome, voiceName);
+                LOGGER.info("🎵 Added biome voice: {} -> {}", biome, voiceName);
+            }
+        }
+        
+        // Load time-based voices  
+        if (ttsConfig.has("time_voices")) {
+            JsonObject timeVoices = ttsConfig.getAsJsonObject("time_voices");
+            for (Map.Entry<String, JsonElement> entry : timeVoices.entrySet()) {
+                String timeOfDay = entry.getKey();
+                String voiceName = entry.getValue().getAsString();
+                config.tts_config.time_voices.put(timeOfDay, voiceName);
+                LOGGER.info("🎵 Added time voice: {} -> {}", timeOfDay, voiceName);
+            }
+        }
+        
+        // Load default voice
+        if (ttsConfig.has("voice_id")) {
+            config.tts_config.voice_id = ttsConfig.get("voice_id").getAsString();
+            LOGGER.info("🎵 Set voice_id: {}", config.tts_config.voice_id);
+        }
+        
+        LOGGER.info("🎵 TTS config loaded - reputation_voices: {}, biome_voices: {}, time_voices: {}", 
+            config.tts_config.reputation_voices.size(),
+            config.tts_config.biome_voices.size(), 
+            config.tts_config.time_voices.size());
     }
 
     /**

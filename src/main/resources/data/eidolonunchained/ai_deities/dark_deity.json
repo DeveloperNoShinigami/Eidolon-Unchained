@@ -161,40 +161,43 @@
   },
 
   "tts_config": {
-    "voice_id": "shadow_lord",
-    "backup_voice": "caleb",
+    "voice_id": "Ethan",
+    "backup_voice": "Caleb",
     "pitch": 0.8,
     "speed": 0.9,
     "volume": 1.1,
     "emotion": "ominous",
     "accent": "ancient",
     "emphasis_level": 1,
-    "enabled": false,
+    "enabled": true,
     "allow_player_override": true,
     "funding_preference": "player_first",
     "voice_aliases": {
-      "shadow_lord": "male-deep-1",
-      "dark_whisper": "male-whisper-1"
+      "shadow_lord": "Ethan",
+      "dark_whisper": "Caleb"
     },
     "reputation_voices": {
-      "0": "male-whisper-1",
-      "25": "male-deep-1",
-      "75": "male-deep-intense-1"
+      "0": "Caleb",
+      "25": "Ethan",
+      "75": "Ethan"
     },
     "time_voices": {
-      "night": "male-deep-1",
-      "day": "male-whisper-1"
+      "night": "Ethan",
+      "day": "Caleb"
     },
     "biome_voices": {
-      "minecraft:deep_dark": "male-deep-intense-1",
-      "minecraft:soul_sand_valley": "male-whisper-1",
-      "minecraft:warped_forest": "male-deep-1"
+      "minecraft:deep_dark": "Ethan",
+      "minecraft:soul_sand_valley": "Caleb",
+      "minecraft:warped_forest": "Ethan"
     },
     "advanced_params": {
       "reverb": 0.3,
       "echo": 0.2,
       "darkness_filter": true
-    }
+    },
+    "audio_format": "wav",
+    "voice_language": "en_US",
+    "voice_gender": "male"
   },
   
   "patron_config": {

@@ -163,8 +163,8 @@
   ],
 
   "tts_config": {
-    "voice_id": "divine_masculine",
-    "backup_voice": "benjamin",
+    "voice_id": "Benjamin",
+    "backup_voice": "Noah",
     "pitch": 1.0,
     "speed": 1.0,
     "volume": 1.0,
@@ -175,19 +175,19 @@
     "allow_player_override": true,
     "funding_preference": "player_first",
     "voice_aliases": {
-      "world_guardian": "male-balanced-1",
-      "realm_voice": "male-warm-1",
-      "creation_echo": "male-ancient-1"
+      "world_guardian": "Benjamin",
+      "realm_voice": "Noah",
+      "creation_echo": "Logan"
     },
     "reputation_voices": {
-      "0": "male-warm-1",
-      "25": "male-balanced-1",
-      "75": "male-balanced-divine-1"
+      "0": "Noah",
+      "25": "Benjamin",
+      "75": "Benjamin"
     },
     "biome_voices": {
-      "minecraft:plains": "male-balanced-1",
-      "minecraft:forest": "male-natural-1",
-      "minecraft:desert": "male-dry-1"
+      "minecraft:plains": "Benjamin",
+      "minecraft:forest": "Noah",
+      "minecraft:desert": "Logan"
     },
     "audio_format": "wav",
     "voice_language": "en_US",

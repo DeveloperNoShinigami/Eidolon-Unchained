@@ -91,8 +91,8 @@
   },
 
   "tts_config": {
-    "voice_id": "water_nymph",
-    "backup_voice": "sophia",
+    "voice_id": "Sophia",
+    "backup_voice": "Ava",
     "pitch": 1.0,
     "speed": 0.9,
     "volume": 1.0,
@@ -103,30 +103,33 @@
     "allow_player_override": true,
     "funding_preference": "player_first",
     "voice_aliases": {
-      "ocean_spirit": "female-flowing-1",
-      "tidal_whisper": "female-light-1",
-      "depths_call": "female-deep-1"
+      "ocean_spirit": "Sophia",
+      "tidal_whisper": "Ava",
+      "depths_call": "Sophia"
     },
     "reputation_voices": {
-      "0": "female-light-1",
-      "25": "female-flowing-1",
-      "75": "female-flowing-divine-1"
+      "0": "Ava",
+      "25": "Sophia",
+      "75": "Sophia"
     },
     "time_voices": {
-      "day": "female-flowing-1",
-      "night": "female-deep-1"
+      "day": "Sophia",
+      "night": "Ava"
     },
     "biome_voices": {
-      "minecraft:ocean": "female-flowing-1",
-      "minecraft:deep_ocean": "female-deep-1",
-      "minecraft:river": "female-light-1",
-      "minecraft:beach": "female-flowing-1"
+      "minecraft:ocean": "Sophia",
+      "minecraft:deep_ocean": "Ava",
+      "minecraft:river": "Sophia",
+      "minecraft:beach": "Sophia"
     },
     "advanced_params": {
       "water_echo": 0.3,
       "tidal_resonance": 0.2,
       "depth_filter": true
-    }
+    },
+    "audio_format": "wav",
+    "voice_language": "en_US",
+    "voice_gender": "female"
   },
   
   "patron_config": {

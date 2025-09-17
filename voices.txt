@@ -1,0 +1,328 @@
+{
+  "voices": [
+    {
+      "id": "01955d76-ed5b-73e0-a88d-cbeb3c5b499d",
+      "name": "Sophia",
+      "language": "american_english",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-7407-a03c-cdd993439ba4",
+      "name": "Madison",
+      "language": "american_english",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-7416-82d8-5fc486e2f676",
+      "name": "Harper",
+      "language": "american_english",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-7426-8748-4b0e5aea1974",
+      "name": "Olivia",
+      "language": "american_english",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-7436-a182-c4d21aaca9fc",
+      "name": "Ava",
+      "language": "american_english",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-7441-a184-5f5ee015e4fe",
+      "name": "Amelia",
+      "language": "american_english",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-7451-92d6-5ef579d3ed28",
+      "name": "Charlotte",
+      "language": "american_english",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-745d-add1-b755d440192d",
+      "name": "Evelyn",
+      "language": "american_english",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-7468-83a7-bfc267cf4849",
+      "name": "Abigail",
+      "language": "american_english",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-7474-86b2-a41b310c2a2d",
+      "name": "Mia",
+      "language": "american_english",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-7480-951c-af1dd9873e34",
+      "name": "Chloe",
+      "language": "american_english",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-748c-8d98-0fb708ef0fbd",
+      "name": "Ethan",
+      "language": "american_english",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-7497-9f8e-0e7448515bf3",
+      "name": "Noah",
+      "language": "american_english",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-74a3-9129-c3253d01f690",
+      "name": "Mason",
+      "language": "american_english",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-74af-a2be-9302077075b8",
+      "name": "Logan",
+      "language": "american_english",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-74ba-89e5-2b4b45e632cd",
+      "name": "Benjamin",
+      "language": "american_english",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-74c6-ac15-ab68ee19d560",
+      "name": "Lucas",
+      "language": "american_english",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-74d2-a33c-b2b8e998658f",
+      "name": "Jackson",
+      "language": "american_english",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-74de-83e5-800a44fee0d1",
+      "name": "Caleb",
+      "language": "american_english",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-74e9-9fea-1f8cad1cd9c5",
+      "name": "Nicholas",
+      "language": "american_english",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-74f9-b54a-2d051890468d",
+      "name": "Eleanor",
+      "language": "british_english",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-751c-b341-0ee85dbefd92",
+      "name": "Poppy",
+      "language": "british_english",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-7528-86ee-3348a642af7e",
+      "name": "Florence",
+      "language": "british_english",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-7534-b7a6-028adcfb4e7d",
+      "name": "Amelia",
+      "language": "british_english",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-753f-9f74-c0674216f0f5",
+      "name": "Oliver",
+      "language": "british_english",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-754f-a070-a570ddfed516",
+      "name": "Harry",
+      "language": "british_english",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-755b-9b43-890d73586908",
+      "name": "William",
+      "language": "british_english",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-7566-9c0e-bce4d88ceba0",
+      "name": "Charles",
+      "language": "british_english",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-757a-9bdb-94fa0a2b7893",
+      "name": "Sakura",
+      "language": "japanese",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-7591-9d3f-f919ac645bb6",
+      "name": "Akari",
+      "language": "japanese",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-75a1-96f8-7a82e767e2c4",
+      "name": "Yuki",
+      "language": "japanese",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-75ad-afe3-ac5eb3d0a16e",
+      "name": "Hana",
+      "language": "japanese",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-75b8-b70f-dfaf400b7c42",
+      "name": "Takashi",
+      "language": "japanese",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-75c8-8386-b83ff9c45856",
+      "name": "Mei",
+      "language": "mandarin_chinese",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-75d4-8338-3d7108137cd1",
+      "name": "Ling",
+      "language": "mandarin_chinese",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-75df-8ca5-a6f84acaff76",
+      "name": "Jingyi",
+      "language": "mandarin_chinese",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-75eb-b509-e7bf29b3b530",
+      "name": "Qiuyue",
+      "language": "mandarin_chinese",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-75fb-87dd-ebbed25d2585",
+      "name": "Wei",
+      "language": "mandarin_chinese",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-7606-9e21-8b236fbe12a8",
+      "name": "Liang",
+      "language": "mandarin_chinese",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-7612-bf44-f7bdcc808356",
+      "name": "Ming",
+      "language": "mandarin_chinese",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-761e-abac-1956f66ac089",
+      "name": "Hao",
+      "language": "mandarin_chinese",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-762a-9a2a-0fec3b7ace8b",
+      "name": "Carmen",
+      "language": "spanish",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-7649-ac1e-c56a13c3302f",
+      "name": "Miguel",
+      "language": "spanish",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-7655-98bb-fd7578af9617",
+      "name": "Javier",
+      "language": "spanish",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-7668-877b-2fa240c1d5ee",
+      "name": "Sophie",
+      "language": "french",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-7678-b678-3ddc5ec8b5c4",
+      "name": "Priya",
+      "language": "hindi",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-7683-a79d-253390189fdb",
+      "name": "Aditi",
+      "language": "hindi",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-768f-9e5b-8bcc89ba8f3d",
+      "name": "Arjun",
+      "language": "hindi",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-769b-bd00-002a8e88dc65",
+      "name": "Vikram",
+      "language": "hindi",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-76ab-bc6b-57cc5dfeaf01",
+      "name": "Bianca",
+      "language": "italian",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-76ba-898e-c65bd579a334",
+      "name": "Marco",
+      "language": "italian",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-76c6-8b9e-b713d3f0b866",
+      "name": "Isabela",
+      "language": "brazilian_portuguese",
+      "gender": "female"
+    },
+    {
+      "id": "01955d76-ed5b-76d2-8f05-b9a34b5f9011",
+      "name": "Gabriel",
+      "language": "brazilian_portuguese",
+      "gender": "male"
+    },
+    {
+      "id": "01955d76-ed5b-76dd-bef6-37119ea2f99f",
+      "name": "Rafael",
+      "language": "brazilian_portuguese",
+      "gender": "male"
+    }
+  ]
+}

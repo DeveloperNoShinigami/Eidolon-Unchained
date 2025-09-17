@@ -179,8 +179,8 @@
   },
 
   "tts_config": {
-    "voice_id": "divine_feminine",
-    "backup_voice": "charlotte",
+    "voice_id": "Charlotte",
+    "backup_voice": "Sophia",
     "pitch": 1.1,
     "speed": 1.0,
     "volume": 1.0,
@@ -191,29 +191,32 @@
     "allow_player_override": true,
     "funding_preference": "player_first",
     "voice_aliases": {
-      "sacred_guardian": "female-warm-1",
-      "divine_light": "female-light-1",
-      "healing_whisper": "female-flowing-1"
+      "sacred_guardian": "Charlotte",
+      "divine_light": "Sophia",
+      "healing_whisper": "Charlotte"
     },
     "reputation_voices": {
-      "0": "female-light-1",
-      "25": "female-warm-1",
-      "75": "female-warm-divine-1"
+      "0": "Sophia",
+      "25": "Charlotte",
+      "75": "Charlotte"
     },
     "time_voices": {
-      "day": "female-warm-1",
-      "night": "female-light-1"
+      "day": "Charlotte",
+      "night": "Sophia"
     },
     "biome_voices": {
-      "minecraft:plains": "female-warm-1",
-      "minecraft:sunflower_plains": "female-light-1",
-      "minecraft:flower_forest": "female-flowing-1"
+      "minecraft:plains": "Charlotte",
+      "minecraft:sunflower_plains": "Sophia",
+      "minecraft:flower_forest": "Charlotte"
     },
     "advanced_params": {
       "divine_resonance": 0.4,
       "healing_harmony": 0.3,
       "light_filter": true
-    }
+    },
+    "audio_format": "wav",
+    "voice_language": "en_US",
+    "voice_gender": "female"
   },
   
   "patron_config": {

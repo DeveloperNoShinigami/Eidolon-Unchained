@@ -209,40 +209,15 @@ public class TTSAudioPacket {
      */
     private boolean trySimpleVoiceChatPlayback(String url, byte[] data, float volume, float speed) {
         try {
-            // Check if Simple Voice Chat is available
-            Class<?> integrationClass = Class.forName("com.bluelotuscoding.eidolonunchained.integration.voicechat.VoiceChatIntegration");
-            java.lang.reflect.Method isAvailableMethod = integrationClass.getMethod("isAvailable");
-            boolean available = (Boolean) isAvailableMethod.invoke(null);
-            
-            if (!available) {
-                return false;
-            }
-            
-            // For URL, we'd need to download first - Simple Voice Chat needs audio data
-            byte[] audioData = data;
-            if (audioData == null && url != null) {
-                audioData = downloadAudioData(url);
-                if (audioData == null) {
-                    return false;
-                }
-            }
-            
-            if (audioData == null) {
-                return false;
-            }
-            
-            // Get the current player for spatial positioning
-            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-            if (mc.player == null) {
-                return false;
-            }
-            
-            // Create a server player proxy for VoiceChat integration
-            // Note: This would need server-side implementation for true spatial audio
-            // For now, we'll fall back to other methods
-            LOGGER.debug("Simple Voice Chat available but requires server-side spatial audio setup");
+            LOGGER.info("Trying Simple Voice Chat playback - URL: {}, data: {}", url != null, data != null ? data.length : 0);
+
+            // Simple Voice Chat spatial audio is handled server-side in our VoiceChatIntegration
+            // On the client side, we should fall back to other methods
+            // The server already tried VoiceChat via VoiceChatIntegration.tryPlaySpatial()
+
+            LOGGER.debug("Simple Voice Chat spatial audio handled server-side, skipping client-side attempt");
             return false;
-            
+
         } catch (Exception e) {
             LOGGER.debug("Simple Voice Chat playback failed: {}", e.getMessage());
             return false;
@@ -466,52 +441,157 @@ public class TTSAudioPacket {
 
     private boolean playWithJavaSound(byte[] audioData, float volume, float speed) {
         try {
-            // Use Java Sound API to play audio
-            javax.sound.sampled.AudioInputStream audioStream = 
-                javax.sound.sampled.AudioSystem.getAudioInputStream(new ByteArrayInputStream(audioData));
-            
+            LOGGER.info("Attempting Java Sound API playback with {} bytes of audio data", audioData.length);
+
+            javax.sound.sampled.AudioInputStream audioStream = null;
+
+            // Try to create AudioInputStream directly first
+            try {
+                audioStream = javax.sound.sampled.AudioSystem.getAudioInputStream(new ByteArrayInputStream(audioData));
+                LOGGER.debug("Successfully created AudioInputStream directly from audio data");
+            } catch (javax.sound.sampled.UnsupportedAudioFileException e) {
+                LOGGER.info("Direct AudioInputStream creation failed ({}), attempting MP3 conversion", e.getMessage());
+
+                // Try MP3 to PCM conversion if direct approach fails
+                byte[] convertedData = convertMp3ToPcmBytes(audioData);
+                if (convertedData != null) {
+                    try {
+                        audioStream = javax.sound.sampled.AudioSystem.getAudioInputStream(new ByteArrayInputStream(convertedData));
+                        LOGGER.info("Successfully created AudioInputStream from converted MP3 data");
+                    } catch (Exception e2) {
+                        LOGGER.warn("Failed to create AudioInputStream from converted data: {}", e2.getMessage());
+                    }
+                }
+
+                if (audioStream == null) {
+                    LOGGER.warn("Could not create AudioInputStream from audio data or converted data");
+                    return false;
+                }
+            }
+
             javax.sound.sampled.AudioFormat format = audioStream.getFormat();
+            LOGGER.info("Audio format: {} Hz, {} channels, {} bits",
+                       format.getSampleRate(), format.getChannels(), format.getSampleSizeInBits());
+
             javax.sound.sampled.DataLine.Info info = new javax.sound.sampled.DataLine.Info(
                 javax.sound.sampled.Clip.class, format);
-            
+
             if (!javax.sound.sampled.AudioSystem.isLineSupported(info)) {
+                LOGGER.warn("Audio line not supported for format: {}", format);
+                audioStream.close();
                 return false;
             }
-            
+
             javax.sound.sampled.Clip clip = (javax.sound.sampled.Clip) javax.sound.sampled.AudioSystem.getLine(info);
             clip.open(audioStream);
-            
+
             // Apply volume
             if (clip.isControlSupported(javax.sound.sampled.FloatControl.Type.MASTER_GAIN)) {
-                javax.sound.sampled.FloatControl gainControl = 
+                javax.sound.sampled.FloatControl gainControl =
                     (javax.sound.sampled.FloatControl) clip.getControl(javax.sound.sampled.FloatControl.Type.MASTER_GAIN);
-                
+
                 float gain = 20f * (float) Math.log10(Math.max(0.1, Math.min(2.0, volume)));
                 gainControl.setValue(Math.max(gainControl.getMinimum(), Math.min(gainControl.getMaximum(), gain)));
+                LOGGER.info("Applied volume gain: {} dB (volume: {})", gain, volume);
+            } else {
+                LOGGER.warn("Volume control not supported for this audio line");
             }
-            
+
             // Play the audio
+            LOGGER.info("Starting audio playback...");
             clip.start();
-            
-            showTTSNotification("Playing deity voice");
-            
+
+            showTTSNotification("🔊 Deity speaks...");
+
             // Clean up after playback
             CompletableFuture.runAsync(() -> {
                 try {
+                    LOGGER.debug("Monitoring audio playback completion...");
                     while (clip.isRunning()) {
                         Thread.sleep(100);
                     }
+                    LOGGER.info("Audio playback completed, cleaning up");
                     clip.close();
                 } catch (Exception e) {
-                    // Ignore cleanup errors
+                    LOGGER.debug("Error during audio cleanup: {}", e.getMessage());
                 }
             });
-            
+
             return true;
-            
+
         } catch (Exception e) {
-            LOGGER.debug("Java Sound API playback failed: {}", e.getMessage());
+            LOGGER.warn("Java Sound API playback failed: {}", e.getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Convert MP3 data to PCM bytes using Java Sound API
+     */
+    private byte[] convertMp3ToPcmBytes(byte[] mp3Data) {
+        try {
+            // Create input stream from MP3 data
+            ByteArrayInputStream bais = new ByteArrayInputStream(mp3Data);
+            javax.sound.sampled.AudioInputStream mp3Stream = javax.sound.sampled.AudioSystem.getAudioInputStream(bais);
+
+            if (mp3Stream == null) {
+                LOGGER.debug("AudioSystem could not create AudioInputStream from MP3 data");
+                return null;
+            }
+
+            javax.sound.sampled.AudioFormat sourceFormat = mp3Stream.getFormat();
+            LOGGER.debug("Source MP3 format: {} Hz, {} channels, {} bits",
+                        sourceFormat.getSampleRate(), sourceFormat.getChannels(), sourceFormat.getSampleSizeInBits());
+
+            // Define target PCM format (44.1kHz or 48kHz, 16-bit, mono/stereo as source)
+            int targetChannels = Math.min(2, Math.max(1, sourceFormat.getChannels()));
+            float targetSampleRate = sourceFormat.getSampleRate() > 22000 ? 44100.0f : 22050.0f;
+
+            javax.sound.sampled.AudioFormat targetFormat = new javax.sound.sampled.AudioFormat(
+                javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED,
+                targetSampleRate,  // 44.1kHz or 22kHz
+                16,        // 16-bit
+                targetChannels,  // Mono or stereo
+                targetChannels * 2,  // Frame size
+                targetSampleRate,  // Frame rate
+                false      // Little endian
+            );
+
+            // Convert to target format
+            javax.sound.sampled.AudioInputStream pcmStream = javax.sound.sampled.AudioSystem.getAudioInputStream(targetFormat, mp3Stream);
+            if (pcmStream == null) {
+                LOGGER.debug("AudioSystem could not convert MP3 to target PCM format");
+                mp3Stream.close();
+                return null;
+            }
+
+            // Read PCM data
+            ByteArrayOutputStream pcmBytes = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = pcmStream.read(buffer)) != -1) {
+                pcmBytes.write(buffer, 0, bytesRead);
+            }
+
+            pcmStream.close();
+            mp3Stream.close();
+
+            byte[] pcmData = pcmBytes.toByteArray();
+            if (pcmData.length == 0) {
+                LOGGER.debug("No PCM data extracted from MP3");
+                return null;
+            }
+
+            LOGGER.info("Successfully converted MP3 to PCM: {} bytes -> {} bytes ({}Hz, {} channels)",
+                       mp3Data.length, pcmData.length, targetFormat.getSampleRate(), targetFormat.getChannels());
+            return pcmData;
+
+        } catch (javax.sound.sampled.UnsupportedAudioFileException e) {
+            LOGGER.debug("MP3 format not supported by Java Sound API: {}", e.getMessage());
+            return null;
+        } catch (Exception e) {
+            LOGGER.debug("Error converting MP3 to PCM: {}", e.getMessage());
+            return null;
         }
     }
 

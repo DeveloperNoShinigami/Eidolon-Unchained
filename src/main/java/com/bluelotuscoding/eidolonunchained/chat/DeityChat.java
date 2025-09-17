@@ -386,8 +386,118 @@ public class DeityChat {
             PlayerContext fullContext = new PlayerContext(player, deity);
             String context = buildComprehensiveAIContext(fullContext, deityId, player);
             
-            // Generate AI response asynchronously
-            provider.generateResponse(
+            // 💡 SIMPLE SOLUTION: Check if player wants TTS-only mode (saves money!)
+            com.bluelotuscoding.eidolonunchained.ai.TTSManager ttsManager = com.bluelotuscoding.eidolonunchained.ai.TTSManager.getInstance();
+            boolean isTTSOnlyMode = ttsManager.getPlayerSettings(player).ttsOnly;
+            
+            if (isTTSOnlyMode) {
+                // TTS-Only Mode: Skip LLM, send prompt directly to TTS
+                handleTTSOnlyMode(player, deity, conversationPrompt, personality, context, deityId, playerId, history, onComplete);
+            } else {
+                // Hybrid Mode: LLM generates text + TTS speaks it (original behavior)
+                handleHybridMode(provider, conversationPrompt, personality, context, aiConfig, player, deity, deityId, playerId, history, onComplete);
+            }
+            
+        } catch (Exception e) {
+            LOGGER.error("Error in deity conversation processing: {}", e.getMessage());
+            player.sendSystemMessage(Component.translatable("eidolonunchained.chat.conversation_error"));
+            endConversation(player);
+        }
+    }
+    
+    /**
+     * Handle TTS-Only mode: Skip LLM, send prompt directly to TTS for voice generation
+     */
+    private static void handleTTSOnlyMode(ServerPlayer player, DatapackDeity deity, String conversationPrompt, 
+                                          String personality, String context, ResourceLocation deityId, UUID playerId, 
+                                          List<String> history, Runnable onComplete) {
+        // Check if TTS is enabled for this player
+        com.bluelotuscoding.eidolonunchained.ai.TTSManager ttsManager = com.bluelotuscoding.eidolonunchained.ai.TTSManager.getInstance();
+        boolean isTTSEnabled = ttsManager.getPlayerSettings(player).enabled;
+        
+        if (!isTTSEnabled) {
+            LOGGER.warn("TTS-Only mode requested but TTS is disabled for player {}", player.getName().getString());
+            player.sendSystemMessage(Component.literal("§c[TTS-Only Mode] TTS must be enabled to use this mode. Use /eidolon-unchained tts enable"));
+            endConversation(player);
+            return;
+        }
+        
+        // Create a contextual prompt for direct TTS generation
+        String ttsPrompt = buildTTSDirectPrompt(conversationPrompt, personality, context, deity.getName());
+        
+        // Send directly to TTS - no LLM call
+        LOGGER.info("🎙️ TTS-Only Mode: Sending prompt directly to TTS for player {}", player.getName().getString());
+        ttsManager.generateAndSendTTS(player, ttsPrompt, deityId.getPath())
+            .thenAccept(success -> {
+                if (success) {
+                    // Add to conversation history
+                    if (history != null) {
+                        history.add("Player: " + conversationPrompt);
+                        history.add("Deity: [TTS Response Generated]");
+                    }
+                    
+                    // Send minimal visual feedback
+                    player.sendSystemMessage(Component.literal("§6⟦ " + deity.getName() + " ⟧ §7[Speaking via TTS...]"));
+                    
+                    if (onComplete != null) {
+                        onComplete.run();
+                    }
+                } else {
+                    LOGGER.error("TTS-Only mode failed for player {}", player.getName().getString());
+                    player.sendSystemMessage(Component.literal("§c[TTS-Only Mode] TTS generation failed"));
+                    endConversation(player);
+                }
+            })
+            .exceptionally(throwable -> {
+                LOGGER.error("TTS-Only mode error for player {}: {}", player.getName().getString(), throwable.getMessage());
+                player.sendSystemMessage(Component.literal("§c[TTS-Only Mode] TTS error"));
+                endConversation(player);
+                return null;
+            });
+    }
+    
+    /**
+     * Handle LLM-Only mode: Generate AI response but disable TTS
+     */
+    private static void handleLLMOnlyMode(com.bluelotuscoding.eidolonunchained.ai.AIProviderFactory.AIProvider provider,
+                                          String conversationPrompt, String personality, String context, AIDeityConfig aiConfig,
+                                          ServerPlayer player, DatapackDeity deity, ResourceLocation deityId, UUID playerId, 
+                                          List<String> history, Runnable onComplete) {
+        // Generate AI response normally but skip TTS
+        provider.generateResponse(
+                conversationPrompt, 
+                personality,
+                context,
+                aiConfig.api_settings.generationConfig, 
+                aiConfig.api_settings.safetySettings
+            ).thenAccept(aiResponse -> {
+                if (aiResponse == null) {
+                    player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.no_response"));
+                    return;
+                }
+                
+                String rawResponse = aiResponse.dialogue;
+                LOGGER.info("🔥 LLM-Only Mode: AI Response received: '{}'", rawResponse);
+                
+                // Process the response normally but with TTS disabled
+                processResponseWithoutTTS(player, deity, rawResponse, history, playerId, deityId, conversationPrompt, onComplete);
+                
+            }).exceptionally(ex -> {
+                LOGGER.error("LLM-Only mode error: {}", ex.getMessage());
+                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.no_response"));
+                return null;
+            });
+    }
+    
+    /**
+     * Handle Hybrid mode: Original behavior with both LLM and TTS
+     */
+    private static void handleHybridMode(com.bluelotuscoding.eidolonunchained.ai.AIProviderFactory.AIProvider provider,
+                                         String conversationPrompt, String personality, String context, AIDeityConfig aiConfig,
+                                         ServerPlayer player, DatapackDeity deity, ResourceLocation deityId, UUID playerId, 
+                                         List<String> history, Runnable onComplete) {
+        // Generate AI response asynchronously (original behavior)
+        provider.generateResponse(
                 conversationPrompt, 
                 personality,
                 context,
@@ -410,94 +520,92 @@ public class DeityChat {
                 String rawResponse = aiResponse.dialogue;
                 LOGGER.info("🔥 DEBUG: AI Response received: '{}'", rawResponse);
                 
-                // 🔥 CRITICAL FIX: Check blessing cooldown BEFORE AI processing
-                // This prevents AI from giving false feedback when on cooldown
-                boolean isExplicitRequest = message.toLowerCase().matches(".*\\b(give|grant|bless|provide|can i have|i need|i want)\\b.*");
-                if (isExplicitRequest && !shouldAllowBlessing(player, deity, message)) {
-                    // Player is on cooldown or tier restricted - skip AI processing entirely
-                    LOGGER.info("🚫 Skipping AI item extraction due to cooldown/tier restrictions");
-                    
-                    // Send only the AI's conversational response, no item processing
-                    String cleanedResponse = CommandStringUtils.safeChatDisplay(cleanModIdLeakage(rawResponse));
-                    player.sendSystemMessage(Component.literal("§6⟦ " + deity.getName() + " ⟧ §f" + cleanedResponse));
-                    
-                    // Add to history
-                    if (history != null) {
-                        history.add("Deity: " + cleanedResponse);
-                    }
-                    return;
-                }
+                // Continue with original hybrid processing (includes both AI commands and TTS)
+                processHybridResponse(player, deity, rawResponse, history, playerId, deityId, conversationPrompt, onComplete);
                 
-                // � PURE AI APPROACH: Let AI understand natural language and suggest items
-                LOGGER.info("� Starting AI-driven item extraction...");
-                
-                // Use the pure AI extractor
-                List<String> aiCommands = com.bluelotuscoding.eidolonunchained.integration.ai.AIItemExtractor
-                    .extractItemsViaAI(message, player, rawResponse);
-                LOGGER.info("� AI extraction result: {}", aiCommands);
-                
-                int commandsExecuted = 0;
-                if (!aiCommands.isEmpty()) {
-                    // Blessing check already passed above for explicit requests
-                    // 🔥 NEW: Use proper prayer type resolution with chant context
-                    String prayerType = com.bluelotuscoding.eidolonunchained.prayer.PrayerTypeResolver
-                        .resolve(player, deityId, message, rawResponse);
-                        
-                    // Get max commands from AI deity config for this specific prayer type
-                    int maxCommands = getMaxCommandsForPrayerType(deityId, prayerType);
-                    
-                    // 🔥 CRITICAL FIX: Check conversation session limits
-                    int sessionCommandCount = conversationCommandCounts.getOrDefault(playerId, 0);
-                    int remainingCommands = maxCommands - sessionCommandCount;
-                    
-                    if (remainingCommands <= 0) {
-                        LOGGER.info("🚫 Session command limit reached for {}: {}/{} commands used", 
-                            player.getName().getString(), sessionCommandCount, maxCommands);
-                        String cleanedResponse = CommandStringUtils.safeChatDisplay(cleanModIdLeakage(rawResponse));
-                        player.sendSystemMessage(Component.literal("§6⟦ " + deity.getName() + " ⟧ §f" + cleanedResponse));
-                        player.sendSystemMessage(Component.literal("§c⚡ " + deity.getName() + " has already granted you " + maxCommands + " blessings this conversation."));
-                        
-                        // Add to history
-                        if (history != null) {
-                            history.add("Deity: " + cleanedResponse);
-                        }
-                        return;
-                    }
-                    
-                    // Limit commands to what's remaining in the session
-                    List<String> sessionLimitedCommands = aiCommands.size() > remainingCommands ? 
-                        aiCommands.subList(0, remainingCommands) : aiCommands;
-                    
-                    commandsExecuted = com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
-                        .executeCommands(sessionLimitedCommands, player);
-                    
-                    // Update session command count
-                    conversationCommandCounts.put(playerId, sessionCommandCount + commandsExecuted);
-                    
-                    LOGGER.info("🔥 AI request fulfilled: executed {} commands for {} (prayer type: {}, session: {}/{} total): {}", 
-                        commandsExecuted, player.getName().getString(), prayerType, 
-                        sessionCommandCount + commandsExecuted, maxCommands, sessionLimitedCommands);
-                } else {
-                    LOGGER.info("🚫 Blessing request denied for {} due to tier restrictions or cooldown", 
-                        player.getName().getString());
-                }
-                
-                // After processing commands, optionally offer a fate (offer, not assign)
-                tryOfferFateToPlayer(player, deityId, message);
-
-                // Continue with regular response processing
-                processRegularResponse(player, deity, rawResponse, history, playerId, deityId, commandsExecuted, onComplete);
             }).exceptionally(ex -> {
-                // Handle AI generation errors
                 LOGGER.error("Error generating AI response: {}", ex.getMessage());
                 player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.no_response"));
                 return null;
             });
+    }
+    
+    /**
+     * Build a direct prompt for TTS-only mode
+     */
+    private static String buildTTSDirectPrompt(String userMessage, String personality, String context, String deityName) {
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("You are ").append(deityName).append(". ");
+        prompt.append(personality).append(" ");
+        prompt.append("Context: ").append(context).append(" ");
+        prompt.append("The user says: \"").append(userMessage).append("\" ");
+        prompt.append("Respond as ").append(deityName).append(" in character:");
+        return prompt.toString();
+    }
+    
+    /**
+     * Process AI response without TTS (LLM-only mode)
+     */
+    private static void processResponseWithoutTTS(ServerPlayer player, DatapackDeity deity, String rawResponse, 
+                                                  List<String> history, UUID playerId, ResourceLocation deityId, 
+                                                  String originalMessage, Runnable onComplete) {
+        try {
+            // Process blessing requests and commands (same as hybrid mode)
+            boolean isExplicitRequest = originalMessage.toLowerCase().matches(".*\\b(give|grant|bless|provide|can i have|i need|i want)\\b.*");
+            if (isExplicitRequest && !shouldAllowBlessing(player, deity, originalMessage)) {
+                // Player is on cooldown or tier restricted - skip AI processing entirely
+                LOGGER.info("🚫 Skipping AI item extraction due to cooldown/tier restrictions");
+                
+                // Send only the AI's conversational response, no item processing
+                String cleanedResponse = CommandStringUtils.safeChatDisplay(cleanModIdLeakage(rawResponse));
+                player.sendSystemMessage(Component.literal("§6⟦ " + deity.getName() + " ⟧ §f" + cleanedResponse));
+                
+                // Add to history
+                if (history != null) {
+                    history.add("Deity: " + cleanedResponse);
+                }
+                return;
+            }
+            
+            // Continue with regular response processing but disable TTS in final display
+            processRegularResponse(player, deity, rawResponse, history, playerId, deityId, 0, onComplete);
             
         } catch (Exception e) {
-            LOGGER.error("Error in deity conversation processing: {}", e.getMessage());
-            player.sendSystemMessage(Component.translatable("eidolonunchained.chat.conversation_error"));
-            endConversation(player);
+            LOGGER.error("Error in LLM-only response processing: {}", e.getMessage());
+            player.sendSystemMessage(Component.literal("§c[LLM-Only Mode] Error processing response"));
+        }
+    }
+    
+    /**
+     * Process hybrid response with both AI commands and TTS
+     */
+    private static void processHybridResponse(ServerPlayer player, DatapackDeity deity, String rawResponse, 
+                                              List<String> history, UUID playerId, ResourceLocation deityId, 
+                                              String originalMessage, Runnable onComplete) {
+        try {
+            // This is the original hybrid processing logic
+            boolean isExplicitRequest = originalMessage.toLowerCase().matches(".*\\b(give|grant|bless|provide|can i have|i need|i want)\\b.*");
+            if (isExplicitRequest && !shouldAllowBlessing(player, deity, originalMessage)) {
+                // Player is on cooldown or tier restricted - skip AI processing entirely
+                LOGGER.info("🚫 Skipping AI item extraction due to cooldown/tier restrictions");
+                
+                // Send only the AI's conversational response, no item processing
+                String cleanedResponse = CommandStringUtils.safeChatDisplay(cleanModIdLeakage(rawResponse));
+                player.sendSystemMessage(Component.literal("§6⟦ " + deity.getName() + " ⟧ §f" + cleanedResponse));
+                
+                // Add to history
+                if (history != null) {
+                    history.add("Deity: " + cleanedResponse);
+                }
+                return;
+            }
+            
+            // Continue with regular response processing
+            processRegularResponse(player, deity, rawResponse, history, playerId, deityId, 0, onComplete);
+            
+        } catch (Exception e) {
+            LOGGER.error("Error in hybrid response processing: {}", e.getMessage());
+            player.sendSystemMessage(Component.literal("§c[Hybrid Mode] Error processing response"));
         }
     }
 
@@ -1563,8 +1671,11 @@ public class DeityChat {
      */
     private static void sendDeityResponse(ServerPlayer player, String deityName, String message, Runnable onComplete) {
 
-        // Check if TTS is enabled globally
-        boolean isTTSEnabled = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.ENABLE_TTS.get();
+        // Check if TTS is enabled for this specific player (via commands)
+        com.bluelotuscoding.eidolonunchained.ai.TTSManager ttsManager = com.bluelotuscoding.eidolonunchained.ai.TTSManager.getInstance();
+        boolean isTTSEnabled = ttsManager.getPlayerSettings(player).enabled;
+
+        LOGGER.info("🔊 TTS DEBUG: Player {} TTS enabled: {}", player.getName().getString(), isTTSEnabled);
 
         // Generate TTS audio for deity response (async, non-blocking)
         ResourceLocation currentDeityId = activeConversations.get(player.getUUID());
@@ -1585,8 +1696,11 @@ public class DeityChat {
 
         // 🔥 TTS-AWARE VISUAL DISPLAY: Different display logic based on TTS status
         if (isTTSEnabled) {
-            // TTS Mode: Minimal visual feedback - just show deity is speaking
-            sendMinimalTTSFeedback(player, deityName, onComplete);
+            // TTS Mode: Pure audio experience - no visual interference
+            // Let Player2 TTS handle the audio, don't show any action bar text
+            if (onComplete != null) {
+                onComplete.run();
+            }
         } else {
             // No TTS Mode: Full visual display with typing animation
             // Get display configuration

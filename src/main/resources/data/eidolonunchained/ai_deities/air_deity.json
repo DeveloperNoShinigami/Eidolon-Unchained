@@ -170,8 +170,8 @@
   ],
 
   "tts_config": {
-    "voice_id": "wind_whisper",
-    "backup_voice": "ava",
+    "voice_id": "Mason",
+    "backup_voice": "Ava",
     "pitch": 1.3,
     "speed": 1.1,
     "volume": 0.9,
@@ -182,18 +182,18 @@
     "allow_player_override": true,
     "funding_preference": "player_first",
     "voice_aliases": {
-      "wind_lord": "male-airy-1",
-      "sky_whisper": "male-light-1",
-      "storm_voice": "male-intense-1"
+      "wind_lord": "Mason",
+      "sky_whisper": "Noah",
+      "storm_voice": "Jackson"
     },
     "reputation_voices": {
-      "0": "male-light-1",
-      "25": "male-airy-1",
-      "75": "male-airy-divine-1"
+      "0": "Noah",
+      "25": "Mason",
+      "75": "Mason"
     },
     "biome_voices": {
-      "minecraft:windswept_hills": "male-airy-1",
-      "minecraft:mountains": "male-echo-1"
+      "minecraft:windswept_hills": "Mason",
+      "minecraft:mountains": "Benjamin"
     },
     "audio_format": "wav",
     "voice_language": "en_US",

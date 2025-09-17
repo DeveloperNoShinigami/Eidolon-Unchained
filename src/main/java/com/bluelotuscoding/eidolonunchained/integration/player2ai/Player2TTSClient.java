@@ -275,16 +275,88 @@ public class Player2TTSClient {
             // Build TTS request with voice selection
             JsonObject ttsRequest = new JsonObject();
             ttsRequest.addProperty("text", request.text);
-            ttsRequest.addProperty("speed", 1.0);
-            ttsRequest.addProperty("audio_format", "mp3");
+            
+            // Get TTS configuration from AI deity config if available
+            com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig.TTSConfig ttsConfig = getTTSConfigForDeity(request.deityId);
+            
+            // Apply enhancement parameters from deity config or use defaults
+            if (ttsConfig != null) {
+                ttsRequest.addProperty("speed", ttsConfig.speed);
+                ttsRequest.addProperty("audio_format", ttsConfig.audio_format != null ? ttsConfig.audio_format : "wav");
+                
+                // TODO: Verify Player2 API supports these enhancement parameters
+                // Currently setting as metadata - may need API documentation review
+                JsonObject metadata = new JsonObject();
+                metadata.addProperty("pitch", ttsConfig.pitch);
+                metadata.addProperty("volume", ttsConfig.volume);
+                metadata.addProperty("emotion", ttsConfig.emotion);
+                metadata.addProperty("accent", ttsConfig.accent);
+                metadata.addProperty("emphasis_level", ttsConfig.emphasis_level);
+                
+                // Add advanced parameters if present
+                if (!ttsConfig.advanced_params.isEmpty()) {
+                    JsonObject advancedParams = new JsonObject();
+                    ttsConfig.advanced_params.forEach((key, value) -> {
+                        if (value instanceof String) {
+                            advancedParams.addProperty(key, (String) value);
+                        } else if (value instanceof Number) {
+                            advancedParams.addProperty(key, (Number) value);
+                        } else if (value instanceof Boolean) {
+                            advancedParams.addProperty(key, (Boolean) value);
+                        }
+                    });
+                    metadata.add("advanced_params", advancedParams);
+                }
+                
+                // TODO: Custom WAV file support
+                // Check if Player2 API supports custom voice files (ttsConfig.custom_voice_file)
+                // This would allow modpack creators to use custom deity voices
+                if (ttsConfig.custom_voice_file != null && !ttsConfig.custom_voice_file.isEmpty()) {
+                    // TODO: Implement custom voice file upload/reference to Player2 API
+                    // This feature needs investigation into Player2 API capabilities
+                    LOGGER.info("Custom voice file specified for deity {}: {} (TODO: implement)", request.deityId, ttsConfig.custom_voice_file);
+                }
+                
+                ttsRequest.add("metadata", metadata);
+            } else {
+                ttsRequest.addProperty("speed", 1.0);
+                ttsRequest.addProperty("audio_format", "wav");  // Use WAV for better compatibility with VoiceChat and Java Sound API
+            }
 
-            // Add voice selection if specified
-            if (request.voice != null && !request.voice.isEmpty() && !request.voice.equals("auto")) {
+            // Add voice selection - respect AI deity config settings
+            String voiceToUse = request.voice;
+            LOGGER.info("TTS Voice Selection - Initial request voice: '{}', deity: '{}'", request.voice, request.deityId);
+
+            if (request.voice == null || request.voice.isEmpty() || request.voice.equals("auto")) {
+                // For "auto" mode, use deity-specific voice from config
+                if (request.deityId != null && !request.deityId.isEmpty() && request.player != null) {
+                    String deityVoice = getVoiceForDeity(request.deityId, request.player, "");
+                    LOGGER.info("TTS Voice Selection - Deity config returned voice: '{}'", deityVoice);
+                    if (deityVoice != null && !deityVoice.equals("auto")) {
+                        voiceToUse = deityVoice;
+                        LOGGER.info("TTS Voice Selection - Using deity-specific voice from config: '{}'", deityVoice);
+                    } else {
+                        LOGGER.info("TTS Voice Selection - Deity config returned auto/null, will let Player2.game choose");
+                    }
+                } else {
+                    LOGGER.info("TTS Voice Selection - No deity context or player, will let Player2.game choose");
+                }
+                // If still "auto" or null, let Player2.game choose (no voice_id parameter)
+            }
+
+            // Only set voice_id if we have a specific voice (not "auto")
+            if (voiceToUse != null && !voiceToUse.isEmpty() && !voiceToUse.equals("auto")) {
                 // Support both voice names and IDs
-                String resolvedVoiceId = resolveVoiceNameToId(request.voice);
+                String resolvedVoiceId = resolveVoiceNameToId(voiceToUse);
+                LOGGER.info("TTS Voice Selection - Resolving '{}' to voice ID: '{}'", voiceToUse, resolvedVoiceId);
                 if (resolvedVoiceId != null) {
                     ttsRequest.addProperty("voice_id", resolvedVoiceId);
+                    LOGGER.info("TTS Voice Selection - FINAL: Using voice '{}' with ID: '{}'", voiceToUse, resolvedVoiceId);
+                } else {
+                    LOGGER.warn("TTS Voice Selection - Failed to resolve voice '{}', letting Player2.game choose default", voiceToUse);
                 }
+            } else {
+                LOGGER.info("TTS Voice Selection - FINAL: No specific voice selected, letting Player2.game choose");
             }
 
             URL url = URI.create(PLAYER2_TTS_SPEAK).toURL();
@@ -396,11 +468,10 @@ public class Player2TTSClient {
     }
 
     /**
-     * Get appropriate voice for a deity using AI config or fallback to defaults
+     * Get TTS configuration from AI deity config
      */
-    public static String getVoiceForDeity(String deityId, ServerPlayer player, String currentBiome) {
+    private com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig.TTSConfig getTTSConfigForDeity(String deityId) {
         try {
-            // Try to get voice from AI deity configuration
             com.bluelotuscoding.eidolonunchained.ai.AIDeityManager aiManager =
                 com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance();
 
@@ -408,84 +479,73 @@ public class Player2TTSClient {
                 new net.minecraft.resources.ResourceLocation(deityId.contains(":") ? deityId : "eidolonunchained:" + deityId);
 
             com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig = aiManager.getAIConfig(deityResource);
+            return aiConfig != null ? aiConfig.tts_config : null;
+        } catch (Exception e) {
+            LOGGER.debug("Failed to get TTS config for deity {}: {}", deityId, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Get appropriate voice for a deity using AI config or fallback to defaults
+     */
+    public static String getVoiceForDeity(String deityId, ServerPlayer player, String currentBiome) {
+        org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger();
+        logger.info("🎵 getVoiceForDeity called: deityId={}, currentBiome={}", deityId, currentBiome);
+        
+        try {
+            // Try to get voice from AI deity configuration
+            com.bluelotuscoding.eidolonunchained.ai.AIDeityManager aiManager =
+                com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance();
+
+            net.minecraft.resources.ResourceLocation deityResource =
+                new net.minecraft.resources.ResourceLocation(deityId.contains(":") ? deityId : "eidolonunchained:" + deityId);
+            
+            logger.info("🎵 deityResource={}", deityResource);
+
+            com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig aiConfig = aiManager.getAIConfig(deityResource);
+            
+            logger.info("🎵 aiConfig={}", aiConfig != null ? "found" : "null");
 
             if (aiConfig != null && aiConfig.tts_config != null) {
+                logger.info("🎵 tts_config found, voice_id={}", aiConfig.tts_config.voice_id);
+                
                 // Get player's reputation with this deity
                 int reputation = 0;
                 if (player != null) {
                     try {
+                        final int[] repValue = {0}; // Array workaround for final variable access
                         player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE).ifPresent(rep -> {
-                            // This is a final variable access issue, using array as workaround
-                            final int[] repValue = {0};
                             repValue[0] = (int) rep.getReputation(player.getUUID(), deityResource);
                         });
+                        reputation = repValue[0];
                     } catch (Exception e) {
                         // Ignore reputation errors, use default
+                        logger.debug("🎵 Failed to get reputation: {}", e.getMessage());
                     }
                 }
+                
+                logger.info("🎵 reputation={}", reputation);
 
                 // Get context-aware voice from deity config
                 String configuredVoice = aiConfig.tts_config.getVoiceForContext(player, currentBiome, reputation);
+                logger.info("🎵 getVoiceForContext returned: {}", configuredVoice);
+                
                 if (configuredVoice != null && !configuredVoice.equals("auto")) {
                     // Apply voice aliases
-                    return aiConfig.tts_config.resolveVoiceAlias(configuredVoice);
+                    String finalVoice = aiConfig.tts_config.resolveVoiceAlias(configuredVoice);
+                    logger.info("🎵 final voice after aliases: {}", finalVoice);
+                    return finalVoice;
                 }
             }
         } catch (Exception e) {
-            // Fall back to default mapping if config fails
-            org.apache.logging.log4j.LogManager.getLogger().debug("Failed to get voice from deity config, using defaults: {}", e.getMessage());
+            // No fallback - if AI deity config fails, let Player2 choose default
+            logger.warn("🎵 Failed to get voice from deity config: {}", e.getMessage());
         }
 
-        // Fallback to default voice mapping based on deity type
-        return getDefaultVoiceForDeityType(deityId);
-    }
-
-    /**
-     * Default voice mapping for deity types (fallback) using actual Player2 voice names
-     */
-    private static String getDefaultVoiceForDeityType(String deityId) {
-        // Map deity types to appropriate Player2 voices based on their characteristics
-        switch (deityId.toLowerCase()) {
-            case "dark_deity":
-            case "shadow_deity":
-                return "shadow_lord"; // Alias for Caleb - deep, mysterious
-            case "light_deity":
-            case "sun_deity":
-                return "divine_feminine"; // Alias for Charlotte - warm, radiant
-            case "fire_deity":
-                return "fire_spirit"; // Alias for Jackson - intense, powerful
-            case "water_deity":
-            case "sea_deity":
-                return "water_nymph"; // Alias for Sophia - flowing, serene
-            case "earth_deity":
-            case "stone_deity":
-                return "earth_guardian"; // Alias for Mason - solid, grounded
-            case "air_deity":
-            case "wind_deity":
-                return "wind_whisper"; // Alias for Ava - light, airy
-            case "nature_deity":
-            case "forest_deity":
-                return "nature_goddess"; // Alias for Madison - natural, earthy
-            case "death_deity":
-            case "necromancy_deity":
-            case "myrkul":
-                return "death_harbinger"; // Alias for Charles - ancient, ominous
-            case "nether_deity":
-            case "hell_deity":
-                return "caleb"; // Deep, demonic quality
-            case "end_deity":
-            case "void_deity":
-                return "void_entity"; // Alias for Logan - otherworldly
-            case "twilight_deity":
-            case "dusk_deity":
-                return "twilight_oracle"; // Alias for Evelyn - mystical, ethereal
-            case "overworld_deity":
-            case "balance_deity":
-                return "divine_masculine"; // Alias for Benjamin - balanced, authoritative
-            default:
-                // Generic fallbacks
-                return "charlotte"; // Warm, versatile female voice as default
-        }
+        // No fallback mapping - voices come exclusively from AI deity configs
+        logger.info("🎵 returning null (let Player2 choose default)");
+        return null; // Let Player2 choose default if no config available
     }
 
     /**
@@ -522,6 +582,9 @@ public class Player2TTSClient {
             case "jackson": return "01955d76-ed5b-74d2-a33c-b2b8e998658f";
             case "caleb": return "01955d76-ed5b-74de-83e5-800a44fee0d1";
             case "nicholas": return "01955d76-ed5b-74e9-9fea-1f8cad1cd9c5";
+
+            // DEBUG: Temporary hardcoded mapping for shadow_lord to test
+            case "shadow_lord": return "01955d76-ed5b-748c-8d98-0fb708ef0fbd"; // Ethan's voice ID
 
             // British English Voices
             case "eleanor": return "01955d76-ed5b-74f9-b54a-2d051890468d";
@@ -572,19 +635,6 @@ public class Player2TTSClient {
             case "isabela": return "01955d76-ed5b-76c6-8b9e-b713d3f0b866";
             case "gabriel": return "01955d76-ed5b-76d2-8f05-b9a34b5f9011";
             case "rafael": return "01955d76-ed5b-76dd-bef6-37119ea2f99f";
-
-            // Deity-specific aliases for better voice matching
-            case "divine_feminine": return "01955d76-ed5b-7451-92d6-5ef579d3ed28"; // Charlotte - warm, divine
-            case "divine_masculine": return "01955d76-ed5b-74ba-89e5-2b4b45e632cd"; // Benjamin - authoritative
-            case "nature_goddess": return "01955d76-ed5b-7407-a03c-cdd993439ba4"; // Madison - natural, earthy
-            case "shadow_lord": return "01955d76-ed5b-74de-83e5-800a44fee0d1"; // Caleb - deep, mysterious
-            case "fire_spirit": return "01955d76-ed5b-74d2-a33c-b2b8e998658f"; // Jackson - intense, powerful
-            case "water_nymph": return "01955d76-ed5b-73e0-a88d-cbeb3c5b499d"; // Sophia - flowing, serene
-            case "earth_guardian": return "01955d76-ed5b-74a3-9129-c3253d01f690"; // Mason - solid, grounded
-            case "wind_whisper": return "01955d76-ed5b-7436-a182-c4d21aaca9fc"; // Ava - light, airy
-            case "twilight_oracle": return "01955d76-ed5b-745d-add1-b755d440192d"; // Evelyn - mystical, ethereal
-            case "death_harbinger": return "01955d76-ed5b-7566-9c0e-bce4d88ceba0"; // Charles - ancient, ominous
-            case "void_entity": return "01955d76-ed5b-74af-a2be-9302077075b8"; // Logan - otherworldly
 
             default:
                 LOGGER.debug("Unknown voice name '{}', using default", voiceNameOrId);

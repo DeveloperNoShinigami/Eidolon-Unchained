@@ -234,8 +234,8 @@
   ],
 
   "tts_config": {
-    "voice_id": "twilight_oracle",
-    "backup_voice": "evelyn",
+    "voice_id": "Evelyn",
+    "backup_voice": "Evelyn",
     "pitch": 1.1,
     "speed": 0.9,
     "volume": 0.95,
@@ -246,19 +246,19 @@
     "allow_player_override": true,
     "funding_preference": "player_first",
     "voice_aliases": {
-      "dusk_guardian": "female-twilight-1",
-      "shadow_whisper": "female-mystic-1",
-      "evening_voice": "female-gentle-1"
+      "dusk_guardian": "Evelyn",
+      "shadow_whisper": "Madison",
+      "evening_voice": "Sophia"
     },
     "reputation_voices": {
-      "0": "female-mystic-1",
-      "25": "female-twilight-1",
-      "75": "female-twilight-divine-1"
+      "0": "Madison",
+      "25": "Evelyn",
+      "75": "Evelyn"
     },
     "time_voices": {
-      "dawn": "female-gentle-1",
-      "dusk": "female-twilight-1",
-      "night": "female-mystic-1"
+      "dawn": "Sophia",
+      "dusk": "Evelyn",
+      "night": "Madison"
     },
     "audio_format": "wav",
     "voice_language": "en_US",

@@ -295,8 +295,8 @@
   ],
 
   "tts_config": {
-    "voice_id": "nature_goddess",
-    "backup_voice": "madison",
+    "voice_id": "Madison",
+    "backup_voice": "Sophia",
     "pitch": 1.0,
     "speed": 0.95,
     "volume": 1.0,
@@ -307,19 +307,19 @@
     "allow_player_override": true,
     "funding_preference": "player_first",
     "voice_aliases": {
-      "forest_guardian": "female-natural-1",
-      "nature_whisper": "female-earth-1",
-      "verdant_voice": "female-flowing-1"
+      "forest_guardian": "Madison",
+      "nature_whisper": "Sophia",
+      "verdant_voice": "Madison"
     },
     "reputation_voices": {
-      "0": "female-earth-1",
-      "25": "female-natural-1",
-      "75": "female-natural-divine-1"
+      "0": "Sophia",
+      "25": "Madison",
+      "75": "Madison"
     },
     "biome_voices": {
-      "minecraft:forest": "female-natural-1",
-      "minecraft:jungle": "female-tropical-1",
-      "minecraft:flower_forest": "female-gentle-1"
+      "minecraft:forest": "Madison",
+      "minecraft:jungle": "Sophia",
+      "minecraft:flower_forest": "Madison"
     },
     "audio_format": "wav",
     "voice_language": "en_US",

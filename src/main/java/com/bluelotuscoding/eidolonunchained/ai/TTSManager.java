@@ -37,6 +37,7 @@ public class TTSManager {
         public String preferredVoice = "auto"; // "auto" means use deity-appropriate voice
         public float volume = 1.0f;
         public float speed = 1.0f;
+        public boolean ttsOnly = false; // If true, skip LLM and use TTS-only mode (saves money!)
 
         public TTSSettings() {}
 
@@ -124,10 +125,14 @@ public class TTSManager {
             } catch (Exception e) {
                 LOGGER.debug("Failed to get player biome for TTS: {}", e.getMessage());
             }
+            LOGGER.info("🎵 TTS Voice Resolution: deityId={}, currentBiome={}", deityId, currentBiome);
             voice = Player2TTSClient.getVoiceForDeity(deityId, player, currentBiome);
+            LOGGER.info("🎵 TTS Voice Resolution: getVoiceForDeity returned: {}", voice);
             // Apply alias from deity config if specified
             if (deityTTS != null && voice != null) {
+                String originalVoice = voice;
                 voice = deityTTS.resolveVoiceAlias(voice);
+                LOGGER.info("🎵 TTS Voice Resolution: after resolveVoiceAlias: {} -> {}", originalVoice, voice);
             }
         } else {
             voice = settings.preferredVoice;
@@ -241,48 +246,65 @@ public class TTSManager {
      */
     private void sendTTSToPlayer(ServerPlayer player, Object responseObj, float volume, float speed) {
         try {
+            LOGGER.info("sendTTSToPlayer called for player: {} with volume: {}, speed: {}",
+                       player.getName().getString(), volume, speed);
+
             String audioUrl = null; byte[] audioData = null;
             if (responseObj instanceof Player2TTSClient.TTSResponse r1) {
                 audioUrl = r1.audioUrl; audioData = r1.audioData;
+                LOGGER.info("Player2TTSClient response - URL: {}, audioData length: {}",
+                           audioUrl != null, audioData != null ? audioData.length : 0);
             } else if (responseObj instanceof WebTTSClient.TTSResponse r2) {
                 audioUrl = r2.audioUrl; audioData = r2.audioData;
+                LOGGER.info("WebTTSClient response - URL: {}, audioData length: {}",
+                           audioUrl != null, audioData != null ? audioData.length : 0);
             }
 
             if (audioUrl != null) {
+                LOGGER.info("Attempting VoiceChat spatial playback with URL for player: {}", player.getName().getString());
                 // Try spatial playback first (Simple Voice Chat), fall back to packet
                 try {
                     boolean played = com.bluelotuscoding.eidolonunchained.integration.voicechat.VoiceChatIntegration
                         .tryPlaySpatial(player, audioUrl, null, volume, speed);
                     if (played) {
-                        LOGGER.debug("Played TTS audio via VoiceChat (URL) for player: {}", player.getName().getString());
+                        LOGGER.info("SUCCESS: Played TTS audio via VoiceChat (URL) for player: {}", player.getName().getString());
                         return;
+                    } else {
+                        LOGGER.warn("VoiceChat spatial playback failed, falling back to packet for player: {}", player.getName().getString());
                     }
-                } catch (Throwable ignored) {}
+                } catch (Throwable t) {
+                    LOGGER.error("Exception during VoiceChat spatial playback: {}", t.getMessage(), t);
+                }
                 // Send URL for client to download and play
                 TTSAudioPacket packet = new TTSAudioPacket(audioUrl, null, volume, speed);
                 EidolonUnchainedNetworking.sendToPlayer(player, packet);
-                LOGGER.debug("Sent TTS audio URL to player: {}", player.getName().getString());
+                LOGGER.info("Sent TTS audio URL packet to player: {}", player.getName().getString());
 
             } else if (audioData != null) {
+                LOGGER.info("Attempting VoiceChat spatial playback with audio data for player: {}", player.getName().getString());
                 // Try spatial playback first (Simple Voice Chat), fall back to packet
                 try {
                     boolean played = com.bluelotuscoding.eidolonunchained.integration.voicechat.VoiceChatIntegration
                         .tryPlaySpatial(player, null, audioData, volume, speed);
                     if (played) {
-                        LOGGER.debug("Played TTS audio via VoiceChat (bytes) for player: {}", player.getName().getString());
+                        LOGGER.info("SUCCESS: Played TTS audio via VoiceChat (bytes) for player: {}", player.getName().getString());
                         return;
+                    } else {
+                        LOGGER.warn("VoiceChat spatial playback failed, falling back to packet for player: {}", player.getName().getString());
                     }
-                } catch (Throwable ignored) {}
+                } catch (Throwable t) {
+                    LOGGER.error("Exception during VoiceChat spatial playback: {}", t.getMessage(), t);
+                }
                 // Send audio data directly
                 TTSAudioPacket packet = new TTSAudioPacket(null, audioData, volume, speed);
                 EidolonUnchainedNetworking.sendToPlayer(player, packet);
-                LOGGER.debug("Sent TTS audio data to player: {}", player.getName().getString());
+                LOGGER.info("Sent TTS audio data packet to player: {}", player.getName().getString());
 
             } else {
-                LOGGER.warn("TTS response has no audio URL or data for player: {}", player.getName().getString());
+                LOGGER.error("TTS response has no audio URL or data for player: {}", player.getName().getString());
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to send TTS audio to player {}: {}", player.getName().getString(), e.getMessage());
+            LOGGER.error("Failed to send TTS audio to player {}: {}", player.getName().getString(), e.getMessage(), e);
         }
     }
 

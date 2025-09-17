@@ -1,6 +1,7 @@
 # Eidolon Unchained
 
 Docs: wiki/Home/README.md
+Contributing: CONTRIBUTING.md (guided by CODEX_AGENT_OPTIMAL.md)
 
 **AI-Powered Deity Conversations for Minecraft 1.20.1**
 

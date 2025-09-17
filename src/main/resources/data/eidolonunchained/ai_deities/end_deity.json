@@ -168,8 +168,8 @@
   ],
 
   "tts_config": {
-    "voice_id": "void_entity",
-    "backup_voice": "logan",
+    "voice_id": "Logan",
+    "backup_voice": "Logan",
     "pitch": 0.7,
     "speed": 0.8,
     "volume": 1.1,
@@ -180,18 +180,18 @@
     "allow_player_override": true,
     "funding_preference": "player_first",
     "voice_aliases": {
-      "void_lord": "male-void-1",
-      "end_whisper": "male-whisper-1",
-      "dragon_voice": "male-ancient-1"
+      "void_lord": "Logan",
+      "end_whisper": "Noah",
+      "dragon_voice": "Charles"
     },
     "reputation_voices": {
-      "0": "male-whisper-1",
-      "25": "male-void-1",
-      "75": "male-void-divine-1"
+      "0": "Noah",
+      "25": "Logan",
+      "75": "Logan"
     },
     "biome_voices": {
-      "minecraft:the_end": "male-void-1",
-      "minecraft:end_highlands": "male-ancient-1"
+      "minecraft:the_end": "Logan",
+      "minecraft:end_highlands": "Charles"
     },
     "audio_format": "wav",
     "voice_language": "en_US",

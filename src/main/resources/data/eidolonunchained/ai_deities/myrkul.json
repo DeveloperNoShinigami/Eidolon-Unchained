@@ -173,8 +173,8 @@
   ],
 
   "tts_config": {
-    "voice_id": "death_harbinger",
-    "backup_voice": "charles",
+    "voice_id": "Charles",
+    "backup_voice": "Charles",
     "pitch": 0.7,
     "speed": 0.8,
     "volume": 0.9,
@@ -185,19 +185,19 @@
     "allow_player_override": true,
     "funding_preference": "player_first",
     "voice_aliases": {
-      "bone_lord": "male-death-1",
-      "shadow_king": "male-dark-1",
-      "death_voice": "male-ancient-1"
+      "bone_lord": "Charles",
+      "shadow_king": "Logan",
+      "death_voice": "Benjamin"
     },
     "reputation_voices": {
-      "0": "male-whisper-1",
-      "50": "male-dark-1",
-      "100": "male-death-divine-1"
+      "0": "Noah",
+      "50": "Logan",
+      "100": "Charles"
     },
     "biome_voices": {
-      "nether": "male-hellish-1",
-      "end": "male-void-1",
-      "desert": "male-ancient-1"
+      "nether": "Caleb",
+      "end": "Logan",
+      "desert": "Benjamin"
     },
     "audio_format": "wav",
     "voice_language": "en_US",

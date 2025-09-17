@@ -450,26 +450,41 @@ public class AIDeityConfig {
 
         public TTSConfig() {
             // Initialize with safe defaults
+            org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger();
+            logger.info("🎵 TTSConfig constructor called");
+            logger.info("🎵 TTSConfig initialized with empty maps: reputation_voices={}, biome_voices={}, time_voices={}", 
+                reputation_voices, biome_voices, time_voices);
         }
 
         /**
          * Get the appropriate voice ID for current context
          */
         public String getVoiceForContext(ServerPlayer player, String currentBiome, int reputation) {
+            org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger();
+            logger.info("🎵 getVoiceForContext: currentBiome={}, reputation={}", currentBiome, reputation);
+            logger.info("🎵 voice_id={}, reputation_voices={}, biome_voices={}, time_voices={}", 
+                voice_id, reputation_voices, biome_voices, time_voices);
+            
             // Check reputation-based voices first
             if (!reputation_voices.isEmpty()) {
+                logger.info("🎵 checking reputation voices: {}", reputation_voices);
                 for (Map.Entry<String, String> entry : reputation_voices.entrySet()) {
                     try {
                         int threshold = Integer.parseInt(entry.getKey());
+                        logger.info("🎵 checking threshold {} against reputation {}", threshold, reputation);
                         if (reputation >= threshold) {
+                            logger.info("🎵 reputation voice match: {} for threshold {}", entry.getValue(), threshold);
                             return entry.getValue();
                         }
-                    } catch (NumberFormatException ignored) {}
+                    } catch (NumberFormatException ignored) {
+                        logger.warn("🎵 invalid reputation threshold: {}", entry.getKey());
+                    }
                 }
             }
 
             // Check biome-based voices
             if (currentBiome != null && biome_voices.containsKey(currentBiome)) {
+                logger.info("🎵 biome voice match: {} for biome {}", biome_voices.get(currentBiome), currentBiome);
                 return biome_voices.get(currentBiome);
             }
 
@@ -486,29 +501,48 @@ public class AIDeityConfig {
                 } else {
                     timeContext = "night";
                 }
+                
+                logger.info("🎵 time context: {} (timeOfDay={})", timeContext, timeOfDay);
 
                 if (time_voices.containsKey(timeContext)) {
+                    logger.info("🎵 time voice match: {} for {}", time_voices.get(timeContext), timeContext);
                     return time_voices.get(timeContext);
                 }
             }
 
             // Return primary voice or backup
-            return voice_id.equals("auto") ? null : voice_id;
+            String result = voice_id.equals("auto") ? null : voice_id;
+            logger.info("🎵 returning primary/fallback voice: {}", result);
+            return result;
         }
 
         /**
          * Apply voice aliases for custom voice names
          */
         public String resolveVoiceAlias(String voiceId) {
+            org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger();
+            logger.info("🎵 resolveVoiceAlias input: {}", voiceId);
+            logger.info("🎵 voice_aliases: {}", voice_aliases);
+            
             // Deity-local alias first
             String local = voice_aliases.getOrDefault(voiceId, null);
-            if (local != null) return local;
+            if (local != null) {
+                logger.info("🎵 local alias resolved: {} -> {}", voiceId, local);
+                return local;
+            }
+            
             // Global registry fallback
             try {
-                return com.bluelotuscoding.eidolonunchained.integration.tts.TTSVoiceRegistry
+                String global = com.bluelotuscoding.eidolonunchained.integration.tts.TTSVoiceRegistry
                     .getInstance()
                     .resolve(voiceId);
-            } catch (Exception ignored) {}
+                logger.info("🎵 global alias resolved: {} -> {}", voiceId, global);
+                return global;
+            } catch (Exception e) {
+                logger.warn("🎵 global alias failed: {}", e.getMessage());
+            }
+            
+            logger.info("🎵 no alias, returning original: {}", voiceId);
             return voiceId;
         }
     }

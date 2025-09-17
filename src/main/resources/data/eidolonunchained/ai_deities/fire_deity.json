@@ -160,8 +160,8 @@
   },
 
   "tts_config": {
-        "voice_id": "fire_spirit",
-    "backup_voice": "jackson",
+        "voice_id": "Jackson",
+    "backup_voice": "Jackson",
     "pitch": 1.2,
     "speed": 1.1,
     "volume": 1.2,
@@ -172,30 +172,33 @@
     "allow_player_override": true,
     "funding_preference": "player_first",
     "voice_aliases": {
-      "flame_lord": "male-intense-1",
-      "burning_rage": "male-deep-2",
-      "ember_whisper": "male-whisper-1"
+      "flame_lord": "Jackson",
+      "burning_rage": "Caleb",
+      "ember_whisper": "Noah"
     },
     "reputation_voices": {
-      "0": "male-whisper-1",
-      "25": "male-intense-1",
-      "75": "male-intense-divine-1"
+      "0": "Noah",
+      "25": "Jackson",
+      "75": "Jackson"
     },
     "time_voices": {
-      "day": "male-intense-1",
-      "night": "male-deep-1"
+      "day": "Jackson",
+      "night": "Caleb"
     },
     "biome_voices": {
-      "minecraft:nether_wastes": "male-intense-2",
-      "minecraft:crimson_forest": "male-deep-1",
-      "minecraft:basalt_deltas": "male-intense-1",
-      "minecraft:desert": "male-intense-1"
+      "minecraft:nether_wastes": "Jackson",
+      "minecraft:crimson_forest": "Caleb",
+      "minecraft:basalt_deltas": "Jackson",
+      "minecraft:desert": "Jackson"
     },
     "advanced_params": {
       "flame_crackle": 0.3,
       "heat_distortion": 0.2,
       "intensity_boost": 1.1
-    }
+    },
+    "audio_format": "wav",
+    "voice_language": "en_US",
+    "voice_gender": "male"
   },
   
   "patron_config": {
