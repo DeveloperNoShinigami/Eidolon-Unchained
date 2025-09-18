@@ -100,16 +100,14 @@ public class AIProviderFactory {
      * Create Player2AI provider
      */
     private static AIProvider createPlayer2AIProvider() {
-        String apiKey = APIKeyManager.getAPIKey("player2ai");
-        if (apiKey == null || apiKey.trim().isEmpty()) {
-            LOGGER.error("No Player2AI API key configured");
-            return new DummyAIProvider();
-        }
-        
-        // Use simple local Player2AI client
+    // Unified auth: do not require a server API key. We support:
+    // - Local Player2 app with game headers
+    // - Web API with per-player device login (Bearer p2Key)
+    // - Optional server key if configured
+    // Provider can be constructed regardless; runtime will route/auth accordingly.
         int timeout = EidolonUnchainedConfig.COMMON.geminiTimeout.get();
         Player2AIClient client = new Player2AIClient(timeout);
-        LOGGER.debug("Creating Player2AI provider for local mode");
+    LOGGER.info("Creating Player2AI provider (unified auth: local app or per-player device login)");
         
         // Start health signal as required by Player2AI jam submission rules
         Player2HealthSignal.startHealthSignal();
@@ -239,17 +237,32 @@ public class AIProviderFactory {
         
         @Override
         public boolean isAvailable() {
-            return APIKeyManager.hasAPIKey("player2ai");
+            // Availability doesn't require a server key anymore; runtime will attempt local app or per-player web auth.
+            // Returning true allows commands/UI to proceed and surface actionable auth prompts if needed.
+            return true;
         }
         
         private String extractDeityId(String context) {
-            // Extract deity identifier from context
-            // Context might be like "deity:eidolonunchained:nature_deity,player:uuid"
-            if (context != null && context.contains("deity:")) {
-                String[] parts = context.split(",");
-                for (String part : parts) {
-                    if (part.startsWith("deity:")) {
-                        return part.substring("deity:".length());
+            // Extract deity identifier from context - handle both formats:
+            // New format: "DEITY: eidolonunchained:deity_name"
+            // Legacy format: "deity:eidolonunchained:deity_name"
+            if (context != null) {
+                // Try new format first: "DEITY: eidolonunchained:deity_name"
+                if (context.contains("DEITY: ")) {
+                    String[] lines = context.split("\n");
+                    for (String line : lines) {
+                        if (line.startsWith("DEITY: ")) {
+                            return line.substring("DEITY: ".length());
+                        }
+                    }
+                }
+                // Fallback to legacy format: "deity:eidolonunchained:deity_name"
+                if (context.contains("deity:")) {
+                    String[] parts = context.split(",");
+                    for (String part : parts) {
+                        if (part.startsWith("deity:")) {
+                            return part.substring("deity:".length());
+                        }
                     }
                 }
             }
@@ -257,12 +270,25 @@ public class AIProviderFactory {
         }
         
         private String extractPlayerUUID(String context) {
-            // Extract player UUID from context
-            if (context != null && context.contains("player:")) {
-                String[] parts = context.split(",");
-                for (String part : parts) {
-                    if (part.startsWith("player:")) {
-                        return part.substring("player:".length());
+            // Extract player UUID from context - handle both formats:
+            // New format: "PLAYER: PlayerName (uuid)"
+            // Legacy format: "player:uuid"
+            if (context != null) {
+                // Try new format first: "PLAYER: PlayerName (uuid)"
+                if (context.contains("PLAYER: ") && context.contains("(") && context.contains(")")) {
+                    int startParen = context.indexOf("(");
+                    int endParen = context.indexOf(")", startParen);
+                    if (startParen != -1 && endParen != -1 && endParen > startParen) {
+                        return context.substring(startParen + 1, endParen);
+                    }
+                }
+                // Fallback to legacy format: "player:uuid"
+                if (context.contains("player:")) {
+                    String[] parts = context.split(",");
+                    for (String part : parts) {
+                        if (part.startsWith("player:")) {
+                            return part.substring("player:".length());
+                        }
                     }
                 }
             }

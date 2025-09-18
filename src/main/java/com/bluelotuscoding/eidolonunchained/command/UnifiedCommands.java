@@ -12,7 +12,6 @@ import com.bluelotuscoding.eidolonunchained.chat.ConversationMessage;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
 import com.bluelotuscoding.eidolonunchained.events.RitualCompleteEvent;
 import com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient;
-import com.bluelotuscoding.eidolonunchained.command.TTSCommands;
 // import elucent.eidolon.capability.IReputation;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -154,6 +153,11 @@ public class UnifiedCommands {
         // Main command tree: /eidolon-unchained
         dispatcher.register(Commands.literal("eidolon-unchained")
             .requires(source -> source.hasPermission(EidolonUnchainedConfig.COMMON.requiredOpLevel.get()))
+            // Unified Player2 login (shared for AI + TTS)
+            .then(Commands.literal("login")
+                .then(Commands.literal("device").executes(UnifiedCommands::startPlayer2AILoginDevice))
+                .then(Commands.literal("status").executes(UnifiedCommands::showPlayer2AILoginStatus))
+                .then(Commands.literal("logout").executes(UnifiedCommands::logoutPlayer2AIP2Key)))
             
             // Configuration commands
             .then(Commands.literal("config")
@@ -208,6 +212,15 @@ public class UnifiedCommands {
                 .then(Commands.literal("auth")
                     .then(Commands.literal("auto")
                         .executes(UnifiedCommands::authenticatePlayer2AIAuto)))
+                .then(Commands.literal("login")
+                    .then(Commands.literal("device")
+                        .executes(UnifiedCommands::startPlayer2AILoginDevice))
+                    .then(Commands.literal("status")
+            .executes(UnifiedCommands::showPlayer2AILoginStatus)))
+                .then(Commands.literal("logout")
+                    .executes(UnifiedCommands::logoutPlayer2AIP2Key))
+        // Surface TTS configuration under the player2ai subtree as an alias
+        .then(com.bluelotuscoding.eidolonunchained.command.TTSCommands.buildNode())
                 .then(Commands.literal("test")
                     .executes(UnifiedCommands::testPlayer2AIConnection))
                 .then(Commands.literal("debug-chat")
@@ -1992,7 +2005,7 @@ public class UnifiedCommands {
      * 
      * Validates that progression stages are properly loaded from /deities/ JSON files
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({"unchecked"})
     private static int verifyProgressionStages(CommandContext<CommandSourceStack> context) {
         try {
             net.minecraft.resources.ResourceLocation deityLocation = net.minecraft.commands.arguments.ResourceLocationArgument.getId(context, "deity");
@@ -2552,6 +2565,88 @@ public class UnifiedCommands {
             source.sendFailure(Component.literal("§cDebug test failed: " + safeError));
         }
         
+        return 1;
+    }
+
+    // --- Player2AI unified login handlers (shared cache with TTS) ---
+    private static int startPlayer2AILoginDevice(CommandContext<CommandSourceStack> context) {
+        if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+            context.getSource().sendFailure(Component.literal("This command can only be used by players"));
+            return 0;
+        }
+        var start = com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AuthManager.startDeviceFlow(player);
+        if (!start.started) {
+            context.getSource().sendFailure(Component.literal("§cDevice login failed: " + start.message));
+            return 0;
+        }
+        net.minecraft.network.chat.Component url = Component.literal(start.verificationUri)
+            .withStyle(s -> s.withUnderlined(true)
+                .withColor(net.minecraft.ChatFormatting.AQUA)
+                .withClickEvent(new net.minecraft.network.chat.ClickEvent(
+                    net.minecraft.network.chat.ClickEvent.Action.OPEN_URL,
+                    start.verificationUri))
+                .withHoverEvent(new net.minecraft.network.chat.HoverEvent(
+                    net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT,
+                    Component.literal("Open login page"))));
+        net.minecraft.network.chat.Component code = Component.literal(start.userCode)
+            .withStyle(s -> s.withBold(true)
+                .withColor(net.minecraft.ChatFormatting.GOLD)
+                .withClickEvent(new net.minecraft.network.chat.ClickEvent(
+                    net.minecraft.network.chat.ClickEvent.Action.COPY_TO_CLIPBOARD,
+                    start.userCode))
+                .withHoverEvent(new net.minecraft.network.chat.HoverEvent(
+                    net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT,
+                    Component.literal("Click to copy code"))));
+        context.getSource().sendSuccess(() -> Component.literal("§6Player2 login: visit §b").append(url).append(" §6and enter code §e").append(code), false);
+        if (start.verificationUriComplete != null && !start.verificationUriComplete.isBlank()) {
+            net.minecraft.network.chat.Component urlComplete = Component.literal(start.verificationUriComplete)
+                .withStyle(s -> s.withUnderlined(true)
+                    .withColor(net.minecraft.ChatFormatting.BLUE)
+                    .withClickEvent(new net.minecraft.network.chat.ClickEvent(
+                        net.minecraft.network.chat.ClickEvent.Action.OPEN_URL,
+                        start.verificationUriComplete))
+                    .withHoverEvent(new net.minecraft.network.chat.HoverEvent(
+                        net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT,
+                        Component.literal("Open ready-to-use link"))));
+            context.getSource().sendSuccess(() -> Component.literal("§7Or click: ").append(urlComplete), false);
+        }
+        com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AuthManager.beginBackgroundPolling(player);
+        context.getSource().sendSuccess(() -> Component.literal("§7Waiting for approval... I'll pick it up automatically."), false);
+        return 1;
+    }
+
+    private static int showPlayer2AILoginStatus(CommandContext<CommandSourceStack> context) {
+        if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+            context.getSource().sendFailure(Component.literal("This command can only be used by players"));
+            return 0;
+        }
+        boolean has = com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AuthManager.getCachedP2Key(player) != null;
+        context.getSource().sendSuccess(() -> Component.literal("§6Player2 Login: " + (has ? "§aLinked" : "§cNot linked")), false);
+        boolean inFlow = com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AuthManager.hasActiveDeviceFlow(player);
+        if (inFlow) {
+            context.getSource().sendSuccess(() -> Component.literal("§7Device login in progress... approve in your browser."), false);
+        }
+        return 1;
+    }
+
+    private static int setPlayer2AIP2KeyManual(CommandContext<CommandSourceStack> context) {
+        if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+            context.getSource().sendFailure(Component.literal("This command can only be used by players"));
+            return 0;
+        }
+        String key = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "p2Key");
+        com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AuthManager.setCachedP2Key(player, key);
+        context.getSource().sendSuccess(() -> Component.literal("§a✓ Player2 key set for your account (temporary)."), false);
+        return 1;
+    }
+
+    private static int logoutPlayer2AIP2Key(CommandContext<CommandSourceStack> context) {
+        if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+            context.getSource().sendFailure(Component.literal("This command can only be used by players"));
+            return 0;
+        }
+        com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AuthManager.clearCachedP2Key(player);
+        context.getSource().sendSuccess(() -> Component.literal("§a✓ Disconnected your Player2 account for AI."), false);
         return 1;
     }
     

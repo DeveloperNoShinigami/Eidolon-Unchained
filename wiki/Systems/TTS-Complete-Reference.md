@@ -1,6 +1,6 @@
 # TTS (Text-to-Speech) System - Complete Reference
 
-The Eidolon Unchained TTS system brings deity voices to life through advanced text-to-speech synthesis powered by Player2.game's API. This system features smart cost distribution, context-aware voice selection, and extensive customization options.
+The Eidolon Unchained TTS system brings deity voices to life through advanced text-to-speech synthesis powered by multiple AI providers including Player2.game and Google Gemini. This system features smart cost distribution, context-aware voice selection, enhanced style prompting, and extensive customization options.
 
 ## Table of Contents
 
@@ -9,6 +9,7 @@ The Eidolon Unchained TTS system brings deity voices to life through advanced te
 - [Player Commands](#player-commands)
 - [Configuration](#configuration)
 - [Voice System](#voice-system)
+- [TTS Providers](#tts-providers)
 - [Cost Distribution](#cost-distribution)
 - [Deity Voice Configuration](#deity-voice-configuration)
 - [Advanced Features](#advanced-features)
@@ -19,6 +20,8 @@ The Eidolon Unchained TTS system brings deity voices to life through advanced te
 
 ### Key Features
 
+- **Multiple TTS Providers**: Support for Player2.game and Google Gemini TTS APIs
+- **Enhanced Style Prompting**: Advanced emotion, accent, pitch, and speed control through natural language
 - **Smart Cost Distribution**: Players can fund their own TTS requests using Player2 App, with server fallback
 - **Context-Aware Voices**: Deity voices change based on reputation, biome, time of day, and other factors
 - **Per-Deity Configuration**: Each deity can have unique voice settings, emotions, and characteristics
@@ -168,6 +171,75 @@ The system selects voices in this order:
 5. **Deity default voice** (from deity config)
 6. **Fallback voice** (based on deity type)
 
+## TTS Providers
+
+The system supports multiple TTS providers, each with unique capabilities and configuration options.
+
+### Player2.game TTS
+- **Voice Selection**: Wide variety of predefined voices with emotional characteristics
+- **Funding Model**: Player-funded or server-funded options
+- **Features**: Context-aware voice selection, cost optimization
+- **Setup**: Requires Player2 API key configuration
+
+### Google Gemini TTS
+- **Voice Selection**: Five high-quality Gemini voices (Puck, Charon, Kore, Fenrir, Aoede)
+- **Enhanced Style Prompting**: Natural language instructions for emotion, accent, pitch, and speed
+- **Features**: Advanced voice characterization through prompt engineering
+- **Setup**: Requires Google Gemini API key configuration
+
+#### Gemini Voice Characteristics
+| Voice | Personality | Best For |
+|-------|-------------|----------|
+| **Puck** | Bright, upbeat | Light, cheerful deities |
+| **Charon** | Deep, ominous | Dark, death, underworld deities |
+| **Kore** | Informative, clear | Knowledge, wisdom deities |
+| **Fenrir** | Fierce, intense | War, destruction, primal deities |
+| **Aoede** | Melodic, flowing | Music, art, nature deities |
+
+#### Enhanced Style Prompting (Gemini)
+Gemini TTS supports sophisticated style control through natural language prompting:
+
+```json
+{
+  "tts_config": {
+    "provider": "gemini",
+    "voice_id": "Charon",
+    "emotion": "menacing",      // "Speak with a menacing tone"
+    "accent": "ancient",        // "Use an ancient speaking style"
+    "pitch": 0.8,              // "Use a deeper, lower voice"
+    "speed": 0.85,             // "Speak slowly and deliberately"
+    "emphasis_level": 2         // Enhanced dramatic emphasis
+  }
+}
+```
+
+#### Provider Configuration
+Set TTS provider per deity:
+
+```json
+{
+  "tts_config": {
+    "provider": "gemini",               // or "player2"
+    "model": "gemini-2.5-flash-preview-tts",
+    "voice_id": "Charon",
+    "backup_voice": "Fenrir"
+  }
+}
+```
+
+#### Global TTS Provider
+Configure default provider in `eidolonunchained-common.toml`:
+
+```toml
+[ai_deity_system]
+# Default TTS provider (gemini or player2)
+tts_provider = "gemini"
+
+# API keys
+gemini_api_key = "your_gemini_api_key"
+player2ai_api_key = "your_player2_api_key"
+```
+
 ## Cost Distribution
 
 ### Funding Models
@@ -205,9 +277,11 @@ The system selects voices in this order:
 
 Add to your deity JSON file:
 
+#### Player2 Provider
 ```json
 {
   "tts_config": {
+    "provider": "player2",
     "voice_id": "male-deep-1",
     "backup_voice": "neutral-1",
     "pitch": 1.0,
@@ -221,11 +295,77 @@ Add to your deity JSON file:
 }
 ```
 
-### Advanced TTS Config
-
+#### Gemini Provider
 ```json
 {
   "tts_config": {
+    "provider": "gemini",
+    "model": "gemini-2.5-flash-preview-tts",
+    "voice_id": "Charon",
+    "backup_voice": "Fenrir",
+    "pitch": 0.8,
+    "speed": 0.85,
+    "volume": 0.9,
+    "emotion": "menacing",
+    "accent": "ancient",
+    "emphasis_level": 2,
+    "enabled": true,
+    "allow_player_override": true,
+    "funding_preference": "server_only"
+  }
+}
+```
+
+### Advanced TTS Config
+
+#### Gemini Provider with Full Features
+```json
+{
+  "tts_config": {
+    "provider": "gemini",
+    "model": "gemini-2.5-flash-preview-tts",
+    "voice_id": "Charon",
+    "backup_voice": "Fenrir",
+    "pitch": 0.8,
+    "speed": 0.85,
+    "volume": 0.9,
+    "emotion": "menacing",
+    "accent": "ancient",
+    "emphasis_level": 2,
+    "enabled": true,
+    "allow_player_override": true,
+    "funding_preference": "server_only",
+
+    "voice_aliases": {
+      "bone_lord": "Charon",
+      "shadow_king": "Fenrir",
+      "death_voice": "Charon"
+    },
+
+    "reputation_voices": {
+      "0": "Fenrir",
+      "50": "Charon",
+      "100": "Charon"
+    },
+
+    "biome_voices": {
+      "nether": "Charon",
+      "end": "Charon",
+      "desert": "Fenrir"
+    },
+
+    "audio_format": "mp3",
+    "voice_language": "en-US",
+    "voice_gender": "male"
+  }
+}
+```
+
+#### Player2 Provider with Full Features
+```json
+{
+  "tts_config": {
+    "provider": "player2",
     "voice_id": "male-deep-1",
     "backup_voice": "male-whisper-1",
     "pitch": 0.8,
@@ -272,18 +412,22 @@ Add to your deity JSON file:
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
+| `provider` | string | "player2" | TTS provider ("player2" or "gemini") |
+| `model` | string | "" | Provider-specific model (Gemini only) |
 | `voice_id` | string | "auto" | Primary voice ID or "auto" |
 | `backup_voice` | string | "neutral-1" | Fallback voice if primary fails |
 | `pitch` | float | 1.0 | Voice pitch (0.5-2.0) |
 | `speed` | float | 1.0 | Speech speed (0.5-2.0) |
 | `volume` | float | 1.0 | Volume level (0.0-2.0) |
-| `emotion` | string | "neutral" | Voice emotion |
-| `accent` | string | "default" | Voice accent |
+| `emotion` | string | "neutral" | Voice emotion (enhanced in Gemini) |
+| `accent` | string | "default" | Voice accent (enhanced in Gemini) |
 | `emphasis_level` | int | 0 | Speech emphasis (0-2) |
 | `enabled` | boolean | true | Whether TTS is enabled |
 | `allow_player_override` | boolean | true | Allow player voice changes |
 | `funding_preference` | string | "player_first" | Funding strategy |
-| `custom_voice_file` | string | "" | Path to custom voice file |
+| `audio_format` | string | "mp3" | Audio format (Gemini only) |
+| `voice_language` | string | "en-US" | Voice language (Gemini only) |
+| `voice_gender` | string | "auto" | Voice gender preference (Gemini only) |
 | `voice_aliases` | object | {} | Custom voice name mappings |
 | `reputation_voices` | object | {} | Voices by reputation threshold |
 | `time_voices` | object | {} | Voices by time of day |
@@ -292,15 +436,55 @@ Add to your deity JSON file:
 
 ## Advanced Features
 
+### Enhanced Style Prompting (Gemini)
+
+Gemini TTS supports sophisticated voice styling through natural language instructions that are automatically generated from your configuration:
+
+#### Emotion-Based Style Instructions
+```json
+"emotion": "menacing"     → "Speak with a menacing tone."
+"emotion": "ancient"      → "Speak with an ancient tone."
+"emotion": "divine"       → "Speak with a divine tone."
+"emotion": "mysterious"   → "Speak with a mysterious tone."
+```
+
+#### Accent-Based Style Instructions
+```json
+"accent": "ancient"       → "Use an ancient speaking style."
+"accent": "ethereal"      → "Use an ethereal speaking style."
+"accent": "primal"        → "Use a primal speaking style."
+"accent": "divine"        → "Use a divine speaking style."
+```
+
+#### Pitch and Speed Translation
+```json
+"pitch": 0.8             → "Use a deeper, lower voice."
+"pitch": 1.2             → "Use a higher, more ethereal voice."
+"speed": 0.8             → "Speak slowly and deliberately."
+"speed": 1.2             → "Speak with urgency and pace."
+```
+
 ### Context-Aware Voice Changes
 
 #### Reputation-Based Voices
+
+**Player2 Provider:**
 ```json
 "reputation_voices": {
   "0": "male-whisper-1",    // Untrusted (0-24 rep)
   "25": "male-deep-1",      // Acknowledged (25-49 rep)
   "50": "male-deep-2",      // Trusted (50-74 rep)
   "75": "male-deep-intense-1" // Revered (75+ rep)
+}
+```
+
+**Gemini Provider:**
+```json
+"reputation_voices": {
+  "0": "Fenrir",           // Untrusted - Fierce, distant
+  "25": "Puck",            // Acknowledged - More approachable
+  "50": "Charon",          // Trusted - Deep, authoritative
+  "100": "Charon"          // Revered - Maintains divine authority
 }
 ```
 
@@ -454,4 +638,4 @@ Create custom voice packages by:
 
 ---
 
-*This documentation covers the complete TTS system as of Eidolon Unchained v3.9.0.9. For the latest updates and additional features, check the mod's changelog and GitHub repository.*
+*This documentation covers the complete TTS system as of Eidolon Unchained v3.9.0.9, including the new Google Gemini TTS integration with enhanced style prompting. For the latest updates and additional features, check the mod's changelog and GitHub repository.*

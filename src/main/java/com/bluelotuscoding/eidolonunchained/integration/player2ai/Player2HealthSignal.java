@@ -1,15 +1,12 @@
 package com.bluelotuscoding.eidolonunchained.integration.player2ai;
 
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
-import com.google.gson.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +22,6 @@ import java.util.concurrent.TimeUnit;
 public class Player2HealthSignal {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String HEALTH_ENDPOINT = "http://127.0.0.1:4315/v1/health"; // Local health endpoint
-    private static final String GAME_CLIENT_ID = "eidolon-unchained"; // Player2AI game client ID
     private static final int HEALTH_SIGNAL_INTERVAL = 60; // seconds
     
     private static transient ScheduledExecutorService healthSignalExecutor;
@@ -107,7 +103,8 @@ public class Player2HealthSignal {
             // Configure request - Use GET for health endpoints (most common pattern)
             connection.setRequestMethod("GET");
             connection.setRequestProperty("Accept", "application/json");
-            connection.setRequestProperty("player2-game-key", GAME_CLIENT_ID);
+            // Apply standard game headers (X-Game-Client-ID, optional X-Player-UUID)
+            Player2SharedConfig.applyGameHeaders(connection, null);
             connection.setConnectTimeout(10000); // 10 second timeout
             connection.setReadTimeout(10000);
             

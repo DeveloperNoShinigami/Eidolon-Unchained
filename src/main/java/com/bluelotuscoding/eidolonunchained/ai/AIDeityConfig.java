@@ -411,6 +411,9 @@ public class AIDeityConfig {
      * TTS (Text-to-Speech) configuration for deity voice synthesis
      */
     public static class TTSConfig {
+        // TTS Provider configuration
+        public String tts_provider = null; // Override global TTS provider: "player2", "google", "webapi", "gemini", or null for global
+
         // Primary voice configuration
         public String voice_id = "auto"; // Voice ID or "auto" for deity-appropriate voice
         public String backup_voice = "neutral-1"; // Fallback voice if primary fails
@@ -438,21 +441,27 @@ public class AIDeityConfig {
 
         // Custom voice files (for modpack creators)
         public String custom_voice_file = ""; // Path to custom voice file (if supported)
-        public Map<String, String> voice_aliases = new HashMap<>(); // Custom voice name mappings
+        public Map<String, String> voice_aliases; // Custom voice name mappings
 
         // Context-aware voice changes
-        public Map<String, String> reputation_voices = new HashMap<>(); // Different voices by reputation
-        public Map<String, String> time_voices = new HashMap<>(); // Different voices by time of day
-        public Map<String, String> biome_voices = new HashMap<>(); // Different voices by biome
+        public Map<String, String> reputation_voices; // Different voices by reputation
+        public Map<String, String> time_voices; // Different voices by time of day
+        public Map<String, String> biome_voices; // Different voices by biome
 
         // Voice generation parameters (for advanced TTS systems)
-        public Map<String, Object> advanced_params = new HashMap<>(); // Provider-specific parameters
+        public Map<String, Object> advanced_params; // Provider-specific parameters
 
         public TTSConfig() {
-            // Initialize with safe defaults
+            // Initialize maps if not set by GSON deserialization
+            if (voice_aliases == null) voice_aliases = new HashMap<>();
+            if (reputation_voices == null) reputation_voices = new HashMap<>();
+            if (time_voices == null) time_voices = new HashMap<>();
+            if (biome_voices == null) biome_voices = new HashMap<>();
+            if (advanced_params == null) advanced_params = new HashMap<>();
+
             org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger();
             logger.info("🎵 TTSConfig constructor called");
-            logger.info("🎵 TTSConfig initialized with empty maps: reputation_voices={}, biome_voices={}, time_voices={}", 
+            logger.info("🎵 TTSConfig maps after initialization: reputation_voices={}, biome_voices={}, time_voices={}",
                 reputation_voices, biome_voices, time_voices);
         }
 

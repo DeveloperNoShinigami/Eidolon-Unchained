@@ -1,9 +1,9 @@
 package com.bluelotuscoding.eidolonunchained.command;
 
 import com.bluelotuscoding.eidolonunchained.ai.TTSManager;
-import com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2TTSClient;
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.BoolArgumentType;
+// import com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2TTSClient;
+// import com.mojang.brigadier.CommandDispatcher;
+// import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -12,14 +12,14 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+// import org.apache.logging.log4j.LogManager;
+// import org.apache.logging.log4j.Logger;
 
 /**
  * Commands for managing TTS (Text-To-Speech) settings for deity interactions
  */
 public class TTSCommands {
-    private static final Logger LOGGER = LogManager.getLogger();
+    // private static final Logger LOGGER = LogManager.getLogger();
 
     /**
      * Build the TTS command node for integration into UnifiedCommands
@@ -79,8 +79,8 @@ public class TTSCommands {
         TTSManager.getInstance().setTTSEnabled(player, true);
         context.getSource().sendSuccess(() -> Component.literal("§a✓ TTS enabled! Deities will now speak to you."), false);
 
-        if (!TTSManager.getInstance().isTTSAvailable(player)) {
-            context.getSource().sendSuccess(() -> Component.literal("§eNote: No TTS funding configured. Configure player2ai client or ask your server admin to set up TTS."), false);
+            if (!TTSManager.getInstance().isTTSAvailable(player)) {
+                context.getSource().sendSuccess(() -> Component.literal("§eNote: No TTS funding configured. Link Player2: /eidolon-unchained player2ai login device"), false);
         }
 
         return 1;
@@ -105,6 +105,7 @@ public class TTSCommands {
 
         TTSManager.TTSSettings settings = TTSManager.getInstance().getPlayerSettings(player);
         boolean available = TTSManager.getInstance().isTTSAvailable(player);
+        String lastPath = TTSManager.getInstance().getLastUsedPath(player);
 
         context.getSource().sendSuccess(() -> Component.literal("§6=== TTS Status ==="), false);
         context.getSource().sendSuccess(() -> Component.literal("§7Enabled: " + (settings.enabled ? "§a✓" : "§c✗")), false);
@@ -112,6 +113,9 @@ public class TTSCommands {
         context.getSource().sendSuccess(() -> Component.literal("§7Voice: §e" + settings.preferredVoice), false);
         context.getSource().sendSuccess(() -> Component.literal("§7Volume: §e" + settings.volume), false);
         context.getSource().sendSuccess(() -> Component.literal("§7Speed: §e" + settings.speed), false);
+        if (lastPath != null && !lastPath.isEmpty()) {
+            context.getSource().sendSuccess(() -> Component.literal("§7Last Path: §e" + lastPath), false);
+        }
 
         String fundingMode;
         if (settings.usePlayerFunding && settings.allowServerFallback) {
@@ -125,8 +129,18 @@ public class TTSCommands {
         }
         context.getSource().sendSuccess(() -> Component.literal("§7Funding: " + fundingMode), false);
 
+        // Show Player2 p2Key presence for web fallback visibility (per-player and server)
+        boolean hasPerPlayer = com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AuthManager.getCachedP2Key(player) != null;
+        context.getSource().sendSuccess(() -> Component.literal("§7Player2 p2Key (you): " + (hasPerPlayer ? "§aYES" : "§cNO")), false);
+        try {
+            String p2 = com.bluelotuscoding.eidolonunchained.config.APIKeyManager.getAPIKey("player2ai");
+            boolean hasKey = p2 != null && !p2.trim().isEmpty();
+            context.getSource().sendSuccess(() -> Component.literal("§7Server p2Key (legacy): " + (hasKey ? "§aYES" : "§cNO")), false);
+        } catch (Exception ignored) {}
+
         return 1;
     }
+
 
     private static int testTTS(CommandContext<CommandSourceStack> context) {
         if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
@@ -137,7 +151,7 @@ public class TTSCommands {
         String text = StringArgumentType.getString(context, "text");
 
         if (!TTSManager.getInstance().isTTSAvailable(player)) {
-            context.getSource().sendFailure(Component.literal("§cTTS not available. Configure player2ai client or ask your server admin to set up TTS."));
+            context.getSource().sendFailure(Component.literal("§cTTS not available. Link Player2: /eidolon-unchained player2ai login device"));
             return 0;
         }
 

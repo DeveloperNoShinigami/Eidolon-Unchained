@@ -164,6 +164,11 @@ public class EidolonUnchainedConfig {
     public final ForgeConfigSpec.DoubleValue ttsDefaultSpeed; // 0.25 .. 4.0
     public final ForgeConfigSpec.ConfigValue<String> ttsDefaultGender; // male|female|other
     public final ForgeConfigSpec.ConfigValue<String> ttsDefaultLanguage; // en_US|...
+    // Google Cloud TTS specific
+    public final ForgeConfigSpec.ConfigValue<String> googleCredentialsPath;
+    public final ForgeConfigSpec.ConfigValue<String> googleDefaultLanguageCode;
+    public final ForgeConfigSpec.ConfigValue<String> googleDefaultVoiceName;
+    
         
         CommonConfig(ForgeConfigSpec.Builder builder) {
             
@@ -171,10 +176,10 @@ public class EidolonUnchainedConfig {
             // AI DEITY SYSTEM CONFIGURATION
             // ===========================================
             builder.comment(
-                "═══════════════════════════════════════════════════════════════════════",
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•",
                 " AI DEITY SYSTEM CONFIGURATION",
                 " Configure AI-powered deity interactions and responses",
-                "═══════════════════════════════════════════════════════════════════════"
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
             ).push("ai_deities");
             
             enableAIDeities = builder
@@ -270,10 +275,10 @@ public class EidolonUnchainedConfig {
             // DISPLAY CONFIGURATION
             // ===========================================
             builder.comment(
-                "═══════════════════════════════════════════════════════════════════════",
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•",
                 " DISPLAY CONFIGURATION",
                 " Configure how AI deity responses are displayed to players",
-                "═══════════════════════════════════════════════════════════════════════"
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
             ).push("display");
             
             useProminentDisplay = builder
@@ -329,7 +334,7 @@ public class EidolonUnchainedConfig {
             // ===========================================
             builder.comment(
                 "",
-                "═══ ACTION BAR SPECIFIC SETTINGS ═══",
+                "â•â•â• ACTION BAR SPECIFIC SETTINGS â•â•â•",
                 "Configure typing animation and display behavior for action bar mode"
             );
             
@@ -394,10 +399,10 @@ public class EidolonUnchainedConfig {
             // CHANT SYSTEM CONFIGURATION
             // ===========================================
             builder.comment(
-                "═══════════════════════════════════════════════════════════════════════",
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•",
                 " CHANT SYSTEM CONFIGURATION", 
                 " Configure the datapack chant system and sign combinations",
-                "═══════════════════════════════════════════════════════════════════════"
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
             ).push("chant_system");
             
             enableChantSystem = builder
@@ -487,10 +492,10 @@ public class EidolonUnchainedConfig {
             // TTS CONFIGURATION
             // ===========================================
             builder.comment(
-                "═══════════════════════════════════════════════════════════════════════",
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•",
                 " TTS CONFIGURATION",
                 " Configure Text-To-Speech provider and defaults",
-                "═══════════════════════════════════════════════════════════════════════"
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
             ).push("tts");
 
             enableTTS = builder
@@ -498,8 +503,8 @@ public class EidolonUnchainedConfig {
                 .define("enabled", false);
 
             ttsProvider = builder
-                .comment("TTS provider to use: player2 (Player2App/API) or webapi (custom /tts endpoints)")
-                .defineInList("provider", "player2", java.util.Arrays.asList("player2", "webapi"));
+                .comment("TTS provider to use: player2 (Player2App/API), webapi (custom /tts endpoints), google (Google Cloud Text-to-Speech), or gemini (Google Gemini Speech Generation)")
+                .defineInList("provider", "player2", java.util.Arrays.asList("player2", "webapi", "google", "gemini"));
 
             webttsBaseUrl = builder
                 .comment("Base URL for Web TTS API (must expose /tts/voices and /tts/speak)")
@@ -527,16 +532,33 @@ public class EidolonUnchainedConfig {
                 .defineInList("default_language", "en_US",
                     java.util.Arrays.asList("en_US", "en_GB", "ja_JP", "zh_CN", "es_ES", "fr_FR", "hi_IN", "it_IT", "pt_BR"));
 
+            // Google Cloud TTS specific settings
+            builder.comment("Google Cloud TTS settings").push("google");
+
+            googleCredentialsPath = builder
+                .comment("Path to Google Cloud service account JSON for TTS (leave blank to disable)")
+                .define("credentials_path", "");
+
+            googleDefaultLanguageCode = builder
+                .comment("Default Google voice languageCode (e.g. en-US). If empty, derived from default_language")
+                .define("default_language_code", "");
+
+            googleDefaultVoiceName = builder
+                .comment("Default Google voice name (e.g. en-US-Neural2-A). If empty, only language/gender used")
+                .define("default_voice_name", "");
+
+            builder.pop();
+
             builder.pop();
 
             // ===========================================
             // DEITY INTERACTION CONFIGURATION
             // ===========================================
             builder.comment(
-                "═══════════════════════════════════════════════════════════════════════",
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•",
                 " DEITY INTERACTION CONFIGURATION",
                 " Configure how players interact with deities",
-                "═══════════════════════════════════════════════════════════════════════"
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
             ).push("deity_interaction");
             
             enableEffigyRightClick = builder
@@ -569,10 +591,10 @@ public class EidolonUnchainedConfig {
             // PRAYER SYSTEM CONFIGURATION
             // ===========================================
             builder.comment(
-                "═══════════════════════════════════════════════════════════════════════",
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•",
                 " PRAYER SYSTEM CONFIGURATION",
                 " Configure prayer types, cooldowns, and effects",
-                "═══════════════════════════════════════════════════════════════════════"
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
             ).push("prayer_system");
             
             enablePrayerSystem = builder
@@ -605,10 +627,10 @@ public class EidolonUnchainedConfig {
             // INTEGRATION CONFIGURATION
             // ===========================================
             builder.comment(
-                "═══════════════════════════════════════════════════════════════════════",
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•",
                 " INTEGRATION CONFIGURATION",
                 " Configure integrations with other mods and systems",
-                "═══════════════════════════════════════════════════════════════════════"
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
             ).push("integrations");
             
             enableEidolonIntegration = builder
@@ -637,10 +659,10 @@ public class EidolonUnchainedConfig {
             // SECURITY AND PERMISSIONS
             // ===========================================
             builder.comment(
-                "═══════════════════════════════════════════════════════════════════════",
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•",
                 " SECURITY AND PERMISSIONS",
                 " Configure security settings and permission requirements",
-                "═══════════════════════════════════════════════════════════════════════"
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
             ).push("security");
             
             requiredOpLevel = builder
@@ -665,10 +687,10 @@ public class EidolonUnchainedConfig {
             // DEBUG AND DEVELOPMENT
             // ===========================================
             builder.comment(
-                "═══════════════════════════════════════════════════════════════════════",
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•",
                 " DEBUG AND DEVELOPMENT",
                 " Configuration for debugging and development features",
-                "═══════════════════════════════════════════════════════════════════════"
+                "â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•"
             ).push("debug");
             
             enableDebugMode = builder
@@ -693,6 +715,7 @@ public class EidolonUnchainedConfig {
 
     // Static accessors for commonly used config values
     public static final ForgeConfigSpec.ConfigValue<String> PLAYER2_API_KEY = COMMON.player2aiApiKey;
+    public static final ForgeConfigSpec.ConfigValue<String> GEMINI_API_KEY = COMMON.geminiApiKey;
     public static final ForgeConfigSpec.BooleanValue ENABLE_TTS = COMMON.enableTTS;
     public static final ForgeConfigSpec.ConfigValue<String> TTS_PROVIDER = COMMON.ttsProvider;
     public static final ForgeConfigSpec.ConfigValue<String> WEBTTS_BASE_URL = COMMON.webttsBaseUrl;
@@ -701,4 +724,8 @@ public class EidolonUnchainedConfig {
     public static final ForgeConfigSpec.DoubleValue TTS_DEFAULT_SPEED = COMMON.ttsDefaultSpeed;
     public static final ForgeConfigSpec.ConfigValue<String> TTS_DEFAULT_GENDER = COMMON.ttsDefaultGender;
     public static final ForgeConfigSpec.ConfigValue<String> TTS_DEFAULT_LANGUAGE = COMMON.ttsDefaultLanguage;
+    // Google Cloud TTS
+    public static final ForgeConfigSpec.ConfigValue<String> GOOGLE_TTS_CREDENTIALS_PATH = COMMON.googleCredentialsPath;
+    public static final ForgeConfigSpec.ConfigValue<String> GOOGLE_TTS_DEFAULT_LANGUAGE_CODE = COMMON.googleDefaultLanguageCode;
+    public static final ForgeConfigSpec.ConfigValue<String> GOOGLE_TTS_DEFAULT_VOICE_NAME = COMMON.googleDefaultVoiceName;
 }

@@ -315,6 +315,11 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                     loadTaskConfig(config, json.getAsJsonObject("task_config"));
                 }
 
+                // Parse TTS configuration
+                if (json.has("tts_config")) {
+                    loadTTSConfig(config, json.getAsJsonObject("tts_config"));
+                }
+
                 // Store the configuration
                 aiConfigs.put(deityId, config);
                 linked++;

@@ -2,7 +2,7 @@ package com.bluelotuscoding.eidolonunchained.integration.player2ai;
 
 import com.bluelotuscoding.eidolonunchained.ai.GenerationConfig;
 import com.bluelotuscoding.eidolonunchained.ai.SafetySettings;
-import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
+import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
 import com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiAPIClient;
 import com.google.gson.*;
 import org.apache.logging.log4j.LogManager;
@@ -32,8 +32,9 @@ import java.util.stream.Collectors;
 public class Player2AIClient {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String PLAYER2_LOCAL_API_BASE = "http://127.0.0.1:4315/v1/chat/completions"; // OpenAI-compatible endpoint
+    // Player2 Web API (OpenAI-compatible chat completion)
+    private static final String PLAYER2_WEB_CHAT_API = "https://api.player2.game/v1/chat/completions";
     private static final String PLAYER2_AUTH_BASE = "http://localhost:4316/v1/login/web/";
-    private static final String GAME_CLIENT_ID = "eidolon-unchained"; // Player2AI game client ID
     private static final transient Executor EXECUTOR = Executors.newCachedThreadPool();
     
     private final int timeoutSeconds;
@@ -57,7 +58,7 @@ public class Player2AIClient {
      */
     public static String authenticateWithPlayer2App() {
         try {
-            String authUrl = PLAYER2_AUTH_BASE + GAME_CLIENT_ID;
+            String authUrl = PLAYER2_AUTH_BASE + Player2SharedConfig.GAME_CLIENT_ID;
             URL url = URI.create(authUrl).toURL();
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             
@@ -115,7 +116,8 @@ public class Player2AIClient {
                 HttpURLConnection testConn = (HttpURLConnection) testUrl.openConnection();
                 testConn.setRequestMethod("POST");
                 testConn.setRequestProperty("Content-Type", "application/json");
-                testConn.setRequestProperty("player2-game-key", GAME_CLIENT_ID);
+                // Prefer standard game headers for local app
+                Player2SharedConfig.applyGameHeaders(testConn, null);
                 testConn.setConnectTimeout(3000);
                 testConn.setReadTimeout(3000);
                 testConn.setDoOutput(true);
@@ -145,7 +147,7 @@ public class Player2AIClient {
             
             // Test authentication endpoint (different port)
             try {
-                URL authUrl = URI.create("http://127.0.0.1:4316/v1/login/web/" + GAME_CLIENT_ID).toURL();
+                URL authUrl = URI.create("http://127.0.0.1:4316/v1/login/web/" + Player2SharedConfig.GAME_CLIENT_ID).toURL();
                 HttpURLConnection authConn = (HttpURLConnection) authUrl.openConnection();
                 authConn.setRequestMethod("POST");
                 authConn.setRequestProperty("Content-Type", "application/json");
@@ -173,7 +175,7 @@ public class Player2AIClient {
                 URL healthUrl = URI.create("http://127.0.0.1:4315/v1/health").toURL();
                 HttpURLConnection healthConn = (HttpURLConnection) healthUrl.openConnection();
                 healthConn.setRequestMethod("GET");
-                healthConn.setRequestProperty("player2-game-key", GAME_CLIENT_ID);
+                Player2SharedConfig.applyGameHeaders(healthConn, null);
                 healthConn.setConnectTimeout(3000);
                 healthConn.setReadTimeout(3000);
                 
@@ -205,7 +207,7 @@ public class Player2AIClient {
             URL testUrl = URI.create("http://127.0.0.1:4315/v1/health").toURL();
             HttpURLConnection testConn = (HttpURLConnection) testUrl.openConnection();
             testConn.setRequestMethod("GET");
-            testConn.setRequestProperty("player2-game-key", GAME_CLIENT_ID);
+            Player2SharedConfig.applyGameHeaders(testConn, null);
             testConn.setConnectTimeout(3000);
             testConn.setReadTimeout(3000);
             
@@ -235,8 +237,9 @@ public class Player2AIClient {
                 return new GeminiAPIClient.AIResponse(true, response, Collections.emptyList());
                 
             } catch (Exception e) {
-                LOGGER.debug("Player2AI request failed: {}", e.getMessage());
-                
+                LOGGER.error("Player2AI request failed: {}", e.getMessage());
+                LOGGER.error("Full exception details: ", e);
+
                 // Always return clean user-friendly message to players
                 String errorMessage = "The deity's voice echoes from beyond the veil...";
                 return new GeminiAPIClient.AIResponse(false, errorMessage, Collections.emptyList());
@@ -278,11 +281,14 @@ public class Player2AIClient {
         // User message
         JsonObject userMessage = new JsonObject();
         userMessage.addProperty("role", "user");
-        userMessage.addProperty("name", playerUUID);
         userMessage.addProperty("content", prompt);
         messages.add(userMessage);
         
         request.add("messages", messages);
+        // Provide top-level user identifier per OpenAI compatibility guidance
+        if (playerUUID != null && !playerUUID.isEmpty()) {
+            request.addProperty("user", playerUUID);
+        }
         
         // Use AI deity configuration parameters with safe defaults
         if (genConfig != null) {
@@ -295,8 +301,27 @@ public class Player2AIClient {
             LOGGER.debug("No generation config provided to Player2AI, using defaults");
         }
         
-        // Send request to the local OpenAI-compatible endpoint
-        String response = sendRequest(PLAYER2_LOCAL_API_BASE, "POST", request.toString());
+        String response;
+        // Prefer local app if available; otherwise try web API with player's p2Key
+        if (isPlayer2AppAvailable()) {
+            LOGGER.info("Player2AI Chat: route=local url={} auth=game-headers playerUUID={}", PLAYER2_LOCAL_API_BASE, playerUUID);
+            response = sendLocalChatRequest(PLAYER2_LOCAL_API_BASE, request.toString(), playerUUID);
+        } else {
+            // Web API requires Authorization: Bearer p2Key. Try per-player first, then server-level key.
+            java.util.UUID uuid = safeParseUUID(playerUUID);
+            String p2Key = com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AuthManager.getCachedP2Key(uuid);
+            if (p2Key == null || p2Key.isEmpty()) {
+                try {
+                    p2Key = APIKeyManager.getAPIKey("player2ai");
+                } catch (Throwable ignored) {}
+            }
+            if (p2Key == null || p2Key.isEmpty()) {
+                LOGGER.warn("Player2AI Chat: route=web auth=missing - no p2Key for player {}, run /eidolon-unchained player2ai login device.", playerUUID);
+                throw new IOException("Unauthorized: missing Player2 token for web chat.");
+            }
+            LOGGER.info("Player2AI Chat: route=web url={} auth=bearer playerUUID={} (token present)", PLAYER2_WEB_CHAT_API, playerUUID);
+            response = sendWebChatRequest(PLAYER2_WEB_CHAT_API, request.toString(), p2Key);
+        }
         
         // Parse OpenAI-compatible response
         JsonObject responseObj = JsonParser.parseString(response).getAsJsonObject();
@@ -315,6 +340,7 @@ public class Player2AIClient {
     /**
      * Ensure a character exists for the deity, create if needed
      */
+    @SuppressWarnings("unused")
     private String ensureCharacterExists(String characterId, String personality) throws IOException {
         // Check cache first
         if (characterCache.containsKey(characterId)) {
@@ -384,6 +410,7 @@ public class Player2AIClient {
     /**
      * Send message to Player2AI character
      */
+    @SuppressWarnings("unused")
     private String sendMessageToCharacter(String npcId, String message, String playerUUID) throws IOException {
         JsonObject request = new JsonObject();
         request.addProperty("npc_id", npcId);
@@ -412,52 +439,119 @@ public class Player2AIClient {
     /**
      * Send HTTP request to Player2AI API (OpenAI-compatible format)
      */
-    private String sendRequest(String urlString, String method, String jsonBody) throws IOException {
+    private String sendLocalChatRequest(String urlString, String jsonBody, String playerUUID) throws IOException {
         URL url = URI.create(urlString).toURL();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        
-        // Configure connection with aggressive timeout settings
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("Accept", "application/json");
+        Player2SharedConfig.applyGameHeaders(connection, safeParseUUID(playerUUID));
+    connection.setDoOutput(true);
+    // Scale timeouts from configured timeoutSeconds while keeping sane bounds
+    connection.setConnectTimeout(Math.min(15000, Math.max(3000, (timeoutSeconds * 1000) / 2)));
+    connection.setReadTimeout(Math.min(30000, Math.max(5000, timeoutSeconds * 1000)));
+
+        try (OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8)) {
+            writer.write(jsonBody);
+            writer.flush();
+        }
+
+        int responseCode = connection.getResponseCode();
+        StringBuilder response = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                responseCode >= 200 && responseCode < 300 ? connection.getInputStream() : connection.getErrorStream(),
+                StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) response.append(line);
+        }
+        if (responseCode < 200 || responseCode >= 300) {
+            LOGGER.warn("Player2AI local error {}: {}", responseCode, response);
+            throw new IOException("Player2AI local error: " + responseCode + " - " + response);
+        }
+        return response.toString();
+    }
+
+    private static java.util.UUID safeParseUUID(String uuidStr) {
+        try { return uuidStr != null ? java.util.UUID.fromString(uuidStr) : null; } catch (Exception ignored) { return null; }
+    }
+
+    /**
+     * Generic local request helper for legacy endpoints (characters, chat, memory, etc.).
+     * Uses the local Player2 app (4315) and applies standard game headers.
+     */
+    private String sendRequest(String pathOrUrl, String method, String jsonBody) throws IOException {
+        String resolved = pathOrUrl;
+        if (!pathOrUrl.startsWith("http://") && !pathOrUrl.startsWith("https://")) {
+            // Default to local Player2 app base
+            if (pathOrUrl.startsWith("/")) pathOrUrl = pathOrUrl.substring(1);
+            resolved = "http://127.0.0.1:4315/" + pathOrUrl;
+        }
+
+        URL url = URI.create(resolved).toURL();
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod(method);
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setRequestProperty("Accept", "application/json");
-        connection.setRequestProperty("player2-game-key", GAME_CLIENT_ID);
-        
-        // Set authentication for local instance
-        connection.setRequestProperty("player2-game-key", GAME_CLIENT_ID);
-        connection.setDoOutput(true);
-        
-        // CRITICAL: Use much shorter timeouts to prevent server hangs
-        connection.setConnectTimeout(5000); // 5 seconds connect timeout
-        connection.setReadTimeout(10000);   // 10 seconds read timeout
-        
-        // Send request body
+        Player2SharedConfig.applyGameHeaders(connection, null);
+    connection.setDoOutput(true);
+    connection.setConnectTimeout(Math.min(15000, Math.max(3000, (timeoutSeconds * 1000) / 2)));
+    connection.setReadTimeout(Math.min(30000, Math.max(5000, timeoutSeconds * 1000)));
+
         if (jsonBody != null && !jsonBody.isEmpty()) {
             try (OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8)) {
                 writer.write(jsonBody);
                 writer.flush();
             }
         }
-        
-        // Read response
+
         int responseCode = connection.getResponseCode();
         StringBuilder response = new StringBuilder();
-        
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                responseCode >= 200 && responseCode < 300 
-                    ? connection.getInputStream() 
-                    : connection.getErrorStream(), StandardCharsets.UTF_8))) {
-            
+                responseCode >= 200 && responseCode < 300 ? connection.getInputStream() : connection.getErrorStream(),
+                StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) response.append(line);
+        }
+        if (responseCode < 200 || responseCode >= 300) {
+            LOGGER.warn("Player2AI local request error {}: {}", responseCode, response);
+            throw new IOException("Player2AI local request error: " + responseCode + " - " + response);
+        }
+        return response.toString();
+    }
+
+    /**
+     * Send OpenAI-compatible chat completion to Player2 Web API using p2Key.
+     */
+    private String sendWebChatRequest(String urlString, String jsonBody, String p2Key) throws IOException {
+        URL url = URI.create(urlString).toURL();
+        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("Accept", "application/json");
+        connection.setRequestProperty("Authorization", "Bearer " + p2Key);
+        connection.setDoOutput(true);
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(15000);
+
+        try (OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8)) {
+            writer.write(jsonBody);
+            writer.flush();
+        }
+
+        int responseCode = connection.getResponseCode();
+        StringBuilder response = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                responseCode >= 200 && responseCode < 300 ? connection.getInputStream() : connection.getErrorStream(),
+                StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 response.append(line);
             }
         }
-        
         if (responseCode < 200 || responseCode >= 300) {
-            LOGGER.error("Player2AI API error {}: {}", responseCode, response.toString());
-            throw new IOException("Player2AI API error: " + responseCode + " - " + response.toString());
+            LOGGER.warn("Player2 Web Chat API error {}: {}", responseCode, response.toString());
+            throw new IOException("Player2 Web Chat API error: " + responseCode + " - " + response.toString());
         }
-        
         return response.toString();
     }
     

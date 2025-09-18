@@ -193,6 +193,25 @@ public class VoiceChatIntegration {
      * Enhanced PCM extraction supporting multiple audio formats
      */
     private static short[] extractPcmFromAudioData(byte[] data) {
+        // First, check if this might be raw LINEAR16 PCM data from Gemini TTS
+        // Gemini returns raw PCM at 24kHz with no headers when requested as LINEAR16
+        if (!hasAudioHeaders(data) && data.length > 1000 && data.length % 2 == 0) {
+            LOGGER.info("Detected raw LINEAR16 PCM data (no headers), assuming 24kHz from Gemini TTS");
+            // Convert bytes to short array (16-bit samples, little endian)
+            short[] samples = new short[data.length / 2];
+            for (int i = 0; i < samples.length; i++) {
+                int byteIndex = i * 2;
+                // Little endian: low byte first, high byte second
+                samples[i] = (short) ((data[byteIndex] & 0xFF) | ((data[byteIndex + 1] & 0xFF) << 8));
+            }
+            
+            // Resample from 24kHz to 48kHz for Simple Voice Chat
+            LOGGER.info("Resampling raw LINEAR16 from 24kHz to 48kHz: {} samples", samples.length);
+            short[] resampled = resampleAudio(samples, 24000.0f, 48000.0f, 1); // Assume mono
+            LOGGER.info("Successfully processed raw LINEAR16: {} -> {} samples", samples.length, resampled.length);
+            return resampled;
+        }
+        
         // First, analyze the actual WAV header to understand what we're dealing with
         WavInfo info = analyzeWavHeader(data);
         if (info != null) {
@@ -236,8 +255,8 @@ public class VoiceChatIntegration {
             }
         }
 
-        // Try MP3 format detection and conversion
-        if (data.length > 4 && data[0] == (byte) 0xFF && (data[1] & 0xE0) == 0xE0) {
+        // Try MP3 format detection and conversion - Enhanced detection
+        if (isMp3Data(data)) {
             LOGGER.info("MP3 format detected, attempting conversion to PCM");
             short[] pcm = convertMp3ToPcm(data);
             if (pcm != null) {
@@ -253,6 +272,16 @@ public class VoiceChatIntegration {
             LOGGER.debug("OGG format detected but conversion not implemented");
             // OGG decoding would require external library
             return null;
+        }
+
+        // Fallback: Try to treat unknown data as MP3 (common case for Gemini API)
+        if (data.length > 100) { // Only try if we have substantial data
+            LOGGER.info("Unknown audio format, attempting MP3 conversion as fallback");
+            short[] pcm = convertMp3ToPcm(data);
+            if (pcm != null) {
+                LOGGER.info("Fallback MP3 conversion successful: {} samples", pcm.length);
+                return pcm;
+            }
         }
 
         // Last resort: try to interpret as raw PCM
@@ -305,79 +334,126 @@ public class VoiceChatIntegration {
     }
 
     /**
-     * Convert MP3 data to PCM using Java Sound API
+     * Enhanced MP3 format detection
+     * Handles various MP3 formats including those with metadata or ID3 tags
+     */
+    private static boolean isMp3Data(byte[] data) {
+        if (data == null || data.length < 4) {
+            return false;
+        }
+
+        // Check for MP3 frame header (standard detection)
+        if (data[0] == (byte) 0xFF && (data[1] & 0xE0) == 0xE0) {
+            return true;
+        }
+
+        // Check for ID3v2 tag followed by MP3 data
+        if (data.length >= 10 && data[0] == 'I' && data[1] == 'D' && data[2] == '3') {
+            // ID3v2 header found, look for MP3 frame after tag
+            try {
+                // ID3v2 size is in bytes 6-9 (syncsafe integer)
+                int tagSize = ((data[6] & 0x7F) << 21) | ((data[7] & 0x7F) << 14) | 
+                             ((data[8] & 0x7F) << 7) | (data[9] & 0x7F);
+                int frameStart = 10 + tagSize; // Header (10 bytes) + tag size
+                
+                if (frameStart < data.length - 1 && 
+                    data[frameStart] == (byte) 0xFF && (data[frameStart + 1] & 0xE0) == 0xE0) {
+                    return true;
+                }
+            } catch (Exception e) {
+                // If ID3 parsing fails, fall through to other checks
+            }
+        }
+
+        // Try Java Sound API to definitively identify MP3
+        try {
+            java.io.ByteArrayInputStream bais = new java.io.ByteArrayInputStream(data);
+            javax.sound.sampled.AudioInputStream stream = javax.sound.sampled.AudioSystem.getAudioInputStream(bais);
+            if (stream != null) {
+                javax.sound.sampled.AudioFormat format = stream.getFormat();
+                stream.close();
+                // Check if format encoding suggests MP3/MPEG
+                String encoding = format.getEncoding().toString().toLowerCase();
+                return encoding.contains("mp3") || encoding.contains("mpeg");
+            }
+        } catch (Exception e) {
+            // Not a valid audio format that Java can recognize
+        }
+
+        return false;
+    }
+
+    /**
+     * Convert MP3 data to PCM using Simple Voice Chat's native MP3 decoder
+     * This is much more reliable than Java Sound API for MP3 files
      */
     private static short[] convertMp3ToPcm(byte[] mp3Data) {
+        if (serverApi == null) {
+            LOGGER.warn("Simple Voice Chat API not available for MP3 decoding");
+            return null;
+        }
+
+        try (java.io.ByteArrayInputStream inputStream = new java.io.ByteArrayInputStream(mp3Data)) {
+            // Use Simple Voice Chat's native MP3 decoder
+            Object mp3Decoder = reflectInvoke(serverApi, "createMp3Decoder", 
+                                            new Class[]{java.io.InputStream.class}, 
+                                            new Object[]{inputStream});
+            
+            if (mp3Decoder == null) {
+                LOGGER.warn("Failed to create MP3 decoder from Simple Voice Chat API");
+                return null;
+            }
+
+            // Decode MP3 to PCM samples
+            short[] pcmSamples = (short[]) reflectInvoke(mp3Decoder, "decode", new Class[]{}, new Object[]{});
+            
+            if (pcmSamples != null) {
+                // Get audio format to check sample rate
+                Object audioFormat = reflectInvoke(mp3Decoder, "getAudioFormat", new Class[]{}, new Object[]{});
+                if (audioFormat != null) {
+                    float sampleRate = (float) reflectInvoke(audioFormat, "getSampleRate", new Class[]{}, new Object[]{});
+                    int channels = (int) reflectInvoke(audioFormat, "getChannels", new Class[]{}, new Object[]{});
+                    LOGGER.debug("MP3 decoded: {} samples, {}Hz, {} channels", pcmSamples.length, sampleRate, channels);
+                    
+                    // If sample rate is not 48kHz, resample it
+                    if (Math.abs(sampleRate - 48000.0f) > 1.0f) {
+                        LOGGER.debug("Resampling from {}Hz to 48kHz", sampleRate);
+                        pcmSamples = resampleAudio(pcmSamples, sampleRate, 48000.0f, channels);
+                    }
+                }
+                
+                LOGGER.info("Successfully decoded MP3 using Simple Voice Chat: {} samples", pcmSamples.length);
+                return pcmSamples;
+            } else {
+                LOGGER.warn("MP3 decoder returned null PCM samples");
+                return null;
+            }
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to decode MP3 using Simple Voice Chat decoder: {}", e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Fallback method to try treating data as raw PCM
+     */
+    private static short[] tryRawAudioConversion(byte[] audioData) {
+        LOGGER.debug("Attempting raw audio conversion as fallback");
         try {
-            // Create input stream from MP3 data
-            java.io.ByteArrayInputStream bais = new java.io.ByteArrayInputStream(mp3Data);
-            javax.sound.sampled.AudioInputStream mp3Stream = javax.sound.sampled.AudioSystem.getAudioInputStream(bais);
-
-            if (mp3Stream == null) {
-                LOGGER.debug("AudioSystem could not create AudioInputStream from MP3 data");
-                return null;
-            }
-
-            javax.sound.sampled.AudioFormat sourceFormat = mp3Stream.getFormat();
-            LOGGER.debug("Source MP3 format: {} Hz, {} channels, {} bits",
-                        sourceFormat.getSampleRate(), sourceFormat.getChannels(), sourceFormat.getSampleSizeInBits());
-
-            // Define target PCM format (48kHz, 16-bit, mono/stereo as source)
-            int targetChannels = Math.min(2, Math.max(1, sourceFormat.getChannels()));
-            javax.sound.sampled.AudioFormat targetFormat = new javax.sound.sampled.AudioFormat(
-                javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED,
-                48000.0f,  // 48kHz for VoiceChat
-                16,        // 16-bit
-                targetChannels,  // Mono or stereo
-                targetChannels * 2,  // Frame size
-                48000.0f,  // Frame rate
-                false      // Little endian
-            );
-
-            // Convert to target format
-            javax.sound.sampled.AudioInputStream pcmStream = javax.sound.sampled.AudioSystem.getAudioInputStream(targetFormat, mp3Stream);
-            if (pcmStream == null) {
-                LOGGER.debug("AudioSystem could not convert MP3 to target PCM format");
-                mp3Stream.close();
-                return null;
-            }
-
-            // Read PCM data
-            java.io.ByteArrayOutputStream pcmBytes = new java.io.ByteArrayOutputStream();
-            byte[] buffer = new byte[8192];
-            int bytesRead;
-            while ((bytesRead = pcmStream.read(buffer)) != -1) {
-                pcmBytes.write(buffer, 0, bytesRead);
-            }
-
-            pcmStream.close();
-            mp3Stream.close();
-
-            byte[] pcmData = pcmBytes.toByteArray();
-            if (pcmData.length == 0) {
-                LOGGER.debug("No PCM data extracted from MP3");
-                return null;
-            }
-
-            // Convert byte array to short array (16-bit samples)
-            short[] samples = new short[pcmData.length / 2];
+            // Assume 16-bit samples, convert to shorts
+            short[] samples = new short[audioData.length / 2];
             for (int i = 0; i < samples.length; i++) {
                 int byteIndex = i * 2;
-                if (byteIndex + 1 < pcmData.length) {
+                if (byteIndex + 1 < audioData.length) {
                     // Little endian conversion
-                    samples[i] = (short) ((pcmData[byteIndex] & 0xFF) | (pcmData[byteIndex + 1] << 8));
+                    samples[i] = (short) ((audioData[byteIndex] & 0xFF) | (audioData[byteIndex + 1] << 8));
                 }
             }
-
-            LOGGER.info("Successfully converted MP3 to PCM: {} bytes -> {} samples ({}Hz, {} channels)",
-                       mp3Data.length, samples.length, targetFormat.getSampleRate(), targetFormat.getChannels());
+            LOGGER.debug("Raw audio conversion produced {} samples", samples.length);
             return samples;
-
-        } catch (javax.sound.sampled.UnsupportedAudioFileException e) {
-            LOGGER.debug("MP3 format not supported by Java Sound API: {}", e.getMessage());
-            return null;
         } catch (Exception e) {
-            LOGGER.debug("Error converting MP3 to PCM: {}", e.getMessage());
+            LOGGER.warn("Raw audio conversion failed: {}", e.getMessage());
             return null;
         }
     }
@@ -647,5 +723,68 @@ public class VoiceChatIntegration {
     private static short toShortLE(byte[] b, int off) {
         if (off + 1 >= b.length) return 0;
         return (short) ((b[off] & 0xFF) | (b[off + 1] << 8));
+    }
+
+    /**
+     * Check if audio data has recognizable format headers (WAV, MP3, OGG, etc.)
+     * Returns false for raw PCM data with no headers
+     */
+    private static boolean hasAudioHeaders(byte[] data) {
+        if (data.length < 4) return false;
+        
+        // Check for WAV header
+        if (data[0] == 'R' && data[1] == 'I' && data[2] == 'F' && data[3] == 'F') {
+            return true;
+        }
+        
+        // Check for MP3 header (various forms)
+        if (isMp3Data(data)) {
+            return true;
+        }
+        
+        // Check for OGG header
+        if (data[0] == 'O' && data[1] == 'g' && data[2] == 'g' && data[3] == 'S') {
+            return true;
+        }
+        
+        // Check for FLAC header
+        if (data.length > 4 && data[0] == 'f' && data[1] == 'L' && data[2] == 'a' && data[3] == 'C') {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Simple linear interpolation resampling for audio data
+     * Converts from source sample rate to target sample rate
+     */
+    private static short[] resampleAudio(short[] samples, float sourceSampleRate, float targetSampleRate, int channels) {
+        if (Math.abs(sourceSampleRate - targetSampleRate) < 1.0f) {
+            return samples; // No resampling needed
+        }
+
+        double ratio = sourceSampleRate / targetSampleRate;
+        int targetLength = (int) (samples.length / ratio);
+        short[] resampled = new short[targetLength];
+
+        for (int i = 0; i < targetLength; i++) {
+            double sourceIndex = i * ratio;
+            int index = (int) sourceIndex;
+            
+            if (index + 1 < samples.length) {
+                // Linear interpolation
+                double fraction = sourceIndex - index;
+                double sample1 = samples[index];
+                double sample2 = samples[index + 1];
+                resampled[i] = (short) (sample1 + fraction * (sample2 - sample1));
+            } else if (index < samples.length) {
+                resampled[i] = samples[index];
+            }
+        }
+
+        LOGGER.debug("Resampled audio from {}Hz to {}Hz: {} -> {} samples", 
+                    sourceSampleRate, targetSampleRate, samples.length, resampled.length);
+        return resampled;
     }
 }

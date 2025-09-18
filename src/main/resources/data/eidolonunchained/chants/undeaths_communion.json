@@ -11,9 +11,9 @@
   "prayer_effect_type": "conversation",
   "requires_effigy": true,
   "signs": [
+    "eidolon:wicked",
     "eidolon:soul",
-    "eidolon:sacred",
-    "eidolon:wicked"
+    "eidolon:soul"
   ],
   "requirements": [],
   "effects": [

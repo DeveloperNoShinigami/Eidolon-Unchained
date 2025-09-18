@@ -48,6 +48,7 @@ public class PlayerChantingSystem {
     
     // Scheduler for delayed spell execution (like ribbon system)
     private static final transient ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+    private static volatile boolean warnedEmptySpellRegistry = false;
     
     /**
      * Container for tracking a player's active chanting sequence
@@ -120,20 +121,25 @@ public class PlayerChantingSystem {
             
             // Schedule NATIVE EIDOLON spell execution after delay
             spellExecutionTask = CompletableFuture.runAsync(() -> {
-                try {
-                    // Execute native Eidolon spell using their casting system
-                    BlockPos playerPos = player.blockPosition();
-                    eidolonSpell.cast(player.level(), playerPos, player, sequence);
-                    
-                    LOGGER.info("Successfully cast Eidolon spell {} for player {}", 
-                        eidolonSpell.getRegistryName(), player.getName().getString());
-                        
-                } catch (Exception e) {
-                    LOGGER.error("Error executing Eidolon spell {} for player {}: {}", 
-                        eidolonSpell.getRegistryName(), player.getName().getString(), e.getMessage());
-                } finally {
-                    // Clear the chant after execution (success or failure)
-                    PlayerChantingSystem.clearPlayerChant(player);
+                // Ensure execution happens on the main server thread
+                net.minecraft.server.MinecraftServer server = player.getServer();
+                if (server != null) {
+                    server.execute(() -> {
+                        try {
+                            // Execute native Eidolon spell using their casting system
+                            BlockPos playerPos = player.blockPosition();
+                            eidolonSpell.cast(player.level(), playerPos, player, sequence);
+
+                            LOGGER.info("Successfully cast Eidolon spell {} for player {}",
+                                eidolonSpell.getRegistryName(), player.getName().getString());
+                        } catch (Exception e) {
+                            LOGGER.error("Error executing Eidolon spell {} for player {}: {}",
+                                eidolonSpell.getRegistryName(), player.getName().getString(), e.getMessage());
+                        } finally {
+                            // Clear the chant after execution (success or failure)
+                            PlayerChantingSystem.clearPlayerChant(player);
+                        }
+                    });
                 }
             }, CompletableFuture.delayedExecutor(SPELL_RESOLUTION_DELAY, TimeUnit.MILLISECONDS));
         }
@@ -161,6 +167,9 @@ public class PlayerChantingSystem {
         
         // Add the sign to the sequence
         chant.addSign(sign);
+        
+        // Immediate audio feedback for keybind presses
+        playSignSound(player, sign);
         
         // Run configurable sign effects (datapack-driven) instead of built-in visuals/sounds
         try {
@@ -218,7 +227,41 @@ public class PlayerChantingSystem {
         try {
             SignSequence eidolonSequence = new SignSequence(chant.signs);
             elucent.eidolon.api.spells.Spell eidolonSpell = elucent.eidolon.registries.Spells.find(eidolonSequence, player.level());
-            
+
+            // Fallback: some Eidolon builds don't seed the internal 'spells' cache; scan the spellMap directly
+            if (eidolonSpell == null) {
+                try {
+                    // First scan the map values
+                    for (elucent.eidolon.api.spells.Spell s : elucent.eidolon.registries.Spells.getSpellMap().values()) {
+                        if (s != null && s.matches(eidolonSequence)) {
+                            eidolonSpell = s;
+                            LOGGER.debug("Resolved Eidolon spell via spellMap fallback: {}", s.getRegistryName());
+                            break;
+                        }
+                    }
+                    // If still not found, also scan the registered spells list as a safety net
+                    if (eidolonSpell == null) {
+                        for (elucent.eidolon.api.spells.Spell s : elucent.eidolon.registries.Spells.getSpells()) {
+                            if (s != null && s.matches(eidolonSequence)) {
+                                eidolonSpell = s;
+                                LOGGER.debug("Resolved Eidolon spell via spells list fallback: {}", s.getRegistryName());
+                                break;
+                            }
+                        }
+                    }
+                    // One-time diagnostic if registry appears empty
+                    if (eidolonSpell == null
+                        && !warnedEmptySpellRegistry
+                        && elucent.eidolon.registries.Spells.getSpellMap().isEmpty()
+                        && elucent.eidolon.registries.Spells.getSpells().isEmpty()) {
+                        warnedEmptySpellRegistry = true;
+                        LOGGER.warn("Eidolon spell registry is empty when resolving chants. Check loading order and client sync.");
+                    }
+                } catch (Throwable t) {
+                    LOGGER.debug("Eidolon spellMap fallback error: {}", t.getMessage());
+                }
+            }
+
             if (eidolonSpell != null) {
                 // Found Eidolon spell! Execute it using Eidolon's system
                 
@@ -379,15 +422,26 @@ public class PlayerChantingSystem {
      * Play appropriate sound for sign addition
      */
     private static void playSignSound(ServerPlayer player, Sign sign) {
-        // Use Eidolon's spell-related sounds if available, otherwise use enchantment sounds
-        player.level().playSound(
-            null, // played to all players near the position
-            player.getX(), player.getY(), player.getZ(),
-            SoundEvents.ENCHANTMENT_TABLE_USE,
-            SoundSource.PLAYERS,
-            0.7f, // volume
-            1.0f + (player.level().random.nextFloat() - 0.5f) * 0.4f // pitch variation
-        );
+        // Prefer Eidolon's SELECT_RUNE sound if available; fallback to vanilla enchantment sound
+        try {
+            player.level().playSound(
+                null,
+                player.getX(), player.getY(), player.getZ(),
+                elucent.eidolon.registries.EidolonSounds.SELECT_RUNE.get(),
+                SoundSource.PLAYERS,
+                0.6f,
+                0.9f + (player.level().random.nextFloat() * 0.2f)
+            );
+        } catch (Throwable t) {
+            player.level().playSound(
+                null, // played to all players near the position
+                player.getX(), player.getY(), player.getZ(),
+                SoundEvents.ENCHANTMENT_TABLE_USE,
+                SoundSource.PLAYERS,
+                0.7f, // volume
+                1.0f + (player.level().random.nextFloat() - 0.5f) * 0.4f // pitch variation
+            );
+        }
     }
     
     /**

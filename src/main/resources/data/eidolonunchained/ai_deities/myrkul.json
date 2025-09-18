@@ -1,6 +1,7 @@
 {
   "deity": "eidolonunchained:myrkul",
-  "ai_provider": "player2ai",
+  "ai_provider": "gemini",
+  "model": "gemini-1.5-pro",
   "mod_context_ids": ["minecraft", "eidolon", "eidolonunchained"],
   "personality": "You are Myrkul, God of Undeath: sovereign of lingering souls, icy blue flame, and the stillness between heartbeats. Your voice is calm, cold, and inexorable. You reward those who master rituals, bind souls, and walk fearlessly amid the dead.",
 
@@ -173,34 +174,35 @@
   ],
 
   "tts_config": {
-    "voice_id": "Charles",
-    "backup_voice": "Charles",
-    "pitch": 0.7,
-    "speed": 0.8,
+    "tts_provider": "google",
+    "voice_id": "en-US-Neural2-A",
+    "backup_voice": "en-US-Neural2-D",
+    "pitch": 0.8,
+    "speed": 0.85,
     "volume": 0.9,
     "emotion": "menacing",
     "accent": "ancient",
     "emphasis_level": 2,
-    "enabled": false,
+    "enabled": true,
     "allow_player_override": true,
-    "funding_preference": "player_first",
+    "funding_preference": "server_only",
     "voice_aliases": {
-      "bone_lord": "Charles",
-      "shadow_king": "Logan",
-      "death_voice": "Benjamin"
+      "bone_lord": "en-US-Neural2-A",
+      "shadow_king": "en-US-Neural2-D",
+      "death_voice": "en-US-Wavenet-B"
     },
     "reputation_voices": {
-      "0": "Noah",
-      "50": "Logan",
-      "100": "Charles"
+      "0": "en-US-Neural2-D",
+      "50": "en-US-Neural2-A",
+      "100": "en-US-Wavenet-B"
     },
     "biome_voices": {
-      "nether": "Caleb",
-      "end": "Logan",
-      "desert": "Benjamin"
+      "nether": "en-US-Neural2-A",
+      "end": "en-US-Wavenet-B",
+      "desert": "en-US-Neural2-D"
     },
-    "audio_format": "wav",
-    "voice_language": "en_US",
+    "audio_format": "mp3",
+    "voice_language": "en-US",
     "voice_gender": "male"
   }
 }

@@ -1,5 +1,6 @@
 package com.bluelotuscoding.eidolonunchained.integration.player2ai;
 
+import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.google.gson.*;
 import net.minecraft.server.level.ServerPlayer;
@@ -8,13 +9,11 @@ import org.apache.logging.log4j.Logger;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -30,14 +29,13 @@ public class Player2TTSClient {
     // Player2 Web API endpoints (OpenAPI: https://api.player2.game/v1)
     // TTS speak endpoint returns TTSSpeakResponse { data: base64 } or may include url
     private static final String PLAYER2_TTS_SPEAK = "https://api.player2.game/v1/tts/speak";
-    private static final String PLAYER2_AUTH_API = "https://api.player2.game/v1/auth";
+    // private static final String PLAYER2_AUTH_API = "https://api.player2.game/v1/auth"; // reserved for future use
 
     // Local Player2 App endpoints for client-side requests
     private static final String PLAYER2_LOCAL_TTS = "http://127.0.0.1:4315/v1/tts";
-    private static final String PLAYER2_LOCAL_AUTH = "http://127.0.0.1:4315/v1/login/web/0198fed4-2d7d-7acf-aaf0-2bdb36a74eba";
+    private static final String PLAYER2_LOCAL_AUTH = "http://127.0.0.1:4315/v1/login/web/" + Player2SharedConfig.GAME_CLIENT_ID;
 
     // Eidolon Unchained verified game client ID
-    private static final String GAME_CLIENT_ID = "0198fed4-2d7d-7acf-aaf0-2bdb36a74eba";
 
     private static final transient Executor EXECUTOR = Executors.newCachedThreadPool();
 
@@ -76,21 +74,28 @@ public class Player2TTSClient {
         public final byte[] audioData;
         public final String error;
         public final boolean usedPlayerFunding;
+        public final String path; // e.g., "player2-local", "player2-web"
 
-        public TTSResponse(boolean success, String audioUrl, byte[] audioData, String error, boolean usedPlayerFunding) {
+        public TTSResponse(boolean success, String audioUrl, byte[] audioData, String error, boolean usedPlayerFunding, String path) {
             this.success = success;
             this.audioUrl = audioUrl;
             this.audioData = audioData;
             this.error = error;
             this.usedPlayerFunding = usedPlayerFunding;
+            this.path = path;
         }
 
         public static TTSResponse success(String audioUrl, byte[] audioData, boolean usedPlayerFunding) {
-            return new TTSResponse(true, audioUrl, audioData, null, usedPlayerFunding);
+            // Default path unknown; prefer using explicit factory below where possible
+            return new TTSResponse(true, audioUrl, audioData, null, usedPlayerFunding, null);
         }
 
         public static TTSResponse failure(String error) {
-            return new TTSResponse(false, null, null, error, false);
+            return new TTSResponse(false, null, null, error, false, null);
+        }
+
+        public static TTSResponse successWithPath(String audioUrl, byte[] audioData, boolean usedPlayerFunding, String path) {
+            return new TTSResponse(true, audioUrl, audioData, null, usedPlayerFunding, path);
         }
     }
 
@@ -116,6 +121,22 @@ public class Player2TTSClient {
                         return playerResponse;
                     }
                     LOGGER.debug("Player-funded TTS failed: {}", playerResponse.error);
+
+                    // Player web fallback: try Player2 Web API using player's p2Key (still player-funded)
+                    String perPlayerKey = com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AuthManager.getCachedP2Key(request.player);
+                    String storedKey = APIKeyManager.getAPIKey("player2ai");
+                    if ((perPlayerKey != null && !perPlayerKey.isEmpty()) || (storedKey != null && !storedKey.isEmpty())) {
+                        LOGGER.info("Player2TTS: route=web auth=bearer (p2Key present) - attempting Player2 Web API fallback");
+                        TTSResponse webPlayerResponse = tryServerFundedTTS(request);
+                        if (webPlayerResponse.success) {
+                            LOGGER.info("Successfully used Player2 Web API (player-funded) for {}", request.player.getName().getString());
+                            return webPlayerResponse;
+                        } else {
+                            LOGGER.warn("Player2 Web API (player-funded) fallback failed: {}", webPlayerResponse.error);
+                        }
+                    } else {
+                        LOGGER.info("Player2TTS: route=web auth=missing - no p2Key. Use /eidolon-unchained player2ai login device.");
+                    }
 
                     // Fallback to server if allowed
                     if (request.allowServerFallback && serverAllowed) {
@@ -156,29 +177,12 @@ public class Player2TTSClient {
      */
     private boolean isPlayerFundingAvailable(ServerPlayer player) {
         try {
-            // Check if Player2 App is running locally
-            if (!Player2AIClient.isPlayer2AppAvailable()) {
-                return false;
-            }
-
-            // Try to get p2Key from Player2 App using verified game client ID
-            URL authUrl = URI.create(PLAYER2_LOCAL_AUTH).toURL();
-            HttpURLConnection conn = (HttpURLConnection) authUrl.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setConnectTimeout(3000);
-            conn.setReadTimeout(3000);
-
-            int responseCode = conn.getResponseCode();
-            if (responseCode == 200) {
-                // Parse response to get p2Key
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-                    String response = reader.lines().reduce("", (a, b) -> a + b);
-                    JsonObject json = JsonParser.parseString(response).getAsJsonObject();
-                    return json.has("p2Key") && !json.get("p2Key").isJsonNull();
-                }
-            }
-            return false;
+            // Player funding is available if they have a per-player p2Key cached, a server-level key, or the local app is running.
+            String perPlayer = com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AuthManager.getCachedP2Key(player);
+            if (perPlayer != null && !perPlayer.isEmpty()) return true;
+            String stored = APIKeyManager.getAPIKey("player2ai");
+            if (stored != null && !stored.isEmpty()) return true;
+            return Player2AIClient.isPlayer2AppAvailable();
         } catch (Exception e) {
             LOGGER.debug("Failed to check player funding availability: {}", e.getMessage());
             return false;
@@ -223,8 +227,7 @@ public class Player2TTSClient {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
-            conn.setRequestProperty("X-Game-Client-ID", GAME_CLIENT_ID);
-            conn.setRequestProperty("X-Player-UUID", request.player.getUUID().toString());
+            Player2SharedConfig.applyGameHeaders(conn, request.player.getUUID());
             conn.setDoOutput(true);
             conn.setConnectTimeout(10000);
             conn.setReadTimeout(30000);
@@ -242,11 +245,11 @@ public class Player2TTSClient {
                     JsonObject json = JsonParser.parseString(response).getAsJsonObject();
 
                     if (json.has("audio_url")) {
-                        return TTSResponse.success(json.get("audio_url").getAsString(), null, true);
+                        return TTSResponse.successWithPath(json.get("audio_url").getAsString(), null, true, "player2-local");
                     } else if (json.has("audio_data")) {
                         String base64Audio = json.get("audio_data").getAsString();
                         byte[] audioData = Base64.getDecoder().decode(base64Audio);
-                        return TTSResponse.success(null, audioData, true);
+                        return TTSResponse.successWithPath(null, audioData, true, "player2-local");
                     }
                 }
             } else {
@@ -270,7 +273,7 @@ public class Player2TTSClient {
             // Get p2Key from Player2 App for web API authentication
             String p2Key = getPlayerP2Key(request.player);
             if (p2Key == null || p2Key.isEmpty()) {
-                return TTSResponse.failure("Server TTS requires Player2 App authentication");
+                return TTSResponse.failure("Unauthorized (401) - No Player2 token. Use /eidolon-unchained player2ai login device.");
             }
             // Build TTS request with voice selection
             JsonObject ttsRequest = new JsonObject();
@@ -281,8 +284,14 @@ public class Player2TTSClient {
             
             // Apply enhancement parameters from deity config or use defaults
             if (ttsConfig != null) {
+                // Speed from deity config; fall back handled below
                 ttsRequest.addProperty("speed", ttsConfig.speed);
-                ttsRequest.addProperty("audio_format", ttsConfig.audio_format != null ? ttsConfig.audio_format : "wav");
+                // Use deity-configured audio_format if set; otherwise use global default from config
+                String cfgFormat = (ttsConfig.audio_format != null && !ttsConfig.audio_format.isEmpty())
+                    ? ttsConfig.audio_format
+                    : com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.TTS_DEFAULT_AUDIO_FORMAT.get();
+                if (cfgFormat == null || cfgFormat.isEmpty()) cfgFormat = "mp3"; // safe default
+                ttsRequest.addProperty("audio_format", cfgFormat);
                 
                 // TODO: Verify Player2 API supports these enhancement parameters
                 // Currently setting as metadata - may need API documentation review
@@ -319,8 +328,11 @@ public class Player2TTSClient {
                 
                 ttsRequest.add("metadata", metadata);
             } else {
-                ttsRequest.addProperty("speed", 1.0);
-                ttsRequest.addProperty("audio_format", "wav");  // Use WAV for better compatibility with VoiceChat and Java Sound API
+                // Fall back to global defaults
+                ttsRequest.addProperty("speed", com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.TTS_DEFAULT_SPEED.get());
+                String cfgFormat = com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.TTS_DEFAULT_AUDIO_FORMAT.get();
+                if (cfgFormat == null || cfgFormat.isEmpty()) cfgFormat = "mp3"; // safe default observed working previously
+                ttsRequest.addProperty("audio_format", cfgFormat);
             }
 
             // Add voice selection - respect AI deity config settings
@@ -344,19 +356,43 @@ public class Player2TTSClient {
                 // If still "auto" or null, let Player2.game choose (no voice_id parameter)
             }
 
-            // Only set voice_id if we have a specific voice (not "auto")
+            // Only set voice if we have a specific voice (not "auto")
             if (voiceToUse != null && !voiceToUse.isEmpty() && !voiceToUse.equals("auto")) {
                 // Support both voice names and IDs
                 String resolvedVoiceId = resolveVoiceNameToId(voiceToUse);
                 LOGGER.info("TTS Voice Selection - Resolving '{}' to voice ID: '{}'", voiceToUse, resolvedVoiceId);
                 if (resolvedVoiceId != null) {
+                    // Prefer array field `voice_ids` (new schema)
+                    com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
+                    arr.add(resolvedVoiceId);
+                    ttsRequest.add("voice_ids", arr);
+                    // Also include single fields for compatibility with older schemas
                     ttsRequest.addProperty("voice_id", resolvedVoiceId);
-                    LOGGER.info("TTS Voice Selection - FINAL: Using voice '{}' with ID: '{}'", voiceToUse, resolvedVoiceId);
+                    ttsRequest.addProperty("voice", voiceToUse);
+                    LOGGER.info("TTS Voice Selection - FINAL: Using voice '{}' with ID '{}' (voice_ids + voice_id + voice)", voiceToUse, resolvedVoiceId);
                 } else {
-                    LOGGER.warn("TTS Voice Selection - Failed to resolve voice '{}', letting Player2.game choose default", voiceToUse);
+                    // Could be a direct ID already or unknown name; include as name and single id field
+                    ttsRequest.addProperty("voice", voiceToUse);
+                    if (voiceToUse.matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
+                        ttsRequest.addProperty("voice_id", voiceToUse);
+                    }
+                    LOGGER.warn("TTS Voice Selection - Could not resolve voice '{}', sending as provided for server-side resolution", voiceToUse);
                 }
             } else {
                 LOGGER.info("TTS Voice Selection - FINAL: No specific voice selected, letting Player2.game choose");
+                // When no explicit voice is chosen, pass optional hints if configured
+                if (ttsConfig != null) {
+                    try {
+                        if (ttsConfig.voice_gender != null && !ttsConfig.voice_gender.isEmpty()) {
+                            ttsRequest.addProperty("voice_gender", ttsConfig.voice_gender);
+                        }
+                    } catch (Exception ignored) {}
+                    try {
+                        if (ttsConfig.voice_language != null && !ttsConfig.voice_language.isEmpty()) {
+                            ttsRequest.addProperty("voice_language", ttsConfig.voice_language);
+                        }
+                    } catch (Exception ignored) {}
+                }
             }
 
             URL url = URI.create(PLAYER2_TTS_SPEAK).toURL();
@@ -397,34 +433,37 @@ public class Player2TTSClient {
                         }
 
                         byte[] decodedAudio = Base64.getDecoder().decode(audioData);
-                        return TTSResponse.success(null, decodedAudio, false);
+                        // Using Player2 Web API with p2Key — still player-funded
+                        return TTSResponse.successWithPath(null, decodedAudio, true, "player2-web");
                     }
                     // Fallbacks observed on some implementations
                     if (json.has("url")) {
-                        return TTSResponse.success(json.get("url").getAsString(), null, false);
+                        // Using Player2 Web API with p2Key — still player-funded
+                        return TTSResponse.successWithPath(json.get("url").getAsString(), null, true, "player2-web");
                     }
                     if (json.has("audio_url")) {
-                        return TTSResponse.success(json.get("audio_url").getAsString(), null, false);
+                        return TTSResponse.successWithPath(json.get("audio_url").getAsString(), null, true, "player2-web");
                     }
                     if (json.has("audio_data")) {
                         String base64Audio = json.get("audio_data").getAsString();
                         byte[] audioData = Base64.getDecoder().decode(base64Audio);
-                        return TTSResponse.success(null, audioData, false);
+                        return TTSResponse.successWithPath(null, audioData, true, "player2-web");
                     }
                 }
-            } else if (responseCode == 401) {
-                return TTSResponse.failure("Unauthorized (401) - check Player2 API key");
+        } else if (responseCode == 401) {
+                return TTSResponse.failure("Unauthorized (401) - Token invalid/expired. Use /eidolon-unchained player2ai login device to refresh.");
             } else if (responseCode == 402) {
                 return TTSResponse.failure("Insufficient credits (402)");
             } else if (responseCode == 400) {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getErrorStream()))) {
                     String error = reader.lines().reduce("", (a, b) -> a + b);
-                    return TTSResponse.failure("Invalid request (400): " + error);
+            // Surface common schema issues to help debugging
+            return TTSResponse.failure("Invalid request (400): " + error + " | payload=" + ttsRequest.toString());
                 }
             } else {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getErrorStream()))) {
                     String error = reader.lines().reduce("", (a, b) -> a + b);
-                    return TTSResponse.failure("Server TTS failed (" + responseCode + "): " + error);
+            return TTSResponse.failure("Server TTS failed (" + responseCode + "): " + error + " | payload=" + ttsRequest.toString());
                 }
             }
         } catch (Exception e) {
@@ -439,7 +478,21 @@ public class Player2TTSClient {
      */
     private String getPlayerP2Key(ServerPlayer player) {
         try {
-            // Call Player2 App login endpoint with verified game client ID
+            // 1) Prefer per-player cached key
+            String perPlayer = com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AuthManager.getCachedP2Key(player);
+            if (perPlayer != null && !perPlayer.isEmpty()) return perPlayer;
+
+            // 2) Server-level stored key (legacy/manual)
+            try {
+                String stored = APIKeyManager.getAPIKey("player2ai");
+                if (stored != null && !stored.isEmpty()) {
+                    return stored;
+                }
+            } catch (Throwable t) {
+                // ignore and try local app
+            }
+
+            // 3) Try local Player2 App quick auth (only works if app is running)
             URL authUrl = URI.create(PLAYER2_LOCAL_AUTH).toURL();
             HttpURLConnection conn = (HttpURLConnection) authUrl.openConnection();
             conn.setRequestMethod("POST");
@@ -449,12 +502,13 @@ public class Player2TTSClient {
 
             int responseCode = conn.getResponseCode();
             if (responseCode == 200) {
-                // Parse response to get p2Key
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
                     String response = reader.lines().reduce("", (a, b) -> a + b);
                     JsonObject json = JsonParser.parseString(response).getAsJsonObject();
                     if (json.has("p2Key") && !json.get("p2Key").isJsonNull()) {
-                        return json.get("p2Key").getAsString();
+                        String k = json.get("p2Key").getAsString();
+                        com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AuthManager.setCachedP2Key(player, k);
+                        return k;
                     }
                 }
             } else {
@@ -582,9 +636,6 @@ public class Player2TTSClient {
             case "jackson": return "01955d76-ed5b-74d2-a33c-b2b8e998658f";
             case "caleb": return "01955d76-ed5b-74de-83e5-800a44fee0d1";
             case "nicholas": return "01955d76-ed5b-74e9-9fea-1f8cad1cd9c5";
-
-            // DEBUG: Temporary hardcoded mapping for shadow_lord to test
-            case "shadow_lord": return "01955d76-ed5b-748c-8d98-0fb708ef0fbd"; // Ethan's voice ID
 
             // British English Voices
             case "eleanor": return "01955d76-ed5b-74f9-b54a-2d051890468d";

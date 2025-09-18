@@ -535,8 +535,13 @@ public class EidolonCategoryExtension {
      */
     public Category createCategory(String categoryName, String displayName, ItemStack icon, int color, List<ReputationLockedEntry> entries) {
         try {
-            // Create index page with entries
-            IndexPage indexPage = new IndexPage(entries.toArray(new IndexEntry[0]));
+            // Create index page with a visible title/header like vanilla categories use
+            // Use our modid for the translation domain; TitledIndexPage will append ".title"
+            // Final key looked up = "eidolonunchained.codex.category." + categoryName + ".title"
+            IndexPage indexPage = new TitledIndexPage(
+                "eidolonunchained.codex.category." + categoryName,
+                entries.toArray(new IndexEntry[0])
+            );
             
             // Create index
             Index categoryIndex = new Index(
