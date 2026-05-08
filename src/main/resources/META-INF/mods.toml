@@ -71,7 +71,7 @@ description='''${mod_description}'''
 [[dependencies.${mod_id}]]
     modId="eidolon"
     mandatory=true
-    versionRange="[0.3.8,)"
+    versionRange="[0.3.12,)"
     ordering="AFTER"
     side="BOTH"
 

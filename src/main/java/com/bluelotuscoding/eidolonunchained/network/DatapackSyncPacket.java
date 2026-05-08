@@ -1,24 +1,5 @@
 package com.bluelotuscoding.eidolonunchained.network;
 
-import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
-import com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager;
-import com.bluelotuscoding.eidolonunchained.data.CodexDataManager;
-import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
-import com.bluelotuscoding.eidolonunchained.ai.AIDeityManager;
-import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
-import com.bluelotuscoding.eidolonunchained.chant.DatapackChant;
-import com.bluelotuscoding.eidolonunchained.codex.CodexEntry;
-import com.bluelotuscoding.eidolonunchained.research.ResearchChapter;
-import com.bluelotuscoding.eidolonunchained.research.ResearchEntry;
-import com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-
-import java.io.IOException;
-import java.util.Optional;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkEvent;
@@ -30,686 +11,283 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * COMPLETE datapack synchronization packet  
- * Syncs ALL datapack content: deities, chants, codex entries, research data, and AI configs
- * Professional implementation with full functionality
+ * MINIMAL datapack synchronization packet
+ * Complex serialization disabled to prevent StackOverflowError crashes
+ * Client works with local data instead of synced server data
  */
 public class DatapackSyncPacket {
-    // Custom Gson instance with Optional support to avoid reflection issues
-    private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
+
+    // Empty data maps - no actual synchronization to prevent crashes
+    private final Map<ResourceLocation, String> deityData = new HashMap<>();
+    private final Map<ResourceLocation, String> chantData = new HashMap<>();
+    private final Map<ResourceLocation, String> codexData = new HashMap<>();
+    private final Map<ResourceLocation, String> aiDeityData = new HashMap<>();
+    private final Map<ResourceLocation, String> researchChapterData = new HashMap<>();
+    private final Map<ResourceLocation, String> researchEntryData = new HashMap<>();
 
     /**
-     * Custom type adapter factory to handle Optional fields without reflection
-     */
-    private static class OptionalTypeAdapterFactory implements com.google.gson.TypeAdapterFactory {
-        @Override
-        public <T> TypeAdapter<T> create(Gson gson, com.google.gson.reflect.TypeToken<T> type) {
-            if (!Optional.class.isAssignableFrom(type.getRawType())) {
-                return null;
-            }
-
-            final TypeAdapter<Object> elementAdapter = (TypeAdapter<Object>) gson.getAdapter(
-                com.google.gson.reflect.TypeToken.get(
-                    ((java.lang.reflect.ParameterizedType) type.getType()).getActualTypeArguments()[0]
-                )
-            );
-
-            return (TypeAdapter<T>) new TypeAdapter<Optional<?>>() {
-                @Override
-                public void write(JsonWriter out, Optional<?> value) throws IOException {
-                    if (value == null || !value.isPresent()) {
-                        out.nullValue();
-                    } else {
-                        elementAdapter.write(out, value.get());
-                    }
-                }
-
-                @Override
-                public Optional<?> read(JsonReader in) throws IOException {
-                    if (in.peek() == com.google.gson.stream.JsonToken.NULL) {
-                        in.nextNull();
-                        return Optional.empty();
-                    }
-                    return Optional.ofNullable(elementAdapter.read(in));
-                }
-            };
-        }
-    }
-    
-    private final Map<ResourceLocation, String> deityData;
-    private final Map<ResourceLocation, String> chantData;
-    private final Map<ResourceLocation, String> codexData;
-    private final Map<ResourceLocation, String> aiDeityData;
-    private final Map<ResourceLocation, String> researchChapterData;
-    private final Map<ResourceLocation, String> researchEntryData;
-    
-    /**
-     * Create packet with current server data
+     * Constructor for creating packet on server
      */
     public DatapackSyncPacket() {
-        this.deityData = new HashMap<>();
-        this.chantData = new HashMap<>(); 
-        this.codexData = new HashMap<>();
-        this.aiDeityData = new HashMap<>();
-        this.researchChapterData = new HashMap<>();
-        this.researchEntryData = new HashMap<>();
-        
-        // Gather ALL server-side datapack content
         collectServerData();
     }
-    
+
+    /**
+     * Create a sync packet from server data (safe version that doesn't crash)
+     */
+    public static DatapackSyncPacket createFromServer() {
+        try {
+            System.out.println("🔥 DatapackSyncPacket.createFromServer() called - starting packet creation");
+            DatapackSyncPacket packet = new DatapackSyncPacket();
+            System.out.println("🔥 DatapackSyncPacket.createFromServer() completed - packet created successfully");
+            return packet;
+        } catch (Exception e) {
+            System.err.println("🔥 DatapackSyncPacket.createFromServer() FAILED: " + e.getMessage());
+            e.printStackTrace();
+            return new DatapackSyncPacket();
+        }
+    }
+
     /**
      * Constructor for packet decoding
      */
-    public DatapackSyncPacket(Map<ResourceLocation, String> deityData, 
+    public DatapackSyncPacket(Map<ResourceLocation, String> deityData,
                              Map<ResourceLocation, String> chantData,
                              Map<ResourceLocation, String> codexData,
                              Map<ResourceLocation, String> aiDeityData,
                              Map<ResourceLocation, String> researchChapterData,
                              Map<ResourceLocation, String> researchEntryData) {
-        this.deityData = deityData;
-        this.chantData = chantData;
-        this.codexData = codexData;
-        this.aiDeityData = aiDeityData;
-        this.researchChapterData = researchChapterData;
-        this.researchEntryData = researchEntryData;
+        // Store only AI deity data to prevent circular reference issues with other data
+        if (aiDeityData != null) {
+            this.aiDeityData.putAll(aiDeityData);
+        }
+        System.out.println("DatapackSyncPacket: Packet created with " + this.aiDeityData.size() + " AI configs");
     }
-    
+
     private void collectServerData() {
         try {
-            System.out.println("DatapackSyncPacket: Collecting server data...");
-            
-            // Collect deity data
-            Map<ResourceLocation, DatapackDeity> deities = DatapackDeityManager.getAllDeities();
-            if (deities != null) {
-                System.out.println("DatapackSyncPacket: Found " + deities.size() + " deities to sync");
-                deities.forEach((id, deity) -> {
-                    try {
-                        // Use Gson to serialize the deity directly
-                        deityData.put(id, GSON.toJson(deity));
-                        System.out.println("DatapackSyncPacket: Serialized deity " + id);
-                    } catch (Exception e) {
-                        System.err.println("Failed to serialize deity " + id + ": " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                });
-            } else {
-                System.out.println("DatapackSyncPacket: No deities found on server");
-            }
-            
-            // Collect chant data
-            Map<String, DatapackChant> chants = DatapackChantManager.getAllChants();
-            if (chants != null) {
-                System.out.println("DatapackSyncPacket: Found " + chants.size() + " chants to sync");
-                chants.forEach((idStr, chant) -> {
-                    try {
-                        ResourceLocation id = new ResourceLocation(idStr);
-                        // Use Gson to serialize the chant directly
-                        chantData.put(id, GSON.toJson(chant));
-                        System.out.println("DatapackSyncPacket: Serialized chant " + id);
-                    } catch (Exception e) {
-                        System.err.println("Failed to serialize chant " + idStr + ": " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                });
-            } else {
-                System.out.println("DatapackSyncPacket: No chants found on server");
-            }
-            
-            // Collect codex data  
-            Map<ResourceLocation, CodexEntry> codexEntries = CodexDataManager.getAllEntries();
-            if (codexEntries != null) {
-                System.out.println("DatapackSyncPacket: Found " + codexEntries.size() + " codex entries to sync");
-                codexEntries.forEach((id, entry) -> {
-                    try {
-                        // Use Gson to serialize the entry directly
-                        codexData.put(id, GSON.toJson(entry));
-                        System.out.println("DatapackSyncPacket: Serialized codex entry " + id);
-                    } catch (Exception e) {
-                        System.err.println("Failed to serialize codex entry " + id + ": " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                });
-            } else {
-                System.out.println("DatapackSyncPacket: No codex entries found on server");
-            }
-            
-            // Collect AI deity data  
-            AIDeityManager aiManager = AIDeityManager.getInstance();
-            if (aiManager != null) {
-                java.util.Collection<AIDeityConfig> aiConfigs = aiManager.getAllConfigs();
-                if (aiConfigs != null && !aiConfigs.isEmpty()) {
-                    System.out.println("DatapackSyncPacket: Found " + aiConfigs.size() + " AI deity configs to sync");
-                    aiConfigs.forEach(config -> {
-                        try {
-                            if (config.deity_id != null) {
-                                // Use Gson to serialize the config directly
-                                aiDeityData.put(config.deity_id, GSON.toJson(config));
-                                System.out.println("DatapackSyncPacket: Serialized AI config for deity " + config.deity_id);
+            System.out.println("DatapackSyncPacket: Starting data collection for essential AI configs");
+
+            // Only collect AI deity configuration data - this is essential for API calls
+            try {
+                // Get AI configurations from AIDeityManager if available
+                com.bluelotuscoding.eidolonunchained.ai.AIDeityManager manager =
+                    com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance();
+
+                System.out.println("DatapackSyncPacket: AIDeityManager instance retrieved: " + (manager != null));
+
+                if (manager != null) {
+                    var allConfigs = manager.getAllConfigs();
+                    System.out.println("DatapackSyncPacket: Found " + allConfigs.size() + " AI configs from manager");
+
+                    // Collect only basic AI config data (avoiding complex nested objects)
+                    for (com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig config : allConfigs) {
+                        if (config != null && config.deity_id != null) {
+                            try {
+                                System.out.println("DatapackSyncPacket: Processing AI config for deity: " + config.deity_id);
+                                System.out.println("  - AI Provider: " + config.ai_provider);
+                                System.out.println("  - Model: " + config.model);
+
+                                // Create minimal JSON representation
+                                com.google.gson.JsonObject minimalConfig = new com.google.gson.JsonObject();
+                                minimalConfig.addProperty("deity", config.deity_id.toString());
+                                if (config.ai_provider != null) {
+                                    minimalConfig.addProperty("ai_provider", config.ai_provider);
+                                }
+                                if (config.model != null) {
+                                    minimalConfig.addProperty("model", config.model);
+                                }
+                                if (config.personality != null && config.personality.length() < 500) {
+                                    // Truncate personality to avoid large payloads
+                                    minimalConfig.addProperty("personality", config.personality.substring(0, Math.min(500, config.personality.length())));
+                                }
+
+                                // Store as string to avoid circular references
+                                String jsonString = minimalConfig.toString();
+                                aiDeityData.put(config.deity_id, jsonString);
+                                System.out.println("DatapackSyncPacket: Successfully collected AI config for: " + config.deity_id);
+                            } catch (Exception ex) {
+                                System.err.println("Failed to serialize AI config for " + config.deity_id + ": " + ex.getMessage());
+                                ex.printStackTrace();
                             }
-                        } catch (Exception e) {
-                            System.err.println("Failed to serialize AI config for deity " + config.deity_id + ": " + e.getMessage());
-                            e.printStackTrace();
+                        } else {
+                            System.out.println("DatapackSyncPacket: Skipping null config or config with null deity_id");
                         }
-                    });
+                    }
+                    System.out.println("DatapackSyncPacket: Collection complete. Total collected: " + aiDeityData.size() + " AI configurations");
                 } else {
-                    System.out.println("DatapackSyncPacket: No AI deity configs found on server");
+                    System.err.println("DatapackSyncPacket: AIDeityManager instance is null - cannot collect AI configs");
                 }
-            } else {
-                System.out.println("DatapackSyncPacket: AIDeityManager not available");
+            } catch (Exception ex) {
+                System.err.println("DatapackSyncPacket: Failed to collect AI deity data: " + ex.getMessage());
+                ex.printStackTrace();
             }
-            
-            // Collect research chapter data
-            Map<ResourceLocation, ResearchChapter> researchChapters = ResearchDataManager.getLoadedResearchChapters();
-            if (researchChapters != null && !researchChapters.isEmpty()) {
-                System.out.println("DatapackSyncPacket: Found " + researchChapters.size() + " research chapters to sync");
-                researchChapters.forEach((id, chapter) -> {
-                    try {
-                        // Use Gson to serialize the chapter directly
-                        researchChapterData.put(id, GSON.toJson(chapter));
-                        System.out.println("DatapackSyncPacket: Serialized research chapter " + id);
-                    } catch (Exception e) {
-                        System.err.println("Failed to serialize research chapter " + id + ": " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                });
-            } else {
-                System.out.println("DatapackSyncPacket: No research chapters found on server");
-            }
-            
-            // Collect research entry data
-            Map<ResourceLocation, ResearchEntry> researchEntries = ResearchDataManager.getLoadedResearchEntries();
-            if (researchEntries != null && !researchEntries.isEmpty()) {
-                System.out.println("DatapackSyncPacket: Found " + researchEntries.size() + " research entries to sync");
-                researchEntries.forEach((id, entry) -> {
-                    try {
-                        // Use Gson to serialize the entry directly
-                        researchEntryData.put(id, GSON.toJson(entry));
-                        System.out.println("DatapackSyncPacket: Serialized research entry " + id);
-                    } catch (Exception e) {
-                        System.err.println("Failed to serialize research entry " + id + ": " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                });
-            } else {
-                System.out.println("DatapackSyncPacket: No research entries found on server");
-            }
-            
-            System.out.println("DatapackSyncPacket: Collection complete - " + 
-                             deityData.size() + " deities, " + 
-                             chantData.size() + " chants, " + 
-                             codexData.size() + " codex entries, " +
-                             aiDeityData.size() + " AI configs, " + 
-                             researchChapterData.size() + " research chapters, " + 
-                             researchEntryData.size() + " research entries");
-            
+
         } catch (Exception e) {
-            System.err.println("Failed to collect server datapack data: " + e.getMessage());
+            System.err.println("DatapackSyncPacket: Error during data collection: " + e.getMessage());
             e.printStackTrace();
         }
     }
-    
+
+    /**
+     * Encode packet data to network buffer
+     */
     public static void encode(DatapackSyncPacket packet, FriendlyByteBuf buffer) {
         try {
-            System.out.println("DatapackSyncPacket: Starting encode with " + 
-                             packet.deityData.size() + " deities, " + 
-                             packet.chantData.size() + " chants, " + 
-                             packet.codexData.size() + " codex entries, " +
-                             packet.aiDeityData.size() + " AI configs, " +
-                             packet.researchChapterData.size() + " research chapters, " +
-                             packet.researchEntryData.size() + " research entries");
-            
-            // Write deity data
-            buffer.writeInt(packet.deityData.size());
-            packet.deityData.forEach((id, data) -> {
-                buffer.writeResourceLocation(id);
-                buffer.writeUtf(data);
-            });
-            
-            // Write chant data
-            buffer.writeInt(packet.chantData.size());
-            packet.chantData.forEach((id, data) -> {
-                buffer.writeResourceLocation(id);
-                buffer.writeUtf(data);
-            });
-            
-            // Write codex data
-            buffer.writeInt(packet.codexData.size());
-            packet.codexData.forEach((id, data) -> {
-                buffer.writeResourceLocation(id);
-                buffer.writeUtf(data);
-            });
-            
-            // Write AI deity data
+            // Write empty maps for most data to prevent serialization issues
+            buffer.writeInt(0); // deityData size
+            buffer.writeInt(0); // chantData size
+            buffer.writeInt(0); // codexData size
+
+            // Write AI deity data (essential for API calls)
             buffer.writeInt(packet.aiDeityData.size());
-            packet.aiDeityData.forEach((id, data) -> {
-                buffer.writeResourceLocation(id);
-                buffer.writeUtf(data);
-            });
-            
-            // Write research chapter data
-            buffer.writeInt(packet.researchChapterData.size());
-            packet.researchChapterData.forEach((id, data) -> {
-                buffer.writeResourceLocation(id);
-                buffer.writeUtf(data);
-            });
-            
-            // Write research entry data
-            buffer.writeInt(packet.researchEntryData.size());
-            packet.researchEntryData.forEach((id, data) -> {
-                buffer.writeResourceLocation(id);
-                buffer.writeUtf(data);
-            });
-            
-            System.out.println("DatapackSyncPacket: Encode complete - wrote " + 
-                             (packet.deityData.size() + packet.chantData.size() + 
-                              packet.codexData.size() + packet.aiDeityData.size() +
-                              packet.researchChapterData.size() + packet.researchEntryData.size()) + " total entries");
+            for (Map.Entry<ResourceLocation, String> entry : packet.aiDeityData.entrySet()) {
+                buffer.writeResourceLocation(entry.getKey());
+                buffer.writeUtf(entry.getValue(), 32767); // Max Minecraft string length
+            }
+
+            buffer.writeInt(0); // researchChapterData size
+            buffer.writeInt(0); // researchEntryData size
+
+            System.out.println("DatapackSyncPacket: Encoded packet with " + packet.aiDeityData.size() + " AI configs");
         } catch (Exception e) {
-            System.err.println("Failed to encode datapack sync packet: " + e.getMessage());
+            System.err.println("Failed to encode DatapackSyncPacket: " + e.getMessage());
             e.printStackTrace();
         }
     }
-    
+
+    /**
+     * Decode packet data from network buffer
+     */
     public static DatapackSyncPacket decode(FriendlyByteBuf buffer) {
-        Map<ResourceLocation, String> deityData = new HashMap<>();
-        Map<ResourceLocation, String> chantData = new HashMap<>();
-        Map<ResourceLocation, String> codexData = new HashMap<>();
-        Map<ResourceLocation, String> aiDeityData = new HashMap<>();
-        Map<ResourceLocation, String> researchChapterData = new HashMap<>();
-        Map<ResourceLocation, String> researchEntryData = new HashMap<>();
-        
         try {
-            System.out.println("DatapackSyncPacket: Starting decode...");
-            
-            // Read deity data
-            int deityCount = buffer.readInt();
-            System.out.println("DatapackSyncPacket: Reading " + deityCount + " deities");
-            for (int i = 0; i < deityCount; i++) {
-                ResourceLocation id = buffer.readResourceLocation();
-                String data = buffer.readUtf();
-                deityData.put(id, data);
-            }
-            
-            // Read chant data
-            int chantCount = buffer.readInt();
-            System.out.println("DatapackSyncPacket: Reading " + chantCount + " chants");
-            for (int i = 0; i < chantCount; i++) {
-                ResourceLocation id = buffer.readResourceLocation();
-                String data = buffer.readUtf();
-                chantData.put(id, data);
-            }
-            
-            // Read codex data
-            int codexCount = buffer.readInt();
-            System.out.println("DatapackSyncPacket: Reading " + codexCount + " codex entries");
-            for (int i = 0; i < codexCount; i++) {
-                ResourceLocation id = buffer.readResourceLocation();
-                String data = buffer.readUtf();
-                codexData.put(id, data);
-            }
-            
+            // Read the empty maps
+            int deitySize = buffer.readInt();
+            int chantSize = buffer.readInt();
+            int codexSize = buffer.readInt();
+
             // Read AI deity data
-            int aiDeityCount = buffer.readInt();
-            System.out.println("DatapackSyncPacket: Reading " + aiDeityCount + " AI configs");
-            for (int i = 0; i < aiDeityCount; i++) {
+            int aiSize = buffer.readInt();
+            Map<ResourceLocation, String> aiData = new HashMap<>();
+            for (int i = 0; i < aiSize; i++) {
                 ResourceLocation id = buffer.readResourceLocation();
-                String data = buffer.readUtf();
-                aiDeityData.put(id, data);
+                String data = buffer.readUtf(32767);
+                aiData.put(id, data);
             }
-            
-            // Read research chapter data
-            int researchChapterCount = buffer.readInt();
-            System.out.println("DatapackSyncPacket: Reading " + researchChapterCount + " research chapters");
-            for (int i = 0; i < researchChapterCount; i++) {
-                ResourceLocation id = buffer.readResourceLocation();
-                String data = buffer.readUtf();
-                researchChapterData.put(id, data);
-            }
-            
-            // Read research entry data
-            int researchEntryCount = buffer.readInt();
-            System.out.println("DatapackSyncPacket: Reading " + researchEntryCount + " research entries");
-            for (int i = 0; i < researchEntryCount; i++) {
-                ResourceLocation id = buffer.readResourceLocation();
-                String data = buffer.readUtf();
-                researchEntryData.put(id, data);
-            }
-            
-            System.out.println("DatapackSyncPacket: Decode complete - " + 
-                             deityCount + " deities, " + chantCount + " chants, " + 
-                             codexCount + " codex entries, " + aiDeityCount + " AI configs, " +
-                             researchChapterCount + " research chapters, " + researchEntryCount + " research entries");
+
+            int researchChapterSize = buffer.readInt();
+            int researchEntrySize = buffer.readInt();
+
+            System.out.println("DatapackSyncPacket: Decoded packet with " + aiSize + " AI configs");
+
+            return new DatapackSyncPacket(new HashMap<>(), new HashMap<>(), new HashMap<>(),
+                                        aiData, new HashMap<>(), new HashMap<>());
         } catch (Exception e) {
-            System.err.println("Failed to decode datapack sync packet: " + e.getMessage());
+            System.err.println("Failed to decode DatapackSyncPacket: " + e.getMessage());
             e.printStackTrace();
+            return new DatapackSyncPacket();
         }
-        
-        return new DatapackSyncPacket(deityData, chantData, codexData, aiDeityData, researchChapterData, researchEntryData);
     }
-    
+
+    /**
+     * Handle packet on receiving side
+     */
     public static void handle(DatapackSyncPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> {
-            // CLIENT-SIDE ONLY - populate client data managers
-            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-        try {
-            System.out.println("CLIENT: Processing datapack sync with " + 
-                             packet.deityData.size() + " deities, " + 
-                             packet.chantData.size() + " chants, " + 
-                             packet.codexData.size() + " codex entries, " +
-                             packet.aiDeityData.size() + " AI configs, " +
-                             packet.researchChapterData.size() + " research chapters, " +
-                             packet.researchEntryData.size() + " research entries");
-            
-            // Process each data type
-            processDeityData(packet.deityData);
-            processChantData(packet.chantData);
-            processCodexData(packet.codexData);
-            processAIConfigData(packet.aiDeityData);
-            processResearchChapterData(packet.researchChapterData);
-            processResearchEntryData(packet.researchEntryData);
-            
-            System.out.println("CLIENT: Datapack synchronization complete!");
-            System.out.println("CLIENT: Final counts - Deities: " + DatapackDeityManager.getAllDeities().size() + 
-                             ", Chants: " + DatapackChantManager.getAllChantsCollection().size() + 
-                             ", Codex: " + CodexDataManager.getAllEntries().size() +
-                             ", AI Configs: " + AIDeityManager.getAllClientSafeConfigs().size() +
-                             ", Research Chapters: " + ResearchDataManager.getLoadedResearchChapters().size() +
-                             ", Research Entries: " + ResearchDataManager.getLoadedResearchEntries().size());
-            
-            // CRITICAL: Register synced data with Eidolon systems for actual functionality
-            System.out.println("CLIENT: Registering synced data with Eidolon systems...");
-            
             try {
-                // Register chants with Eidolon spell system (essential for keybind execution)
-                DatapackChantManager.registerClientChantsWithEidolon();
-                System.out.println("CLIENT: Registered chants with Eidolon spell system");
-                
-                // Register research with Eidolon research system
-                ResearchDataManager.registerClientResearchWithEidolon();
-                System.out.println("CLIENT: Registered research with Eidolon research system");
-                
-                // CRITICAL: Register codex entries with Eidolon codex system (THIS WAS MISSING!)
-                com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration.attemptIntegrationIfNeeded();
-                System.out.println("CLIENT: Registered codex entries with Eidolon codex system");
-                
-                System.out.println("CLIENT: All Eidolon integrations complete!");
-                
+                DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+                    System.out.println("DatapackSyncPacket: Processing AI config sync on client");
+
+                    // Process only AI deity data to enable API calls
+                    if (!packet.aiDeityData.isEmpty()) {
+                        processAIConfigData(packet.aiDeityData);
+                        System.out.println("DatapackSyncPacket: Processed " + packet.aiDeityData.size() + " AI configs on client");
+                    } else {
+                        System.out.println("DatapackSyncPacket: No AI configs to sync");
+                    }
+                });
+
+                System.out.println("DatapackSyncPacket: AI config sync packet handled successfully");
             } catch (Exception e) {
-                System.err.println("CLIENT: Failed to register with Eidolon systems: " + e.getMessage());
+                System.err.println("Failed to handle DatapackSyncPacket: " + e.getMessage());
                 e.printStackTrace();
             }
-            
-        } catch (Exception e) {
-            System.err.println("CLIENT: Failed to handle datapack sync: " + e.getMessage());
-            e.printStackTrace();
-        }
-                handleClientSide(packet);
-            });
         });
+
         context.setPacketHandled(true);
     }
-    
-    /**
-     * Handle client-side data population
-     */
-    private static void handleClientSide(DatapackSyncPacket packet) {
+
+    // Stub methods for ChunkedDataSyncPacket compatibility
+    public static void processDeityData(Map<ResourceLocation, String> data) {
+        System.out.println("DatapackSyncPacket: processDeityData called - minimal implementation");
+        // No processing to prevent circular reference issues
+    }
+
+    public static void processChantData(Map<ResourceLocation, String> data) {
+        System.out.println("DatapackSyncPacket: processChantData called - minimal implementation");
+        // No processing to prevent circular reference issues
+    }
+
+    public static void processCodexData(Map<ResourceLocation, String> data) {
+        System.out.println("DatapackSyncPacket: processCodexData called - minimal implementation");
+        // No processing to prevent circular reference issues
+    }
+
+    public static void processAIConfigData(Map<ResourceLocation, String> data) {
+        System.out.println("DatapackSyncPacket: processAIConfigData called with " + data.size() + " entries");
         try {
-            System.out.println("CLIENT: Received DatapackSyncPacket - processing for client-server sync...");
-            System.out.println("CLIENT: Packet contains " + packet.deityData.size() + " deities, " + 
-                             packet.chantData.size() + " chants, " + 
-                             packet.codexData.size() + " codex entries, " +
-                             packet.aiDeityData.size() + " AI configs, " +
-                             packet.researchChapterData.size() + " research chapters, " +
-                             packet.researchEntryData.size() + " research entries");
-            
-            // Clear existing client data first
-            DatapackDeityManager.clearClientDeities();
-            DatapackChantManager.clearClientChants();
-            CodexDataManager.clearClientEntries();
-            AIDeityManager.clearClientConfigs();
-            ResearchDataManager.clearClientResearchData();
-            
-            // Populate client-side deity data
-            packet.deityData.forEach((id, jsonData) -> {
+            // Process AI configuration data on client side
+            for (Map.Entry<ResourceLocation, String> entry : data.entrySet()) {
+                ResourceLocation configId = entry.getKey();
+                String jsonData = entry.getValue();
+
                 try {
-                    DatapackDeity deity = GSON.fromJson(jsonData, DatapackDeity.class);
-                    if (deity != null) {
-                        DatapackDeityManager.addClientDeity(id, deity);
-                        System.out.println("CLIENT: Added deity " + id);
+                    // Parse the JSON data and register with AIDeityManager
+                    com.google.gson.JsonElement element = com.google.gson.JsonParser.parseString(jsonData);
+                    if (element.isJsonObject()) {
+                        // Extract deity ID from the JSON config
+                        com.google.gson.JsonObject jsonObj = element.getAsJsonObject();
+                        if (jsonObj.has("deity")) {
+                            String deityIdString = jsonObj.get("deity").getAsString();
+                            net.minecraft.resources.ResourceLocation deityId = net.minecraft.resources.ResourceLocation.tryParse(deityIdString);
+
+                            if (deityId != null) {
+                                // If AIDeityManager already has a fully-loaded config (from client resource pack
+                                // reload), don't overwrite it with the stripped server-sync version which lacks
+                                // tts_config and other fields parsed only on the client.
+                                com.bluelotuscoding.eidolonunchained.ai.AIDeityManager aiManager =
+                                    com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance();
+                                if (aiManager.getAIConfig(deityId) != null &&
+                                        aiManager.getAIConfig(deityId).tts_config != null) {
+                                    System.out.println("DatapackSyncPacket: Skipping sync for " + deityId + " — full config already loaded");
+                                    continue;
+                                }
+
+                                // Full parse via AIDeityManager so tts_config and all other fields are populated
+                                aiManager.handleSyncedAIConfig(deityId, jsonObj);
+                                System.out.println("DatapackSyncPacket: Registered client AI config for deity: " + deityId);
+                            }
+                        }
                     }
                 } catch (Exception e) {
-                    System.err.println("CLIENT: Failed to deserialize deity " + id + ": " + e.getMessage());
-                    e.printStackTrace();
+                    System.err.println("Failed to parse AI config " + configId + ": " + e.getMessage());
                 }
-            });
-            
-            // Populate client-side chant data
-            packet.chantData.forEach((id, jsonData) -> {
-                try {
-                    DatapackChant chant = GSON.fromJson(jsonData, DatapackChant.class);
-                    if (chant != null) {
-                        DatapackChantManager.addClientChant(id, chant);
-                        System.out.println("CLIENT: Added chant " + id);
-                    }
-                } catch (Exception e) {
-                    System.err.println("CLIENT: Failed to deserialize chant " + id + ": " + e.getMessage());
-                    e.printStackTrace();
-                }
-            });
-            
-            // Populate client-side codex data
-            packet.codexData.forEach((id, jsonData) -> {
-                try {
-                    CodexEntry entry = GSON.fromJson(jsonData, CodexEntry.class);
-                    if (entry != null) {
-                        CodexDataManager.addClientEntry(id, entry);
-                        System.out.println("CLIENT: Added codex entry " + id);
-                    }
-                } catch (Exception e) {
-                    System.err.println("CLIENT: Failed to deserialize codex entry " + id + ": " + e.getMessage());
-                    e.printStackTrace();
-                }
-            });
-            
-            // Populate client-side AI deity data
-            packet.aiDeityData.forEach((id, jsonData) -> {
-                try {
-                    AIDeityConfig config = GSON.fromJson(jsonData, AIDeityConfig.class);
-                    if (config != null) {
-                        AIDeityManager.addClientConfig(id, config);
-                        System.out.println("CLIENT: Added AI deity config " + id);
-                    }
-                } catch (Exception e) {
-                    System.err.println("CLIENT: Failed to deserialize AI deity config " + id + ": " + e.getMessage());
-                    e.printStackTrace();
-                }
-            });
-            
-            // Populate client-side research chapter data
-            packet.researchChapterData.forEach((id, jsonData) -> {
-                try {
-                    ResearchChapter chapter = GSON.fromJson(jsonData, ResearchChapter.class);
-                    if (chapter != null) {
-                        ResearchDataManager.addClientResearchChapter(id, chapter);
-                        System.out.println("CLIENT: Added research chapter " + id);
-                    }
-                } catch (Exception e) {
-                    System.err.println("CLIENT: Failed to deserialize research chapter " + id + ": " + e.getMessage());
-                    e.printStackTrace();
-                }
-            });
-            
-            // Populate client-side research entry data
-            packet.researchEntryData.forEach((id, jsonData) -> {
-                try {
-                    ResearchEntry entry = GSON.fromJson(jsonData, ResearchEntry.class);
-                    if (entry != null) {
-                        ResearchDataManager.addClientResearchEntry(id, entry);
-                        System.out.println("CLIENT: Added research entry " + id);
-                    }
-                } catch (Exception e) {
-                    System.err.println("CLIENT: Failed to deserialize research entry " + id + ": " + e.getMessage());
-                    e.printStackTrace();
-                }
-            });
-            
-            System.out.println("CLIENT: Datapack synchronization complete!");
-            System.out.println("CLIENT: Final counts - Deities: " + DatapackDeityManager.getAllDeities().size() + 
-                             ", Chants: " + DatapackChantManager.getAllChantsCollection().size() + 
-                             ", Codex: " + CodexDataManager.getAllEntries().size() +
-                             ", AI Configs: " + AIDeityManager.getAllClientSafeConfigs().size() +
-                             ", Research Chapters: " + ResearchDataManager.getLoadedResearchChapters().size() +
-                             ", Research Entries: " + ResearchDataManager.getLoadedResearchEntries().size());
-            
-            // CRITICAL: Register synced data with Eidolon systems for actual functionality
-            System.out.println("CLIENT: Registering synced data with Eidolon systems...");
-            
-            try {
-                // Register chants with Eidolon spell system (essential for keybind execution)
-                DatapackChantManager.registerClientChantsWithEidolon();
-                System.out.println("CLIENT: Registered chants with Eidolon spell system");
-                
-                // Register research with Eidolon research system
-                ResearchDataManager.registerClientResearchWithEidolon();
-                System.out.println("CLIENT: Registered research with Eidolon research system");
-                
-                // CRITICAL: Register codex entries with Eidolon codex system (THIS WAS MISSING!)
-                com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration.attemptIntegrationIfNeeded();
-                System.out.println("CLIENT: Registered codex entries with Eidolon codex system");
-                
-                System.out.println("CLIENT: All Eidolon integrations complete!");
-                
-            } catch (Exception e) {
-                System.err.println("CLIENT: Failed to register with Eidolon systems: " + e.getMessage());
-                e.printStackTrace();
             }
-            
+            System.out.println("DatapackSyncPacket: AI config processing completed");
         } catch (Exception e) {
-            System.err.println("CLIENT: Failed to handle datapack sync: " + e.getMessage());
+            System.err.println("Failed to process AI config data: " + e.getMessage());
             e.printStackTrace();
         }
     }
-    
-    /**
-     * Create a sync packet from current server data
-     * This is called when a player joins to sync all datapack content
-     */
-    public static DatapackSyncPacket createFromServer() {
-        try {
-            DatapackSyncPacket packet = new DatapackSyncPacket(
-                new HashMap<>(), new HashMap<>(), new HashMap<>(), 
-                new HashMap<>(), new HashMap<>(), new HashMap<>()
-            );
-            
-            // Collect all server data
-            packet.collectServerData();
-            
-            System.out.println("Created DatapackSyncPacket from server with " +
-                             packet.deityData.size() + " deities, " +
-                             packet.chantData.size() + " chants, " +
-                             packet.codexData.size() + " codex entries, " +
-                             packet.aiDeityData.size() + " AI configs, " +
-                             packet.researchChapterData.size() + " research chapters, " +
-                             packet.researchEntryData.size() + " research entries");
-            
-            return packet;
-        } catch (Exception e) {
-            System.err.println("Failed to create DatapackSyncPacket from server: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
+
+    public static void processResearchChapterData(Map<ResourceLocation, String> data) {
+        System.out.println("DatapackSyncPacket: processResearchChapterData called - minimal implementation");
+        // No processing to prevent circular reference issues
     }
-    
-    // CRITICAL FIX: Static processing methods for chunked sync system
-    public static void processDeityData(Map<ResourceLocation, String> deityData) {
-        deityData.forEach((id, jsonData) -> {
-            try {
-                DatapackDeity deity = GSON.fromJson(jsonData, DatapackDeity.class);
-                if (deity != null) {
-                    DatapackDeityManager.addClientDeity(id, deity);
-                    System.out.println("CLIENT: Added deity " + id);
-                }
-            } catch (Exception e) {
-                System.err.println("CLIENT: Failed to deserialize deity " + id + ": " + e.getMessage());
-                e.printStackTrace();
-            }
-        });
-    }
-    
-    public static void processChantData(Map<ResourceLocation, String> chantData) {
-        chantData.forEach((id, jsonData) -> {
-            try {
-                DatapackChant chant = GSON.fromJson(jsonData, DatapackChant.class);
-                if (chant != null) {
-                    DatapackChantManager.addClientChant(id, chant);
-                    System.out.println("CLIENT: Added chant " + id);
-                }
-            } catch (Exception e) {
-                System.err.println("CLIENT: Failed to deserialize chant " + id + ": " + e.getMessage());
-                e.printStackTrace();
-            }
-        });
-    }
-    
-    public static void processCodexData(Map<ResourceLocation, String> codexData) {
-        codexData.forEach((id, jsonData) -> {
-            try {
-                CodexEntry entry = GSON.fromJson(jsonData, CodexEntry.class);
-                if (entry != null) {
-                    CodexDataManager.addClientEntry(id, entry);
-                    System.out.println("CLIENT: Added codex entry " + id);
-                }
-            } catch (Exception e) {
-                System.err.println("CLIENT: Failed to deserialize codex entry " + id + ": " + e.getMessage());
-                e.printStackTrace();
-            }
-        });
-    }
-    
-    public static void processAIConfigData(Map<ResourceLocation, String> aiDeityData) {
-        aiDeityData.forEach((id, jsonData) -> {
-            try {
-                AIDeityConfig config = GSON.fromJson(jsonData, AIDeityConfig.class);
-                if (config != null) {
-                    AIDeityManager.addClientConfig(id, config);
-                    System.out.println("CLIENT: Added AI deity config " + id);
-                }
-            } catch (Exception e) {
-                System.err.println("CLIENT: Failed to deserialize AI deity config " + id + ": " + e.getMessage());
-                e.printStackTrace();
-            }
-        });
-    }
-    
-    public static void processResearchChapterData(Map<ResourceLocation, String> researchChapterData) {
-        researchChapterData.forEach((id, jsonData) -> {
-            try {
-                ResearchChapter chapter = GSON.fromJson(jsonData, ResearchChapter.class);
-                if (chapter != null) {
-                    ResearchDataManager.addClientResearchChapter(id, chapter);
-                    System.out.println("CLIENT: Added research chapter " + id);
-                }
-            } catch (Exception e) {
-                System.err.println("CLIENT: Failed to deserialize research chapter " + id + ": " + e.getMessage());
-                e.printStackTrace();
-            }
-        });
-    }
-    
-    public static void processResearchEntryData(Map<ResourceLocation, String> researchEntryData) {
-        researchEntryData.forEach((id, jsonData) -> {
-            try {
-                ResearchEntry entry = GSON.fromJson(jsonData, ResearchEntry.class);
-                if (entry != null) {
-                    ResearchDataManager.addClientResearchEntry(id, entry);
-                    System.out.println("CLIENT: Added research entry " + id);
-                }
-            } catch (Exception e) {
-                System.err.println("CLIENT: Failed to deserialize research entry " + id + ": " + e.getMessage());
-                e.printStackTrace();
-            }
-        });
+
+    public static void processResearchEntryData(Map<ResourceLocation, String> data) {
+        System.out.println("DatapackSyncPacket: processResearchEntryData called - minimal implementation");
+        // No processing to prevent circular reference issues
     }
 }

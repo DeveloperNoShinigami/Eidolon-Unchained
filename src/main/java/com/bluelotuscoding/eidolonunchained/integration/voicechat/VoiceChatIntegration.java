@@ -1,5 +1,11 @@
 package com.bluelotuscoding.eidolonunchained.integration.voicechat;
 
+import de.maxhenkel.voicechat.api.VoicechatServerApi;
+import de.maxhenkel.voicechat.api.ServerLevel;
+import de.maxhenkel.voicechat.api.Position;
+import de.maxhenkel.voicechat.api.audiochannel.LocationalAudioChannel;
+import de.maxhenkel.voicechat.api.audiochannel.AudioPlayer;
+import de.maxhenkel.voicechat.api.opus.OpusEncoder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -11,7 +17,7 @@ public class VoiceChatIntegration {
     private static final Logger LOGGER = LogManager.getLogger();
     private static volatile boolean available = false;
     private static volatile Object api; // Common VoiceChatApi (for builders, etc.)
-    private static volatile Object serverApi; // ServerVoicechatApi for audio channels
+    private static volatile Object serverApi; // VoicechatServerApi for audio channels
 
     public static void setAvailable(boolean flag) {
         available = flag;
@@ -39,7 +45,7 @@ public class VoiceChatIntegration {
 
     /**
      * Try spatial playback via Simple Voice Chat if present.
-     * Enhanced implementation with better audio format support and error handling.
+     * Uses the typed SVC API directly (no reflection for channel/encoder/player creation).
      */
     public static boolean tryPlaySpatial(net.minecraft.server.level.ServerPlayer player,
                                          String audioUrl,
@@ -54,7 +60,14 @@ public class VoiceChatIntegration {
                        isAvailable(), serverApi != null);
             return false;
         }
-        
+
+        if (!(serverApi instanceof VoicechatServerApi)) {
+            LOGGER.warn("SVC spatial: serverApi is not a VoicechatServerApi (actual: {})", serverApi.getClass().getName());
+            return false;
+        }
+
+        VoicechatServerApi svcApi = (VoicechatServerApi) serverApi;
+
         try {
             // If we have URL but no data, try to download it first
             if (audioUrl != null && (audioData == null || audioData.length == 0)) {
@@ -72,91 +85,96 @@ public class VoiceChatIntegration {
                 return false;
             }
 
-            // Enhanced audio format detection and conversion
+            // Decode audio to 48kHz mono PCM (required by SVC)
             short[] pcm = extractPcmFromAudioData(audioData);
             if (pcm == null) {
-                LOGGER.debug("Could not extract PCM data from audio, format may be unsupported");
+                LOGGER.warn("SVC spatial: could not extract PCM data from audio (format unsupported)");
                 return false;
             }
 
-            // Create spatial audio channel at the player's position
-            final Object lvl = player.level();
             final double x = player.getX();
             final double y = player.getY();
             final double z = player.getZ();
 
-            LOGGER.debug("Creating spatial audio channel at position: {}, {}, {} for player: {}", 
+            LOGGER.debug("Creating SVC locational audio channel at ({}, {}, {}) for player: {}",
                         x, y, z, player.getGameProfile().getName());
 
-            Object serverLevel = reflectInvoke(serverApi, "fromServerLevel", new Class[]{Object.class}, new Object[]{lvl});
-            if (serverLevel == null) {
-                LOGGER.debug("Failed to get server level for spatial audio");
+            // Wrap Minecraft ServerLevel → SVC ServerLevel
+            ServerLevel svcLevel = svcApi.fromServerLevel(player.level());
+            if (svcLevel == null) {
+                LOGGER.warn("SVC spatial: fromServerLevel returned null");
                 return false;
             }
 
-            Object pos = reflectInvoke(serverApi, "createPosition", new Class[]{double.class, double.class, double.class}, new Object[]{x, y, z});
-            if (pos == null) {
-                LOGGER.debug("Failed to create position for spatial audio");
-                return false;
-            }
+            // Build SVC Position
+            Position pos = svcApi.createPosition(x, y, z);
 
+            // Create locational channel
             java.util.UUID channelId = java.util.UUID.randomUUID();
-            Object channel = reflectInvoke(serverApi, "createLocationalAudioChannel",
-                    new Class[]{java.util.UUID.class, serverLevel.getClass(), pos.getClass()},
-                    new Object[]{channelId, serverLevel, pos});
+            LocationalAudioChannel channel = svcApi.createLocationalAudioChannel(channelId, svcLevel, pos);
             if (channel == null) {
-                LOGGER.debug("Failed to create locational audio channel");
+                LOGGER.warn("SVC spatial: createLocationalAudioChannel returned null");
                 return false;
             }
 
-            // Set audio distance with enhanced fallback handling
+            // Set hearing distance (default 16, scale with volume up to 128)
             float effectiveDistance = Math.max(16.0f, Math.min(128.0f, volume * 64.0f));
-            boolean distanceSet = reflectTryInvoke(channel, "setDistance", new Class[]{double.class}, new Object[]{(double)effectiveDistance})
-                    || reflectTryInvoke(channel, "setDistance", new Class[]{int.class}, new Object[]{(int)effectiveDistance})
-                    || reflectTryInvoke(channel, "setDistance", new Class[]{float.class}, new Object[]{effectiveDistance});
-            
-            if (!distanceSet) {
-                LOGGER.debug("Could not set audio distance, using default");
-            }
+            channel.setDistance(effectiveDistance);
 
-            // Apply volume scaling to PCM data if needed
+            // Apply volume scaling to PCM
             if (volume != 1.0f) {
                 pcm = applyVolumeScaling(pcm, volume);
             }
 
-            // Create encoder and audio player
-            Object encoder = reflectInvoke(serverApi, "createEncoder", new Class[]{}, new Object[]{});
+            // Chunk PCM into 960-sample frames (48kHz, 20ms) as required by Opus
+            final short[] pcmFinal = padToFrameBoundary(pcm, 960);
+            final int frameSize = 960;
+
+            // Create encoder
+            OpusEncoder encoder = svcApi.createEncoder();
             if (encoder == null) {
-                LOGGER.debug("Failed to create audio encoder");
+                LOGGER.warn("SVC spatial: createEncoder returned null");
                 return false;
             }
 
-            Object audioPlayer = reflectInvoke(serverApi, "createAudioPlayer",
-                    new Class[]{channel.getClass(), encoder.getClass(), short[].class},
-                    new Object[]{channel, encoder, pcm});
-            if (audioPlayer == null) {
-                LOGGER.debug("Failed to create audio player");
-                return false;
-            }
+            // Use Supplier<short[]> overload — feeds one 960-sample frame at a time
+            final int[] frameIndex = {0};
+            final int totalFrames = pcmFinal.length / frameSize;
+            AudioPlayer audioPlayer = svcApi.createAudioPlayer(channel, encoder, () -> {
+                int idx = frameIndex[0]++;
+                if (idx >= totalFrames) return null; // signals end of audio
+                short[] frame = new short[frameSize];
+                System.arraycopy(pcmFinal, idx * frameSize, frame, 0, frameSize);
+                return frame;
+            });
 
-            // Start playing asynchronously
-            boolean started = reflectTryInvoke(audioPlayer, "startPlaying", new Class[]{}, new Object[]{});
-            if (started) {
-                LOGGER.info("Started spatial TTS playback via Simple Voice Chat for {} ({} samples, volume: {}, distance: {})", 
-                           player.getGameProfile().getName(), pcm.length, volume, effectiveDistance);
-                
-                // Schedule cleanup after estimated playback duration
-                scheduleChannelCleanup(channelId, pcm.length, serverApi);
-                return true;
-            } else {
-                LOGGER.debug("Failed to start audio playback");
-                return false;
-            }
+            // Clean up encoder when playback stops
+            audioPlayer.setOnStopped(() -> {
+                encoder.close();
+                LOGGER.debug("SVC spatial: encoder closed after playback for {}", player.getGameProfile().getName());
+            });
+
+            audioPlayer.startPlaying();
+
+            LOGGER.info("Started SVC spatial TTS for {} ({} samples / {} frames, distance: {})",
+                       player.getGameProfile().getName(), pcmFinal.length, totalFrames, effectiveDistance);
+            return true;
 
         } catch (Exception e) {
-            LOGGER.error("Error during Simple Voice Chat spatial playback: {}", e.getMessage());
+            LOGGER.error("Error during Simple Voice Chat spatial playback: {}", e.getMessage(), e);
             return false;
         }
+    }
+
+    /**
+     * Pad PCM array to a multiple of frameSize so the supplier never gets a short frame.
+     */
+    private static short[] padToFrameBoundary(short[] pcm, int frameSize) {
+        int remainder = pcm.length % frameSize;
+        if (remainder == 0) return pcm;
+        short[] padded = new short[pcm.length + (frameSize - remainder)];
+        System.arraycopy(pcm, 0, padded, 0, pcm.length);
+        return padded;
     }
 
     /**
@@ -456,26 +474,6 @@ public class VoiceChatIntegration {
             LOGGER.warn("Raw audio conversion failed: {}", e.getMessage());
             return null;
         }
-    }
-
-    /**
-     * Schedule cleanup of audio channel after playback
-     */
-    private static void scheduleChannelCleanup(java.util.UUID channelId, int sampleCount, Object serverApi) {
-        // Estimate playback duration (assuming 48kHz sample rate)
-        long durationMs = (sampleCount * 1000L) / 48000L;
-        long cleanupDelayMs = durationMs + 2000; // Add 2 seconds buffer
-        
-        // Schedule cleanup
-        java.util.concurrent.CompletableFuture.runAsync(() -> {
-            try {
-                Thread.sleep(cleanupDelayMs);
-                // Try to remove/cleanup the channel
-                reflectTryInvoke(serverApi, "removeAudioChannel", new Class[]{java.util.UUID.class}, new Object[]{channelId});
-            } catch (Exception e) {
-                // Ignore cleanup errors
-            }
-        });
     }
 
     /**

@@ -1,7 +1,7 @@
 {
   "id": "eidolonunchained:dark_deity",
   "name": "Nyxathel, Shadow Lord",
-  "description": "Master of shadows and forbidden knowledge",
+  "description": "An ancient sovereign of shadow, secrets, and forbidden devotion.",
   "colors": {
     "red": 123,
     "green": 85,
@@ -15,23 +15,10 @@
         "reputation": 0,
         "major": false,
         "title": "Shadow Touched",
-        "description": "A soul brushed by the edge of darkness",
+        "description": "The first veil parts, and the dark begins to notice you.",
         "rewards": [
           "give @s eidolon:soul_shard 1",
-          "title @s title {\"text\":\"The veil parts for a moment...\",\"color\":\"dark_purple\"}",
-          "playsound minecraft:ambient.soul_sand_valley.mood master @s ~ ~ ~ 0.3 0.7"
-        ]
-      },
-      {
-        "id": "shadow_initiate",
-        "reputation": 15,
-        "major": false,
-        "title": "Shadow Initiate",
-        "description": "A new soul embraced by the shadows",
-        "rewards": [
-          "give @s eidolon:soul_shard 3",
-          "title @s title {\"text\":\"The shadows welcome you...\",\"color\":\"dark_purple\"}",
-          "playsound minecraft:ambient.soul_sand_valley.mood master @s ~ ~ ~ 0.5 0.8"
+          "title @s actionbar {\"text\":\"A hush falls around you.\",\"color\":\"dark_purple\"}"
         ]
       },
       {
@@ -39,13 +26,10 @@
         "reputation": 25,
         "major": false,
         "title": "Dark Acolyte",
-        "description": "Proven servant of the shadow realm",
+        "description": "You have learned to hear the quiet promises hidden in darkness.",
         "rewards": [
-          "give @s eidolon:death_essence 2",
           "give @s eidolon:unholy_symbol 1",
-          "effect give @s minecraft:night_vision 1200 0",
-          "title @s title {\"text\":\"Dark Acolyte\",\"color\":\"dark_purple\"}",
-          "playsound minecraft:block.beacon.power_select master @s ~ ~ ~ 0.7 0.6"
+          "effect give @s minecraft:night_vision 600 0"
         ]
       },
       {
@@ -53,16 +37,10 @@
         "reputation": 50,
         "major": true,
         "title": "Shadow Priest",
-        "description": "Bearer of forbidden knowledge and dark mysteries",
+        "description": "Nyxathel entrusts you with rites meant for candleless places.",
         "rewards": [
-          "give @s eidolon:warped_sprouts 5",
-          "give @s eidolon:zombie_heart 1",
-          "give @s eidolon:lesser_soul_gem 1",
-          "effect give @s minecraft:resistance 2400 0",
-          "effect give @s minecraft:strength 1200 0",
-          "title @s title {\"text\":\"Shadow Priest\",\"color\":\"dark_purple\",\"bold\":true}",
-          "title @s subtitle {\"text\":\"Bearer of Forbidden Knowledge\",\"color\":\"gray\"}",
-          "playsound minecraft:block.beacon.activate master @s ~ ~ ~ 1.0 0.8"
+          "give @s eidolon:death_essence 2",
+          "effect give @s minecraft:resistance 900 0"
         ]
       },
       {
@@ -70,18 +48,10 @@
         "reputation": 75,
         "major": true,
         "title": "Void Master",
-        "description": "Master of the void between life and death",
+        "description": "The boundary between thought and shadow yields before you.",
         "rewards": [
           "give @s eidolon:greater_soul_gem 1",
-          "give @s eidolon:tattered_cloth 3",
-          "give @s eidolon:arcane_gold_ingot 2",
-          "effect give @s minecraft:resistance 3600 1",
-          "effect give @s minecraft:fire_resistance 3600 0",
-          "effect give @s minecraft:water_breathing 3600 0",
-          "title @s title {\"text\":\"Void Master\",\"color\":\"dark_purple\",\"bold\":true}",
-          "title @s subtitle {\"text\":\"Master of Life and Death\",\"color\":\"red\"}",
-          "playsound minecraft:entity.wither.spawn master @s ~ ~ ~ 0.5 1.2",
-          "tellraw @a {\"text\":\"The void acknowledges a new Void Master!\",\"color\":\"dark_purple\"}"
+          "effect give @s minecraft:strength 900 1"
         ]
       },
       {
@@ -89,20 +59,11 @@
         "reputation": 100,
         "major": true,
         "title": "Shadow Champion",
-        "description": "Ultimate champion of Nyxathel's dark dominion",
+        "description": "You stand as Nyxathel's chosen instrument in the midnight veil.",
         "rewards": [
           "give @s eidolon:shadow_gem 1",
-          "give @s eidolon:death_essence 5",
-          "give @s eidolon:arcane_gold_ingot 3",
-          "give @s minecraft:enchanted_golden_apple 2",
-          "effect give @s minecraft:resistance 7200 2",
-          "effect give @s minecraft:strength 7200 1",
-          "effect give @s minecraft:speed 7200 1",
-          "title @s title {\"text\":\"SHADOW CHAMPION\",\"color\":\"dark_purple\",\"bold\":true,\"underlined\":true}",
-          "title @s subtitle {\"text\":\"Ultimate Servant of Darkness\",\"color\":\"purple\"}",
-          "playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1.0 0.5",
-          "tellraw @a {\"text\":\"🌟 A new Shadow Champion has risen! 🌟\",\"color\":\"gold\",\"bold\":true}",
-          "advancement grant @s only minecraft:adventure/hero_of_the_village"
+          "effect give @s minecraft:resistance 1200 1",
+          "effect give @s minecraft:night_vision 1200 0"
         ]
       }
     ]
@@ -110,7 +71,9 @@
   "abandon": {
     "reputation_penalty": 1.0,
     "reset_reputation": true,
-    "message": "§4Nyxathel's wrath is absolute. §cYou have betrayed the Shadow Lord and are cast into the abyss. §8All progress is lost forever."
+    "message": "§4Nyxathel withdraws the sheltering veil. §8The dark remembers betrayal."
   },
-  "prayer_types": ["conversation", "blessing", "knowledge", "curse"]
+  "deity_damage_type": "eidolonunchained:dark_divine_power",
+  "prayer_types": ["conversation", "knowledge", "blessing", "curse"],
+  "linked_eidolon_deity": "eidolon:dark"
 }

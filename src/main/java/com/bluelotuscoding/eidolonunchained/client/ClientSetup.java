@@ -2,6 +2,7 @@ package com.bluelotuscoding.eidolonunchained.client;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.client.gui.ChantOverlay;
+import com.bluelotuscoding.eidolonunchained.client.gui.PotionSignStatusOverlay;
 import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
@@ -22,6 +23,7 @@ public class ClientSetup {
     @SubscribeEvent
     public static void registerGuiOverlays(RegisterGuiOverlaysEvent event) {
         event.registerAboveAll("chant_overlay", new ChantOverlay());
+        event.registerAboveAll("potion_sign_status_overlay", new PotionSignStatusOverlay());
         LOGGER.info("Registered chant overlay for independent chant interface");
     }
 }

@@ -51,48 +51,55 @@ public class GeminiAPIClient {
     }
     
     /**
-     * Validate and normalize the Gemini model name
+     * Validate and normalize the Gemini model name.
+     * Passes recognised current models through as-is; falls back to gemini-2.5-flash
+     * for unknown names rather than silently using a deprecated model.
+     *
+     * Current stable/preview chat models (as of May 2026):
+     *   gemini-2.5-flash          (recommended — fast, cheap, capable)
+     *   gemini-2.5-flash-lite     (budget / lowest latency)
+     *   gemini-2.5-pro            (most advanced reasoning)
+     *   gemini-3-flash-preview    (preview)
+     *   gemini-3.1-pro-preview    (preview)
+     *   gemini-3.1-flash-lite-preview (preview)
+     *
+     * Deprecated / removed: gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash, gemini-2.0-flash-lite
      */
     private String validateAndNormalizeModelName(String model) {
         if (model == null || model.trim().isEmpty()) {
-            LOGGER.warn("Model name is empty, defaulting to gemini-1.5-flash");
-            return "gemini-1.5-flash";
+            LOGGER.warn("Model name is empty, defaulting to gemini-2.5-flash");
+            return "gemini-2.5-flash";
         }
-        
-        String normalizedModel = model.toLowerCase().trim();
-        
-        // Handle common variations and fix them
-        if (normalizedModel.contains("gemini") && normalizedModel.contains("2.5")) {
-            LOGGER.warn("Gemini 2.5 models don't exist yet, using gemini-1.5-flash instead");
-            return "gemini-1.5-flash";
+
+        String normalised = model.trim();
+
+        // Explicitly recognised current models — pass through unchanged
+        if (normalised.equals("gemini-2.5-flash") ||
+            normalised.equals("gemini-2.5-flash-lite") ||
+            normalised.equals("gemini-2.5-pro") ||
+            normalised.startsWith("gemini-2.5-flash-preview") ||
+            normalised.startsWith("gemini-2.5-pro-preview") ||
+            normalised.startsWith("gemini-3-flash-preview") ||
+            normalised.startsWith("gemini-3.1-flash") ||
+            normalised.startsWith("gemini-3.1-pro") ||
+            normalised.startsWith("gemini-3.1-flash-lite")) {
+            return normalised;
         }
-        
-        if (normalizedModel.contains("flash") && normalizedModel.contains("lite")) {
-            LOGGER.warn("Flash-Lite model name corrected to gemini-1.5-flash");
-            return "gemini-1.5-flash";
+
+        // Deprecated models — upgrade automatically
+        if (normalised.startsWith("gemini-1.5") || normalised.startsWith("gemini-2.0")) {
+            LOGGER.warn("Model '{}' is deprecated; upgrading to gemini-2.5-flash", normalised);
+            return "gemini-2.5-flash";
         }
-        
-        // Valid model names for Gemini API
-        if (normalizedModel.equals("gemini-1.5-flash") || 
-            normalizedModel.equals("gemini-1.5-pro") ||
-            normalizedModel.equals("gemini-pro") ||
-            normalizedModel.equals("gemini-pro-vision")) {
-            return normalizedModel;
+
+        // Legacy short names
+        if (normalised.equals("gemini-pro") || normalised.equals("gemini-pro-vision")) {
+            LOGGER.warn("Legacy model '{}' is no longer supported; using gemini-2.5-flash", normalised);
+            return "gemini-2.5-flash";
         }
-        
-        // Try to fix common model name formats
-        if (normalizedModel.contains("1.5") && normalizedModel.contains("flash")) {
-            return "gemini-1.5-flash";
-        }
-        if (normalizedModel.contains("1.5") && normalizedModel.contains("pro")) {
-            return "gemini-1.5-pro";
-        }
-        if (normalizedModel.contains("pro")) {
-            return "gemini-pro";
-        }
-        
-        LOGGER.warn("Unknown model name '{}', defaulting to gemini-1.5-flash", model);
-        return "gemini-1.5-flash";
+
+        LOGGER.warn("Unknown model name '{}', defaulting to gemini-2.5-flash", model);
+        return "gemini-2.5-flash";
     }
     
     /**
@@ -235,10 +242,10 @@ public class GeminiAPIClient {
         URL url = new URL(urlString);
         HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
         
-        // Debug logging - be more careful with API key masking
+        // API call logging - use INFO level for production visibility
         String maskedUrl = urlString.replaceAll("key=[^&]*", "key=***");
-        LOGGER.debug("Making API request to: {}", maskedUrl);
-        LOGGER.debug("Request body: {}", requestBody.toString());
+        LOGGER.info("🔥 GEMINI API CALL: Making request to: {}", maskedUrl);
+        LOGGER.info("🔥 GEMINI REQUEST: {}", requestBody.toString());
         
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
@@ -270,7 +277,12 @@ public class GeminiAPIClient {
         }
         
         String responseBody = response.toString();
-        
+
+        // Log successful responses too
+        if (responseCode >= 200 && responseCode < 300) {
+            LOGGER.info("🔥 GEMINI RESPONSE: Status {}, Body: {}", responseCode, responseBody);
+        }
+
         if (responseCode >= 400) {
             LOGGER.error("API request failed. Response code: {}", responseCode);
             LOGGER.error("Request URL: {}", maskedUrl);

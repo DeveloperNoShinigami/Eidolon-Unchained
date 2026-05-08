@@ -130,8 +130,8 @@ public class EffectiveAIConfig {
         
         // Cooldown
         int effectiveCooldown = getCooldown(deityId, prayerType, jsonConfig);
-        int jsonCooldown = jsonConfig != null ? jsonConfig.cooldown_minutes : 30;
-        summary.append("Cooldown: ").append(effectiveCooldown).append(" minutes ");
+        int jsonCooldown = jsonConfig != null ? jsonConfig.cooldown_seconds : 1800;
+        summary.append("Cooldown: ").append(effectiveCooldown).append(" seconds ");
         if (hasServerOverrides && effectiveCooldown != jsonCooldown) {
             summary.append("(Server Override - JSON: ").append(jsonCooldown).append(")");
         } else {

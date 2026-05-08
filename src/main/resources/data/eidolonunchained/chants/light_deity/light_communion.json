@@ -1,0 +1,36 @@
+{
+  "name": "Light Communion",
+  "description": "A spoken invocation that lets Luminae answer from beyond the veil of radiance.",
+  "category": "light_deity",
+  "codex_icon": "minecraft:nether_star",
+  "difficulty": "light_touched",
+  "mana_cost": 10,
+  "cooldown": 60,
+  "show_in_codex": false,
+  "linked_deity": "eidolonunchained:light_deity",
+  "prayer_effect_type": "conversation",
+  "requires_effigy": false,
+  "signs": [
+    "eidolon:sacred",
+    "eidolon:sacred",
+    "eidolon:harmony"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "effigy_sound",
+      "sound": "minecraft:ambient.cave",
+      "volume": 0.6,
+      "pitch": 1.4,
+      "category": "AMBIENT"
+    },
+    {
+      "type": "send_message",
+      "message": "§eA warmth stirs the air as Luminae turns her gaze toward you."
+    },
+    {
+      "type": "start_conversation",
+      "deity": "eidolonunchained:light_deity"
+    }
+  ]
+}

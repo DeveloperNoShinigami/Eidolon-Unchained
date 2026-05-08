@@ -1,0 +1,28 @@
+{
+  "type": "eidolon:ritual_brazier",
+  "ritual": "eidolonunchained:shadow_patronage_ritual",
+  "reagent": [
+    {
+      "item": "eidolon:soul_shard"
+    }
+  ],
+  "pedestalItems": [
+    {
+      "item": "eidolon:soul_shard"
+    },
+    {
+      "item": "eidolon:death_essence"
+    },
+    {
+      "item": "eidolon:arcane_gold_ingot"
+    },
+    {
+      "item": "minecraft:wither_skeleton_skull"
+    }
+  ],
+  "focusItems": [
+    {
+      "item": "eidolon:codex"
+    }
+  ]
+}

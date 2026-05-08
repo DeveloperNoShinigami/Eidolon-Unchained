@@ -243,26 +243,13 @@ public class AIProviderFactory {
         }
         
         private String extractDeityId(String context) {
-            // Extract deity identifier from context - handle both formats:
-            // New format: "DEITY: eidolonunchained:deity_name"
-            // Legacy format: "deity:eidolonunchained:deity_name"
-            if (context != null) {
-                // Try new format first: "DEITY: eidolonunchained:deity_name"
-                if (context.contains("DEITY: ")) {
-                    String[] lines = context.split("\n");
-                    for (String line : lines) {
-                        if (line.startsWith("DEITY: ")) {
-                            return line.substring("DEITY: ".length());
-                        }
-                    }
-                }
-                // Fallback to legacy format: "deity:eidolonunchained:deity_name"
-                if (context.contains("deity:")) {
-                    String[] parts = context.split(",");
-                    for (String part : parts) {
-                        if (part.startsWith("deity:")) {
-                            return part.substring("deity:".length());
-                        }
+            // Extract deity identifier from context
+            // Context might be like "deity:eidolonunchained:nature_deity,player:uuid"
+            if (context != null && context.contains("deity:")) {
+                String[] parts = context.split(",");
+                for (String part : parts) {
+                    if (part.startsWith("deity:")) {
+                        return part.substring("deity:".length());
                     }
                 }
             }
@@ -270,24 +257,31 @@ public class AIProviderFactory {
         }
         
         private String extractPlayerUUID(String context) {
-            // Extract player UUID from context - handle both formats:
-            // New format: "PLAYER: PlayerName (uuid)"
-            // Legacy format: "player:uuid"
+            // Extract player UUID from context - handles both formats:
+            // 1. Machine format: "deity:id,player:uuid"
+            // 2. Human format: "PLAYER: Name (uuid)"
             if (context != null) {
-                // Try new format first: "PLAYER: PlayerName (uuid)"
-                if (context.contains("PLAYER: ") && context.contains("(") && context.contains(")")) {
-                    int startParen = context.indexOf("(");
-                    int endParen = context.indexOf(")", startParen);
-                    if (startParen != -1 && endParen != -1 && endParen > startParen) {
-                        return context.substring(startParen + 1, endParen);
-                    }
-                }
-                // Fallback to legacy format: "player:uuid"
+                // Try machine-readable format first
                 if (context.contains("player:")) {
                     String[] parts = context.split(",");
                     for (String part : parts) {
                         if (part.startsWith("player:")) {
                             return part.substring("player:".length());
+                        }
+                    }
+                }
+
+                // Try human-readable format: "PLAYER: Name (uuid)"
+                if (context.contains("PLAYER:")) {
+                    String[] lines = context.split("\n");
+                    for (String line : lines) {
+                        if (line.trim().startsWith("PLAYER:")) {
+                            // Extract UUID from parentheses: "PLAYER: Dev (uuid-here)"
+                            int start = line.indexOf('(');
+                            int end = line.indexOf(')', start);
+                            if (start != -1 && end != -1 && end > start) {
+                                return line.substring(start + 1, end);
+                            }
                         }
                     }
                 }

@@ -1,0 +1,32 @@
+{
+  "name": "Arcane Edge",
+  "description": "Imbues the caster's main-hand weapon with arcane energy for 30 seconds. All damage it deals is converted to magic damage and scaled by the caster's Magic Power.",
+  "category": "debug",
+  "codex_icon": "minecraft:iron_sword",
+  "difficulty": 1,
+  "mana_cost": 20,
+  "cooldown": 1200,
+  "combat_role": "support",
+  "mob_priority_weight": 5,
+  "show_in_codex": true,
+  "requires_effigy": false,
+  "requires_target": false,
+  "signs": [
+    "eidolon:wicked",
+    "eidolon:sacred"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "magic_weapon",
+      "slot": "mainhand",
+      "duration": 600
+    },
+    {
+      "type": "play_sound",
+      "sound": "eidolon:select_rune",
+      "volume": 1.0,
+      "pitch": 0.9
+    }
+  ]
+}

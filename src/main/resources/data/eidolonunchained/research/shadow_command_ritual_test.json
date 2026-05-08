@@ -1,0 +1,22 @@
+{
+  "id": "shadow_command_ritual_test",
+  "stars": 1,
+  "triggers": [
+    {
+      "type": "biome",
+      "biome": "minecraft:jungle",
+      "max_found": 1
+    }
+  ],
+  "tasks": {
+    "0": [
+      {
+        "type": "ritual_completion",
+        "ritual": "eidolonunchained:shadow_command_test_ritual",
+        "count": 1,
+        "command": "give @s minecraft:bone 1"
+      }
+    ]
+  },
+  "rewards": []
+}

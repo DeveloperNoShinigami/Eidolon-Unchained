@@ -153,6 +153,10 @@ public class PlayerContextTracker {
                 .count();
         }
 
+        public void clearTriggeredResearchTracking() {
+            triggeredResearchTracking.clear();
+        }
+
         public String getContextSummary() {
             StringBuilder summary = new StringBuilder();
             
@@ -677,6 +681,15 @@ public class PlayerContextTracker {
     public static long getTriggeredResearchCount(ServerPlayer player, String researchId) {
         EnhancedPlayerContext context = getOrCreateContext(player.getUUID(), player);
         return context.getTriggeredResearchCount(researchId);
+    }
+
+    /**
+     * Clear persisted trigger-consumption tracking so max_found discoveries can fire again.
+     */
+    public static void clearTriggeredResearchTracking(ServerPlayer player) {
+        EnhancedPlayerContext context = getOrCreateContext(player.getUUID(), player);
+        context.clearTriggeredResearchTracking();
+        context.saveToNBT(player);
     }
 
     /**

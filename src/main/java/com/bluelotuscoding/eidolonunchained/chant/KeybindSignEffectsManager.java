@@ -5,7 +5,7 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import com.bluelotuscoding.eidolonunchained.util.UnifiedDynamicSystemLoader;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -13,6 +13,7 @@ import net.minecraftforge.fml.common.Mod;
 import org.slf4j.Logger;
 
 import java.util.*;
+import com.bluelotuscoding.eidolonunchained.util.UnifiedDynamicLoader;
 
 /**
  * Loads keybind sign effects from datapacks:
@@ -36,7 +37,7 @@ import java.util.*;
  * }
  */
 @Mod.EventBusSubscriber(modid = "eidolonunchained", bus = Mod.EventBusSubscriber.Bus.FORGE)
-public class KeybindSignEffectsManager extends SimpleJsonResourceReloadListener {
+public class KeybindSignEffectsManager extends UnifiedDynamicSystemLoader {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
 
@@ -49,7 +50,7 @@ public class KeybindSignEffectsManager extends SimpleJsonResourceReloadListener 
     private static final Map<ResourceLocation, List<String>> SEQUENCES = new HashMap<>();
 
     public KeybindSignEffectsManager() {
-        super(GSON, "keybind_settings");
+        super(GSON, "keybind_settings", "eidolonunchained", "sequences");
         INSTANCE = this;
     }
 
@@ -70,17 +71,36 @@ public class KeybindSignEffectsManager extends SimpleJsonResourceReloadListener 
         SEQUENCES.clear();
 
         int processed = 0;
+        // Parse per-file data (per_sign) using legacy approach to preserve flexibility
         for (Map.Entry<ResourceLocation, JsonElement> entry : resourceMap.entrySet()) {
-            // Only process sign_effects.json entries
             if (!entry.getKey().getPath().endsWith("sign_effects")) continue;
             JsonElement el = entry.getValue();
             if (!el.isJsonObject()) continue;
             try {
-                parseSignEffects(el.getAsJsonObject());
+                JsonObject root = el.getAsJsonObject();
+                if (root.has("per_sign")) {
+                    JsonObject per = root.getAsJsonObject("per_sign");
+                    for (Map.Entry<String, JsonElement> e : per.entrySet()) {
+                        ResourceLocation signId = ResourceLocation.tryParse(e.getKey());
+                        if (signId == null) continue;
+                        List<String> cmds = parseCommands(e.getValue());
+                        if (!cmds.isEmpty()) PER_SIGN.put(signId, cmds);
+                    }
+                }
                 processed++;
             } catch (Exception ex) {
                 LOGGER.error("Failed to parse sign effects at {}: {}", entry.getKey(), ex.getMessage());
             }
+        }
+
+        // Normalize sequences across files: support both top-level 'sequences' object and file-per-entry styles
+        Map<ResourceLocation, JsonObject> seqEntries = UnifiedDynamicLoader.normalizeResourceMap(resourceMap, "eidolonunchained", "sequences");
+        for (Map.Entry<ResourceLocation, JsonObject> se : seqEntries.entrySet()) {
+            ResourceLocation chantId = se.getKey();
+            JsonObject obj = se.getValue();
+            List<String> cmds = new ArrayList<>();
+            if (obj.has("commands")) cmds.addAll(parseCommands(obj.get("commands")));
+            if (!cmds.isEmpty()) SEQUENCES.put(chantId, cmds);
         }
         LOGGER.info("Loaded keybind sign effects: {} files, {} per-sign mappings, {} sequences",
             processed, PER_SIGN.size(), SEQUENCES.size());
@@ -112,6 +132,13 @@ public class KeybindSignEffectsManager extends SimpleJsonResourceReloadListener 
                 if (!cmds.isEmpty()) SEQUENCES.put(chantId, cmds);
             }
         }
+    }
+
+    @Override
+    protected void handleEntry(ResourceLocation id, JsonObject json) {
+        if (json == null) return;
+        // preserve legacy per-file parsing behavior
+        parseSignEffects(json);
     }
 
     private static ResourceLocation normalizeChantId(String id) {

@@ -3,10 +3,10 @@ package com.bluelotuscoding.eidolonunchained.data;
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.research.ResearchEntry;
 import com.bluelotuscoding.eidolonunchained.research.ResearchChapter;
+import com.bluelotuscoding.eidolonunchained.research.integration.EidolonTaskWrapper;
 import com.bluelotuscoding.eidolonunchained.research.tasks.*;
 import com.bluelotuscoding.eidolonunchained.research.conditions.*;
 import elucent.eidolon.api.research.ResearchTask;
-import elucent.eidolon.registries.Researches;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -15,6 +15,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -23,18 +24,26 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +71,14 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
     private static final Map<ResourceLocation, List<ResearchEntry>> RESEARCH_EXTENSIONS = new HashMap<>();
     private static final Map<ResourceLocation, ResearchEntry> LOADED_RESEARCH_ENTRIES = new HashMap<>();
     private static final Map<ResourceLocation, ResourceLocation> ENTRIES_WITH_MISSING_CHAPTER = new HashMap<>();
+    private static final Map<com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask, List<String>> TASK_COMPLETION_COMMANDS =
+        Collections.synchronizedMap(new IdentityHashMap<>());
+    // All KillEntitiesTask instances from loaded research — used by runKillTaskCommands
+    private static final List<com.bluelotuscoding.eidolonunchained.research.tasks.KillEntitiesTask> KILL_TASKS =
+        Collections.synchronizedList(new ArrayList<>());
+    // All CraftItemsTask instances from loaded research — used by runCraftTaskCommands
+    private static final List<com.bluelotuscoding.eidolonunchained.research.tasks.CraftItemsTask> CRAFT_TASKS =
+        Collections.synchronizedList(new ArrayList<>());
     
     private static ResearchDataManager INSTANCE;
     
@@ -116,6 +133,9 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
         RESEARCH_EXTENSIONS.clear();
         LOADED_RESEARCH_ENTRIES.clear();
         ENTRIES_WITH_MISSING_CHAPTER.clear();
+        TASK_COMPLETION_COMMANDS.clear();
+        KILL_TASKS.clear();
+        CRAFT_TASKS.clear();
 
         int loadedChapters = 0;
         int loadedEntries = 0;
@@ -182,18 +202,13 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
             );
         }
 
-        // CRITICAL TIMING FIX: Call Eidolon integration AFTER resource loading completes
-        // This ensures research entries are loaded before attempting to inject them
-        // Only call research integration on client side since Eidolon research is client-only
-        if (FMLEnvironment.dist == Dist.CLIENT) {
-            LOGGER.info("Resource loading complete - triggering Eidolon research integration (client-side)");
-            try {
-                com.bluelotuscoding.eidolonunchained.integration.EidolonResearchIntegration.injectCustomResearch();
-            } catch (Exception e) {
-                LOGGER.error("Failed to trigger Eidolon research integration", e);
-            }
-        } else {
-            LOGGER.info("Skipping Eidolon research integration on server side (research system is client-only)");
+        // CRITICAL TIMING FIX: Register the same custom research on both sides after datapack loading.
+        // The research table renders tasks on the client but re-validates and submits them on the server.
+        LOGGER.info("Resource loading complete - triggering Eidolon research integration");
+        try {
+            com.bluelotuscoding.eidolonunchained.integration.EidolonResearchIntegration.injectCustomResearch();
+        } catch (Exception e) {
+            LOGGER.error("Failed to trigger Eidolon research integration", e);
         }
     }
 
@@ -375,7 +390,6 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                             com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task = parseTask(taskObj, entryId);
                             if (task != null) {
                                 tierTasks.add(task);
-                                integrateTask(task);
                             }
                         }
                     }
@@ -432,6 +446,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
         }
         
         String type = taskObj.get("type").getAsString();
+        com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask parsedTask = null;
         
         // Handle the trigger-based research task format
         switch (type) {
@@ -440,7 +455,7 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                     ResourceLocation itemId = ResourceLocation.tryParse(taskObj.get("item").getAsString());
                     int count = taskObj.has("count") ? taskObj.get("count").getAsInt() : 1;
                     if (itemId != null) {
-                        return new CollectItemsTask(itemId, count);
+                        parsedTask = new CollectItemsTask(itemId, count);
                     }
                 }
                 break;
@@ -450,7 +465,19 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                     ResourceLocation entityId = ResourceLocation.tryParse(taskObj.get("entity").getAsString());
                     int count = taskObj.has("count") ? taskObj.get("count").getAsInt() : 1;
                     if (entityId != null) {
-                        return new KillEntitiesTask(entityId, count);
+                        KillEntitiesTask killTask = new KillEntitiesTask(entityId, count);
+                        KILL_TASKS.add(killTask);
+                        parsedTask = killTask;
+                    }
+                }
+                break;
+            case "ritual_completion":
+            case "use_ritual":
+                if (taskObj.has("ritual")) {
+                    ResourceLocation ritualId = ResourceLocation.tryParse(taskObj.get("ritual").getAsString());
+                    int count = taskObj.has("count") ? taskObj.get("count").getAsInt() : 1;
+                    if (ritualId != null) {
+                        parsedTask = new UseRitualTask(ritualId, count);
                     }
                 }
                 break;
@@ -459,8 +486,11 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                 if (taskObj.has("item")) {
                     ResourceLocation itemId = ResourceLocation.tryParse(taskObj.get("item").getAsString());
                     int count = taskObj.has("count") ? taskObj.get("count").getAsInt() : 1;
+                    String station = taskObj.has("station") ? taskObj.get("station").getAsString() : "crafting_table";
                     if (itemId != null) {
-                        return new CraftItemsTask(itemId, count);
+                        CraftItemsTask craftTask = new CraftItemsTask(itemId, count, station);
+                        CRAFT_TASKS.add(craftTask);
+                        parsedTask = craftTask;
                     }
                 }
                 break;
@@ -468,8 +498,42 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
                 LOGGER.warn("Unknown task type '{}' in research {}", type, researchId);
                 break;
         }
-        
-        return null;
+
+        if (parsedTask != null) {
+            List<String> commands = extractTaskCommands(taskObj);
+            if (!commands.isEmpty()) {
+                TASK_COMPLETION_COMMANDS.put(parsedTask, commands);
+            }
+        }
+
+        return parsedTask;
+    }
+
+    private List<String> extractTaskCommands(JsonObject taskObj) {
+        List<String> commands = new ArrayList<>();
+        try {
+            if (taskObj.has("commands") && taskObj.get("commands").isJsonArray()) {
+                for (JsonElement e : taskObj.getAsJsonArray("commands")) {
+                    if (e.isJsonPrimitive()) {
+                        String cmd = e.getAsString().trim();
+                        if (!cmd.isEmpty()) {
+                            commands.add(cmd);
+                        }
+                    }
+                }
+            }
+
+            if (taskObj.has("command") && taskObj.get("command").isJsonPrimitive()) {
+                String cmd = taskObj.get("command").getAsString().trim();
+                if (!cmd.isEmpty()) {
+                    commands.add(cmd);
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to parse task commands: {}", e.getMessage());
+        }
+
+        return commands;
     }
 
     /**
@@ -590,42 +654,225 @@ public class ResearchDataManager extends SimpleJsonResourceReloadListener {
         LOGGER.info("Loaded codex-style research: {}", entryId);
     }
 
-    private static void integrateTask(com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task) {
+    public static ResearchTask convertToEidolonTask(com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task) {
+        ResearchTask convertedTask = null;
         if (task instanceof CollectItemsTask collect) {
             Item item = ForgeRegistries.ITEMS.getValue(collect.getItem());
             if (item != null) {
-                Researches.addTask(rand -> new ResearchTask.TaskItems(new ItemStack(item, collect.getCount())));
-                return;
+                convertedTask = new ResearchTask.TaskItems(new ItemStack(item, collect.getCount()));
+                return wrapTaskWithCommandsIfAny(task, convertedTask);
             }
+
+            LOGGER.warn("Research task {} references missing item {}", task.getType().id(), collect.getItem());
+            return null;
         }
         if (task instanceof ExploreBiomesTask explore) {
-            Researches.addTask(rand -> new com.bluelotuscoding.eidolonunchained.research.integration.EidolonTaskWrapper.BiomeTaskWrapper(explore));
-            return;
+            convertedTask = new EidolonTaskWrapper.BiomeTaskWrapper(explore);
+            return wrapTaskWithCommandsIfAny(task, convertedTask);
         }
         if (task instanceof EnterDimensionTask dimension) {
-            Researches.addTask(rand -> new com.bluelotuscoding.eidolonunchained.research.integration.EidolonTaskWrapper.DimensionTaskWrapper(dimension));
-            return;
+            convertedTask = new EidolonTaskWrapper.DimensionTaskWrapper(dimension);
+            return wrapTaskWithCommandsIfAny(task, convertedTask);
         }
         if (task instanceof WeatherTask weather) {
-            Researches.addTask(rand -> new com.bluelotuscoding.eidolonunchained.research.integration.EidolonTaskWrapper.WeatherTaskWrapper(weather));
-            return;
+            convertedTask = new EidolonTaskWrapper.WeatherTaskWrapper(weather);
+            return wrapTaskWithCommandsIfAny(task, convertedTask);
+        }
+        if (task instanceof TimeWindowTask timeWindow) {
+            convertedTask = new EidolonTaskWrapper.TimeWindowTaskWrapper(timeWindow);
+            return wrapTaskWithCommandsIfAny(task, convertedTask);
         }
         if (task instanceof HasNbtTask nbt) {
-            Researches.addTask(rand -> new com.bluelotuscoding.eidolonunchained.research.integration.EidolonTaskWrapper.NbtTaskWrapper(nbt));
+            convertedTask = new EidolonTaskWrapper.NbtTaskWrapper(nbt);
+            return wrapTaskWithCommandsIfAny(task, convertedTask);
+        }
+        if (task instanceof HasItemWithNbtTask hasItemNbt) {
+            convertedTask = new EidolonTaskWrapper.HasItemNbtTaskWrapper(hasItemNbt);
+            return wrapTaskWithCommandsIfAny(task, convertedTask);
+        }
+        if (task instanceof KillEntitiesTask killEntities) {
+            convertedTask = new EidolonTaskWrapper.KillEntitiesTaskWrapper(killEntities);
+            return wrapTaskWithCommandsIfAny(task, convertedTask);
+        }
+        if (task instanceof KillEntityWithNbtTask killEntityNbt) {
+            convertedTask = new EidolonTaskWrapper.KillEntityNbtTaskWrapper(killEntityNbt);
+            return wrapTaskWithCommandsIfAny(task, convertedTask);
+        }
+        if (task instanceof UseRitualTask ritual) {
+            convertedTask = new EidolonTaskWrapper.RitualTaskWrapper(ritual);
+            return wrapTaskWithCommandsIfAny(task, convertedTask);
+        }
+        if (task instanceof CraftItemsTask craft) {
+            convertedTask = new EidolonTaskWrapper.CraftItemsTaskWrapper(craft);
+            return wrapTaskWithCommandsIfAny(task, convertedTask);
+        }
+
+        LOGGER.warn(
+            "Research task type {} is parsed but not yet supported as a per-research Eidolon task; that step will stay empty until support is added",
+            task.getType().id()
+        );
+        return null;
+    }
+
+    private static ResearchTask wrapTaskWithCommandsIfAny(
+        com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask sourceTask,
+        ResearchTask convertedTask
+    ) {
+        if (convertedTask == null) {
+            return null;
+        }
+
+        List<String> commands = TASK_COMPLETION_COMMANDS.get(sourceTask);
+        if (commands == null || commands.isEmpty()) {
+            return convertedTask;
+        }
+
+        return new CommandedEidolonTask(convertedTask, commands, sourceTask.getType().id().toString());
+    }
+
+    /**
+     * Called on every player kill. Finds all KillEntitiesTask instances that match the killed entity
+     * and just became complete, then executes their on-complete commands.
+     */
+    public static void runKillTaskCommands(ServerPlayer player, ResourceLocation entityType) {
+        if (player == null || entityType == null) return;
+        for (KillEntitiesTask killTask : KILL_TASKS) {
+            if (!entityType.equals(killTask.getEntity())) continue;
+            List<String> commands = TASK_COMPLETION_COMMANDS.get(killTask);
+            if (commands == null || commands.isEmpty()) continue;
+            // Only fire commands the exact moment the task becomes complete
+            int killCount = killTask.getKillCount(player);
+            if (killCount == killTask.getCount()) {
+                LOGGER.info("Kill task complete for {} ({} x{}): firing {} commands",
+                    player.getName().getString(), entityType, killTask.getCount(), commands.size());
+                for (String cmd : commands) {
+                    executeTaskCommand(player, cmd);
+                }
+            }
+        }
+    }
+
+    public static void runCraftTaskCommands(ServerPlayer player, ResourceLocation itemId) {
+        if (player == null || itemId == null) return;
+        for (CraftItemsTask craftTask : CRAFT_TASKS) {
+            if (!itemId.equals(craftTask.getItem())) continue;
+            List<String> commands = TASK_COMPLETION_COMMANDS.get(craftTask);
+            if (commands == null || commands.isEmpty()) continue;
+            int craftCount = craftTask.getCraftCount(player);
+            if (craftCount == craftTask.getCount()) {
+                LOGGER.info("Craft task complete for {} ({} x{}): firing {} commands",
+                    player.getName().getString(), itemId, craftTask.getCount(), commands.size());
+                for (String cmd : commands) {
+                    executeTaskCommand(player, cmd);
+                }
+            }
+        }
+    }
+
+    private static void executeTaskCommand(ServerPlayer player, String command) {
+        if (player == null) {
             return;
         }
-        if (task instanceof KillEntitiesTask kill) {
-            // Keep using XP for kill tasks since they're tracked separately
-            Researches.addTask(rand -> new ResearchTask.XP(1));
+
+        MinecraftServer server = player.getServer();
+        if (server == null) {
             return;
         }
-        if (task instanceof KillEntityWithNbtTask killNbt) {
-            // Keep using XP for kill tasks since they're tracked separately  
-            Researches.addTask(rand -> new ResearchTask.XP(1));
-            return;
+
+        try {
+            String processed = command
+                .replace("{player}", player.getName().getString())
+                .replace("{uuid}", player.getUUID().toString())
+                .replace("{x}", String.valueOf((int) player.getX()))
+                .replace("{y}", String.valueOf((int) player.getY()))
+                .replace("{z}", String.valueOf((int) player.getZ()))
+                .replace("@s", player.getName().getString());
+
+            if (processed.startsWith("/")) {
+                processed = processed.substring(1);
+            }
+
+            server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), processed);
+            LOGGER.info("Executed research task command for {}: {}", player.getName().getString(), processed);
+        } catch (Exception e) {
+            LOGGER.error("Failed to execute research task command '{}' for {}: {}", command, player.getName().getString(), e.getMessage());
         }
-        // Fallback placeholder task to ensure registration
-        Researches.addTask(rand -> new ResearchTask.XP(1));
+    }
+
+    private static class CommandedEidolonTask extends ResearchTask {
+        private final ResearchTask delegate;
+        private final List<String> commands;
+        private final String sourceType;
+
+        private CommandedEidolonTask(ResearchTask delegate, List<String> commands, String sourceType) {
+            this.delegate = delegate;
+            this.commands = commands;
+            this.sourceType = sourceType;
+        }
+
+        @Override
+        public CompoundTag write() {
+            return delegate.write();
+        }
+
+        @Override
+        public void read(CompoundTag tag) {
+            delegate.read(tag);
+        }
+
+        @Override
+        public int getSlotCount() {
+            return delegate.getSlotCount();
+        }
+
+        @Override
+        public void modifyContainer(AbstractContainerMenu menu, int x, int y) {
+            delegate.modifyContainer(menu, x, y);
+        }
+
+        @Override
+        public CompletenessResult isComplete(AbstractContainerMenu menu, Player player, int slotStart) {
+            return delegate.isComplete(menu, player, slotStart);
+        }
+
+        @Override
+        public void onComplete(AbstractContainerMenu menu, Player player, int slotStart) {
+            try {
+                delegate.onComplete(menu, player, slotStart);
+            } catch (Exception e) {
+                LOGGER.warn("Delegate onComplete failed for task {}: {}", sourceType, e.getMessage());
+            }
+
+            if (player instanceof ServerPlayer serverPlayer) {
+                for (String cmd : commands) {
+                    executeTaskCommand(serverPlayer, cmd);
+                }
+            }
+        }
+
+        @Override
+        @OnlyIn(Dist.CLIENT)
+        public int getWidth() {
+            return delegate.getWidth();
+        }
+
+        @Override
+        @OnlyIn(Dist.CLIENT)
+        public void drawIcon(GuiGraphics stack, ResourceLocation texture, int x, int y) {
+            delegate.drawIcon(stack, texture, x, y);
+        }
+
+        @Override
+        @OnlyIn(Dist.CLIENT)
+        public int drawCustom(GuiGraphics stack, ResourceLocation texture, int x, int y) {
+            return delegate.drawCustom(stack, texture, x, y);
+        }
+
+        @Override
+        @OnlyIn(Dist.CLIENT)
+        public void drawTooltip(GuiGraphics stack, AbstractContainerScreen<?> gui, double mouseX, double mouseY) {
+            delegate.drawTooltip(stack, gui, mouseX, mouseY);
+        }
     }
     // Public API methods for accessing loaded research data
     

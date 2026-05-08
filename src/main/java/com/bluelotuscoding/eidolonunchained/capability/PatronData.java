@@ -22,7 +22,7 @@ public class PatronData implements IPatronData, INBTSerializable<CompoundTag> {
     @Override
     public void setPatron(ServerPlayer player, ResourceLocation deityId) {
         UUID playerId = player.getUUID();
-        if (deityId == null) {
+        if (deityId == null || NO_PATRON.equals(deityId)) {
             playerPatrons.remove(playerId);
             playerTitles.remove(playerId);
         } else {
@@ -33,13 +33,13 @@ public class PatronData implements IPatronData, INBTSerializable<CompoundTag> {
     
     @Override
     public ResourceLocation getPatron(ServerPlayer player) {
-        return playerPatrons.get(player.getUUID());
+        return playerPatrons.getOrDefault(player.getUUID(), NO_PATRON);
     }
     
     @Override
     public void updateTitle(ServerPlayer player) {
         ResourceLocation patron = getPatron(player);
-        if (patron == null) {
+        if (NO_PATRON.equals(patron)) {
             setTitle(player, null);
             return;
         }
@@ -68,7 +68,7 @@ public class PatronData implements IPatronData, INBTSerializable<CompoundTag> {
     @Override
     public double getReputationModifier(ServerPlayer player, ResourceLocation deityId) {
         ResourceLocation patron = getPatron(player);
-        if (patron == null) {
+        if (NO_PATRON.equals(patron)) {
             return 1.0; // No modifier if no patron
         }
         

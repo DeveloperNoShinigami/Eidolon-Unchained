@@ -8,10 +8,17 @@ import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 // import org.apache.logging.log4j.LogManager;
 // import org.apache.logging.log4j.Logger;
 
@@ -20,6 +27,19 @@ import net.minecraft.server.level.ServerPlayer;
  */
 public class TTSCommands {
     // private static final Logger LOGGER = LogManager.getLogger();
+
+    /**
+     * Suggest available deity IDs (namespace:path) without extra comment lines or quoting
+     */
+    private static final SuggestionProvider<CommandSourceStack> DEITY_SUGGESTIONS = (context, builder) -> {
+        List<String> suggestions = new ArrayList<>();
+        for (Map.Entry<ResourceLocation, com.bluelotuscoding.eidolonunchained.deity.DatapackDeity> entry :
+            com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getAllDeities().entrySet()) {
+            ResourceLocation id = entry.getKey();
+            suggestions.add(id.toString());
+        }
+        return SharedSuggestionProvider.suggest(suggestions, builder);
+    };
 
     /**
      * Build the TTS command node for integration into UnifiedCommands
@@ -33,6 +53,10 @@ public class TTSCommands {
                     .then(Commands.literal("status")
                         .executes(TTSCommands::showTTSStatus))
                     .then(Commands.literal("test")
+                        .then(Commands.argument("deity", ResourceLocationArgument.id())
+                            .suggests(DEITY_SUGGESTIONS)
+                            .then(Commands.argument("text", StringArgumentType.greedyString())
+                                .executes(TTSCommands::testTTSForDeity)))
                         .then(Commands.argument("text", StringArgumentType.greedyString())
                             .executes(TTSCommands::testTTS)))
                     .then(Commands.literal("funding")
@@ -150,9 +174,9 @@ public class TTSCommands {
 
         String text = StringArgumentType.getString(context, "text");
 
+        // Don't hard-block testing if player2 funding isn't configured; Gemini/Web API may still work
         if (!TTSManager.getInstance().isTTSAvailable(player)) {
-            context.getSource().sendFailure(Component.literal("§cTTS not available. Link Player2: /eidolon-unchained player2ai login device"));
-            return 0;
+            context.getSource().sendSuccess(() -> Component.literal("§eWarning: TTS availability check failed (Player2 not linked?). Attempting anyway..."), false);
         }
 
         context.getSource().sendSuccess(() -> Component.literal("§7Testing TTS: \"" + text + "\""), false);
@@ -163,6 +187,37 @@ public class TTSCommands {
                     player.sendSystemMessage(Component.literal("§a✓ TTS test completed"));
                 } else {
                     player.sendSystemMessage(Component.literal("§c✗ TTS test failed"));
+                }
+            });
+
+        return 1;
+    }
+
+    private static int testTTSForDeity(CommandContext<CommandSourceStack> context) {
+        if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+            context.getSource().sendFailure(Component.literal("This command can only be used by players"));
+            return 0;
+        }
+
+    ResourceLocation deity = ResourceLocationArgument.getId(context, "deity");
+    String text = StringArgumentType.getString(context, "text");
+
+        // ResourceLocationArgument already provides proper namespace handling
+    final String deityId = deity.toString();
+
+        // Don't hard-block testing if availability reports false
+        if (!TTSManager.getInstance().isTTSAvailable(player)) {
+            context.getSource().sendSuccess(() -> Component.literal("§eWarning: TTS availability check failed. Attempting deity-specific TTS anyway..."), false);
+        }
+
+    context.getSource().sendSuccess(() -> Component.literal("§7Testing TTS for deity §e" + deityId + "§7: \"" + text + "\""), false);
+
+    TTSManager.getInstance().generateAndSendTTS(player, text, deityId)
+            .thenAccept(success -> {
+                if (success) {
+            player.sendSystemMessage(Component.literal("§a✓ TTS test (" + deityId + ") completed"));
+                } else {
+            player.sendSystemMessage(Component.literal("§c✗ TTS test (" + deityId + ") failed"));
                 }
             });
 
@@ -252,42 +307,18 @@ public class TTSCommands {
     }
 
     private static int listVoices(CommandContext<CommandSourceStack> context) {
-        context.getSource().sendSuccess(() -> Component.literal("§6=== Available Voices ==="), false);
-        // Try dynamic list from provider (if web API is active)
-        TTSManager.getInstance().listVoices().thenAccept(voices -> {
-            if (voices != null && !voices.isEmpty()) {
-                context.getSource().sendSuccess(() -> Component.literal("§7auto §8- Use deity-appropriate voice"), false);
-                for (var v : voices) {
-                    String line = String.format("§7%s", v.id);
-                    context.getSource().sendSuccess(() -> Component.literal(line), false);
-                }
-            } else {
-                // Fallback static list
-                context.getSource().sendSuccess(() -> Component.literal("§7auto §8- Use deity-appropriate voice"), false);
-                context.getSource().sendSuccess(() -> Component.literal("§7male-deep-1 §8- Deep, ominous voice"), false);
-                context.getSource().sendSuccess(() -> Component.literal("§7female-warm-1 §8- Warm, comforting voice"), false);
-                context.getSource().sendSuccess(() -> Component.literal("§7male-intense-1 §8- Intense, passionate voice"), false);
-                context.getSource().sendSuccess(() -> Component.literal("§7female-flowing-1 §8- Flowing, calm voice"), false);
-                context.getSource().sendSuccess(() -> Component.literal("§7male-steady-1 §8- Steady, grounded voice"), false);
-                context.getSource().sendSuccess(() -> Component.literal("§7female-light-1 §8- Light, airy voice"), false);
-                context.getSource().sendSuccess(() -> Component.literal("§7female-natural-1 §8- Natural, earthy voice"), false);
-                context.getSource().sendSuccess(() -> Component.literal("§7male-whisper-1 §8- Whispered, eerie voice"), false);
-                context.getSource().sendSuccess(() -> Component.literal("§7neutral-1 §8- Default neutral voice"), false);
-            }
-        }).exceptionally(err -> {
-            // On error, show fallback list
-            context.getSource().sendSuccess(() -> Component.literal("§7auto §8- Use deity-appropriate voice"), false);
-            context.getSource().sendSuccess(() -> Component.literal("§7male-deep-1 §8- Deep, ominous voice"), false);
-            context.getSource().sendSuccess(() -> Component.literal("§7female-warm-1 §8- Warm, comforting voice"), false);
-            context.getSource().sendSuccess(() -> Component.literal("§7male-intense-1 §8- Intense, passionate voice"), false);
-            context.getSource().sendSuccess(() -> Component.literal("§7female-flowing-1 §8- Flowing, calm voice"), false);
-            context.getSource().sendSuccess(() -> Component.literal("§7male-steady-1 §8- Steady, grounded voice"), false);
-            context.getSource().sendSuccess(() -> Component.literal("§7female-light-1 §8- Light, airy voice"), false);
-            context.getSource().sendSuccess(() -> Component.literal("§7female-natural-1 §8- Natural, earthy voice"), false);
-            context.getSource().sendSuccess(() -> Component.literal("§7male-whisper-1 §8- Whispered, eerie voice"), false);
-            context.getSource().sendSuccess(() -> Component.literal("§7neutral-1 §8- Default neutral voice"), false);
-            return null;
-        });
+        context.getSource().sendSuccess(() -> Component.literal("§6=== Player2 Voices ==="), false);
+        context.getSource().sendSuccess(() -> Component.literal("§7auto §8- Use deity-configured voice"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§eAmerican English (Male):"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§7  ethan  noah  mason  logan  benjamin  lucas  jackson  caleb  nicholas"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§eAmerican English (Female):"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§7  sophia  madison  harper  olivia  ava  amelia  charlotte  evelyn  abigail  mia  chloe"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§eBritish English (Male):"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§7  william  charles  oliver  harry"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§eBritish English (Female):"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§7  eleanor  poppy  florence"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§eOther: §7sakura  takashi  mei  wei  carmen  miguel  sophie  priya  arjun  bianca  marco  isabela"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§8Use: /eu tts voice <name>  or  /eu tts voice auto"), false);
         return 1;
     }
 

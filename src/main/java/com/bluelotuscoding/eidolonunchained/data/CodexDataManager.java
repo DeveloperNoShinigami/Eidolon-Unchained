@@ -53,6 +53,7 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
     private static final Map<ResourceLocation, List<CodexEntry>> CHAPTER_EXTENSIONS = new HashMap<>();
     private static final Map<ResourceLocation, CodexEntry> ALL_ENTRIES = new HashMap<>();
     private static final Map<ResourceLocation, ChapterDefinition> CUSTOM_CHAPTERS = new HashMap<>();
+    private static final Map<String, CategoryDefinition> CUSTOM_CATEGORIES = new HashMap<>();
     
     private static CodexDataManager INSTANCE;
     
@@ -85,8 +86,8 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
     
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
-        LOGGER.info("Server started - loaded {} custom codex entries extending {} chapters and {} new chapters",
-                   ALL_ENTRIES.size(), CHAPTER_EXTENSIONS.size(), CUSTOM_CHAPTERS.size());
+        LOGGER.info("Server started - loaded {} custom codex entries extending {} chapters, {} new chapters, and {} custom categories",
+                   ALL_ENTRIES.size(), CHAPTER_EXTENSIONS.size(), CUSTOM_CHAPTERS.size(), CUSTOM_CATEGORIES.size());
 
         // Log all loaded content for debugging
         if (!CHAPTER_EXTENSIONS.isEmpty()) {
@@ -99,6 +100,10 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
 
         if (!CUSTOM_CHAPTERS.isEmpty()) {
             LOGGER.info("Custom chapters: {}", CUSTOM_CHAPTERS.keySet());
+        }
+
+        if (!CUSTOM_CATEGORIES.isEmpty()) {
+            LOGGER.info("Custom categories: {}", CUSTOM_CATEGORIES.keySet());
         }
     }
     
@@ -116,7 +121,9 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
         CHAPTER_EXTENSIONS.clear();
         ALL_ENTRIES.clear();
         CUSTOM_CHAPTERS.clear();
+        CUSTOM_CATEGORIES.clear();
 
+        loadCategoryDefinitions(resourceManager);
         // Load chapter definitions first so entries can reference them
         loadCustomChapters(resourceManager);
 
@@ -217,7 +224,15 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
             LOGGER.info("About to create CodexEntry...");
 
             // Basic fields
-            String titleStr = json.has("title") ? json.get("title").getAsString() : location.getPath();
+            String titleStr;
+            if (json.has("title")) {
+                titleStr = json.get("title").getAsString();
+            } else {
+                // Generate translation key from entry name instead of using file path
+                // NOTE: Don't add .title suffix - TitlePage will add it automatically
+                String entryName = location.getPath().replace("codex_entries/", "").replace(".json", "");
+                titleStr = "eidolon.codex.entry." + entryName;
+            }
             Component title = (titleStr.contains(":") || titleStr.contains(".") || titleStr.startsWith("eidolonunchained:") || titleStr.startsWith("eidolon."))
                 ? Component.translatable(titleStr)
                 : Component.literal(titleStr);
@@ -328,6 +343,60 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
     }
 
     /**
+     * Loads custom category definitions from datapacks.
+     */
+    private void loadCategoryDefinitions(ResourceManager resourceManager) {
+        LOGGER.info("Searching for custom codex categories in 'codex' structure...");
+
+        Map<ResourceLocation, Resource> allCategoryFiles = resourceManager.listResources(
+            "codex",
+            path -> path.getPath().endsWith("_category.json")
+        );
+
+        LOGGER.info("DEBUG: Found {} category files: {}", allCategoryFiles.size(), allCategoryFiles.keySet());
+
+        allCategoryFiles.forEach((resLoc, resource) -> {
+            LOGGER.info("Found codex category resource: {} (namespace: {}, path: {})", resLoc, resLoc.getNamespace(), resLoc.getPath());
+            try (InputStreamReader reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
+                JsonObject json = GSON.fromJson(reader, JsonObject.class);
+                if (json == null) {
+                    LOGGER.warn("Skipping invalid category definition at {}", resLoc);
+                    return;
+                }
+
+                String[] pathParts = resLoc.getPath().split("/");
+                if (pathParts.length < 3) {
+                    LOGGER.warn("Skipping malformed category definition path at {}", resLoc);
+                    return;
+                }
+
+                String categoryKey = json.has("key")
+                    ? json.get("key").getAsString()
+                    : pathParts[pathParts.length - 2];
+                String nameKey = json.has("name")
+                    ? json.get("name").getAsString()
+                    : "eidolon.codex.category." + categoryKey;
+                ResourceLocation icon = json.has("icon")
+                    ? ResourceLocation.tryParse(json.get("icon").getAsString())
+                    : ResourceLocation.tryParse("minecraft:book");
+                Integer color = json.has("color")
+                    ? parseColor(json.get("color").getAsString())
+                    : null;
+                String descriptionKey = json.has("description")
+                    ? json.get("description").getAsString()
+                    : "";
+
+                CUSTOM_CATEGORIES.put(categoryKey, new CategoryDefinition(categoryKey, nameKey, icon, color, descriptionKey));
+                LOGGER.info("Loaded custom category definition {}", categoryKey);
+            } catch (IOException e) {
+                LOGGER.error("Failed to load category definition at {}", resLoc, e);
+            }
+        });
+
+        LOGGER.info("Custom category loading complete. Total loaded: {}", CUSTOM_CATEGORIES.size());
+    }
+
+    /**
      * Loads custom chapter definitions from datapacks
      */
     private void loadCustomChapters(ResourceManager resourceManager) {
@@ -361,7 +430,44 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                             : Component.literal(titleKey);
 
                     LOGGER.info("Registering custom chapter: {} (title: {}, icon: {}, category: {})", chapterId, chapterTitle, icon, category);
-                    CUSTOM_CHAPTERS.put(chapterId, new ChapterDefinition(chapterTitle, icon, category));
+                                        // Optional unlock conditions
+                    java.util.List<ResourceLocation> unlockFacts = new java.util.ArrayList<>();
+                    ResourceLocation unlockDeity = null;
+                    Integer unlockRep = null;
+                    java.util.List<ResourceLocation> unlockResearch = new java.util.ArrayList<>();
+                    if (json.has("unlock") && json.get("unlock").isJsonObject()) {
+                        com.google.gson.JsonObject unlock = json.getAsJsonObject("unlock");
+                        if (unlock.has("facts") && unlock.get("facts").isJsonArray()) {
+                            com.google.gson.JsonArray arr = unlock.getAsJsonArray("facts");
+                            for (int i = 0; i < arr.size(); i++) {
+                                ResourceLocation f = ResourceLocation.tryParse(arr.get(i).getAsString());
+                                if (f != null) unlockFacts.add(f);
+                            }
+                        if (unlock.has("researches") && unlock.get("researches").isJsonArray()) {
+                            com.google.gson.JsonArray arr2 = unlock.getAsJsonArray("researches");
+                            for (int i = 0; i < arr2.size(); i++) {
+                                ResourceLocation r = ResourceLocation.tryParse(arr2.get(i).getAsString());
+                                if (r != null) unlockResearch.add(r);
+                            }
+                        } else if (unlock.has("research")) {
+                            ResourceLocation r = ResourceLocation.tryParse(unlock.get("research").getAsString());
+                            if (r != null) unlockResearch.add(r);
+                        }
+                        } else if (unlock.has("fact")) {
+                            ResourceLocation f = ResourceLocation.tryParse(unlock.get("fact").getAsString());
+                            if (f != null) unlockFacts.add(f);
+                        }
+                        if (unlock.has("reputation") && unlock.get("reputation").isJsonObject()) {
+                            com.google.gson.JsonObject rep = unlock.getAsJsonObject("reputation");
+                            if (rep.has("deity")) {
+                                unlockDeity = ResourceLocation.tryParse(rep.get("deity").getAsString());
+                            }
+                            if (rep.has("min")) {
+                                unlockRep = rep.get("min").getAsInt();
+                            }
+                        }
+                    }
+                    CUSTOM_CHAPTERS.put(chapterId, new ChapterDefinition(chapterTitle, icon, category, unlockFacts, unlockResearch, unlockDeity, unlockRep));
                     LOGGER.info("Loaded custom chapter definition {}", chapterId);
                 } catch (IOException e) {
                     LOGGER.error("Failed to load chapter definition at {}", resLoc, e);
@@ -403,7 +509,44 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
                             : Component.literal(titleKey);
 
                     LOGGER.info("Registering custom chapter: {} (title: {}, icon: {}, category: {})", chapterId, chapterTitle, icon, category);
-                    CUSTOM_CHAPTERS.put(chapterId, new ChapterDefinition(chapterTitle, icon, category));
+                                        // Optional unlock conditions
+                    java.util.List<ResourceLocation> unlockFacts = new java.util.ArrayList<>();
+                    ResourceLocation unlockDeity = null;
+                    Integer unlockRep = null;
+                    java.util.List<ResourceLocation> unlockResearch = new java.util.ArrayList<>();
+                    if (json.has("unlock") && json.get("unlock").isJsonObject()) {
+                        com.google.gson.JsonObject unlock = json.getAsJsonObject("unlock");
+                        if (unlock.has("facts") && unlock.get("facts").isJsonArray()) {
+                            com.google.gson.JsonArray arr = unlock.getAsJsonArray("facts");
+                            for (int i = 0; i < arr.size(); i++) {
+                                ResourceLocation f = ResourceLocation.tryParse(arr.get(i).getAsString());
+                                if (f != null) unlockFacts.add(f);
+                            }
+                        if (unlock.has("researches") && unlock.get("researches").isJsonArray()) {
+                            com.google.gson.JsonArray arr2 = unlock.getAsJsonArray("researches");
+                            for (int i = 0; i < arr2.size(); i++) {
+                                ResourceLocation r = ResourceLocation.tryParse(arr2.get(i).getAsString());
+                                if (r != null) unlockResearch.add(r);
+                            }
+                        } else if (unlock.has("research")) {
+                            ResourceLocation r = ResourceLocation.tryParse(unlock.get("research").getAsString());
+                            if (r != null) unlockResearch.add(r);
+                        }
+                        } else if (unlock.has("fact")) {
+                            ResourceLocation f = ResourceLocation.tryParse(unlock.get("fact").getAsString());
+                            if (f != null) unlockFacts.add(f);
+                        }
+                        if (unlock.has("reputation") && unlock.get("reputation").isJsonObject()) {
+                            com.google.gson.JsonObject rep = unlock.getAsJsonObject("reputation");
+                            if (rep.has("deity")) {
+                                unlockDeity = ResourceLocation.tryParse(rep.get("deity").getAsString());
+                            }
+                            if (rep.has("min")) {
+                                unlockRep = rep.get("min").getAsInt();
+                            }
+                        }
+                    }
+                    CUSTOM_CHAPTERS.put(chapterId, new ChapterDefinition(chapterTitle, icon, category, unlockFacts, unlockResearch, unlockDeity, unlockRep));
                     LOGGER.info("Loaded custom chapter definition {}", chapterId);
                 } catch (IOException e) {
                     LOGGER.error("Failed to load chapter definition at {}", resLoc, e);
@@ -456,6 +599,20 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
     }
 
     /**
+     * Gets a datapack-defined category definition.
+     */
+    public static CategoryDefinition getCategoryDefinition(String key) {
+        return CUSTOM_CATEGORIES.get(key);
+    }
+
+    /**
+     * Gets all custom category definitions.
+     */
+    public static Map<String, CategoryDefinition> getAllCategoryDefinitions() {
+        return new HashMap<>(CUSTOM_CATEGORIES);
+    }
+
+    /**
      * Gets a datapack-defined chapter definition
      */
     public static ChapterDefinition getCustomChapter(ResourceLocation id) {
@@ -473,8 +630,8 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
      * Log loaded data for debugging
      */
     public static void logLoadedData() {
-        LOGGER.info("Server started - loaded {} custom codex entries extending {} chapters and {} new chapters",
-                   ALL_ENTRIES.size(), CHAPTER_EXTENSIONS.size(), CUSTOM_CHAPTERS.size());
+        LOGGER.info("Server started - loaded {} custom codex entries extending {} chapters, {} new chapters, and {} custom categories",
+                   ALL_ENTRIES.size(), CHAPTER_EXTENSIONS.size(), CUSTOM_CHAPTERS.size(), CUSTOM_CATEGORIES.size());
 
         for (Map.Entry<ResourceLocation, List<CodexEntry>> entry : CHAPTER_EXTENSIONS.entrySet()) {
             LOGGER.info("Chapter '{}' extended with {} entries: {}",
@@ -485,6 +642,58 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
         if (!CUSTOM_CHAPTERS.isEmpty()) {
             LOGGER.info("Custom chapters: {}", CUSTOM_CHAPTERS.keySet());
         }
+
+        if (!CUSTOM_CATEGORIES.isEmpty()) {
+            LOGGER.info("Custom categories: {}", CUSTOM_CATEGORIES.keySet());
+        }
+    }
+
+    private static Integer parseColor(String colorValue) {
+        try {
+            return (int) Long.parseLong(colorValue.replace("0x", ""), 16);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to parse codex category color '{}', using default", colorValue);
+            return null;
+        }
+    }
+
+    /**
+     * Represents a datapack-defined category with icon and presentation metadata.
+     */
+    public static class CategoryDefinition {
+        private final String key;
+        private final String nameKey;
+        private final ResourceLocation icon;
+        private final Integer color;
+        private final String descriptionKey;
+
+        public CategoryDefinition(String key, String nameKey, ResourceLocation icon, Integer color, String descriptionKey) {
+            this.key = key;
+            this.nameKey = nameKey;
+            this.icon = icon;
+            this.color = color;
+            this.descriptionKey = descriptionKey;
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public String getNameKey() {
+            return nameKey;
+        }
+
+        public ResourceLocation getIcon() {
+            return icon;
+        }
+
+        public Integer getColor() {
+            return color;
+        }
+
+        public String getDescriptionKey() {
+            return descriptionKey;
+        }
     }
 
     /**
@@ -494,11 +703,31 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
         private final Component title;
         private final ResourceLocation icon;
         private final String category;
+        private final List<ResourceLocation> unlockFacts;
+        private final List<ResourceLocation> unlockResearch;
+        private final ResourceLocation unlockDeity;
+        private final Integer unlockRep;
 
         public ChapterDefinition(Component title, ResourceLocation icon, String category) {
             this.title = title;
             this.icon = icon;
             this.category = category;
+            this.unlockFacts = new ArrayList<>();
+            this.unlockResearch = new ArrayList<>();
+            this.unlockDeity = null;
+            this.unlockRep = null;
+        }
+
+        public ChapterDefinition(Component title, ResourceLocation icon, String category,
+                               List<ResourceLocation> unlockFacts, List<ResourceLocation> unlockResearch,
+                               ResourceLocation unlockDeity, Integer unlockRep) {
+            this.title = title;
+            this.icon = icon;
+            this.category = category;
+            this.unlockFacts = unlockFacts != null ? unlockFacts : new ArrayList<>();
+            this.unlockResearch = unlockResearch != null ? unlockResearch : new ArrayList<>();
+            this.unlockDeity = unlockDeity;
+            this.unlockRep = unlockRep;
         }
 
         public Component getTitle() {
@@ -511,6 +740,22 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
 
         public String getCategory() {
             return category;
+        }
+
+        public List<ResourceLocation> getUnlockFacts() {
+            return unlockFacts;
+        }
+
+        public List<ResourceLocation> getUnlockResearch() {
+            return unlockResearch;
+        }
+
+        public ResourceLocation getUnlockDeity() {
+            return unlockDeity;
+        }
+
+        public Integer getUnlockRep() {
+            return unlockRep;
         }
     }
     
@@ -625,14 +870,10 @@ public class CodexDataManager extends SimpleJsonResourceReloadListener {
     private void triggerCategoryScanning(ResourceManager resourceManager) {
         LOGGER.info("Triggering category scanning with loaded resources...");
         try {
-            // Import the EidolonCategoryExtension class
-            Class<?> extensionClass = Class.forName("com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension");
-            java.lang.reflect.Method triggerMethod = extensionClass.getDeclaredMethod("triggerCategoryScanningWithResources", ResourceManager.class);
-            triggerMethod.setAccessible(true);
-            triggerMethod.invoke(null, resourceManager);
+            com.bluelotuscoding.eidolonunchained.integration.EidolonCategoryExtension.triggerCategoryScanningWithResources(resourceManager);
             LOGGER.info("Successfully triggered category scanning");
         } catch (Exception e) {
-            LOGGER.error("Failed to trigger category scanning via reflection", e);
+            LOGGER.error("Failed to trigger category scanning", e);
         }
     }
     

@@ -1,0 +1,95 @@
+{
+  "id": "debug_all_tasks_triggers",
+  "stars": 6,
+
+  "_comment_triggers": "Every trigger type — fires once each (max_found: 1). Enter any of these conditions to unlock the research.",
+  "triggers": [
+    {
+      "_comment": "TRIGGER: kill_entity with NBT filter — fires when player kills a named zombie",
+      "type": "kill_entity",
+      "entity": "minecraft:zombie",
+      "max_found": 1
+    }
+  ],
+
+  "_comment_tasks": "Every task type — one per stage. Complete them in order (stage 0 → 1 → 2 → 3 → 4 → 5).",
+  "tasks": {
+    "0": [
+      {
+        "_comment": "TASK: item (collect_items) — pick up 1 dirt",
+        "type": "item",
+        "item": "minecraft:dirt",
+        "count": 1
+      }
+    ],
+    "1": [
+      {
+        "_comment": "TASK: kill / kill_entity — kill 1 zombie",
+        "type": "kill",
+        "entity": "minecraft:zombie",
+        "count": 1,
+        "command": "tellraw @s {\"text\":\"[Debug] Stage 1 complete: kill task\",\"color\":\"green\"}"
+      }
+    ],
+    "2": [
+      {
+        "_comment": "TASK: craft / craft_item — craft 1 stick (auto-completes on craft, no slot needed). station controls the icon shown.",
+        "type": "craft",
+        "item": "minecraft:stick",
+        "count": 1,
+        "station": "crafting_table",
+        "command": "tellraw @s {\"text\":\"[Debug] Stage 2 complete: craft task\",\"color\":\"green\"}"
+      }
+    ],
+    "3": [
+      {
+        "_comment": "TASK: ritual_completion / use_ritual — complete shadow patronage ritual once",
+        "type": "ritual_completion",
+        "ritual": "eidolonunchained:shadow_patronage_ritual",
+        "count": 1,
+        "command": "tellraw @s {\"text\":\"[Debug] Stage 3 complete: ritual_completion task\",\"color\":\"green\"}"
+      }
+    ],
+    "4": [
+      {
+        "_comment": "TASK: item with count > 1 — collect 5 oak logs to test count field",
+        "type": "item",
+        "item": "minecraft:oak_log",
+        "count": 1,
+        "commands": [
+          "tellraw @s {\"text\":\"[Debug] Stage 4 complete: item count task\",\"color\":\"green\"}",
+          "give @s minecraft:paper 1"
+        ]
+      }
+    ],
+    "5": [
+      {
+        "_comment": "TASK: kill_entity alias — same as kill, tests alternate type string",
+        "type": "kill_entity",
+        "entity": "minecraft:skeleton",
+        "count": 1,
+        "command": "tellraw @s {\"text\":\"[Debug] Stage 5 complete: kill_entity alias task\",\"color\":\"gold\"}"
+      }
+    ]
+  },
+
+  "_comment_rewards": "rewards run when all tasks are completed (onLearned). Supported types: sign, item, command, commands.",
+  "rewards": [
+    {
+      "_comment": "REWARD: grant a sign by full resource location",
+      "type": "sign",
+      "sign": "eidolonunchained:myrkul_sign"
+    },
+    {
+      "_comment": "REWARD: give an item",
+      "type": "item",
+      "item": "minecraft:diamond",
+      "count": 1
+    },
+    {
+      "_comment": "REWARD: run a command ({player} is replaced with the player's name)",
+      "type": "command",
+      "command": "tellraw {player} {\"text\":\"[Debug] All tasks complete — rewards granted!\",\"color\":\"gold\"}"
+    }
+  ]
+}

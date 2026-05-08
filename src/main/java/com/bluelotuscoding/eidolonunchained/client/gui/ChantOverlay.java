@@ -198,7 +198,12 @@ public class ChantOverlay implements IGuiOverlay {
     @Override
     public void render(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
         if (!isActive || activeChant.isEmpty()) return;
-        
+
+        // Hide ribbon UI when in active chanting mode
+        if (com.bluelotuscoding.eidolonunchained.config.ChantCastingConfig.isActiveChantingMode()) {
+            return;
+        }
+
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         

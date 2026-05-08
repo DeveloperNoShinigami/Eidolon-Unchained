@@ -1,0 +1,10 @@
+{
+  "linked_deity": "eidolonunchained:light_deity",
+  "symbol": "eidolon:particle/sacred_sign",
+  "color": {
+    "r": 1.0,
+    "g": 0.86,
+    "b": 0.39
+  },
+  "description": "Luminae's patronage rite. Perform the brazier ritual with an arcane gold ingot reagent, pedestal offerings of arcane gold, a golden apple, enchanted ash, and a nether star, then focus the codex to bind yourself to the light deity."
+}

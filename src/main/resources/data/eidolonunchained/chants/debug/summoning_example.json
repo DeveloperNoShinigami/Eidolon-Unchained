@@ -1,0 +1,36 @@
+{
+  "name": "Summoning Example",
+  "description": "Debug chant example that summons enthralled witches. Their chant rotation is provided by the chantable_mobs config.",
+  "category": "debug",
+  "codex_icon": "minecraft:bone",
+  "difficulty": 1,
+  "mana_cost": 50,
+  "cooldown": 60,
+  "combat_role": "support",
+  "mob_priority_weight": 11,
+  "show_in_codex": true,
+  "requires_effigy": false,
+  "requires_target": true,
+  "signs": [
+    "eidolon:wicked",
+    "eidolon:soul",
+    "eidolon:harmony"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "summoning",
+      "entity": "minecraft:zombie",
+      "count": 2,
+      "spread": 1.5,
+      "spawn_at": "caster",
+      "range": 4.0,
+      "disable_boss_bar": true,
+      "equipment": {
+        "mainhand": {
+          "item": "eidolon:summoning_staff"
+        }
+      }
+    }
+  ]
+}

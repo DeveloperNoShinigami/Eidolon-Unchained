@@ -14,6 +14,9 @@ public interface IPatronData {
     // Capability instance
     Capability<IPatronData> PATRON_DATA = CapabilityManager.get(new CapabilityToken<>(){});
     
+    // Constant for no patron
+    ResourceLocation NO_PATRON = new ResourceLocation("eidolonunchained", "none");
+
     /**
      * Set a player's patron deity
      * @param player The player

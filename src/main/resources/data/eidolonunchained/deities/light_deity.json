@@ -1,11 +1,11 @@
 {
   "id": "eidolonunchained:light_deity",
-  "name": "Lumina, Sacred Guardian",
-  "description": "Divine protector of the innocent and bringer of light",
+  "name": "Luminae, Radiant Sovereign",
+  "description": "An eternal keeper of light, truth, and sacred purpose.",
   "colors": {
     "red": 255,
-    "green": 230,
-    "blue": 117
+    "green": 220,
+    "blue": 100
   },
   "progression": {
     "max_reputation": 100,
@@ -15,107 +15,65 @@
         "reputation": 0,
         "major": false,
         "title": "Light Touched",
-        "description": "A soul brushed by gentle radiance",
-        "rewards": [
-          "give @s minecraft:glow_berries 4",
-          "effect give @s minecraft:regeneration 200 0",
-          "title @s title {\"text\":\"The light notices you...\",\"color\":\"yellow\"}",
-          "playsound minecraft:block.beacon.ambient master @s ~ ~ ~ 0.2 1.4"
-        ]
-      },
-      {
-        "id": "light_initiate",
-        "reputation": 15,
-        "major": false,
-        "title": "Light Initiate",
-        "description": "A soul touched by divine radiance",
+        "description": "The first ray finds you, and the radiance begins to take notice.",
         "rewards": [
           "give @s minecraft:golden_apple 1",
-          "effect give @s minecraft:regeneration 300 0",
-          "title @s title {\"text\":\"The light embraces you...\",\"color\":\"yellow\"}",
-          "playsound minecraft:block.beacon.ambient master @s ~ ~ ~ 0.3 1.2"
+          "title @s actionbar {\"text\":\"A warmth settles over you.\",\"color\":\"yellow\"}"
         ]
       },
       {
-        "id": "light_acolyte",
+        "id": "dawn_acolyte",
         "reputation": 25,
         "major": false,
-        "title": "Light Acolyte",
-        "description": "Faithful servant of the sacred light",
+        "title": "Dawn Acolyte",
+        "description": "You have learned to carry the light even where others look away.",
         "rewards": [
-          "give @s eidolon:gold_inlay 3",
-          "give @s eidolon:holy_symbol 1",
-          "effect give @s minecraft:resistance 600 0",
-          "effect give @s minecraft:glowing 1200 0",
-          "title @s title {\"text\":\"Light Acolyte\",\"color\":\"yellow\"}",
-          "playsound minecraft:block.beacon.power_select master @s ~ ~ ~ 0.7 1.0"
+          "give @s eidolon:arcane_gold_ingot 2",
+          "effect give @s minecraft:regeneration 600 0"
         ]
       },
       {
-        "id": "light_priest",
+        "id": "radiant_priest",
         "reputation": 50,
         "major": true,
-        "title": "Priest of Light",
-        "description": "Ordained minister of divine radiance",
+        "title": "Radiant Priest",
+        "description": "Luminae entrusts you with rites meant for open skies and sacred flames.",
         "rewards": [
-          "give @s eidolon:divine_shard 2",
-          "give @s eidolon:sanctum_compass 1",
-          "give @s minecraft:diamond 3",
-          "effect give @s minecraft:absorption 1800 1",
-          "effect give @s minecraft:glowing 2400 0",
-          "title @s title {\"text\":\"Priest of Light\",\"color\":\"gold\"}",
-          "title @s subtitle {\"text\":\"Divine ordination achieved\",\"color\":\"yellow\"}",
-          "playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1.0 1.0",
-          "say A new Priest of Light has been ordained! The heavens shine upon them."
+          "give @s eidolon:arcane_seal 1",
+          "effect give @s minecraft:absorption 900 1"
         ]
       },
       {
-        "id": "light_high_priest",
+        "id": "beacon_keeper",
         "reputation": 75,
         "major": true,
-        "title": "High Priest of Light",
-        "description": "Elevated servant of the divine radiance",
+        "title": "Beacon Keeper",
+        "description": "You hold the light against the dark without flinching.",
         "rewards": [
-          "give @s eidolon:celestial_staff 1",
-          "give @s eidolon:blessed_bone 5",
-          "give @s minecraft:totem_of_undying 1",
-          "effect give @s minecraft:health_boost 3600 2",
-          "effect give @s minecraft:glowing 3600 0",
-          "effect give @s minecraft:hero_of_the_village 6000 2",
-          "title @s title {\"text\":\"High Priest of Light\",\"color\":\"gold\"}",
-          "title @s subtitle {\"text\":\"Blessed by divine grace\",\"color\":\"white\"}",
-          "playsound minecraft:entity.player.levelup master @s ~ ~ ~ 1.0 1.5",
-          "say The divine light blesses a new High Priest! Their radiance illuminates the land."
+          "give @s eidolon:greater_soul_gem 1",
+          "effect give @s minecraft:strength 900 0"
         ]
       },
       {
         "id": "light_champion",
         "reputation": 100,
         "major": true,
-        "title": "Champion of Light",
-        "description": "Ultimate warrior of divine radiance",
+        "title": "Light Champion",
+        "description": "You stand as Luminae's chosen instrument, a living beacon against shadow.",
         "rewards": [
-          "give @s eidolon:radiant_blade 1",
-          "give @s eidolon:divine_armor 1",
-          "give @s eidolon:holy_grail 1",
-          "give @s minecraft:netherite_block 3",
-          "effect give @s minecraft:health_boost 7200 4",
-          "effect give @s minecraft:strength 7200 2",
-          "effect give @s minecraft:resistance 7200 2",
-          "effect give @s minecraft:glowing 7200 0",
-          "effect give @s minecraft:hero_of_the_village 12000 3",
-          "title @s title {\"text\":\"Champion of Light\",\"color\":\"gold\",\"bold\":true}",
-          "title @s subtitle {\"text\":\"Divine champion ascendant\",\"color\":\"yellow\"}",
-          "playsound minecraft:ui.toast.challenge_complete master @a ~ ~ ~ 2.0 1.2",
-          "say BEHOLD! A Champion of Light has ascended! The divine radiance flows through them!"
+          "give @s minecraft:nether_star 1",
+          "effect give @s minecraft:absorption 1200 2",
+          "effect give @s minecraft:regeneration 1200 1"
         ]
       }
     ]
   },
   "abandon": {
-    "reputation_penalty": 0.75,
-    "reset_reputation": false,
-    "message": "§eLumina's radiance fades from your soul. §6The divine light mourns your departure, but the path to redemption remains open to the faithful."
+    "reputation_penalty": 1.0,
+    "reset_reputation": true,
+    "message": "§eLuminae turns her gaze away. §fThe warmth you carried fades like an ember in rain."
   },
-  "prayer_types": ["conversation", "blessing", "knowledge", "balance"]
+  "deity_damage_type": "eidolonunchained:light_divine_power",
+  "prayer_types": ["conversation", "knowledge", "blessing", "curse"],
+  "linked_eidolon_deity": "eidolon:light"
 }

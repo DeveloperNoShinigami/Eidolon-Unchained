@@ -1,6 +1,3 @@
-# Exclude unpacked Eidolon Repraised jar folder
-eidolon_repraised-1.20.1-0.3.8.15_unpacked_jar/
-
 # eclipse
 bin
 *.launch
@@ -45,8 +42,16 @@ src/generated/
 .apt_generated_tests/
 
 # IDE and editor files
+.eclipse/
+.tmp/
+/run-data
+.vscode/
 .vscode/settings.json
 .vscode/launch.json
+.vscode/tasks.json
+.agent/
+.claude/
+.github/copilot-instructions.md
 *.swp
 *.swo
 *~
@@ -69,14 +74,15 @@ latest.log
 .cache/
 tmp/
 temp/
+run-data/
 
-# Mod development artifacts
-*.mixins.json
+# Local tools and builders
+tools/
+ai-deity-builder.html
+deity-builder.html
+
+# Mod development artifacts (generated refmap, but NOT our source mixins config)
 *.refmap.json
-
-# Don't ignore our specific mixins files if they're intentional
-!eidolon.mixins.json
-!eidolon.refmap.json
 
 # Auto-generated documentation files (prevent AI tools from creating unwanted files)
 AI_DEITY_*.md
@@ -105,3 +111,4 @@ fix_*.sh
 *_GUIDE.md
 *_SYSTEM.md
 *_FIXES.md
+wiki/Archive

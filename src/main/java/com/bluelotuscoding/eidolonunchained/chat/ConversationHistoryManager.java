@@ -290,12 +290,12 @@ public class ConversationHistoryManager extends SavedData {
         }
         
         // Fall back to JSON value (preset)
-        if (jsonConfig != null && jsonConfig.cooldown_minutes > 0) {
-            return jsonConfig.cooldown_minutes;
+        if (jsonConfig != null && jsonConfig.cooldown_seconds > 0) {
+            return jsonConfig.cooldown_seconds;
         }
-        
-        // System default
-        return 30;
+
+        // System default (30 minutes in seconds)
+        return 1800;
     }
     
     /**

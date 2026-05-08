@@ -59,7 +59,7 @@ public class AIDeityConfig {
     public List<NLTrigger> naturalLanguageTriggers = new ArrayList<>();
 
     // TTS (Text-to-Speech) configuration - populated from JSON only
-    public TTSConfig tts_config = new TTSConfig();
+    public TTSConfig tts_config;
 
     public AIDeityConfig() {
         // No defaults - safety settings must come from JSON configuration
@@ -390,8 +390,21 @@ public class AIDeityConfig {
         public String teamColor = ""; // Team color for display (e.g., "dark_purple", "green")
         public boolean friendlyFire = false; // Whether team members can damage each other (default: false)
 
-        // Supported Entities
-        public List<String> supportedMobIds = new ArrayList<>(); // Entities this deity supports/controls
+        // Follower entities
+        public List<String> followerMobIds = new ArrayList<>(); // Entities this deity's followers can enthrall/control
+
+        // Mob resource tuning for deity followers.
+        // Defaults are applied globally to mobs using EU mana tags; stage overrides are keyed by title.
+        public double defaultFollowerMobMana = 100.0d;
+        public double defaultFollowerMobMagicPower = 0.0d;
+        public Map<String, Double> followerMobManaByStage = new HashMap<>();
+        public Map<String, Double> followerMobMagicPowerByStage = new HashMap<>();
+
+        // Mob enthrall gate
+        // Minimum progression stage title a player must hold to enthrall any mob in followerMobIds.
+        // If empty, no title is required (any follower can tame supported mobs).
+        // Example: "Wolf-Tamer" — player must have earned that title via the deity's progression stages.
+        public String stageRequiredForEntrall = "";
     }
 
     /**
@@ -412,7 +425,8 @@ public class AIDeityConfig {
      */
     public static class TTSConfig {
         // TTS Provider configuration
-        public String tts_provider = null; // Override global TTS provider: "player2", "google", "webapi", "gemini", or null for global
+        public String tts_provider = null; // Override global TTS provider: "player2", "google", "webapi", or null for global
+        public String model = null; // Override TTS model for provider (e.g., "gemini-2.0-flash-experimental-tts")
 
         // Primary voice configuration
         public String voice_id = "auto"; // Voice ID or "auto" for deity-appropriate voice
@@ -459,10 +473,6 @@ public class AIDeityConfig {
             if (biome_voices == null) biome_voices = new HashMap<>();
             if (advanced_params == null) advanced_params = new HashMap<>();
 
-            org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger();
-            logger.info("🎵 TTSConfig constructor called");
-            logger.info("🎵 TTSConfig maps after initialization: reputation_voices={}, biome_voices={}, time_voices={}",
-                reputation_voices, biome_voices, time_voices);
         }
 
         /**

@@ -1,0 +1,36 @@
+{
+  "name": "Shadow Communion",
+  "description": "A whispered invocation that lets Nyxathel answer from beyond the veil.",
+  "category": "dark_deity",
+  "codex_icon": "minecraft:wither_skeleton_skull",
+  "difficulty": "shadow_touched",
+  "mana_cost": 10,
+  "cooldown": 60,
+  "show_in_codex": true,
+  "linked_deity": "eidolonunchained:dark_deity",
+  "prayer_effect_type": "conversation",
+  "requires_effigy": false,
+  "signs": [
+    "eidolon:wicked",
+    "eidolon:wicked",
+    "eidolon:blood"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "effigy_sound",
+      "sound": "minecraft:ambient.soul_sand_valley.mood",
+      "volume": 0.8,
+      "pitch": 1.15,
+      "category": "AMBIENT"
+    },
+    {
+      "type": "send_message",
+      "message": "§5The air grows still as Nyxathel turns his attention toward you."
+    },
+    {
+      "type": "start_conversation",
+      "deity": "eidolonunchained:dark_deity"
+    }
+  ]
+}

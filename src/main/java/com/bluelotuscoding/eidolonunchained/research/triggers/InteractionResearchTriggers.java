@@ -29,6 +29,10 @@ public class InteractionResearchTriggers {
     
     // Track triggered research per player to prevent infinite loops
     private static final Map<String, Set<String>> PLAYER_TRIGGERED_RESEARCH = new HashMap<>();
+
+    public static void clearTriggeredResearch(ServerPlayer player) {
+        PLAYER_TRIGGERED_RESEARCH.remove(player.getUUID().toString());
+    }
     
     @SubscribeEvent
     public static void onBlockInteraction(PlayerInteractEvent.RightClickBlock event) {

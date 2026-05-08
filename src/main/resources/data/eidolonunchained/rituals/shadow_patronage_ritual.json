@@ -1,0 +1,10 @@
+{
+  "linked_deity": "eidolonunchained:dark_deity",
+  "symbol": "eidolon:particle/death_sign",
+  "color": {
+    "r": 0.37,
+    "g": 0.19,
+    "b": 0.46
+  },
+  "description": "Nyxathel's patronage rite. Perform the brazier ritual with a soul shard reagent, pedestal offerings of soul shard, death essence, arcane gold, and a wither skeleton skull, then focus the codex to bind yourself to the dark deity."
+}

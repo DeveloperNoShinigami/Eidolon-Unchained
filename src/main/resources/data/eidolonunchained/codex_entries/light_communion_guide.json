@@ -1,0 +1,24 @@
+{
+  "target_chapter": "radiant_observances",
+  "title": "eidolonunchained.codex.entry.light_communion_guide.title",
+  "description": "eidolonunchained.codex.entry.light_communion_guide.description",
+  "icon": "minecraft:nether_star",
+  "prerequisites": [
+    "eidolonunchained:light_communion_study"
+  ],
+  "pages": [
+    {
+      "type": "chant",
+      "spell": "eidolonunchained:light_communion",
+      "text": "eidolonunchained.codex.entry.light_communion_guide.chant_description"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.light_communion_guide.overview"
+    },
+    {
+      "type": "text",
+      "text": "eidolonunchained.codex.entry.light_communion_guide.research_hook"
+    }
+  ]
+}

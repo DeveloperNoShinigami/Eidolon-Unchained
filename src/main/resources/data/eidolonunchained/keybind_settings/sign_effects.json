@@ -1,41 +1,32 @@
 {
   "per_sign": {
     "eidolon:wicked": [
-      "particle minecraft:enchant ~ ~1 ~ 0.6 0.8 0.6 0.01 35 force @s",
-      "particle minecraft:end_rod ~ ~1.2 ~ 0.5 0.6 0.5 0 12 force @s"
-    ],
-    "eidolon:soul": [
-      "particle minecraft:glow ~ ~1 ~ 0.6 0.8 0.6 0.02 25 force @s",
-      "particle minecraft:happy_villager ~ ~1.2 ~ 0.4 0.6 0.4 0 10 force @s"
-    ],
-    "eidolon:mind": [
-      "particle minecraft:cloud ~ ~1 ~ 0.5 0.6 0.5 0.02 16 force @s",
-      "particle minecraft:enchant ~ ~1.3 ~ 0.4 0.5 0.4 0.01 18 force @s"
+      "particle minecraft:enchant ~ ~1 ~ 0.5 0.7 0.5 0.01 24 force @s"
     ],
     "eidolon:blood": [
-      "particle minecraft:flash ~ ~1 ~ 0 0 0 0 1 force @s",
-      "particle minecraft:crit ~ ~1.2 ~ 0.5 0.6 0.5 0.02 14 force @s"
+      "particle minecraft:crit ~ ~1.1 ~ 0.4 0.5 0.4 0.01 12 force @s"
     ],
     "eidolon:sacred": [
-      "particle minecraft:firework ~ ~1 ~ 0.5 0.7 0.5 0.02 8 force @s",
-      "particle minecraft:totem_of_undying ~ ~1.3 ~ 0.3 0.4 0.3 0.01 6 force @s"
+      "particle minecraft:end_rod ~ ~1 ~ 0.4 0.6 0.4 0.01 16 force @s"
     ],
     "eidolon:harmony": [
-      "particle minecraft:note ~ ~1.2 ~ 0.6 0.4 0.6 0 8 force @s",
-      "particle minecraft:glow ~ ~1.0 ~ 0.4 0.6 0.4 0.02 10 force @s"
-    ],
-    "eidolon:warding": [
-      "particle minecraft:portal ~ ~1.1 ~ 0.6 0.6 0.6 0.02 20 force @s",
-      "particle minecraft:small_flame ~ ~1.0 ~ 0.4 0.5 0.4 0.01 12 force @s"
+      "particle minecraft:happy_villager ~ ~1 ~ 0.4 0.5 0.4 0.01 8 force @s"
     ]
   },
   "sequences": {
-    "eidolonunchained:shadow_communion": { "commands": [] },
-    "eidolonunchained:divine_communion": { "commands": [] },
-    "eidolonunchained:divine_judgment": { "commands": [] },
-    "eidolonunchained:natures_communion": { "commands": [] },
-    "eidolonunchained:gaias_wrath": { "commands": [] },
-    "eidolonunchained:forbidden_knowledge": { "commands": [] },
-    "eidolonunchained:test_blessing_request": { "commands": [] }
+    "eidolonunchained:shadow_communion": {
+      "commands": [
+        "title @s actionbar {\"text\":\"The first veil parts...\",\"color\":\"dark_purple\"}",
+        "playsound minecraft:block.enchantment_table.use voice @s ~ ~ ~ 0.7 0.8",
+        "particle minecraft:smoke ~ ~1 ~ 0.4 0.6 0.4 0.01 16 force @s"
+      ]
+    },
+    "eidolonunchained:light_communion": {
+      "commands": [
+        "title @s actionbar {\"text\":\"A warmth rises to meet you...\",\"color\":\"yellow\"}",
+        "playsound minecraft:block.beacon.activate voice @s ~ ~ ~ 0.5 1.2",
+        "particle minecraft:end_rod ~ ~1 ~ 0.5 0.7 0.5 0.01 24 force @s"
+      ]
+    }
   }
 }

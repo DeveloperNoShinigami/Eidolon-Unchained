@@ -1,0 +1,44 @@
+{
+  "name": "Modded Projectile Debug",
+  "description": "Debug chant that spawns a blank projectile with configurable impact particles.",
+  "category": "debug",
+  "codex_icon": "minecraft:ender_eye",
+  "difficulty": 1,
+  "mana_cost": 0,
+  "cooldown": 3,
+  "show_in_codex": true,
+  "requires_effigy": false,
+    "combat_role": "offense",
+    "mob_priority_weight": 8,
+  "signs": [
+    "eidolon:sacred",
+    "eidolon:harmony",
+    "eidolon:wicked"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "spawn_projectile",
+      "projectile_type": "blank",
+      "speed": 1.6,
+      "inaccuracy": 0.0,
+      "gravity": 0.0,
+      "damage": 20.0,
+      "damage_type": "magic",
+      "trail_particle": "minecraft:end_rod",
+      "trail_particle_count": 15,
+      "trail_particle_spread": 0.03,
+      "trail_particle_speed": 0.0,
+      "trail_particle_interval": 1,
+      "impact_particle": "minecraft:dragon_breath",
+      "impact_particle_mode": "ring",
+      "impact_particle_count": 30,
+      "impact_particle_spread": 0.55,
+      "impact_particle_speed": 0.03
+    },
+    {
+      "type": "send_message",
+      "message": "Modded Projectile Debug cast: blank projectile launched with magic impact damage + particles."
+    }
+  ]
+}

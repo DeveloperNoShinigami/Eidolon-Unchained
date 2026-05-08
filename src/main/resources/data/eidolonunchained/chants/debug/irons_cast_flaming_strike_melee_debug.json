@@ -1,0 +1,25 @@
+{
+  "name": "Irons Cast Flaming Strike Melee Debug",
+  "description": "Debug chant that uses Iron's Spells flaming strike as a melee-role fire cast.",
+  "category": "debug",
+  "codex_icon": "minecraft:blaze_powder",
+  "difficulty": 1,
+  "mana_cost": 0,
+  "cooldown": 3,
+  "combat_role": "melee",
+  "mob_priority_weight": 9,
+  "show_in_codex": true,
+  "requires_effigy": false,
+  "signs": [
+    "eidolon:wicked",
+    "eidolon:sacred",
+    "eidolon:harmony"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "run_command",
+      "command": "cast @s irons_spellbooks:flaming_strike 1"
+    }
+  ]
+}

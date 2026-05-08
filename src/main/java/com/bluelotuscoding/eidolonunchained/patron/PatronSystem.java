@@ -259,22 +259,16 @@ public class PatronSystem {
             if (team == null) {
                 team = scoreboard.addPlayerTeam(teamName);
 
-                // Configure team display name and color
-                team.setDisplayName(Component.literal(aiConfig.patron_config.teamName));
-
-                // Set team color
-                ChatFormatting color = parseTeamColor(aiConfig.patron_config.teamColor);
-                team.setColor(color);
-
-                // Configure friendly fire based on deity config
-                team.setAllowFriendlyFire(aiConfig.patron_config.friendlyFire);
-
-                // Enable seeing invisible teammates
-                team.setSeeFriendlyInvisibles(true);
-
                 LOGGER.info("Created deity team '{}' for {} with friendly fire: {}",
                     teamName, deityId, aiConfig.patron_config.friendlyFire);
             }
+
+            // Always refresh team properties so config changes are applied to existing deity teams.
+            team.setDisplayName(Component.literal(aiConfig.patron_config.teamName));
+            ChatFormatting color = parseTeamColor(aiConfig.patron_config.teamColor);
+            team.setColor(color);
+            team.setAllowFriendlyFire(aiConfig.patron_config.friendlyFire);
+            team.setSeeFriendlyInvisibles(true);
 
             // Remove player from any existing team first
             if (scoreboard.getPlayersTeam(player.getScoreboardName()) != null) {
@@ -284,7 +278,9 @@ public class PatronSystem {
             // Add player to deity team
             scoreboard.addPlayerToTeam(player.getScoreboardName(), team);
 
-            sendSuccess(player, "§6Joined faction: " + aiConfig.patron_config.teamName);
+            DatapackDeity deityData = DatapackDeityManager.getDeity(deityId);
+            String deityDisplayName = (deityData != null) ? deityData.getDisplayName() : deityId.getPath();
+            sendSuccess(player, "You are now a member of " + deityDisplayName + "'s faith. Welcome to the " + aiConfig.patron_config.teamName + ".");
             LOGGER.info("Player {} joined deity team {} ({})",
                 player.getName().getString(), teamName, aiConfig.patron_config.teamName);
 
@@ -306,7 +302,9 @@ public class PatronSystem {
                 String expectedTeamName = "deity_" + deityId.getPath();
                 if (currentTeam.getName().equals(expectedTeamName)) {
                     scoreboard.removePlayerFromTeam(player.getScoreboardName());
-                    sendWarning(player, "§6Left faction: " + currentTeam.getDisplayName().getString());
+                    DatapackDeity deityData = DatapackDeityManager.getDeity(deityId);
+                    String deityDisplayName = (deityData != null) ? deityData.getDisplayName() : deityId.getPath();
+                    sendWarning(player, "You have been removed from " + deityDisplayName + "'s faith.");
                     LOGGER.info("Player {} left deity team {}",
                         player.getName().getString(), currentTeam.getName());
                 }

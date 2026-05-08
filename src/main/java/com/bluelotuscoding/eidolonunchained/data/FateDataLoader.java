@@ -8,7 +8,6 @@ import com.google.gson.*;
 import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -16,6 +15,8 @@ import net.minecraftforge.fml.common.Mod;
 import org.slf4j.Logger;
 
 import java.util.*;
+import com.bluelotuscoding.eidolonunchained.util.UnifiedDynamicLoader;
+import com.bluelotuscoding.eidolonunchained.util.UnifiedDynamicSystemLoader;
 
 /**
  * Loads deity fates (tasks) from data/<namespace>/fates/<deity_id>/*.json
@@ -23,7 +24,7 @@ import java.util.*;
  * Parsed fates are appended to the corresponding AIDeityConfig.task_config.availableTasks list.
  */
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
-public class FateDataLoader extends SimpleJsonResourceReloadListener {
+public class FateDataLoader extends UnifiedDynamicSystemLoader {
 
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
@@ -36,7 +37,7 @@ public class FateDataLoader extends SimpleJsonResourceReloadListener {
     private static final Map<String, JsonObject> FATE_DATA_CACHE = new HashMap<>();
 
     public FateDataLoader() {
-        super(GSON, "fates");
+        super(GSON, "fates", "eidolonunchained");
         INSTANCE = this;
     }
 
@@ -58,55 +59,9 @@ public class FateDataLoader extends SimpleJsonResourceReloadListener {
         PENDING.clear();
         FATE_DATA_CACHE.clear();
 
-        for (Map.Entry<ResourceLocation, JsonElement> entry : map.entrySet()) {
-            ResourceLocation location = entry.getKey();
-            JsonElement root = entry.getValue();
-            try {
-                if (!root.isJsonObject()) {
-                    LOGGER.warn("Skipping non-object fate JSON: {}", location);
-                    continue;
-                }
-                JsonObject json = root.getAsJsonObject();
+        super.apply(map, rm, profiler);
 
-                // Linked deity is required
-                if (!json.has("linked_deity")) {
-                    LOGGER.warn("Fate {} missing 'linked_deity' field, skipping", location);
-                    continue;
-                }
-                ResourceLocation deityId = ResourceLocation.tryParse(json.get("linked_deity").getAsString());
-                if (deityId == null) {
-                    LOGGER.warn("Fate {} has invalid 'linked_deity' id", location);
-                    continue;
-                }
-
-                TaskSystemConfig.TaskTemplate t = parseFate(json);
-                if (t == null) {
-                    LOGGER.warn("Fate {} could not be parsed", location);
-                    continue;
-                }
-
-                // Cache the original JSON data for later lookup
-                if (t.taskId != null) {
-                    FATE_DATA_CACHE.put(t.taskId, json);
-                }
-
-                // Try to attach to existing AI config
-                AIDeityConfig cfg = AIDeityManager.getInstance().getAIConfig(deityId);
-                if (cfg != null) {
-                    cfg.task_config.availableTasks.add(t);
-                    loaded++;
-                } else {
-                    // Store pending until AI configs are linked
-                    PENDING.computeIfAbsent(deityId, k -> new ArrayList<>()).add(t);
-                    loaded++;
-                }
-            } catch (Exception e) {
-                LOGGER.error("Error loading fate from {}", entry.getKey(), e);
-                errors++;
-            }
-        }
-
-        // Attach any pending fates if configs are available now
+        // After processing entries, try to attach any pending fates
         if (!PENDING.isEmpty()) {
             int attached = 0;
             for (Map.Entry<ResourceLocation, List<TaskSystemConfig.TaskTemplate>> e : new ArrayList<>(PENDING.entrySet())) {
@@ -120,7 +75,50 @@ public class FateDataLoader extends SimpleJsonResourceReloadListener {
             if (attached > 0) LOGGER.info("Attached {} pending fates to AI configs", attached);
         }
 
-        LOGGER.info("Loaded {} fate definitions ({} errors)", loaded, errors);
+        LOGGER.info("Loaded fate definitions (pending attached: {})", PENDING.isEmpty() ? 0 : 1);
+    }
+
+    @Override
+    protected void handleEntry(ResourceLocation location, JsonObject json) {
+        try {
+            if (json == null || !json.isJsonObject()) {
+                LOGGER.warn("Skipping non-object fate JSON: {}", location);
+                return;
+            }
+
+            // Linked deity is required
+            if (!json.has("linked_deity")) {
+                LOGGER.warn("Fate {} missing 'linked_deity' field, skipping", location);
+                return;
+            }
+            ResourceLocation deityId = ResourceLocation.tryParse(json.get("linked_deity").getAsString());
+            if (deityId == null) {
+                LOGGER.warn("Fate {} has invalid 'linked_deity' id", location);
+                return;
+            }
+
+            TaskSystemConfig.TaskTemplate t = parseFate(json);
+            if (t == null) {
+                LOGGER.warn("Fate {} could not be parsed", location);
+                return;
+            }
+
+            // Cache the original JSON data for later lookup
+            if (t.taskId != null) {
+                FATE_DATA_CACHE.put(t.taskId, json);
+            }
+
+            // Try to attach to existing AI config
+            AIDeityConfig cfg = AIDeityManager.getInstance().getAIConfig(deityId);
+            if (cfg != null) {
+                cfg.task_config.availableTasks.add(t);
+            } else {
+                // Store pending until AI configs are linked
+                PENDING.computeIfAbsent(deityId, k -> new ArrayList<>()).add(t);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error loading fate from {}", location, e);
+        }
     }
 
     private TaskSystemConfig.TaskTemplate parseFate(JsonObject json) {

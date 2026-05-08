@@ -10,10 +10,13 @@ import elucent.eidolon.common.deity.Deities;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
+import com.bluelotuscoding.eidolonunchained.util.UnifiedDynamicSystemLoader;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import com.bluelotuscoding.eidolonunchained.events.AIConfigsLinkedEvent;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,108 +27,72 @@ import java.util.concurrent.ConcurrentHashMap;
  * 
  * AI Configuration JSON structure:
  * {
- *   "deity_id": "modid:deity_name",
- *   "ai_provider": "gemini",
- *   "model": "gemini-1.5-pro", 
- *   "personality": "You are...",
- *   "behavior_rules": {
- *     "reputation_thresholds": {...},
- *     "research_requirements": {...},
- *     "dynamic_responses": {...}
- *   },
- *   "prayer_configs": {...}
+ * "deity_id": "modid:deity_name",
+ * "ai_provider": "gemini",
+ * "model": "gemini-1.5-pro",
+ * "personality": "You are...",
+ * "behavior_rules": {
+ * "reputation_thresholds": {...},
+ * "research_requirements": {...},
+ * "dynamic_responses": {...}
+ * },
+ * "prayer_configs": {...}
  * }
  */
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
-public class AIDeityManager extends SimpleJsonResourceReloadListener {
+public class AIDeityManager extends UnifiedDynamicSystemLoader {
     private static final org.slf4j.Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
     private static AIDeityManager INSTANCE;
-    
+
     // Map deity IDs to their AI configurations
-    private final Map<ResourceLocation, AIDeityConfig> aiConfigs = new ConcurrentHashMap<>();
-    private final Map<ResourceLocation, JsonObject> pendingConfigs = new ConcurrentHashMap<>();
+    // CRITICAL: Static to persist across reloads - configs must survive datapack
+    // reloads
+    private static final Map<ResourceLocation, AIDeityConfig> aiConfigs = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, JsonObject> pendingConfigs = new ConcurrentHashMap<>();
     private boolean deitiesLoaded = false;
-    
+
     public AIDeityManager() {
-        super(GSON, "ai_deities");
+        super(GSON, "ai_deities", "eidolonunchained");
         INSTANCE = this;
     }
-    
+
     public static AIDeityManager getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new AIDeityManager();
         }
         return INSTANCE;
     }
-    
+
     @SubscribeEvent
     public static void onAddReloadListeners(AddReloadListenerEvent event) {
         event.addListener(getInstance());
         LOGGER.info("Registered AI Deity reload listener");
     }
-    
+
     @SubscribeEvent
     public static void onDeitiesLoaded(DatapackDeitiesLoadedEvent event) {
         getInstance().deitiesLoaded = true;
         LOGGER.info("Deities loaded, linking AI configurations...");
         getInstance().linkPendingConfigs();
     }
-    
+
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> resourceMap,
-                        ResourceManager resourceManager, ProfilerFiller profiler) {
+            ResourceManager resourceManager, ProfilerFiller profiler) {
         LOGGER.info("Loading AI deity configurations...");
-        
-        aiConfigs.clear();
+
+        // CRITICAL FIX: Don't clear configs on reload - merge instead to preserve
+        // existing configs
+        // This allows AI configs to persist and be available for patron congratulations
+        // Only clear pendingConfigs since those are temporary during loading
         pendingConfigs.clear();
-        int loaded = 0;
-        int errors = 0;
-        
-        for (Map.Entry<ResourceLocation, JsonElement> entry : resourceMap.entrySet()) {
-            ResourceLocation location = entry.getKey();
-            JsonElement element = entry.getValue();
-            
-            if (!element.isJsonObject()) {
-                LOGGER.warn("Skipping non-object JSON at {}", location);
-                continue;
-            }
-            
-            try {
-                JsonObject json = element.getAsJsonObject();
-                
-                // Get the deity this AI config applies to
-                if (!json.has("deity")) {
-                    LOGGER.error("AI config {} is missing required 'deity' field", location);
-                    continue;
-                }
-                
-                JsonElement deityIdElement = json.get("deity");
-                if (deityIdElement == null || deityIdElement.isJsonNull()) {
-                    LOGGER.error("AI config {} has null 'deity' field", location);
-                    continue;
-                }
-                
-                String deityIdString = deityIdElement.getAsString();
-                ResourceLocation deityId = ResourceLocation.tryParse(deityIdString);
-                if (deityId == null) {
-                    throw new IllegalArgumentException("Invalid deity ID: " + deityIdString);
-                }
-                
-                // Store for later linking when deities are loaded
-                pendingConfigs.put(deityId, json);
-                loaded++;
-                
-                LOGGER.debug("Queued AI config for deity: {}", deityId);
-                
-            } catch (Exception e) {
-                LOGGER.error("Failed to load AI config from {}", location, e);
-                errors++;
-            }
-        }
-        
-        LOGGER.info("Queued {} AI deity configurations with {} errors", loaded, errors);
-        
+
+        // Use base class to normalize and process entries
+        super.apply(resourceMap, resourceManager, profiler);
+
+        LOGGER.info("Queued {} AI deity configurations", pendingConfigs.size());
+
         // If deities are already loaded, link immediately
         LOGGER.info("Checking if deities are loaded: {}", deitiesLoaded);
         if (deitiesLoaded) {
@@ -135,7 +102,42 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             LOGGER.info("Deities not yet loaded, will link when DatapackDeitiesLoadedEvent fires");
         }
     }
-    
+
+    @Override
+    protected void handleEntry(ResourceLocation location, JsonObject json) {
+        if (json == null)
+            return;
+        try {
+            // Get the deity this AI config applies to
+            String deityIdString = null;
+            if (json.has("deity") && !json.get("deity").isJsonNull()) {
+                deityIdString = json.get("deity").getAsString();
+            } else if (json.has("deity_id") && !json.get("deity_id").isJsonNull()) {
+                deityIdString = json.get("deity_id").getAsString();
+            } else {
+                // Fallback: use the entry's resource id name as the deity id
+                deityIdString = location.getPath();
+                LOGGER.debug("AI config {} missing explicit deity key; using entry id '{}' as fallback", location, deityIdString);
+            }
+
+            ResourceLocation deityId = ResourceLocation.tryParse(deityIdString);
+            if (deityId == null) {
+                // If parsing failed (no namespace), default to the entry's namespace
+                try {
+                    deityId = new ResourceLocation(location.getNamespace(), deityIdString);
+                } catch (Exception ex) {
+                    LOGGER.error("Invalid deity ID in AI config {}: {}", location, deityIdString);
+                    return;
+                }
+            }
+
+            pendingConfigs.put(deityId, json);
+            LOGGER.debug("Queued AI config for deity: {} (from entry {})", deityId, location);
+        } catch (Exception e) {
+            LOGGER.error("Failed to process AI config {}", location, e);
+        }
+    }
+
     private void loadAIConfig(ResourceLocation location, JsonObject json) {
         // Get the deity this AI config applies to
         String deityIdString = json.get("deity_id").getAsString();
@@ -143,26 +145,26 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
         if (deityId == null) {
             throw new IllegalArgumentException("Invalid deity ID: " + deityIdString);
         }
-        
+
         // Verify the deity exists
         Deity deity = Deities.find(deityId);
         if (deity == null) {
             LOGGER.warn("AI config references non-existent deity: {}", deityId);
             return;
         }
-        
+
         if (!(deity instanceof DatapackDeity)) {
             LOGGER.warn("AI config can only be applied to DatapackDeity instances: {}", deityId);
             return;
         }
-        
+
         // Parse AI configuration
         AIDeityConfig config = new AIDeityConfig();
         config.deity_id = deityId;
         config.ai_provider = json.get("ai_provider").getAsString();
         config.model = json.get("model").getAsString();
         config.personality = json.get("personality").getAsString();
-        
+
         // 🔥 CRITICAL FIX: Parse mod_context_ids field from JSON
         if (json.has("mod_context_ids")) {
             JsonArray modContextArray = json.getAsJsonArray("mod_context_ids");
@@ -174,22 +176,22 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
         } else {
             LOGGER.warn("🔧 No mod_context_ids found in JSON for deity: {}", deityId);
         }
-        
+
         // Parse behavior rules
         if (json.has("behavior_rules")) {
             loadBehaviorRules(config, json.getAsJsonObject("behavior_rules"));
         }
-        
+
         // Parse prayer configurations
         if (json.has("prayer_configs")) {
             loadPrayerConfigs(config, json.getAsJsonObject("prayer_configs"));
         }
-        
+
         // Parse API settings
         if (json.has("api_settings")) {
             loadAPISettings(config, json.getAsJsonObject("api_settings"));
         }
-        
+
         // Patron config
         if (json.has("patron_config")) {
             loadPatronConfig(config, json.getAsJsonObject("patron_config"));
@@ -204,45 +206,45 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
         aiConfigs.put(deityId, config);
         LOGGER.info("Loaded AI configuration for deity: {}", deityId);
     }
-    
+
     /**
      * Links pending AI configurations to loaded deities
      */
-    private void linkPendingConfigs() {
+    public void linkPendingConfigs() {
         if (pendingConfigs.isEmpty()) {
             LOGGER.info("No pending AI configurations to link");
             return;
         }
-        
+
         LOGGER.info("Linking {} pending AI configurations to loaded deities", pendingConfigs.size());
         LOGGER.info("Available deities: {}", Deities.getDeities().stream()
-            .map(d -> d.getId()).toList());
-        
+                .map(d -> d.getId()).toList());
+
         int linked = 0;
         int failed = 0;
-        
+
         for (Map.Entry<ResourceLocation, JsonObject> entry : pendingConfigs.entrySet()) {
             ResourceLocation deityId = entry.getKey();
             JsonObject json = entry.getValue();
-            
+
             try {
                 // Verify the deity exists now that deities are loaded
                 Deity deity = Deities.find(deityId);
                 LOGGER.info("Looking for deity {} - found: {}", deityId, deity != null);
                 if (deity == null) {
-                    LOGGER.warn("AI config references non-existent deity: {} (available: {})", 
-                        deityId, Deities.getDeities().stream().map(d -> d.getId()).toList());
+                    LOGGER.warn("AI config references non-existent deity: {} (available: {})",
+                            deityId, Deities.getDeities().stream().map(d -> d.getId()).toList());
                     failed++;
                     continue;
                 }
-                
+
                 if (!(deity instanceof DatapackDeity)) {
-                    LOGGER.warn("AI config can only be applied to DatapackDeity instances: {} (type: {})", 
-                        deityId, deity.getClass().getSimpleName());
+                    LOGGER.warn("AI config can only be applied to DatapackDeity instances: {} (type: {})",
+                            deityId, deity.getClass().getSimpleName());
                     failed++;
                     continue;
                 }
-                
+
                 // Parse and store AI configuration
                 AIDeityConfig config = new AIDeityConfig();
                 config.deity_id = deityId;
@@ -250,7 +252,7 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 // Model field is optional - some providers like Player2AI don't need it
                 config.model = json.has("model") ? json.get("model").getAsString() : null;
                 config.personality = json.get("personality").getAsString();
-                
+
                 // 🔥 CRITICAL FIX: Parse mod_context_ids field from JSON
                 if (json.has("mod_context_ids")) {
                     JsonArray modContextArray = json.getAsJsonArray("mod_context_ids");
@@ -262,22 +264,22 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 } else {
                     LOGGER.warn("🔧 No mod_context_ids found in JSON for deity: {}", deityId);
                 }
-                
+
                 // Parse behavior rules
                 if (json.has("behavior_rules")) {
                     loadBehaviorRules(config, json.getAsJsonObject("behavior_rules"));
                 }
-                
+
                 // Parse prayer configurations
                 if (json.has("prayer_configs")) {
                     loadPrayerConfigs(config, json.getAsJsonObject("prayer_configs"));
                 }
-                
+
                 // Parse API settings
                 if (json.has("api_settings")) {
                     loadAPISettings(config, json.getAsJsonObject("api_settings"));
                 }
-                
+
                 // Parse patron configuration
                 if (json.has("patron_config")) {
                     loadPatronConfig(config, json.getAsJsonObject("patron_config"));
@@ -289,20 +291,28 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                         JsonArray arr = json.getAsJsonArray("natural_language_triggers");
                         config.naturalLanguageTriggers.clear();
                         for (JsonElement el : arr) {
-                            if (!el.isJsonObject()) continue;
+                            if (!el.isJsonObject())
+                                continue;
                             JsonObject t = el.getAsJsonObject();
                             AIDeityConfig.NLTrigger trig = new AIDeityConfig.NLTrigger();
-                            if (t.has("id")) trig.id = t.get("id").getAsString();
+                            if (t.has("id"))
+                                trig.id = t.get("id").getAsString();
                             if (t.has("contains")) {
-                                for (JsonElement s : t.getAsJsonArray("contains")) trig.contains.add(s.getAsString());
+                                for (JsonElement s : t.getAsJsonArray("contains"))
+                                    trig.contains.add(s.getAsString());
                             }
                             if (t.has("regex")) {
-                                for (JsonElement s : t.getAsJsonArray("regex")) trig.regex.add(s.getAsString());
+                                for (JsonElement s : t.getAsJsonArray("regex"))
+                                    trig.regex.add(s.getAsString());
                             }
-                            if (t.has("min_reputation")) trig.minReputation = t.get("min_reputation").getAsInt();
-                            if (t.has("cooldown_seconds")) trig.cooldownSeconds = t.get("cooldown_seconds").getAsLong();
-                            if (t.has("action")) trig.action = t.get("action").getAsString();
-                            if (t.has("params")) trig.params = t.getAsJsonObject("params");
+                            if (t.has("min_reputation"))
+                                trig.minReputation = t.get("min_reputation").getAsInt();
+                            if (t.has("cooldown_seconds"))
+                                trig.cooldownSeconds = t.get("cooldown_seconds").getAsLong();
+                            if (t.has("action"))
+                                trig.action = t.get("action").getAsString();
+                            if (t.has("params"))
+                                trig.params = t.getAsJsonObject("params");
                             config.naturalLanguageTriggers.add(trig);
                         }
                     } catch (Exception ex) {
@@ -324,17 +334,22 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 aiConfigs.put(deityId, config);
                 linked++;
                 LOGGER.info("Successfully linked AI configuration for deity: {}", deityId);
-                
+
             } catch (Exception e) {
                 LOGGER.error("Failed to link AI config for deity: {}", deityId, e);
                 failed++;
             }
         }
-        
+
         LOGGER.info("Successfully linked {} AI configurations, {} failed", linked, failed);
+        
+        // Fire event to notify that AI configs are ready
+        // This allows dependent systems (like prayer spells) to register safely
+        MinecraftForge.EVENT_BUS.post(new AIConfigsLinkedEvent(linked, failed));
+        
         pendingConfigs.clear();
     }
-    
+
     private void loadBehaviorRules(AIDeityConfig config, JsonObject rules) {
         // Reputation-based behavior changes
         if (rules.has("reputation_thresholds")) {
@@ -345,7 +360,7 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 config.addReputationBehavior(threshold, behavior);
             }
         }
-        
+
         // Research count requirements
         if (rules.has("research_requirements")) {
             JsonObject requirements = rules.getAsJsonObject("research_requirements");
@@ -355,7 +370,7 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 config.addResearchBehavior(researchCount, behavior);
             }
         }
-        
+
         // Dynamic personality shifts
         if (rules.has("personality_shifts")) {
             JsonObject shifts = rules.getAsJsonObject("personality_shifts");
@@ -365,7 +380,7 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 config.addPersonalityShift(condition, personality);
             }
         }
-        
+
         // Blessing behavior rules
         if (rules.has("blessings")) {
             JsonObject blessings = rules.getAsJsonObject("blessings");
@@ -375,7 +390,7 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 config.addBlessingBehavior(condition, behavior);
             }
         }
-        
+
         // Curse behavior rules
         if (rules.has("curses")) {
             JsonObject curses = rules.getAsJsonObject("curses");
@@ -385,8 +400,8 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 config.addCurseBehavior(condition, behavior);
             }
         }
-        
-        // Gift behavior rules  
+
+        // Gift behavior rules
         if (rules.has("gifts")) {
             JsonObject gifts = rules.getAsJsonObject("gifts");
             for (Map.Entry<String, JsonElement> entry : gifts.entrySet()) {
@@ -395,61 +410,85 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 config.addGiftBehavior(condition, behavior);
             }
         }
-        
-        // Time-based behaviors
+
+        // Dynamic responses block (canonical: dynamic_responses.time_of_day, .biome, .environment)
+        if (rules.has("dynamic_responses")) {
+            JsonObject dynamic = rules.getAsJsonObject("dynamic_responses");
+            if (dynamic.has("time_of_day")) {
+                JsonObject timeBehaviors = dynamic.getAsJsonObject("time_of_day");
+                for (Map.Entry<String, JsonElement> entry : timeBehaviors.entrySet()) {
+                    config.addTimeBehavior(entry.getKey(), entry.getValue().getAsString());
+                }
+            }
+            if (dynamic.has("biome")) {
+                JsonObject biomeBehaviors = dynamic.getAsJsonObject("biome");
+                for (Map.Entry<String, JsonElement> entry : biomeBehaviors.entrySet()) {
+                    config.addBiomeBehavior(entry.getKey(), entry.getValue().getAsString());
+                }
+            }
+            if (dynamic.has("environment")) {
+                JsonObject envBehaviors = dynamic.getAsJsonObject("environment");
+                for (Map.Entry<String, JsonElement> entry : envBehaviors.entrySet()) {
+                    config.addPersonalityShift("env_" + entry.getKey(), entry.getValue().getAsString());
+                }
+            }
+        }
+
+        // Legacy flat-key support (backward compat)
         if (rules.has("time_behaviors")) {
             JsonObject timeBehaviors = rules.getAsJsonObject("time_behaviors");
             for (Map.Entry<String, JsonElement> entry : timeBehaviors.entrySet()) {
-                String timeCondition = entry.getKey(); // e.g., "dawn", "midnight"
-                String behavior = entry.getValue().getAsString();
-                config.addTimeBehavior(timeCondition, behavior);
+                config.addTimeBehavior(entry.getKey(), entry.getValue().getAsString());
             }
         }
-        
-        // Biome-specific behaviors
         if (rules.has("biome_behaviors")) {
             JsonObject biomeBehaviors = rules.getAsJsonObject("biome_behaviors");
             for (Map.Entry<String, JsonElement> entry : biomeBehaviors.entrySet()) {
-                String biome = entry.getKey();
-                String behavior = entry.getValue().getAsString();
-                config.addBiomeBehavior(biome, behavior);
+                config.addBiomeBehavior(entry.getKey(), entry.getValue().getAsString());
             }
         }
     }
-    
+
     private void loadPrayerConfigs(AIDeityConfig config, JsonObject prayers) {
         for (Map.Entry<String, JsonElement> entry : prayers.entrySet()) {
             String prayerType = entry.getKey();
             JsonObject prayerConfig = entry.getValue().getAsJsonObject();
-            
+
             PrayerAIConfig prayer = new PrayerAIConfig();
             prayer.type = prayerType;
-            
+
             // All fields must be provided in JSON - no defaults
             if (prayerConfig.has("base_prompt")) {
                 prayer.base_prompt = prayerConfig.get("base_prompt").getAsString();
             } else {
-                throw new IllegalArgumentException("Prayer config " + prayerType + " missing required field: base_prompt");
+                throw new IllegalArgumentException(
+                        "Prayer config " + prayerType + " missing required field: base_prompt");
             }
-            
+
             if (prayerConfig.has("max_commands")) {
                 prayer.max_commands = prayerConfig.get("max_commands").getAsInt();
             } else {
-                throw new IllegalArgumentException("Prayer config " + prayerType + " missing required field: max_commands");
+                throw new IllegalArgumentException(
+                        "Prayer config " + prayerType + " missing required field: max_commands");
             }
-            
-            if (prayerConfig.has("cooldown_minutes")) {
-                prayer.cooldown_minutes = prayerConfig.get("cooldown_minutes").getAsInt();
+
+            if (prayerConfig.has("cooldown_seconds")) {
+                prayer.cooldown_seconds = prayerConfig.get("cooldown_seconds").getAsInt();
+            } else if (prayerConfig.has("cooldown_minutes")) {
+                // backward-compat: convert minutes to seconds
+                prayer.cooldown_seconds = prayerConfig.get("cooldown_minutes").getAsInt() * 60;
             } else {
-                throw new IllegalArgumentException("Prayer config " + prayerType + " missing required field: cooldown_minutes");
+                throw new IllegalArgumentException(
+                        "Prayer config " + prayerType + " missing required field: cooldown_seconds");
             }
-            
+
             if (prayerConfig.has("reputation_required")) {
                 prayer.reputation_required = prayerConfig.get("reputation_required").getAsInt();
             } else {
-                throw new IllegalArgumentException("Prayer config " + prayerType + " missing required field: reputation_required");
+                throw new IllegalArgumentException(
+                        "Prayer config " + prayerType + " missing required field: reputation_required");
             }
-            
+
             if (prayerConfig.has("allowed_commands")) {
                 JsonArray commands = prayerConfig.getAsJsonArray("allowed_commands");
                 prayer.allowed_commands.clear();
@@ -457,10 +496,11 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                     prayer.allowed_commands.add(cmd.getAsString());
                 }
             } else {
-                throw new IllegalArgumentException("Prayer config " + prayerType + " missing required field: allowed_commands");
+                throw new IllegalArgumentException(
+                        "Prayer config " + prayerType + " missing required field: allowed_commands");
             }
-            
-                        // Load additional prompts for AI behavior guidance
+
+            // Load additional prompts for AI behavior guidance
             if (prayerConfig.has("additional_prompts")) {
                 JsonArray prompts = prayerConfig.getAsJsonArray("additional_prompts");
                 prayer.additional_prompts.clear();
@@ -468,7 +508,7 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                     prayer.additional_prompts.add(prompt.getAsString());
                 }
             }
-            
+
             // Load reference commands for AI templates
             if (prayerConfig.has("reference_commands")) {
                 JsonArray refCmds = prayerConfig.getAsJsonArray("reference_commands");
@@ -477,28 +517,28 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                     prayer.reference_commands.add(cmd.getAsString());
                 }
             }
-            
+
             if (prayerConfig.has("auto_judge_commands")) {
                 prayer.auto_judge_commands = prayerConfig.get("auto_judge_commands").getAsBoolean();
             }
-            
+
             if (prayerConfig.has("judgment_config")) {
                 loadJudgmentConfig(prayer.judgment_config, prayerConfig.getAsJsonObject("judgment_config"));
             }
-            
+
             config.addPrayerConfig(prayer);
         }
     }
-    
+
     private void loadJudgmentConfig(JudgmentConfig judgmentConfig, JsonObject judgmentJson) {
         if (judgmentJson.has("blessing_threshold")) {
             judgmentConfig.blessingThreshold = judgmentJson.get("blessing_threshold").getAsInt();
         }
-        
+
         if (judgmentJson.has("curse_threshold")) {
             judgmentConfig.curseThreshold = judgmentJson.get("curse_threshold").getAsInt();
         }
-        
+
         if (judgmentJson.has("blessing_commands")) {
             judgmentConfig.blessingCommands.clear();
             JsonArray commands = judgmentJson.getAsJsonArray("blessing_commands");
@@ -506,7 +546,7 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 judgmentConfig.blessingCommands.add(cmd.getAsString());
             }
         }
-        
+
         if (judgmentJson.has("curse_commands")) {
             judgmentConfig.curseCommands.clear();
             JsonArray commands = judgmentJson.getAsJsonArray("curse_commands");
@@ -514,7 +554,7 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 judgmentConfig.curseCommands.add(cmd.getAsString());
             }
         }
-        
+
         if (judgmentJson.has("neutral_commands")) {
             judgmentConfig.neutralCommands.clear();
             JsonArray commands = judgmentJson.getAsJsonArray("neutral_commands");
@@ -523,16 +563,16 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             }
         }
     }
-    
+
     private void loadAPISettings(AIDeityConfig config, JsonObject apiSettings) {
         if (apiSettings.has("api_key_env")) {
             config.api_key_env = apiSettings.get("api_key_env").getAsString();
         }
-        
+
         if (apiSettings.has("model")) {
             config.api_settings.model = apiSettings.get("model").getAsString();
         }
-        
+
         if (apiSettings.has("timeout_seconds")) {
             config.timeout_seconds = apiSettings.get("timeout_seconds").getAsInt();
         }
@@ -542,15 +582,17 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             try {
                 config.temperature = apiSettings.get("temperature").getAsFloat();
                 config.api_settings.generationConfig.temperature = config.temperature;
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
         if (apiSettings.has("max_tokens")) {
             try {
                 config.max_output_tokens = apiSettings.get("max_tokens").getAsInt();
                 config.api_settings.generationConfig.max_output_tokens = config.max_output_tokens;
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
-        
+
         if (apiSettings.has("safety_settings")) {
             JsonObject safety = apiSettings.getAsJsonObject("safety_settings");
             for (Map.Entry<String, JsonElement> entry : safety.entrySet()) {
@@ -559,7 +601,7 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 config.addSafetySetting(category, threshold);
             }
         }
-        
+
         if (apiSettings.has("generation_config")) {
             JsonObject genConfig = apiSettings.getAsJsonObject("generation_config");
             if (genConfig.has("temperature")) {
@@ -578,14 +620,21 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
     }
 
     private void loadPatronConfig(AIDeityConfig config, JsonObject patron) {
-        if (patron == null) return;
+        if (patron == null)
+            return;
 
         // Basic flags
         if (patron.has("accepts_followers")) {
-            try { config.patron_config.acceptsFollowers = patron.get("accepts_followers").getAsBoolean(); } catch (Exception ignored) {}
+            try {
+                config.patron_config.acceptsFollowers = patron.get("accepts_followers").getAsBoolean();
+            } catch (Exception ignored) {
+            }
         }
         if (patron.has("requires_patron_status")) {
-            try { config.patron_config.requiresPatronStatus = patron.get("requires_patron_status").getAsString(); } catch (Exception ignored) {}
+            try {
+                config.patron_config.requiresPatronStatus = patron.get("requires_patron_status").getAsString();
+            } catch (Exception ignored) {
+            }
         }
 
         // Relationships
@@ -595,7 +644,8 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 for (JsonElement e : patron.getAsJsonArray("opposing_deities")) {
                     config.patron_config.opposingDeities.add(e.getAsString());
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
         if (patron.has("allied_deities")) {
             try {
@@ -603,7 +653,8 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 for (JsonElement e : patron.getAsJsonArray("allied_deities")) {
                     config.patron_config.alliedDeities.add(e.getAsString());
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         // Personality modifiers
@@ -614,60 +665,186 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 for (Map.Entry<String, JsonElement> e : mods.entrySet()) {
                     config.patron_config.followerPersonalityModifiers.put(e.getKey(), e.getValue().getAsString());
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
         if (patron.has("enemy_personality_modifier")) {
-            try { config.patron_config.enemyPersonalityModifier = patron.get("enemy_personality_modifier").getAsString(); } catch (Exception ignored) {}
+            try {
+                config.patron_config.enemyPersonalityModifier = patron.get("enemy_personality_modifier").getAsString();
+            } catch (Exception ignored) {
+            }
         }
         if (patron.has("neutral_personality_modifier")) {
-            try { config.patron_config.neutralPersonalityModifier = patron.get("neutral_personality_modifier").getAsString(); } catch (Exception ignored) {}
+            try {
+                config.patron_config.neutralPersonalityModifier = patron.get("neutral_personality_modifier")
+                        .getAsString();
+            } catch (Exception ignored) {
+            }
         }
         if (patron.has("no_patron_personality_modifier")) {
-            try { config.patron_config.noPatronPersonalityModifier = patron.get("no_patron_personality_modifier").getAsString(); } catch (Exception ignored) {}
+            try {
+                config.patron_config.noPatronPersonalityModifier = patron.get("no_patron_personality_modifier")
+                        .getAsString();
+            } catch (Exception ignored) {
+            }
         }
         if (patron.has("allied_personality_modifier")) {
-            try { config.patron_config.alliedPersonalityModifier = patron.get("allied_personality_modifier").getAsString(); } catch (Exception ignored) {}
+            try {
+                config.patron_config.alliedPersonalityModifier = patron.get("allied_personality_modifier")
+                        .getAsString();
+            } catch (Exception ignored) {
+            }
         }
 
-    // Conversation rules (convert JSON to Java maps/lists/primitives)
+        // Conversation rules (convert JSON to Java maps/lists/primitives)
         if (patron.has("conversation_rules")) {
             try {
                 JsonObject rules = patron.getAsJsonObject("conversation_rules");
                 config.patron_config.conversationRules.clear();
                 for (Map.Entry<String, JsonElement> e : rules.entrySet()) {
-            config.patron_config.conversationRules.put(e.getKey(), toJava(e.getValue()));
+                    config.patron_config.conversationRules.put(e.getKey(), toJava(e.getValue()));
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         // Team/faction
         if (patron.has("assignsPlayersToTeam")) {
-            try { config.patron_config.assignsPlayersToTeam = patron.get("assignsPlayersToTeam").getAsBoolean(); } catch (Exception ignored) {}
+            try {
+                config.patron_config.assignsPlayersToTeam = patron.get("assignsPlayersToTeam").getAsBoolean();
+            } catch (Exception ignored) {
+            }
         }
         if (patron.has("teamName")) {
-            try { config.patron_config.teamName = patron.get("teamName").getAsString(); } catch (Exception ignored) {}
+            try {
+                config.patron_config.teamName = patron.get("teamName").getAsString();
+            } catch (Exception ignored) {
+            }
         }
         if (patron.has("teamColor")) {
-            try { config.patron_config.teamColor = patron.get("teamColor").getAsString(); } catch (Exception ignored) {}
+            try {
+                config.patron_config.teamColor = patron.get("teamColor").getAsString();
+            } catch (Exception ignored) {
+            }
         }
         if (patron.has("friendlyFire")) {
-            try { config.patron_config.friendlyFire = patron.get("friendlyFire").getAsBoolean(); } catch (Exception ignored) {}
+            try {
+                config.patron_config.friendlyFire = patron.get("friendlyFire").getAsBoolean();
+            } catch (Exception ignored) {
+            }
         }
 
-        // Supported entities
-        if (patron.has("supportedMobIds")) {
+        // Follower mob resource defaults
+        if (patron.has("defaultFollowerMobMana")) {
             try {
-                config.patron_config.supportedMobIds.clear();
-                for (JsonElement e : patron.getAsJsonArray("supportedMobIds")) {
-                    config.patron_config.supportedMobIds.add(e.getAsString());
+                config.patron_config.defaultFollowerMobMana = Math.max(0.0d,
+                        patron.get("defaultFollowerMobMana").getAsDouble());
+            } catch (Exception ignored) {
+            }
+        } else if (patron.has("default_follower_mob_mana")) {
+            try {
+                config.patron_config.defaultFollowerMobMana = Math.max(0.0d,
+                        patron.get("default_follower_mob_mana").getAsDouble());
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (patron.has("defaultFollowerMobMagicPower")) {
+            try {
+                config.patron_config.defaultFollowerMobMagicPower = patron.get("defaultFollowerMobMagicPower")
+                        .getAsDouble();
+            } catch (Exception ignored) {
+            }
+        } else if (patron.has("default_follower_mob_magic_power")) {
+            try {
+                config.patron_config.defaultFollowerMobMagicPower = patron.get("default_follower_mob_magic_power")
+                        .getAsDouble();
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (patron.has("followerMobManaByStage")) {
+            try {
+                config.patron_config.followerMobManaByStage.clear();
+                JsonObject manaByStage = patron.getAsJsonObject("followerMobManaByStage");
+                for (Map.Entry<String, JsonElement> e : manaByStage.entrySet()) {
+                    config.patron_config.followerMobManaByStage.put(e.getKey(), Math.max(0.0d, e.getValue().getAsDouble()));
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
+        } else if (patron.has("follower_mob_mana_by_stage")) {
+            try {
+                config.patron_config.followerMobManaByStage.clear();
+                JsonObject manaByStage = patron.getAsJsonObject("follower_mob_mana_by_stage");
+                for (Map.Entry<String, JsonElement> e : manaByStage.entrySet()) {
+                    config.patron_config.followerMobManaByStage.put(e.getKey(), Math.max(0.0d, e.getValue().getAsDouble()));
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (patron.has("followerMobMagicPowerByStage")) {
+            try {
+                config.patron_config.followerMobMagicPowerByStage.clear();
+                JsonObject powerByStage = patron.getAsJsonObject("followerMobMagicPowerByStage");
+                for (Map.Entry<String, JsonElement> e : powerByStage.entrySet()) {
+                    config.patron_config.followerMobMagicPowerByStage.put(e.getKey(), e.getValue().getAsDouble());
+                }
+            } catch (Exception ignored) {
+            }
+        } else if (patron.has("follower_mob_magic_power_by_stage")) {
+            try {
+                config.patron_config.followerMobMagicPowerByStage.clear();
+                JsonObject powerByStage = patron.getAsJsonObject("follower_mob_magic_power_by_stage");
+                for (Map.Entry<String, JsonElement> e : powerByStage.entrySet()) {
+                    config.patron_config.followerMobMagicPowerByStage.put(e.getKey(), e.getValue().getAsDouble());
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        // Follower entities for enthrall/control
+        if (patron.has("followerMobIds")) {
+            try {
+                config.patron_config.followerMobIds.clear();
+                for (JsonElement e : patron.getAsJsonArray("followerMobIds")) {
+                    config.patron_config.followerMobIds.add(e.getAsString());
+                }
+            } catch (Exception ignored) {
+            }
+        } else if (patron.has("supportedMobIds")) { // legacy alias
+            try {
+                config.patron_config.followerMobIds.clear();
+                for (JsonElement e : patron.getAsJsonArray("supportedMobIds")) {
+                    config.patron_config.followerMobIds.add(e.getAsString());
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        // Mob enthrall gate — minimum title required to enthrall supported mobs
+        if (patron.has("stageRequiredForEntrall")) {
+            try {
+                config.patron_config.stageRequiredForEntrall = patron.get("stageRequiredForEntrall").getAsString();
+            } catch (Exception ignored) {
+            }
+        } else if (patron.has("stageRequiredForEnthrall")) { // corrected spelling alias
+            try {
+                config.patron_config.stageRequiredForEntrall = patron.get("stageRequiredForEnthrall").getAsString();
+            } catch (Exception ignored) {
+            }
+        } else if (patron.has("tamingRequiredStage")) { // legacy alias
+            try {
+                config.patron_config.stageRequiredForEntrall = patron.get("tamingRequiredStage").getAsString();
+            } catch (Exception ignored) {
+            }
         }
     }
 
     // Recursively convert JsonElement to Java types expected by downstream code
     private Object toJava(JsonElement el) {
-        if (el == null || el.isJsonNull()) return null;
+        if (el == null || el.isJsonNull())
+            return null;
         if (el.isJsonObject()) {
             Map<String, Object> map = new java.util.HashMap<>();
             for (Map.Entry<String, JsonElement> e : el.getAsJsonObject().entrySet()) {
@@ -677,16 +854,22 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
         }
         if (el.isJsonArray()) {
             java.util.List<Object> list = new java.util.ArrayList<>();
-            for (JsonElement e : el.getAsJsonArray()) list.add(toJava(e));
+            for (JsonElement e : el.getAsJsonArray())
+                list.add(toJava(e));
             return list;
         }
         if (el.isJsonPrimitive()) {
             JsonPrimitive p = el.getAsJsonPrimitive();
-            if (p.isBoolean()) return p.getAsBoolean();
+            if (p.isBoolean())
+                return p.getAsBoolean();
             if (p.isNumber()) {
                 double d = p.getAsDouble();
                 if (Math.floor(d) == d) {
-                    try { return p.getAsInt(); } catch (Exception ex) { return (long) d; }
+                    try {
+                        return p.getAsInt();
+                    } catch (Exception ex) {
+                        return (long) d;
+                    }
                 }
                 return d;
             }
@@ -694,29 +877,41 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
         }
         return null;
     }
-    
+
     private void loadTaskConfig(AIDeityConfig config, JsonObject taskConfig) {
         // Clear hardcoded tasks - everything should come from JSON
         config.task_config.availableTasks.clear();
-        
+
         if (taskConfig.has("enabled")) {
             config.task_config.enabled = taskConfig.get("enabled").getAsBoolean();
         }
-        
+
         if (taskConfig.has("max_active_tasks")) {
             config.task_config.maxActiveTasks = taskConfig.get("max_active_tasks").getAsInt();
         }
-        
+
         if (taskConfig.has("task_assignment_behavior")) {
             JsonObject behavior = taskConfig.getAsJsonObject("task_assignment_behavior");
             if (behavior.has("auto_assign_probability")) {
-                try { config.task_config.taskAssignmentBehavior.autoAssignProbability = behavior.get("auto_assign_probability").getAsFloat(); } catch (Exception ignored) {}
+                try {
+                    config.task_config.taskAssignmentBehavior.autoAssignProbability = behavior
+                            .get("auto_assign_probability").getAsFloat();
+                } catch (Exception ignored) {
+                }
             }
             if (behavior.has("min_reputation_for_auto_assign")) {
-                try { config.task_config.taskAssignmentBehavior.minReputationForAutoAssign = behavior.get("min_reputation_for_auto_assign").getAsInt(); } catch (Exception ignored) {}
+                try {
+                    config.task_config.taskAssignmentBehavior.minReputationForAutoAssign = behavior
+                            .get("min_reputation_for_auto_assign").getAsInt();
+                } catch (Exception ignored) {
+                }
             }
             if (behavior.has("cooldown_between_assignments_hours")) {
-                try { config.task_config.taskAssignmentBehavior.cooldownBetweenAssignmentsHours = behavior.get("cooldown_between_assignments_hours").getAsLong(); } catch (Exception ignored) {}
+                try {
+                    config.task_config.taskAssignmentBehavior.cooldownBetweenAssignmentsHours = behavior
+                            .get("cooldown_between_assignments_hours").getAsLong();
+                } catch (Exception ignored) {
+                }
             }
         }
 
@@ -725,7 +920,7 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             for (JsonElement taskElement : tasks) {
                 JsonObject taskJson = taskElement.getAsJsonObject();
                 TaskSystemConfig.TaskTemplate task = new TaskSystemConfig.TaskTemplate();
-                
+
                 // Basic task fields
                 if (taskJson.has("task_id")) {
                     task.taskId = taskJson.get("task_id").getAsString();
@@ -739,7 +934,7 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 if (taskJson.has("progression_tier")) {
                     task.progressionTier = taskJson.get("progression_tier").getAsString();
                 }
-                
+
                 // Requirements - convert JSON to simple string format for now
                 if (taskJson.has("requirements")) {
                     JsonArray requirements = taskJson.getAsJsonArray("requirements");
@@ -750,7 +945,7 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                         task.requirements.add(reqType + ":" + reqObj.toString());
                     }
                 }
-                
+
                 // Rewards
                 if (taskJson.has("rewards")) {
                     JsonObject rewards = taskJson.getAsJsonObject("rewards");
@@ -767,7 +962,7 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                         task.progressionUnlock = rewards.get("progression_unlock").getAsString();
                     }
                 }
-                
+
                 // Timing and repetition
                 if (taskJson.has("cooldown_hours")) {
                     task.cooldownHours = taskJson.get("cooldown_hours").getAsLong();
@@ -775,12 +970,12 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 if (taskJson.has("repeatable")) {
                     task.repeatable = taskJson.get("repeatable").getAsBoolean();
                 }
-                
+
                 // AI assignment context (store as JSON string for complex handling)
                 if (taskJson.has("ai_assignment_context")) {
                     task.aiAssignmentContext = taskJson.getAsJsonObject("ai_assignment_context").toString();
                 }
-                
+
                 config.task_config.availableTasks.add(task);
             }
         }
@@ -791,11 +986,35 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
      */
     private void loadTTSConfig(AIDeityConfig config, JsonObject ttsConfig) {
         LOGGER.info("🎵 Loading TTS config for deity: {}", config.deity_id);
-        
+
+        // Check if GSON already loaded a TTSConfig with a provider set
+        boolean hasExistingProvider = config.tts_config != null && config.tts_config.tts_provider != null;
+
         if (config.tts_config == null) {
+            LOGGER.info("🎵 Creating new TTSConfig (was null)");
             config.tts_config = new AIDeityConfig.TTSConfig();
+        } else if (hasExistingProvider) {
+            LOGGER.info("🎵 Preserving existing TTSConfig with provider: {}", config.tts_config.tts_provider);
+            // Don't overwrite existing GSON-loaded configuration, just merge additional
+            // data
         }
-        
+
+        // Provider & model (only set if not already loaded by GSON)
+        if (ttsConfig.has("tts_provider") && !ttsConfig.get("tts_provider").isJsonNull()) {
+            String newProvider = ttsConfig.get("tts_provider").getAsString();
+            if (!hasExistingProvider || config.tts_config.tts_provider == null) {
+                config.tts_config.tts_provider = newProvider;
+                LOGGER.info("🎵 Set tts_provider: {}", config.tts_config.tts_provider);
+            } else {
+                LOGGER.info("🎵 Keeping existing tts_provider: {} (not overwriting with: {})",
+                        config.tts_config.tts_provider, newProvider);
+            }
+        }
+        if (ttsConfig.has("model") && !ttsConfig.get("model").isJsonNull()) {
+            config.tts_config.model = ttsConfig.get("model").getAsString();
+            LOGGER.info("🎵 Set tts model: {}", config.tts_config.model);
+        }
+
         // Load reputation-based voices
         if (ttsConfig.has("reputation_voices")) {
             JsonObject repVoices = ttsConfig.getAsJsonObject("reputation_voices");
@@ -806,7 +1025,7 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 LOGGER.info("🎵 Added reputation voice: {} -> {}", repLevel, voiceName);
             }
         }
-        
+
         // Load biome-based voices
         if (ttsConfig.has("biome_voices")) {
             JsonObject biomeVoices = ttsConfig.getAsJsonObject("biome_voices");
@@ -817,8 +1036,8 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 LOGGER.info("🎵 Added biome voice: {} -> {}", biome, voiceName);
             }
         }
-        
-        // Load time-based voices  
+
+        // Load time-based voices
         if (ttsConfig.has("time_voices")) {
             JsonObject timeVoices = ttsConfig.getAsJsonObject("time_voices");
             for (Map.Entry<String, JsonElement> entry : timeVoices.entrySet()) {
@@ -828,17 +1047,92 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
                 LOGGER.info("🎵 Added time voice: {} -> {}", timeOfDay, voiceName);
             }
         }
-        
+
         // Load default voice
         if (ttsConfig.has("voice_id")) {
             config.tts_config.voice_id = ttsConfig.get("voice_id").getAsString();
             LOGGER.info("🎵 Set voice_id: {}", config.tts_config.voice_id);
         }
-        
-        LOGGER.info("🎵 TTS config loaded - reputation_voices: {}, biome_voices: {}, time_voices: {}", 
-            config.tts_config.reputation_voices.size(),
-            config.tts_config.biome_voices.size(), 
-            config.tts_config.time_voices.size());
+        if (ttsConfig.has("backup_voice") && !ttsConfig.get("backup_voice").isJsonNull()) {
+            config.tts_config.backup_voice = ttsConfig.get("backup_voice").getAsString();
+            LOGGER.info("🎵 Set backup_voice: {}", config.tts_config.backup_voice);
+        }
+
+        // Voice characteristics
+        if (ttsConfig.has("pitch") && !ttsConfig.get("pitch").isJsonNull()) {
+            config.tts_config.pitch = ttsConfig.get("pitch").getAsFloat();
+        }
+        if (ttsConfig.has("speed") && !ttsConfig.get("speed").isJsonNull()) {
+            config.tts_config.speed = ttsConfig.get("speed").getAsFloat();
+        }
+        if (ttsConfig.has("volume") && !ttsConfig.get("volume").isJsonNull()) {
+            config.tts_config.volume = ttsConfig.get("volume").getAsFloat();
+        }
+        if (ttsConfig.has("emotion") && !ttsConfig.get("emotion").isJsonNull()) {
+            config.tts_config.emotion = ttsConfig.get("emotion").getAsString();
+        }
+        if (ttsConfig.has("accent") && !ttsConfig.get("accent").isJsonNull()) {
+            config.tts_config.accent = ttsConfig.get("accent").getAsString();
+        }
+        if (ttsConfig.has("emphasis_level") && !ttsConfig.get("emphasis_level").isJsonNull()) {
+            config.tts_config.emphasis_level = ttsConfig.get("emphasis_level").getAsInt();
+        }
+
+        // Behavior flags
+        if (ttsConfig.has("enabled") && !ttsConfig.get("enabled").isJsonNull()) {
+            config.tts_config.enabled = ttsConfig.get("enabled").getAsBoolean();
+        }
+        if (ttsConfig.has("allow_player_override") && !ttsConfig.get("allow_player_override").isJsonNull()) {
+            config.tts_config.allow_player_override = ttsConfig.get("allow_player_override").getAsBoolean();
+        }
+        if (ttsConfig.has("funding_preference") && !ttsConfig.get("funding_preference").isJsonNull()) {
+            config.tts_config.funding_preference = ttsConfig.get("funding_preference").getAsString();
+        }
+
+        // Optional provider expectations
+        if (ttsConfig.has("audio_format") && !ttsConfig.get("audio_format").isJsonNull()) {
+            config.tts_config.audio_format = ttsConfig.get("audio_format").getAsString();
+        }
+        if (ttsConfig.has("voice_gender") && !ttsConfig.get("voice_gender").isJsonNull()) {
+            config.tts_config.voice_gender = ttsConfig.get("voice_gender").getAsString();
+        }
+        if (ttsConfig.has("voice_language") && !ttsConfig.get("voice_language").isJsonNull()) {
+            config.tts_config.voice_language = ttsConfig.get("voice_language").getAsString();
+        }
+
+        // Voice aliases
+        if (ttsConfig.has("voice_aliases") && ttsConfig.get("voice_aliases").isJsonObject()) {
+            JsonObject aliases = ttsConfig.getAsJsonObject("voice_aliases");
+            for (Map.Entry<String, JsonElement> e : aliases.entrySet()) {
+                config.tts_config.voice_aliases.put(e.getKey(), e.getValue().getAsString());
+            }
+            LOGGER.info("🎵 Loaded {} voice aliases", config.tts_config.voice_aliases.size());
+        }
+
+        // Advanced params (provider-specific), store as plain key/values
+        if (ttsConfig.has("advanced_params") && ttsConfig.get("advanced_params").isJsonObject()) {
+            JsonObject adv = ttsConfig.getAsJsonObject("advanced_params");
+            for (Map.Entry<String, JsonElement> e : adv.entrySet()) {
+                JsonElement val = e.getValue();
+                if (val.isJsonPrimitive()) {
+                    if (val.getAsJsonPrimitive().isBoolean())
+                        config.tts_config.advanced_params.put(e.getKey(), val.getAsBoolean());
+                    else if (val.getAsJsonPrimitive().isNumber())
+                        config.tts_config.advanced_params.put(e.getKey(), val.getAsNumber());
+                    else
+                        config.tts_config.advanced_params.put(e.getKey(), val.getAsString());
+                } else {
+                    // Store complex objects as JSON string for now
+                    config.tts_config.advanced_params.put(e.getKey(), val.toString());
+                }
+            }
+            LOGGER.info("🎵 Loaded advanced_params ({} keys)", config.tts_config.advanced_params.size());
+        }
+
+        LOGGER.info("🎵 TTS config loaded - reputation_voices: {}, biome_voices: {}, time_voices: {}",
+                config.tts_config.reputation_voices.size(),
+                config.tts_config.biome_voices.size(),
+                config.tts_config.time_voices.size());
     }
 
     /**
@@ -847,37 +1141,67 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
     public AIDeityConfig getAIConfig(ResourceLocation deityId) {
         return aiConfigs.get(deityId);
     }
-    
+
     /**
      * Check if a deity has AI enabled
      */
     public boolean hasAI(ResourceLocation deityId) {
         return aiConfigs.containsKey(deityId);
     }
-    
+
     /**
      * Get all AI-enabled deity IDs
      */
     public java.util.Set<ResourceLocation> getAIEnabledDeities() {
         return aiConfigs.keySet();
     }
-    
+
     /**
      * Get all AI configurations
      */
     public java.util.Collection<AIDeityConfig> getAllConfigs() {
         return aiConfigs.values();
     }
-    
+
     /**
      * Performance optimization: Check if ANY deity has ritual integration
      * Used to avoid expensive iteration when no ritual integration exists
      */
     public boolean hasAnyRitualIntegration() {
         return aiConfigs.values().stream()
-            .anyMatch(config -> config.ritual_integration != null && !config.ritual_integration.isEmpty());
+                .anyMatch(config -> config.ritual_integration != null && !config.ritual_integration.isEmpty());
     }
-    
+
+    /**
+     * Parse and register an AI config from raw JSON received via server sync packet.
+     * Performs the full parse (including tts_config) so synced configs are equivalent
+     * to configs loaded from disk on the client.
+     */
+    public void handleSyncedAIConfig(ResourceLocation deityId, com.google.gson.JsonObject json) {
+        try {
+            AIDeityConfig config = new AIDeityConfig();
+            config.deity_id = deityId;
+            if (json.has("ai_provider")) config.ai_provider = json.get("ai_provider").getAsString();
+            if (json.has("model")) config.model = json.has("model") ? json.get("model").getAsString() : null;
+            if (json.has("personality")) config.personality = json.get("personality").getAsString();
+            if (json.has("mod_context_ids")) {
+                com.google.gson.JsonArray arr = json.getAsJsonArray("mod_context_ids");
+                config.mod_context_ids.clear();
+                for (com.google.gson.JsonElement e : arr) config.mod_context_ids.add(e.getAsString());
+            }
+            if (json.has("behavior_rules")) loadBehaviorRules(config, json.getAsJsonObject("behavior_rules"));
+            if (json.has("prayer_configs")) loadPrayerConfigs(config, json.getAsJsonObject("prayer_configs"));
+            if (json.has("api_settings")) loadAPISettings(config, json.getAsJsonObject("api_settings"));
+            if (json.has("patron_config")) loadPatronConfig(config, json.getAsJsonObject("patron_config"));
+            if (json.has("tts_config")) loadTTSConfig(config, json.getAsJsonObject("tts_config"));
+            if (json.has("task_config")) loadTaskConfig(config, json.getAsJsonObject("task_config"));
+            aiConfigs.put(deityId, config);
+            LOGGER.debug("Registered synced AI config for deity: {}", deityId);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to parse synced AI config for {}: {}", deityId, e.getMessage());
+        }
+    }
+
     /**
      * Register an AI configuration programmatically.
      * Used by DatapackDeityManager for consolidated deity files.
@@ -887,61 +1211,80 @@ public class AIDeityManager extends SimpleJsonResourceReloadListener {
             LOGGER.warn("Attempted to register null AI config for deity: {}", deityId);
             return;
         }
-        
+
         // Ensure deity ID is set correctly
         config.deity_id = deityId;
-        
+
         // Store the configuration
         aiConfigs.put(deityId, config);
-        
+
         LOGGER.debug("Registered AI configuration for deity: {}", deityId);
     }
-    
+
+    /**
+     * Clear all AI deity configurations (used during datapack reload)
+     */
+    public void clearAllConfigs() {
+        LOGGER.info("Clearing all AI deity configurations for reload");
+        aiConfigs.clear();
+        pendingConfigs.clear();
+    }
+
+    /**
+     * Prepare for deity reload without clearing already-linked AI configurations.
+     * This prevents race conditions where deity reloads clear server-side
+     * AI configs before pending configs are re-linked.
+     */
+    public void prepareForDeityReload() {
+        LOGGER.info("Preparing AI deity manager for deity reload (clearing pending configs only)");
+        pendingConfigs.clear();
+    }
+
     /**
      * Generate a default prompt for a prayer type
      */
     private String generateDefaultPrompt(String prayerType) {
         return switch (prayerType.toLowerCase()) {
-            case "conversation" -> "Player {player} approaches your sacred altar and speaks with you. They have {reputation} reputation with you. Respond as the deity in character, considering their standing and the current context.";
-            case "blessing" -> "Player {player} requests your blessing. Their reputation with you is {reputation}. Consider their worthiness and respond with appropriate divine favor or guidance.";
-            case "knowledge" -> "Player {player} seeks wisdom and knowledge from you. They have {reputation} reputation. Share divine insights appropriate to their standing with you.";
-            case "guidance" -> "Player {player} asks for your guidance on their mystical journey. Their reputation: {reputation}. Offer wisdom befitting your divine nature.";
-            case "ritual", "nature_ritual" -> "Player {player} wishes to perform a sacred ritual. Their standing with you: {reputation}. Guide them through an appropriate ceremonial experience.";
-            case "balance" -> "Player {player} seeks to restore balance in their life or surroundings. Reputation: {reputation}. Help them achieve harmony through your divine power.";
-            default -> "Player {player} prays to you seeking {prayer_type}. Their reputation with you is {reputation}. Respond as befits your divine nature and their standing.";
+            case "conversation" ->
+                "Player {player} approaches your sacred altar and speaks with you. They have {reputation} reputation with you. Respond as the deity in character, considering their standing and the current context.";
+            case "blessing" ->
+                "Player {player} requests your blessing. Their reputation with you is {reputation}. Consider their worthiness and respond with appropriate divine favor or guidance.";
+            case "knowledge" ->
+                "Player {player} seeks wisdom and knowledge from you. They have {reputation} reputation. Share divine insights appropriate to their standing with you.";
+            case "guidance" ->
+                "Player {player} asks for your guidance on their mystical journey. Their reputation: {reputation}. Offer wisdom befitting your divine nature.";
+            case "ritual", "nature_ritual" ->
+                "Player {player} wishes to perform a sacred ritual. Their standing with you: {reputation}. Guide them through an appropriate ceremonial experience.";
+            case "balance" ->
+                "Player {player} seeks to restore balance in their life or surroundings. Reputation: {reputation}. Help them achieve harmony through your divine power.";
+            default ->
+                "Player {player} prays to you seeking {prayer_type}. Their reputation with you is {reputation}. Respond as befits your divine nature and their standing.";
         };
     }
-    
+
     // CLIENT-SIDE METHODS FOR MULTIPLAYER SYNC
-    
+
     /**
      * Clears client-side AI deity data for multiplayer sync
      */
     public static void clearClientConfigs() {
-        if (INSTANCE != null) {
-            INSTANCE.aiConfigs.clear();
-            INSTANCE.pendingConfigs.clear();
-            LOGGER.info("Cleared client-side AI deity data for sync");
-        }
+        aiConfigs.clear();
+        pendingConfigs.clear();
+        LOGGER.info("Cleared client-side AI deity data for sync");
     }
-    
+
     /**
      * Adds an AI deity config to client-side storage during multiplayer sync
      */
     public static void addClientConfig(ResourceLocation id, AIDeityConfig config) {
-        if (INSTANCE != null) {
-            INSTANCE.aiConfigs.put(id, config);
-            LOGGER.debug("Added client AI deity config: {}", id);
-        }
+        aiConfigs.put(id, config);
+        LOGGER.debug("Added client AI deity config: {}", id);
     }
-    
+
     /**
      * Gets all client-safe AI configs (safe for client-side use)
      */
     public static java.util.Collection<AIDeityConfig> getAllClientSafeConfigs() {
-        if (INSTANCE != null) {
-            return new java.util.ArrayList<>(INSTANCE.aiConfigs.values());
-        }
-        return new java.util.ArrayList<>();
+        return new java.util.ArrayList<>(aiConfigs.values());
     }
 }

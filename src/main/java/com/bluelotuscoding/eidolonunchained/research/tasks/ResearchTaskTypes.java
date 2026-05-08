@@ -66,7 +66,8 @@ public class ResearchTaskTypes {
         CRAFT_ITEMS = register(new ResourceLocation(EidolonUnchained.MODID, "craft_items"), json -> {
             ResourceLocation item = ResourceLocation.tryParse(json.get("item").getAsString());
             int count = json.has("count") ? json.get("count").getAsInt() : 1;
-            return new CraftItemsTask(item, count);
+            String station = json.has("station") ? json.get("station").getAsString() : "crafting_table";
+            return new CraftItemsTask(item, count, station);
         });
         USE_RITUAL = register(new ResourceLocation(EidolonUnchained.MODID, "use_ritual"), json -> {
             ResourceLocation ritual = ResourceLocation.tryParse(json.get("ritual").getAsString());

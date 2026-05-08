@@ -102,6 +102,14 @@ public class EidolonUnchainedNetworking {
                 ActiveChantSignPacket::decode,
                 ActiveChantSignPacket::handle
             );
+
+            INSTANCE.registerMessage(
+                ++packetId,
+                RitualTaskProgressPacket.class,
+                RitualTaskProgressPacket::encode,
+                RitualTaskProgressPacket::decode,
+                RitualTaskProgressPacket::handle
+            );
             
             // Effigy effects now handled by EffigyEffectsManager (no packets needed)
 
@@ -112,6 +120,30 @@ public class EidolonUnchainedNetworking {
                 TTSAudioPacket::encode,
                 TTSAudioPacket::new,
                 TTSAudioPacket::handle
+            );
+
+            INSTANCE.registerMessage(
+                ++packetId,
+                AttributeSignStatusIconPacket.class,
+                AttributeSignStatusIconPacket::encode,
+                AttributeSignStatusIconPacket::decode,
+                AttributeSignStatusIconPacket::handle
+            );
+
+            INSTANCE.registerMessage(
+                ++packetId,
+                MobChantBuildStatePacket.class,
+                MobChantBuildStatePacket::encode,
+                MobChantBuildStatePacket::decode,
+                MobChantBuildStatePacket::handle
+            );
+
+            INSTANCE.registerMessage(
+                ++packetId,
+                DeityDamageNumberPacket.class,
+                DeityDamageNumberPacket::encode,
+                DeityDamageNumberPacket::decode,
+                DeityDamageNumberPacket::handle
             );
 
             // Add more packets here as needed

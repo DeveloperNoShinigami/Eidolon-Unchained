@@ -157,31 +157,19 @@ public class TTSAudioPacket {
      */
     private void playTTSFromData(byte[] data, float volume, float speed) {
         LOGGER.info("Playing TTS audio from data: {} bytes (volume: {}, speed: {})", data.length, volume, speed);
-        
+
         CompletableFuture.runAsync(() -> {
             try {
-                // Method 1: Try Simple Voice Chat spatial audio (if available)
-                if (trySimpleVoiceChatPlayback(null, data, volume, speed)) {
-                    LOGGER.debug("TTS audio played via Simple Voice Chat");
+                // Java Sound API — handles MP3 (via SVC's decoder) and PCM/WAV
+                if (playWithJavaSound(data, volume, speed)) {
+                    LOGGER.debug("TTS audio played via Java Sound API");
                     return;
                 }
-                
-                // Method 2: Try Minecraft's sound system with temporary file
-                if (tryMinecraftSoundSystem(null, data, volume, speed)) {
-                    LOGGER.debug("TTS audio played via Minecraft sound system");
-                    return;
-                }
-                
-                // Method 3: Try direct OpenAL playback (if supported format)
-                if (tryOpenALDirectPlayback(data, volume, speed)) {
-                    LOGGER.debug("TTS audio played via OpenAL");
-                    return;
-                }
-                
+
                 // All methods failed - show notification
                 showTTSNotification("Could not play deity voice - unsupported audio format");
                 LOGGER.warn("All TTS playback methods failed for audio data ({} bytes)", data.length);
-                
+
             } catch (Exception e) {
                 LOGGER.error("Error playing TTS audio from data: {}", e.getMessage());
                 showTTSNotification("Audio playback error");

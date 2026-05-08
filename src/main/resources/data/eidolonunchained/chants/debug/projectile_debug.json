@@ -1,0 +1,41 @@
+{
+  "name": "Projectile Debug",
+  "description": "Debug chant for testing spawn_projectile with configurable projectile entities.",
+  "category": "debug",
+  "codex_icon": "minecraft:bow",
+  "difficulty": 1,
+  "mana_cost": 10,
+  "cooldown": 5,
+  "show_in_codex": true,
+  "requires_effigy": false,
+  "signs": [
+    "eidolon:harmony",
+    "eidolon:wicked",
+    "eidolon:sacred"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "spawn_projectile",
+      "projectile_type": "blank",
+      "speed": 1.8,
+      "inaccuracy": 0.0,
+      "gravity": 0.0,
+      "damage": 6.0,
+      "damage_type": "magic",
+      "trail_particle": "minecraft:end_rod",
+      "trail_particle_count": 10,
+      "trail_particle_spread": 0.05,
+      "trail_particle_speed": 0.0,
+      "impact_particle": "minecraft:enchant",
+      "impact_particle_mode": "burst",
+      "impact_particle_count": 20,
+      "impact_particle_spread": 0.3,
+      "impact_particle_speed": 0.02
+    },
+    {
+      "type": "send_message",
+      "message": "Projectile Debug cast: blank projectile launched with magic impact damage."
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "Irons Cast Fireball Debug",
+  "description": "Debug chant that triggers Iron's Spells fireball via command (uses normal cast time).",
+  "category": "debug",
+  "codex_icon": "minecraft:fire_charge",
+  "difficulty": 1,
+  "mana_cost": 0,
+  "cooldown": 2,
+  "show_in_codex": true,
+  "requires_effigy": false,
+  "signs": [
+    "eidolon:sacred",
+    "eidolon:wicked",
+    "eidolon:harmony"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "run_command",
+      "command": "cast @s irons_spellbooks:fireball 1"
+    }
+  ]
+}

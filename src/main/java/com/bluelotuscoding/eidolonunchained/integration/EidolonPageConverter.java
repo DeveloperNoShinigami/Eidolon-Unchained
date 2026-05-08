@@ -16,7 +16,7 @@ import elucent.eidolon.codex.SmeltingPage;
 import elucent.eidolon.codex.SignPage;
 import elucent.eidolon.codex.ChantPage;
 import elucent.eidolon.codex.RuneDescPage;
-import elucent.eidolon.codex.RuneIndexPage;
+// RuneDescPage removed in newer Eidolon — replaced by RuneDescPage
 import elucent.eidolon.codex.SignIndexPage;
 import elucent.eidolon.codex.IndexPage;
 import elucent.eidolon.codex.TitledIndexPage;
@@ -132,8 +132,8 @@ public class EidolonPageConverter {
         loadTranslationsFromFile();
         LOGGER.info("Translation cache loaded with {} entries", cachedTranslations.size());
         
-        // Log some sample translations for debugging
-        String testKey = "eidolonunchained.codex.entry.text_example.title";
+        // Log a live translation key from the active rebuilt datapack slice.
+        String testKey = "eidolonunchained.codex.entry.shadow_communion_guide.title";
         String testTranslation = getDirectTranslation(testKey);
         LOGGER.info("Test translation for '{}': '{}'", testKey, testTranslation);
     }
@@ -187,7 +187,7 @@ public class EidolonPageConverter {
             case "rune_desc":
                 return createRuneDescPage(pageJson);
             case "rune_index":
-                return createRuneIndexPage(pageJson);
+                return createRuneDescPage(pageJson);
             case "sign_index":
                 return createSignIndexPage(pageJson);
             case "index":
@@ -226,17 +226,23 @@ public class EidolonPageConverter {
 
     /**
      * Create a TitlePage - takes just a String parameter like TextPage but renders differently
-     * IMPORTANT: TitlePage expects raw translation keys, NOT translated text!
+     * IMPORTANT: TitlePage expects BASE translation keys, NOT keys with .title suffix!
      * TitlePage will automatically append ".title" to get the title and use base key for content
      */
     private static Page createTitlePage(JsonObject pageJson) {
         String text = pageJson.has("text") ? pageJson.get("text").getAsString() : "";
 
-        // For TitlePage, we pass the RAW key, not translated text
+        // CRITICAL FIX: Remove .title suffix if present, since TitlePage auto-appends it
+        if (text.endsWith(".title")) {
+            text = text.substring(0, text.length() - 6); // Remove ".title"
+            LOGGER.debug("TitlePage: Removed .title suffix, using base key: {}", text);
+        }
+
+        // For TitlePage, we pass the BASE key, not one with .title
         // TitlePage will handle translation internally:
         // - Uses base key for content
         // - Automatically appends ".title" for title
-        LOGGER.debug("TitlePage using raw key: {}", text);
+        LOGGER.debug("TitlePage using base key: {}", text);
         return new TitlePage(text);
     }
 
@@ -247,21 +253,7 @@ public class EidolonPageConverter {
         // If text looks like a translation key (contains dots and starts with mod name)
         if (text.contains(".") && (text.startsWith("eidolonunchained.") || text.startsWith("eidolon."))) {
             LOGGER.info("[DEBUG] Requested translation for key: {}", text);
-            try {
-                String result = Component.translatable(text).getString();
-                LOGGER.info("[DEBUG] Component translation attempt: '{}' -> '{}'", text, result);
-                if (!result.equals(text) && !result.contains("translation.key.not.found")) {
-                    return result;
-                }
-            } catch (Exception e) {
-                LOGGER.info("[DEBUG] Component translation failed for: {}, error: {}", text, e.getMessage());
-            }
-            return text;
-        }
 
-        // If text looks like a translation key (contains dots and starts with mod name)
-        if (text.contains(".") && (text.startsWith("eidolonunchained.") || text.startsWith("eidolon."))) {
-            LOGGER.info("[DEBUG] Requested translation for key: {}", text);
             // Try direct translation first since it's more reliable
             String directTranslation = getDirectTranslation(text);
             if (directTranslation != null && !directTranslation.equals(text)) {
@@ -270,6 +262,7 @@ public class EidolonPageConverter {
             } else {
                 LOGGER.info("[DEBUG] No direct translation found for '{}'.", text);
             }
+
             // Fallback to Component.translatable
             try {
                 Component translated = Component.translatable(text);
@@ -283,6 +276,7 @@ public class EidolonPageConverter {
             } catch (Exception e) {
                 LOGGER.info("[DEBUG] Component translation failed for: {}, error: {}", text, e.getMessage());
             }
+
             // Last resort: create readable fallback
             LOGGER.warn("[DEBUG] No translation found for key: {}, creating fallback", text);
             return createFallbackFromKey(text);
@@ -797,13 +791,6 @@ public class EidolonPageConverter {
      */
     private static Page createRuneDescPage(JsonObject pageJson) {
         return new RuneDescPage();
-    }
-
-    /**
-     * Create a RuneIndexPage listing runes
-     */
-    private static Page createRuneIndexPage(JsonObject pageJson) {
-        return new RuneIndexPage();
     }
 
     /**

@@ -1,0 +1,25 @@
+{
+  "name": "Irons Cast Root CC Debug",
+  "description": "Debug chant that uses Iron's Spells root as a crowd-control role cast.",
+  "category": "debug",
+  "codex_icon": "minecraft:hanging_roots",
+  "difficulty": 1,
+  "mana_cost": 0,
+  "cooldown": 5,
+  "combat_role": "cc",
+  "mob_priority_weight": 8,
+  "show_in_codex": true,
+  "requires_effigy": false,
+  "signs": [
+    "eidolon:harmony",
+    "eidolon:wicked",
+    "eidolon:sacred"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "run_command",
+      "command": "cast @s irons_spellbooks:root 1"
+    }
+  ]
+}

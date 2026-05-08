@@ -1,0 +1,25 @@
+{
+  "name": "Restore Mana Ally Threshold Example",
+  "description": "Example support chant for ally mana-threshold handling.",
+  "category": "debug",
+  "codex_icon": "minecraft:experience_bottle",
+  "difficulty": 1,
+  "mana_cost": 0,
+  "cooldown": 7,
+  "combat_role": "support",
+  "mob_priority_weight": 7,
+  "show_in_codex": true,
+  "requires_effigy": false,
+  "signs": [
+    "eidolon:sacred",
+    "eidolon:wicked",
+    "eidolon:harmony"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "run_command",
+      "command": "execute as @s at @s run cast @e[type=!minecraft:player,distance=0.1..8,sort=nearest,limit=1,nbt={eu_mob_faith_deity:\"{faction_deity}\",{thrall_key}:{owner_uuid_int_array}}] irons_spellbooks:haste 1"
+    }
+  ]
+}

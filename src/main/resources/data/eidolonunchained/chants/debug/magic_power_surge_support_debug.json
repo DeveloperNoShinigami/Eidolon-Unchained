@@ -1,0 +1,36 @@
+{
+  "name": "Magic Power Surge Support Debug",
+  "description": "Debug chant that temporarily buffs the caster's magic power for support-role testing.",
+  "category": "debug",
+  "codex_icon": "minecraft:amethyst_shard",
+  "difficulty": 1,
+  "mana_cost": 0,
+  "cooldown": 6,
+  "combat_role": "support",
+  "mob_priority_weight": 10,
+  "show_in_codex": true,
+  "requires_effigy": false,
+  "signs": [
+    "eidolon:harmony",
+    "eidolon:sacred",
+    "eidolon:wicked"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "modify_attribute",
+      "attribute": "eidolon:magic_power",
+      "amount": 0.5,
+      "operation": "add",
+      "duration_ticks": 200,
+      "modifier_id": "eu_debug.magic_power_surge",
+      "apply_self": true,
+      "sign_icon": "eidolon:harmony",
+      "status_effect": "eidolonunchained:debug_magic_power_surge",
+      "particle": "minecraft:enchant",
+      "particle_count": 12,
+      "particle_spread": 0.3,
+      "particle_speed": 0.01
+    }
+  ]
+}

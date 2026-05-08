@@ -1,0 +1,42 @@
+{
+  "name": "Light Deity Damage Test",
+  "description": "Debug chant that fires a deity-linked projectile using Luminae's base deity damage type automatically.",
+  "category": "debug",
+  "codex_icon": "minecraft:glowstone_dust",
+  "difficulty": 1,
+  "mana_cost": 8,
+  "cooldown": 6,
+  "combat_role": "offense",
+  "show_in_codex": true,
+  "linked_deity": "eidolonunchained:light_deity",
+  "requires_effigy": false,
+  "signs": [
+    "eidolon:sacred",
+    "eidolon:harmony",
+    "eidolon:sacred"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "projectile_effect",
+      "projectile_id": "blank",
+      "speed": 1.9,
+      "inaccuracy": 0.0,
+      "gravity": 0.0,
+      "damage": 6.0,
+      "trail_particle": "minecraft:end_rod",
+      "trail_particle_count": 8,
+      "trail_particle_spread": 0.03,
+      "trail_particle_speed": 0.0,
+      "impact_particle": "minecraft:crit",
+      "impact_particle_mode": "burst",
+      "impact_particle_count": 20,
+      "impact_particle_spread": 0.25,
+      "impact_particle_speed": 0.01
+    },
+    {
+      "type": "send_message",
+      "message": "Light Deity Damage Test: projectile launched (deity base damage type fallback active)."
+    }
+  ]
+}

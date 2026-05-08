@@ -1,0 +1,78 @@
+{
+  "name": "Combat Resolution Debug",
+  "description": "Debug chant covering raycast_effect, area_effect, projectile_effect, and projectile_id spawning.",
+  "category": "debug",
+  "codex_icon": "minecraft:blaze_rod",
+  "difficulty": 1,
+  "mana_cost": 20,
+  "cooldown": 8,
+  "combat_role": "offense",
+  "linked_deity": "eidolonunchained:light_deity",
+  "show_in_codex": true,
+  "requires_effigy": false,
+  "signs": [
+    "eidolon:wicked",
+    "eidolon:sacred",
+    "eidolon:soul"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "raycast_effect",
+      "range": 14.0,
+      "check_for_blocks": true,
+      "bb_inflation": 0.4,
+      "effects": [
+        {
+          "type": "apply_effect",
+          "effect": "minecraft:glowing",
+          "duration": 80,
+          "amplifier": 0
+        }
+      ]
+    },
+    {
+      "type": "area_effect",
+      "radius": 4.0,
+      "exclude_caster": true,
+      "center": "caster",
+      "effects": [
+        {
+          "type": "apply_effect",
+          "effect": "minecraft:weakness",
+          "duration": 80,
+          "amplifier": 0
+        }
+      ]
+    },
+    {
+      "type": "projectile_effect",
+      "projectile_id": "blank",
+      "speed": 1.9,
+      "inaccuracy": 0.0,
+      "gravity": 0.0,
+      "damage": 7.0,
+      "trail_particle": "minecraft:end_rod",
+      "trail_particle_count": 6,
+      "trail_particle_spread": 0.04,
+      "trail_particle_speed": 0.0,
+      "impact_particle": "minecraft:crit",
+      "impact_particle_mode": "burst",
+      "impact_particle_count": 24,
+      "impact_particle_spread": 0.3,
+      "impact_particle_speed": 0.02,
+      "on_hit": [
+        {
+          "type": "apply_effect",
+          "effect": "minecraft:slowness",
+          "duration": 60,
+          "amplifier": 1
+        }
+      ]
+    },
+    {
+      "type": "send_message",
+      "message": "combat_resolution_debug: cast complete"
+    }
+  ]
+}

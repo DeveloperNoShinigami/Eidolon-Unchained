@@ -1,38 +1,35 @@
 # Commands
 
-Root
+The main command root is:
 
-- `/eidolon-unchained` — unified command tree (canonical)
-- Alias: `/eu` (root)
+- `/eidolon-unchained`
+- `/eu` as a short alias
 
-Admin/Config
+## Command Families
 
-- ` /eidolon-unchained config reload|status|validate|reset`
+| Family | Access | Description |
+|---|---|---|
+| `config` | All | Config reload, status, validate, reset |
+| `api` | All | API key management, model selection |
+| `deities` | All | List, reload, status of loaded deities |
+| `patron` | All | Choose, abandon, status for patron deity |
+| `prayers` | All/Op | Prayer history, cooldowns; clear-cooldown (op) |
+| `fates` | Op | Assign, complete, list, reputation for fate/task system |
+| `conversations` | All | Conversation history stats and clearing |
+| `research` | All/Op | List entries; reload and clear (op) |
+| `player2ai` | Op | Auth, login, memory, characters, test |
+| `chant` | All | Chant slot management |
+| `tts` | All | Text-to-speech configuration |
+| `debug` | Op only | AI, ritual, reputation, progression, tier, facts, rewards |
 
-API & Models
+## Notes
 
-- ` /eidolon-unchained api set <provider> <key>`
-- ` /eidolon-unchained api set player2ai` (no key needed)
-- ` /eidolon-unchained api set-model <model>` / `get-model`
-- ` /eidolon-unchained api test <provider>` / `list` / `remove <provider>`
+- `tasks` has been removed. `fates` is the canonical name for that system.
+- `debug` is fully permission-gated (`hasPermission(2)`) and includes all developer utilities.
+- All ID arguments (deity, fateId, ritualId, fact, player) have tab-completion suggestion providers.
+- `ritual-diagnose` is now under `debug ritual diagnose <pos>`.
+- `ai-debug` standalone subtree has been removed; all AI debug commands are under `debug ai`.
 
-Debug (selected)
+For full syntax see [Complete Command Reference](Complete-Command-Reference.md).
 
-- Progression/debug tools are available under ` /eidolon-unchained debug ...`
-- Reputation helpers: ` /eidolon-unchained debug reputation <player> "<deity_id>"`
-
-Fates
-
-- Canonical: `/eidolon-unchained fates ...` (autocomplete enabled)
-- Alias: `/eidolon-unchained tasks ...` remains for compatibility; `/dtask` removed
-- See usage: wiki/Systems/Tasks-Reputation.md
-
-Autocomplete
-
-- Deity, ritual, chant, sign, and player suggestions are dynamic and colon-friendly.
-- Fate IDs suggest dynamically from all deity configs.
-
-References
-
-- `src/main/java/com/bluelotuscoding/eidolonunchained/command/UnifiedCommands.java`
-- `src/main/java/com/bluelotuscoding/eidolonunchained/commands/TaskCommands.java`
+For commands registered by base Eidolon (not Eidolon Unchained), see [Eidolon Base Commands](Eidolon-Base-Commands.md).

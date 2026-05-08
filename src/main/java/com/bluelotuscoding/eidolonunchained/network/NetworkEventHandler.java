@@ -1,6 +1,7 @@
 package com.bluelotuscoding.eidolonunchained.network;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
+import com.bluelotuscoding.eidolonunchained.network.RitualTaskProgressPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -58,6 +59,11 @@ public class NetworkEventHandler {
                             
                             LOGGER.debug("Sent legacy deity sync packet to player: {}", serverPlayer.getName().getString());
                         }
+
+                        EidolonUnchainedNetworking.INSTANCE.send(
+                            PacketDistributor.PLAYER.with(() -> serverPlayer),
+                            RitualTaskProgressPacket.create(serverPlayer)
+                        );
                     }
                 } catch (Exception e) {
                     LOGGER.warn("Failed to send sync packet to player {}: {}", 

@@ -48,6 +48,16 @@ public class DatapackDeity extends Deity {
     
     // 🎭 STAGE TITLE MAPPING - Maps stage IDs to their display titles from JSON
     private final Map<String, String> stageTitles = new HashMap<>();
+
+    // Optional link to a native Eidolon deity — rep changes are mirrored there at 0.5x scale
+    private ResourceLocation linkedEidolonDeity = null;
+    // Base damage identity for deity-linked combat chants.
+    private ResourceLocation deityDamageType = null;
+
+    public void setLinkedEidolonDeity(ResourceLocation id) { this.linkedEidolonDeity = id; }
+    public ResourceLocation getLinkedEidolonDeity() { return linkedEidolonDeity; }
+    public void setDeityDamageType(ResourceLocation damageType) { this.deityDamageType = damageType; }
+    public ResourceLocation getDeityDamageType() { return deityDamageType; }
     
     public DatapackDeity(ResourceLocation id, String name, String description, int red, int green, int blue) {
         super(id, red, green, blue);
@@ -234,6 +244,14 @@ public class DatapackDeity extends Deity {
         }
         
         LOGGER.info("Player {} unlocked {} for deity {}", player.getName().getString(), lock, getId());
+
+        // Trigger AI "progression" conversation if this deity has AI configured
+        if (player instanceof ServerPlayer serverPlayer) {
+            com.bluelotuscoding.eidolonunchained.ai.AIDeityManager mgr = com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance();
+            if (mgr != null && mgr.getAIConfig(getId()) != null) {
+                com.bluelotuscoding.eidolonunchained.chat.DeityChat.startConversation(serverPlayer, getId());
+            }
+        }
     }
     
     @Override
@@ -297,9 +315,28 @@ public class DatapackDeity extends Deity {
                 // 🎉 CHECK FOR TIER PROGRESSION AND AUTO-CONGRATULATION
                 // This triggers automatic deity conversations when players advance in tier
                 com.bluelotuscoding.eidolonunchained.chat.DeityChat.checkAndHandleTierProgression(serverPlayer, getId());
-                    
+
             } catch (Exception e) {
                 LOGGER.error("Error updating title for reputation change on deity {}: {}", getId(), e.getMessage(), e);
+            }
+        }
+
+        // Mirror rep change to linked native Eidolon deity at 0.5x scale
+        if (linkedEidolonDeity != null) {
+            double delta = updated - prev;
+            double scaled = delta * 0.5;
+            if (scaled != 0) {
+                try {
+                    double eidolonPrev = rep.getReputation(player.getUUID(), linkedEidolonDeity);
+                    // Use UUID overload — does NOT call considerChange, preventing a loop back to us
+                    rep.addReputation(player.getUUID(), linkedEidolonDeity, scaled);
+                    double eidolonUpdated = rep.getReputation(player.getUUID(), linkedEidolonDeity);
+                    // Manually fire the Eidolon deity's change handler so signs/facts unlock
+                    elucent.eidolon.common.deity.Deities.find(linkedEidolonDeity)
+                        .onReputationChange(player, rep, eidolonPrev, eidolonUpdated);
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to mirror rep to linked Eidolon deity {}: {}", linkedEidolonDeity, e.getMessage());
+                }
             }
         }
     }

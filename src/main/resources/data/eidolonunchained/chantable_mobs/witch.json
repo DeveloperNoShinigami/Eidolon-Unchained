@@ -1,0 +1,28 @@
+{
+  "mob": "minecraft:witch",
+  "assigned_deity": "eidolonunchained:dark_deity",
+  "starting_title": "Shadow Touched",
+  "chant_rotation_ids": [
+    "eidolonunchained:summoning_example",
+    "eidolonunchained:modded_projectiel_debug",
+    "eidolonunchained:irons_cast_teleport_movement_debug",
+    "eidolonunchained:magic_power_surge_support_debug"
+  ],
+  "chant_interval_ticks": 40,
+  "min_range": 2.0,
+  "max_range": 18.0,
+  "mob_combat_policy": {
+    "allow_native_combat_ai": false,
+    "movement_speed": 0.20,
+    "max_threshold_casts_per_cycle": 2,
+    "role_order": ["movement","support", "offense"],
+    "support_hp_thresholds": {
+      "self": { "below": 0.45, "chant": "eidolonunchained:heal_self" },
+      "ally": { "below": 0.55, "chant": "eidolonunchained:heal_ally" }
+    },
+    "support_mana_thresholds": {
+      "self": { "below": 0.30, "chant": "eidolonunchained:restore_mana_self" },
+      "ally": { "below": 0.35, "chant": "eidolonunchained:restore_mana_ally" }
+    }
+  }
+}

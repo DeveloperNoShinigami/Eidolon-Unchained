@@ -29,6 +29,10 @@ public class RitualResearchTriggers {
     
     // Track triggered research per player to prevent infinite loops
     private static final Map<String, Set<String>> PLAYER_TRIGGERED_RESEARCH = new HashMap<>();
+
+    public static void clearTriggeredResearch(ServerPlayer player) {
+        PLAYER_TRIGGERED_RESEARCH.remove(player.getUUID().toString());
+    }
     
     /**
      * Manually trigger ritual research when a ritual is completed

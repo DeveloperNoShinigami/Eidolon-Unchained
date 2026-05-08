@@ -1,0 +1,28 @@
+{
+  "mob": "minecraft:skeleton",
+  "assigned_deity": "eidolonunchained:dark_deity",
+  "starting_title": "Shadow Touched",
+  "chant_rotation_ids": [
+    "eidolonunchained:modded_projectiel_debug",
+    "eidolonunchained:irons_cast_teleport_movement_debug",
+    "eidolonunchained:irons_cast_root_cc_debug",
+    "eidolonunchained:magic_power_surge_support_debug"
+  ],
+  "chant_interval_ticks": 60,
+  "min_range": 6.0,
+  "max_range": 18.0,
+  "mob_combat_policy": {
+    "allow_native_combat_ai": false,
+     "movement_speed": 0.10,
+    "max_threshold_casts_per_cycle": 2,
+    "role_order": ["movement", "offense", "cc", "support", "defense"],
+    "support_hp_thresholds": {
+      "self": { "below": 0.45, "chant": "eidolonunchained:heal_self" },
+      "ally": { "below": 0.55, "chant": "eidolonunchained:heal_ally" }
+    },
+    "support_mana_thresholds": {
+      "self": { "below": 0.30, "chant": "eidolonunchained:restore_mana_self" },
+      "ally": { "below": 0.35, "chant": "eidolonunchained:restore_mana_ally" }
+    }
+  }
+}

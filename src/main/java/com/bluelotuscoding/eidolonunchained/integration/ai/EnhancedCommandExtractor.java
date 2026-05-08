@@ -986,7 +986,7 @@ public class EnhancedCommandExtractor {
      */
     private static boolean checkPrayerCooldown(ServerPlayer player, String prayerType, 
                                               com.bluelotuscoding.eidolonunchained.ai.PrayerAIConfig prayerConfig) {
-        if (prayerConfig.cooldown_minutes <= 0) {
+        if (prayerConfig.cooldown_seconds <= 0) {
             return true; // No cooldown
         }
         
@@ -999,7 +999,7 @@ public class EnhancedCommandExtractor {
         Long lastUseTime = prayerCooldowns.get(cooldownKey);
         
         if (lastUseTime != null) {
-            long cooldownMillis = prayerConfig.cooldown_minutes * 60 * 1000L;
+            long cooldownMillis = prayerConfig.cooldown_seconds * 1000L;
             long timeSinceLastUse = currentTime - lastUseTime;
             
             if (timeSinceLastUse < cooldownMillis) {

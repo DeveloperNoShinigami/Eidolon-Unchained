@@ -1,0 +1,202 @@
+package com.bluelotuscoding.eidolonunchained.integration;
+
+import elucent.eidolon.codex.Category;
+import elucent.eidolon.codex.Chapter;
+import elucent.eidolon.codex.Index;
+import elucent.eidolon.codex.IndexPage;
+import elucent.eidolon.codex.Page;
+import elucent.eidolon.codex.TitledIndexPage;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.registries.ForgeRegistries;
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
+import net.minecraftforge.fml.common.Mod;
+import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+
+/**
+ * Minimal reflection helper for interacting with Eidolon's codex categories.
+ * Replace with official events when they become available.
+ */
+@Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+public class EidolonCategoryExtension {
+    private static final Logger LOGGER = LogUtils.getLogger();
+
+    private static final String CLASS_CODEX_CHAPTERS = "elucent.eidolon.codex.CodexChapters";
+    private static final String FIELD_CATEGORIES = "categories";
+    private static final String FIELD_CATEGORY_KEY = "key";
+    private static final String FIELD_CATEGORY_CHAPTER = "chapter";
+    private static final String FIELD_CHAPTER_PAGES = "pages";
+    private static final String FIELD_INDEX_ENTRIES = "entries";
+
+    private static Class<?> forName(String n) throws ClassNotFoundException { return Class.forName(n); }
+    private static Field getField(Class<?> c, String n) throws Exception { Field f=c.getDeclaredField(n); f.setAccessible(true); return f; }
+
+    @SuppressWarnings("unchecked")
+    private static List<Category> getCategories() throws Exception {
+        Class<?> chapters = forName(CLASS_CODEX_CHAPTERS);
+        Field f = getField(chapters, FIELD_CATEGORIES);
+        return (List<Category>) f.get(null);
+    }
+
+    /**
+     * Finds a category by its key (the name used when Category was constructed).
+     */
+    public Category findCategory(String categoryKey) {
+        try {
+            for (Category c : getCategories()) {
+                Field keyF = getField(Category.class, FIELD_CATEGORY_KEY);
+                String key = (String) keyF.get(c);
+                if (categoryKey.equals(key)) return c;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to find category '{}'", categoryKey, e);
+        }
+        return null;
+    }
+
+    /**
+     * Creates a new category with a titled index page and registers it with Eidolon.
+     */
+    public Category createCategory(String categoryKey, String displayName, ItemStack icon, int color, List<IndexPage.IndexEntry> entries) {
+        try {
+            IndexPage indexPage = new TitledIndexPage("eidolonunchained.codex.category." + categoryKey, entries.toArray(new IndexPage.IndexEntry[0]));
+            Index index = new Index("eidolon.codex.category." + categoryKey, indexPage);
+            Category category = new Category(categoryKey, icon, color, index);
+            getCategories().add(category);
+            return category;
+        } catch (Exception e) {
+            LOGGER.error("Failed to create category '{}'", categoryKey, e);
+            return null;
+        }
+    }
+
+    /**
+     * Adds entries to an existing category's index page.
+     */
+    public void addEntriesToCategory(Category category, List<IndexPage.IndexEntry> newEntries) {
+        try {
+            Field chapterF = getField(Category.class, FIELD_CATEGORY_CHAPTER);
+            Index idx = (Index) chapterF.get(category);
+            Field pagesF = getField(Chapter.class, FIELD_CHAPTER_PAGES);
+            @SuppressWarnings("unchecked")
+            List<Page> pages = (List<Page>) pagesF.get(idx);
+            for (Page p : pages) {
+                if (p instanceof IndexPage ip) {
+                    Field entriesF = getField(IndexPage.class, FIELD_INDEX_ENTRIES);
+                    @SuppressWarnings("unchecked")
+                    List<IndexPage.IndexEntry> entries = (List<IndexPage.IndexEntry>) entriesF.get(ip);
+                    entries.addAll(newEntries);
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed adding entries to category", e);
+        }
+    }
+
+        /**
+     * Attaches a chapter to a category by adding an index entry pointing to it.
+     */
+    public static void attachChapterToCategory(String categoryKey, Chapter chapter, ItemStack icon) {
+        try {
+            Category target = null;
+            for (Category c : getCategories()) {
+                Field keyF = getField(Category.class, FIELD_CATEGORY_KEY);
+                String key = (String) keyF.get(c);
+                if (categoryKey.equals(key)) { target = c; break; }
+            }
+            if (target == null) {
+                LOGGER.warn("Category '{}' not found; cannot attach chapter", categoryKey);
+                return;
+            }
+
+            Field chapterF = getField(Category.class, FIELD_CATEGORY_CHAPTER);
+            Index idx = (Index) chapterF.get(target);
+            Field pagesF = getField(Chapter.class, FIELD_CHAPTER_PAGES);
+            @SuppressWarnings("unchecked")
+            List<Page> pages = (List<Page>) pagesF.get(idx);
+            IndexPage indexPage = null;
+            for (Page p : pages) if (p instanceof IndexPage) { indexPage = (IndexPage) p; break; }
+            if (indexPage == null) {
+                LOGGER.warn("Category '{}' missing IndexPage; cannot attach chapter", categoryKey);
+                return;
+            }
+
+            Field entriesF = getField(IndexPage.class, FIELD_INDEX_ENTRIES);
+            @SuppressWarnings("unchecked")
+    /**
+     * Attaches a chapter to a category by adding an index entry pointing to it.
+     */
+    public static void attachChapterToCategory(String categoryKey, Chapter chapter, ItemStack icon) {
+        try {
+            Category target = null;
+            for (Category c : getCategories()) {
+                Field keyF = getField(Category.class, FIELD_CATEGORY_KEY);
+                String key = (String) keyF.get(c);
+                if (categoryKey.equals(key)) { target = c; break; }
+            }
+            if (target == null) {
+                LOGGER.warn("Category '{}' not found; cannot attach chapter", categoryKey);
+                return;
+            }
+
+            Field chapterF = getField(Category.class, FIELD_CATEGORY_CHAPTER);
+            Index idx = (Index) chapterF.get(target);
+            Field pagesF = getField(Chapter.class, FIELD_CHAPTER_PAGES);
+            @SuppressWarnings("unchecked")
+            List<Page> pages = (List<Page>) pagesF.get(idx);
+            IndexPage indexPage = null;
+            for (Page p : pages) if (p instanceof IndexPage) { indexPage = (IndexPage) p; break; }
+            if (indexPage == null) {
+                LOGGER.warn("Category '{}' missing IndexPage; cannot attach chapter", categoryKey);
+                return;
+            }
+
+            Field entriesF = getField(IndexPage.class, FIELD_INDEX_ENTRIES);
+            @SuppressWarnings("unchecked")
+            List<IndexPage.IndexEntry> entries = (List<IndexPage.IndexEntry>) entriesF.get(indexPage);
+            entries.add(new IndexPage.IndexEntry(chapter, icon));
+        } catch (Exception e) {
+            LOGGER.error("Failed to attach chapter to category '{}'", categoryKey, e);
+        }
+    }
+    
+    /**
+     * Trigger category scanning after resources are loaded (called from CodexDataManager)
+     */
+    public static void triggerCategoryScanningWithResources(net.minecraft.server.packs.resources.ResourceManager resourceManager) {
+        LOGGER.info("🎯 Category scanning triggered with loaded resources!");
+        
+        try {
+            LOGGER.info("🔄 Using reflection to access Eidolon's category system...");
+            Class<?> codexChaptersClass = Class.forName(CLASS_CODEX_CHAPTERS);
+            Field categoriesField = codexChaptersClass.getDeclaredField(FIELD_CATEGORIES);
+            categoriesField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            java.util.List<Category> categories = (java.util.List<Category>) categoriesField.get(null);
+            LOGGER.info("✅ Successfully accessed Eidolon internals via reflection");
+            
+            LOGGER.info("   Categories list: {} entries", categories.size());
+            
+            // Create custom categories from JSON datapacks
+            LOGGER.info("🎯 Creating custom categories from JSON datapacks...");
+            DatapackCategoryExample.addDatapackCategories(categories, resourceManager);
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to trigger category scanning", e);
+        }
+    }
+}

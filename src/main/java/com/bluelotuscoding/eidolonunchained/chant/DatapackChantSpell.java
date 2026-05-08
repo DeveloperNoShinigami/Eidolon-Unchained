@@ -43,8 +43,20 @@ public class DatapackChantSpell extends PrayerSpell {
 
     @Override
     public int getCost() {
-        // Respect datapack-defined mana cost for gating
+        // Always use the datapack-defined mana cost, ignoring the TOML config value
+        // (Eidolon auto-generates a TOML with cost=0 that would otherwise override this)
         return chantData != null ? Math.max(0, chantData.getManaCost()) : 0;
+    }
+
+    /**
+     * Consume mana directly via ISoul, bypassing the TOML-controlled getCost() path.
+     * Called from cast() after executing effects.
+     */
+    public void consumeDatapackManaCost(Player player) {
+        int cost = chantData != null ? chantData.getManaCost() : 0;
+        if (cost > 0 && !player.isCreative()) {
+            elucent.eidolon.capability.ISoul.expendMana(player, cost);
+        }
     }
     
     /**
@@ -112,11 +124,12 @@ public class DatapackChantSpell extends PrayerSpell {
             player.sendSystemMessage(Component.literal("§a✓ Effigy detected and ready - divine power flows freely."));
         }
         
-        // Check basic spell requirements (magic cost) - bypass PrayerSpell's effigy check
-        if (getCost() > 0 && !player.isCreative()) {
+        // Check mana cost directly from datapack (ignores TOML-overridden getCost())
+        int datapackCost = chantData != null ? chantData.getManaCost() : 0;
+        if (datapackCost > 0 && !player.isCreative()) {
             if (player.getCapability(elucent.eidolon.capability.ISoul.INSTANCE).isPresent()) {
                 elucent.eidolon.capability.ISoul soul = player.getCapability(elucent.eidolon.capability.ISoul.INSTANCE).resolve().get();
-                if (soul.getMagic() < getCost()) {
+                if (soul.getMagic() < datapackCost) {
                     if (player instanceof ServerPlayer serverPlayer)
                         serverPlayer.connection.send(new net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket(Component.translatable("eidolon.title.no_mana")));
                     return false;
@@ -160,25 +173,17 @@ public class DatapackChantSpell extends PrayerSpell {
         // 🔥 Only trigger deity conversation if prayer_effect_type is specified
         // This allows chants to be linked to deities for lore/context without auto-triggering conversations
         if (chantData.hasLinkedDeity() && chantData.getPrayerEffectType() != null && !chantData.getPrayerEffectType().isEmpty()) {
-            // Import the necessary classes for deity interaction
             try {
-                var aiDeityManager = com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance();
-                var deityChat = com.bluelotuscoding.eidolonunchained.chat.DeityChat.class;
-                
                 // Execute chant effects first
                 executeChantEffects(serverPlayer, world, pos);
-                
+
                 // 🔥 Store this chant for prayer type detection
                 com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
                     .setLastPerformedChant(serverPlayer, chantData);
-                
+
                 // Then trigger deity conversation using the prayer_effect_type
-                java.lang.reflect.Method startConversation = deityChat.getDeclaredMethod("startConversation", 
-                    ServerPlayer.class, net.minecraft.resources.ResourceLocation.class);
-                startConversation.invoke(null, serverPlayer, chantData.getLinkedDeity());
-                
-                serverPlayer.sendSystemMessage(Component.translatable("eidolonunchained.ui.chant.deity_listening", chantData.getName()));
-                
+                com.bluelotuscoding.eidolonunchained.chat.DeityChat.startConversation(serverPlayer, chantData.getLinkedDeity());
+
             } catch (Exception e) {
                 LOGGER.error("Failed to trigger deity conversation for chant: {}", chantData.getId(), e);
                 // Fall back to normal chant execution
@@ -199,26 +204,7 @@ public class DatapackChantSpell extends PrayerSpell {
         
         // Consume mana based on datapack cost (if any)
         try {
-            if (getCost() > 0 && !player.isCreative()) {
-                var capOpt = player.getCapability(elucent.eidolon.capability.ISoul.INSTANCE);
-                if (capOpt.isPresent()) {
-                    elucent.eidolon.capability.ISoul soul = capOpt.resolve().get();
-                    double current = 0;
-                    try {
-                        current = ((Number)soul.getClass().getMethod("getMagic").invoke(soul)).doubleValue();
-                    } catch (Exception e0) {
-                        try { current = ((Number)soul.getMagic()).doubleValue(); } catch (Exception ignored2) {}
-                    }
-                    double newVal = Math.max(0, current - (double)getCost());
-                    try {
-                        soul.getClass().getMethod("setMagic", double.class).invoke(soul, newVal);
-                    } catch (Exception e1) {
-                        try {
-                            soul.getClass().getMethod("setMagic", int.class).invoke(soul, (int)newVal);
-                        } catch (Exception ignored) {}
-                    }
-                }
-            }
+            consumeDatapackManaCost(player);
         } catch (Exception e) {
             LOGGER.debug("Failed to consume mana for chant {}: {}", chantData.getId(), e.getMessage());
         }

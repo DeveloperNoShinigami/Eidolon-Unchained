@@ -76,9 +76,9 @@ public class DeityChat {
             return;
         }
         
-        // End any existing conversation
+        // End any existing conversation silently (no farewell messages when starting a new one)
         if (activeConversations.containsKey(playerId)) {
-            endConversation(player);
+            endConversationSilent(player);
         }
         
         // Start new conversation
@@ -155,54 +155,18 @@ public class DeityChat {
      * Send patron-aware greeting message
      */
     private static void sendPatronAwareGreeting(ServerPlayer player, DatapackDeity deity, AIDeityConfig aiConfig) {
-        try {
-            player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
-                .ifPresent(patronData -> {
-                    ResourceLocation playerPatron = patronData.getPatron(player);
-                    AIDeityConfig.PatronRelationship relationship = aiConfig.determinePatronRelationship(playerPatron);
-                    String title = patronData.getTitle(player);
-                    
-                    switch (relationship) {
-                        case FOLLOWER:
-                            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.divine_presence")
-                                .withStyle(net.minecraft.ChatFormatting.YELLOW));
-                            if (title != null && !title.isEmpty()) {
-                                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.recognizes_faithful", deity.getName(), title)
-                                    .withStyle(net.minecraft.ChatFormatting.YELLOW));
-                            } else {
-                                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.recognizes_faithful", deity.getName(), "servant")
-                                    .withStyle(net.minecraft.ChatFormatting.YELLOW));
-                            }
-                            break;
-                        case ALLIED:
-                            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.divine_ally_greeting", deity.getName()));
-                            break;
-                        case NEUTRAL:
-                            player.sendSystemMessage(Component.literal("§7A cautious divine presence observes you..."));
-                            player.sendSystemMessage(Component.literal("§e" + deity.getName() + " §7regards you with wariness."));
-                            break;
-                        default:
-                            player.sendSystemMessage(Component.literal("§6You feel a divine presence..."));
-                            player.sendSystemMessage(Component.literal("§e" + deity.getName() + " is listening to your prayers."));
-                    }
-                });
-        } catch (Exception e) {
-            // Fallback to generic greeting
-            player.sendSystemMessage(Component.literal("§6You feel a divine presence..."));
-            player.sendSystemMessage(Component.literal("§e" + deity.getName() + " is listening to your prayers."));
-        }
-        
+        player.sendSystemMessage(Component.literal("§e" + deity.getName() + " has heard your chant."));
         player.sendSystemMessage(Component.literal("§7Speak your mind in chat, or type 'amen' to end the conversation."));
     }
     
     /**
-     * End an active conversation
+     * End an active conversation with farewell messages.
      */
     public static void endConversation(ServerPlayer player) {
         UUID playerId = player.getUUID();
         ResourceLocation deityId = activeConversations.remove(playerId);
         conversationHistory.remove(playerId);
-        conversationCommandCounts.remove(playerId); // Clear command count for this session
+        conversationCommandCounts.remove(playerId);
         
         if (deityId != null) {
             DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
@@ -211,11 +175,27 @@ public class DeityChat {
             // Stop effigy effects when conversation ends
             EffigyEffectsManager.stopEffects(player);
             
-            
             player.sendSystemMessage(Component.literal("§6The divine presence fades..."));
             player.sendSystemMessage(Component.literal("§e" + deityName + " has heard your prayers."));
             
             LOGGER.info("Ended conversation between player {} and deity {}", player.getName().getString(), deityName);
+        }
+    }
+
+    /**
+     * End an active conversation silently (no farewell messages). Used when a new conversation
+     * immediately replaces the current one.
+     */
+    public static void endConversationSilent(ServerPlayer player) {
+        UUID playerId = player.getUUID();
+        ResourceLocation deityId = activeConversations.remove(playerId);
+        conversationHistory.remove(playerId);
+        conversationCommandCounts.remove(playerId);
+        
+        if (deityId != null) {
+            EffigyEffectsManager.stopEffects(player);
+            LOGGER.info("Silently ended conversation between player {} and deity {} (replaced by new conversation)",
+                    player.getName().getString(), deityId);
         }
     }
     
@@ -280,6 +260,20 @@ public class DeityChat {
      */
     private static void processDeityConversation(ServerPlayer player, ResourceLocation deityId, String message) {
         processDeityConversation(player, deityId, message, null);
+    }
+
+    public static void processSystemConversation(ServerPlayer player, ResourceLocation deityId, String message, Runnable onComplete) {
+        // Ensure the player is registered as being in a conversation with this deity so TTS
+        // and other per-conversation logic (e.g. sendDeityResponse) can look up the deity ID.
+        // We only set it if no conversation is already active to avoid stomping a real session.
+        boolean installedTemporarily = !activeConversations.containsKey(player.getUUID());
+        if (installedTemporarily) {
+            activeConversations.put(player.getUUID(), deityId);
+            if (!conversationHistory.containsKey(player.getUUID())) {
+                conversationHistory.put(player.getUUID(), new java.util.ArrayList<>());
+            }
+        }
+        processDeityConversation(player, deityId, message, onComplete);
     }
     
     /**
@@ -1308,9 +1302,9 @@ public class DeityChat {
         }
 
         // 🐺 ADD NEARBY MOB AWARENESS CONTEXT
-        if (aiConfig != null && aiConfig.patron_config != null && !aiConfig.patron_config.supportedMobIds.isEmpty()) {
+        if (aiConfig != null && aiConfig.patron_config != null && !aiConfig.patron_config.followerMobIds.isEmpty()) {
             try {
-                String mobContext = buildNearbyMobContext(player, aiConfig.patron_config.supportedMobIds);
+                String mobContext = buildNearbyMobContext(player, aiConfig.patron_config.followerMobIds);
                 if (!mobContext.isEmpty()) {
                     prompt.append("\n\n=== NEARBY CREATURES ===\n");
                     prompt.append(mobContext);
@@ -1694,13 +1688,10 @@ public class DeityChat {
             }
         }
 
-        // 🔥 TTS-AWARE VISUAL DISPLAY: Different display logic based on TTS status
-        if (isTTSEnabled) {
-            // TTS Mode: Pure audio experience - no visual interference
-            // Let Player2 TTS handle the audio, don't show any action bar text
-            if (onComplete != null) {
-                onComplete.run();
-            }
+        // Visual display always runs — TTS audio layers on top of text, not instead of it.
+        // This ensures the player always sees the response even if TTS fails or is slow.
+        if (false) {
+            // (unused branch — kept to preserve else-if structure below)
         } else {
             // No TTS Mode: Full visual display with typing animation
             // Get display configuration
@@ -2580,7 +2571,7 @@ public class DeityChat {
                 } else {
                     LOGGER.warn("🔮 No effigy found for tier congratulation - player {} at {}", player.getName().getString(), player.blockPosition());
                 }
-                LOGGER.info("🗣️ Added player {} to active conversations with deity {} (with history initialization)", 
+                LOGGER.info("🗣️ Added player {} to active conversations with deity {} (with history initialization)",
                     player.getName().getString(), deity.getName());
                 
                 // Process the congratulation with callback for rewards execution
@@ -2599,7 +2590,7 @@ public class DeityChat {
                         // Close the conversation
                         endConversation(player);
                         
-                        LOGGER.info("🔚 Auto-closed tier advancement conversation for player {} with {}", 
+                        LOGGER.info("🔚 Auto-closed tier advancement conversation for player {} with {}",
                             player.getName().getString(), deity.getName());
                             
                     } catch (Exception e) {
@@ -2613,6 +2604,10 @@ public class DeityChat {
                 // Fallback: Send a simple congratulation message
                 player.sendSystemMessage(Component.literal("§6⟦ " + deity.getName() + " ⟧ §f" +
                     "You have advanced to " + newTier + "! Your devotion is acknowledged."));
+                
+                // 🔥 CRITICAL FIX: Even without AI config, we MUST execute rewards!
+                LOGGER.info("🎁 [FALLBACK] Executing tier advancement rewards for tier: {} (No AI Config)", newTier);
+                executeTierAdvancementRewards(player, deity, newTier);
             }
             
         } catch (Exception e) {
@@ -3219,7 +3214,7 @@ public class DeityChat {
     /**
      * Build contextual information about nearby mobs that this deity supports/controls
      */
-    private static String buildNearbyMobContext(ServerPlayer player, java.util.List<String> supportedMobIds) {
+    private static String buildNearbyMobContext(ServerPlayer player, java.util.List<String> followerMobIds) {
         StringBuilder context = new StringBuilder();
 
         // Search for nearby entities within 32 blocks
@@ -3238,7 +3233,7 @@ public class DeityChat {
                 String entityId = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE
                     .getKey(livingEntity.getType()).toString();
 
-                if (supportedMobIds.contains(entityId)) {
+                if (followerMobIds.contains(entityId)) {
                     supportedMobCounts.put(entityId, supportedMobCounts.getOrDefault(entityId, 0) + 1);
                 } else {
                     // Only track hostile mobs and important entities for context

@@ -1,0 +1,28 @@
+{
+  "type": "eidolon:ritual_brazier",
+  "ritual": "eidolonunchained:light_patronage_ritual",
+  "reagent": [
+    {
+      "item": "eidolon:arcane_gold_ingot"
+    }
+  ],
+  "pedestalItems": [
+    {
+      "item": "eidolon:arcane_gold_ingot"
+    },
+    {
+      "item": "minecraft:golden_apple"
+    },
+    {
+      "item": "eidolon:enchanted_ash"
+    },
+    {
+      "item": "minecraft:nether_star"
+    }
+  ],
+  "focusItems": [
+    {
+      "item": "eidolon:codex"
+    }
+  ]
+}

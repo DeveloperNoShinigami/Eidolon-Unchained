@@ -1,6 +1,10 @@
 package com.bluelotuscoding.eidolonunchained.research.triggers;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
+import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
+import com.bluelotuscoding.eidolonunchained.network.EidolonUnchainedNetworking;
+import com.bluelotuscoding.eidolonunchained.network.RitualTaskProgressPacket;
+import com.bluelotuscoding.eidolonunchained.research.tasks.KillEntitiesTask;
 import com.bluelotuscoding.eidolonunchained.research.triggers.data.ResearchTrigger;
 import com.mojang.logging.LogUtils;
 import net.minecraft.nbt.CompoundTag;
@@ -29,6 +33,10 @@ public class KillResearchTriggers {
     
     // Track triggered research per player to prevent infinite loops
     private static final Map<String, Set<String>> PLAYER_TRIGGERED_RESEARCH = new HashMap<>();
+
+    public static void clearTriggeredResearch(ServerPlayer player) {
+        PLAYER_TRIGGERED_RESEARCH.remove(player.getUUID().toString());
+    }
     
     @SubscribeEvent
     public static void onEntityKilled(LivingDeathEvent event) {
@@ -42,7 +50,12 @@ public class KillResearchTriggers {
         
         LivingEntity killedEntity = event.getEntity();
         ResourceLocation entityType = ForgeRegistries.ENTITY_TYPES.getKey(killedEntity.getType());
-        
+
+        // Always record the kill for task progress tracking, then sync to client
+        KillEntitiesTask.recordKill(player, entityType);
+        ResearchDataManager.runKillTaskCommands(player, entityType);
+        EidolonUnchainedNetworking.sendToPlayer(player, RitualTaskProgressPacket.create(player));
+
         // Get all kill triggers from research files
         Map<String, List<ResearchTrigger>> allTriggers = ResearchTriggerLoader.getTriggersForAllResearch();
         
@@ -132,16 +145,10 @@ public class KillResearchTriggers {
             return false;
         }
         
+        // TODO: Entity NBT filter is not yet working — TagParser/GSON deserialization issue pending fix
         // Check entity NBT if specified
-        CompoundTag requiredNbt = trigger.getNbt();
-        if (!requiredNbt.isEmpty()) {
-            CompoundTag entityNbt = new CompoundTag();
-            killedEntity.saveWithoutId(entityNbt);
-            
-            if (!containsAllTags(entityNbt, requiredNbt)) {
-                return false;
-            }
-        }
+        // CompoundTag requiredNbt = trigger.getNbt();
+        // if (!requiredNbt.isEmpty()) { ... }
         
         // Check item requirements
         return ItemRequirementChecker.checkItemRequirements(player, trigger.getItemRequirements());

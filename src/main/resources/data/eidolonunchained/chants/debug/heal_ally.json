@@ -1,0 +1,25 @@
+{
+  "name": "Heal Ally Threshold Example",
+  "description": "Example support chant for ally HP threshold handling.",
+  "category": "debug",
+  "codex_icon": "minecraft:glistering_melon_slice",
+  "difficulty": 1,
+  "mana_cost": 0,
+  "cooldown": 5,
+  "combat_role": "support",
+  "mob_priority_weight": 9,
+  "show_in_codex": true,
+  "requires_effigy": false,
+  "signs": [
+    "eidolon:harmony",
+    "eidolon:wicked",
+    "eidolon:sacred"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "run_command",
+      "command": "execute as @s at @s run effect give @e[type=!minecraft:player,distance=0.1..8,sort=nearest,limit=1,nbt={eu_mob_faith_deity:\"{faction_deity}\",{thrall_key}:{owner_uuid_int_array}}] minecraft:regeneration 6 1 true"
+    }
+  ]
+}

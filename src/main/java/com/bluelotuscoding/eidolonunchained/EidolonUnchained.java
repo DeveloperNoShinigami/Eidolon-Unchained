@@ -10,6 +10,7 @@ import com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager;
 import com.bluelotuscoding.eidolonunchained.integration.ModIntegration;
 import com.bluelotuscoding.eidolonunchained.integration.EidolonVersionDetection;
 import com.bluelotuscoding.eidolonunchained.integration.AIDeityIntegration;
+import com.bluelotuscoding.eidolonunchained.registries.EidolonUnchainedAttributes;
 import com.bluelotuscoding.eidolonunchained.registries.EidolonUnchainedRecipes;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.registries.Registries;
@@ -68,11 +69,15 @@ public class EidolonUnchained
         EidolonUnchainedRecipes.RECIPE_TYPES.register(modEventBus);
         EidolonUnchainedRecipes.init(); // Initialize logging
 
+        // Register custom attributes
+        EidolonUnchainedAttributes.ATTRIBUTES.register(modEventBus);
+
         // Register our unified configuration
         EidolonUnchainedConfig.register();
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.register(com.bluelotuscoding.eidolonunchained.events.RitualEventHandler.class);
         
         // Detect Eidolon version capabilities and log results
         EidolonVersionDetection.logFeatureDetection();
@@ -90,8 +95,8 @@ public class EidolonUnchained
         
         // Initialize data managers for codex and research extensions
         CodexDataManager.init();
-        ResearchDataManager.init();
-        EidolonResearchDataManager.getInstance(); // Initialize the Eidolon research data manager
+    // Ensure research task types are registered early to avoid null task types
+    ResearchDataManager.init();
         
         // Initialize mod integrations
         ModIntegration.init();
@@ -108,23 +113,8 @@ public class EidolonUnchained
         LOGGER.info("Eidolon Unchained server starting...");
         
         LOGGER.info("About to log loaded data...");
-        // Log our loaded data
+        // Log our loaded codex data
         CodexDataManager.logLoadedData();
-        ResearchDataManager.logLoadedData();
-        
-        LOGGER.info("About to attempt integration...");
-        // Only integrate with client-side codex system if we're on the client
-        if (FMLEnvironment.dist == Dist.CLIENT) {
-            try {
-                LOGGER.info("Calling attemptIntegrationIfNeeded (client-side)...");
-                com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration.attemptIntegrationIfNeeded();
-                LOGGER.info("Integration call completed successfully");
-            } catch (Exception e) {
-                LOGGER.error("Failed to integrate with Eidolon codex system", e);
-            }
-        } else {
-            LOGGER.info("Skipping codex integration on server side (codex system is client-only)");
-        }
         
         // Chant integration is handled by the datapack reload system, not here
         // This prevents early initialization issues that can cause networking problems
@@ -143,10 +133,21 @@ public class EidolonUnchained
     public void onAddReloadListeners(AddReloadListenerEvent event) {
         event.addListener(new DatapackDeityManager());
         event.addListener(new DatapackChantManager());
+        // Research data manager (for research-gated Codex chapters)
+        event.addListener(new ResearchDataManager());
+        // Optional fact suggestions (for tab-complete + descriptions)
+        event.addListener(new com.bluelotuscoding.eidolonunchained.data.FactsSuggestionManager());
+
+        // Datapack mapping: damage_type -> divine resistance channel.
+        event.addListener(new com.bluelotuscoding.eidolonunchained.data.DivineResistanceTypeManager());
+        
+        // Register AI Deity Manager as a reload listener
+        // This ensures AI configs are loaded on the server side (datapacks)
+        event.addListener(com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance());
         
         // Register research trigger loader as a reload listener
         event.addListener((preparationBarrier, resourceManager, profilerFiller, profilerFiller2, backgroundExecutor, gameExecutor) -> {
-            return preparationBarrier.wait(null).thenRunAsync(() -> {
+            return preparationBarrier.wait(java.util.concurrent.CompletableFuture.completedFuture(null)).thenRunAsync(() -> {
                 com.bluelotuscoding.eidolonunchained.research.triggers.ResearchTriggerLoader.loadTriggers(resourceManager);
             }, gameExecutor);
         });
@@ -154,3 +155,5 @@ public class EidolonUnchained
         LOGGER.info("Eidolon Unchained datapack managers and research trigger loader registered");
     }
 }
+
+

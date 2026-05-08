@@ -188,7 +188,8 @@ public class LocationResearchTriggers {
             
             // Add worldSeed for research table compatibility
             ServerLevel serverLevel = (ServerLevel) player.level();
-            long worldSeed = serverLevel.getSeed();
+                long worldSeed = elucent.eidolon.common.tile.ResearchTableTileEntity.SEED
+                    + 978060631L * serverLevel.getSeed();
             tag.putLong("worldSeed", worldSeed);
             
             // Give to player

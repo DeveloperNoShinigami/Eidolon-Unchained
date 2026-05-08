@@ -7,6 +7,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
 import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
@@ -113,7 +115,19 @@ public class ResearchTriggerLoader {
     private static ResearchTrigger parseComplexTrigger(JsonElement triggerElement) {
         if (triggerElement.isJsonObject()) {
             try {
-                return GSON.fromJson(triggerElement, ResearchTrigger.class);
+                JsonObject obj = triggerElement.getAsJsonObject();
+                ResearchTrigger trigger = GSON.fromJson(obj, ResearchTrigger.class);
+                // GSON cannot deserialize CompoundTag from an NBT string — parse it manually
+                // TODO: Entity NBT filter pending fix — keep parsing code but NBT check is disabled in KillResearchTriggers
+                if (trigger != null && obj.has("nbt") && obj.get("nbt").isJsonPrimitive()) {
+                    try {
+                        CompoundTag nbt = TagParser.parseTag(obj.get("nbt").getAsString());
+                        trigger.setNbt(nbt);
+                    } catch (Exception e) {
+                        LOGGER.warn("Failed to parse NBT filter in trigger: {}", e.getMessage());
+                    }
+                }
+                return trigger;
             } catch (JsonSyntaxException e) {
                 LOGGER.error("Failed to parse complex trigger: {}", e.getMessage());
                 return null;

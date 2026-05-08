@@ -26,6 +26,7 @@ public class CodexChantIntegration {
      */
     public static void registerChants() {
         try {
+            chantChapters.clear();
             Map<String, DatapackChant> chants = DatapackChantManager.getAllChants();
             
             if (chants.isEmpty()) {
@@ -79,10 +80,10 @@ public class CodexChantIntegration {
     private static Chapter createChantChapter(DatapackChant chant) {
         String chantId = chant.getId().getPath();
         List<Page> pages = new ArrayList<>();
-        
+
         // Add title page
         pages.add(new TitlePage("eidolon.codex.page." + chantId));
-        
+
         // The key: create a proper ChantPage that shows signs like Eidolon does
         try {
             DatapackChantSpell spell = DatapackChantManager.getSpellForChant(chant.getId());

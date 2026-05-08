@@ -128,10 +128,10 @@ public class PrayerSystem {
                                 Map<String, Object> rules = (Map<String, Object>) aiConfig.patron_config.conversationRules.get("enemy_restrictions");
                                 if (rules.containsKey("reputation_penalty_on_contact")) {
                                     int penalty = (Integer) rules.get("reputation_penalty_on_contact");
-                                    player.level().getCapability(elucent.eidolon.capability.IReputation.INSTANCE)
+                                    // IReputation is a player capability — get it from the player, not the level
+                                    player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE)
                                         .ifPresent(reputation -> {
-                                            double currentRep = reputation.getReputation(player, aiConfig.deity_id);
-                                            reputation.setReputation(player, aiConfig.deity_id, currentRep + penalty);
+                                            reputation.subtractReputation(player, aiConfig.deity_id, Math.abs(penalty));
                                             player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.boldness_angers", deity.getDisplayName(), penalty + " reputation"));
                                         });
                                 }
@@ -193,9 +193,9 @@ public class PrayerSystem {
         
         // Check cooldown
         String cooldownKey = deityId.toString() + ":" + prayerType;
-        if (isOnCooldown(player.getUUID(), cooldownKey, prayerConfig.cooldown_minutes)) {
-            long remainingMinutes = getCooldownRemaining(player.getUUID(), cooldownKey, prayerConfig.cooldown_minutes);
-            player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.cooldown_wait", remainingMinutes, deity.getDisplayName()));
+        if (isOnCooldown(player.getUUID(), cooldownKey, prayerConfig.cooldown_seconds)) {
+            long remainingSeconds = getCooldownRemaining(player.getUUID(), cooldownKey, prayerConfig.cooldown_seconds);
+            player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.cooldown_wait", remainingSeconds, deity.getDisplayName()));
             return;
         }
         
@@ -282,7 +282,8 @@ public class PrayerSystem {
                             default -> 0.5;
                         };
                         
-                        reputation.addReputation(player.getUUID(), deity.getId(), prayerGain);
+                        // Use Player-based overload so considerChange() fires → Deity.onReputationChange() → ReputationEvent
+                        reputation.addReputation(player, deity.getId(), prayerGain);
                         
                         // Trigger immediate title update for reputation change
                         com.bluelotuscoding.eidolonunchained.events.ReputationChangeHandler.forceUpdatePlayer(player);
@@ -625,31 +626,31 @@ public class PrayerSystem {
         return allowedCommands.contains(commandName);
     }
     
-    private static boolean isOnCooldown(UUID playerId, String cooldownKey, int cooldownMinutes) {
+    private static boolean isOnCooldown(UUID playerId, String cooldownKey, int cooldownSeconds) {
         Map<String, Long> playerCds = playerCooldowns.get(playerId);
         if (playerCds == null) return false;
-        
+
         Long lastUsed = playerCds.get(cooldownKey);
         if (lastUsed == null) return false;
-        
+
         long currentTime = System.currentTimeMillis();
-        long cooldownMs = cooldownMinutes * 60L * 1000L;
-        
+        long cooldownMs = cooldownSeconds * 1000L;
+
         return (currentTime - lastUsed) < cooldownMs;
     }
-    
-    private static long getCooldownRemaining(UUID playerId, String cooldownKey, int cooldownMinutes) {
+
+    private static long getCooldownRemaining(UUID playerId, String cooldownKey, int cooldownSeconds) {
         Map<String, Long> playerCds = playerCooldowns.get(playerId);
         if (playerCds == null) return 0;
-        
+
         Long lastUsed = playerCds.get(cooldownKey);
         if (lastUsed == null) return 0;
-        
+
         long currentTime = System.currentTimeMillis();
-        long cooldownMs = cooldownMinutes * 60L * 1000L;
+        long cooldownMs = cooldownSeconds * 1000L;
         long remaining = cooldownMs - (currentTime - lastUsed);
-        
-        return Math.max(0, remaining / (60L * 1000L)); // Convert to minutes
+
+        return Math.max(0, remaining / 1000L); // Return seconds remaining
     }
     
     private static void setCooldown(UUID playerId, String cooldownKey) {

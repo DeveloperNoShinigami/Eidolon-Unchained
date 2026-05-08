@@ -519,31 +519,23 @@ public class EidolonResearchDataManager extends SimpleJsonResourceReloadListener
     }
     
     /**
-     * Grant a mystical sign to the player using reflection.
+     * Grant a mystical sign to the player through Eidolon's knowledge API.
      */
     private void grantSign(ServerPlayer player, String signName) {
         try {
-            // Try to find the sign in Signs registry using reflection
-            Class<?> signsClass = Class.forName("elucent.eidolon.registries.Signs");
-            signsClass.getField(signName.toUpperCase() + "_SIGN").get(null);
-            
-            // Grant the sign using KnowledgeUtil (correct method signature: Entity, Sign)
-            // TODO: Re-enable when KnowledgeUtil class is available
-            /*
-            Class<?> signClass = Class.forName("elucent.eidolon.api.research.Sign");
-            Method grantSignMethod = KnowledgeUtil.class.getMethod("grantSign", Entity.class, signClass);
-            grantSignMethod.invoke(null, player, sign);
-            */
-            
-            LOGGER.info("Granted sign {} to player {}", signName, player.getName().getString());
-            
-            // Send action bar notification for immediate feedback
-            player.connection.send(new ClientboundSetActionBarTextPacket(
-                Component.literal("§6✦ New mystical sign learned: " + signName.toUpperCase() + " ✦")
-            ));
+            ResourceLocation signId = signName.contains(":")
+                ? new ResourceLocation(signName)
+                : new ResourceLocation("eidolon", signName.toLowerCase(java.util.Locale.ROOT));
+            var sign = elucent.eidolon.registries.Signs.find(signId);
+            if (sign == null) {
+                LOGGER.warn("Unknown sign '{}' for player {}", signName, player.getName().getString());
+                return;
+            }
+
+            elucent.eidolon.util.KnowledgeUtil.grantSign(player, sign);
+            LOGGER.info("Granted sign {} to player {}", signId, player.getName().getString());
         } catch (Exception e) {
             LOGGER.error("Failed to grant sign {} to player {}: {}", signName, player.getName().getString(), e.getMessage());
-            e.printStackTrace(); // This will help debug the specific issue
         }
     }
 }

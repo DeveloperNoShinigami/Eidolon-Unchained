@@ -1,0 +1,25 @@
+{
+  "name": "Irons Cast Teleport Movement Debug",
+  "description": "Debug chant that uses Iron's Spells teleport as a movement-role reposition tool.",
+  "category": "debug",
+  "codex_icon": "minecraft:ender_pearl",
+  "difficulty": 1,
+  "mana_cost": 0,
+  "cooldown": 3,
+  "combat_role": "movement",
+  "mob_priority_weight": 8,
+  "show_in_codex": true,
+  "requires_effigy": false,
+  "signs": [
+    "eidolon:sacred",
+    "eidolon:harmony",
+    "eidolon:wicked"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "run_command",
+      "command": "cast @s irons_spellbooks:teleport 1"
+    }
+  ]
+}

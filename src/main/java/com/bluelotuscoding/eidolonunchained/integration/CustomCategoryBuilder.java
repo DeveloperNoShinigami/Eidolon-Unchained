@@ -83,13 +83,13 @@ public class CustomCategoryBuilder {
         // Translation key for this category
         String translationKey = "eidolonunchained.codex.category." + key;
 
-        // Create index page
-        Index index = new Index(translationKey, new IndexPage(entries));
+        // Create index page with title (TitledIndexPage auto-appends .title to base key)
+        Index index = new Index(translationKey, new TitledIndexPage(translationKey, entries));
 
         // Create and return category with fully-qualified translation key
         Category category = new Category(translationKey, icon, color, index);
         
-        LOGGER.info("✅ Built category '{}' with {} chapters", key, chapters.size());
+        LOGGER.info("✅ Built titled category '{}' with {} chapters (title lookup: {}.title)", key, chapters.size(), translationKey);
         return category;
     }
     

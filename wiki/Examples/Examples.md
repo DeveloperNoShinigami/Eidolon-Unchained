@@ -1,55 +1,32 @@
 # Examples
 
-## Working Chants (Datapack)
+The repository already ships live examples inside the bundled data pack.
 
-### Primal Deity Chants
-- `src/main/resources/data/eidolonunchained/chants/shadow_communion.json` - Dark Deity
-- `src/main/resources/data/eidolonunchained/chants/divine_communion.json` - Light Deity
-- `src/main/resources/data/eidolonunchained/chants/natures_communion.json` - Nature Deity
+## Current Example Surfaces
 
-### Elemental Deity Chants
-- `src/main/resources/data/eidolonunchained/chants/fires_communion.json` - Fire Deity
-- `src/main/resources/data/eidolonunchained/chants/waters_communion.json` - Water Deity
-- `src/main/resources/data/eidolonunchained/chants/earths_communion.json` - Earth Deity
-- `src/main/resources/data/eidolonunchained/chants/airs_communion.json` - Air Deity
+You can study the current bundled examples under:
 
-### Dimensional Deity Chants
-- `src/main/resources/data/eidolonunchained/chants/twilights_communion.json` - Twilight Deity (Balance)
-- `src/main/resources/data/eidolonunchained/chants/overworlds_communion.json` - Overworld Deity (Life)
-- `src/main/resources/data/eidolonunchained/chants/nethers_communion.json` - Nether Deity (Trials)
-- `src/main/resources/data/eidolonunchained/chants/ends_communion.json` - End Deity (Transcendence)
+- `src/main/resources/data/eidolonunchained/deities/`
+- `src/main/resources/data/eidolonunchained/ai_deities/`
+- `src/main/resources/data/eidolonunchained/chants/`
+- `src/main/resources/data/eidolonunchained/codex/`
+- `src/main/resources/data/eidolonunchained/codex_entries/`
+- `src/main/resources/data/eidolonunchained/research/`
+- `src/main/resources/data/eidolonunchained/fates/`
+- `src/main/resources/data/eidolonunchained/facts/`
+- `src/main/resources/data/eidolonunchained/recipes/`
 
-### Special Action Chants
-- `src/main/resources/data/eidolonunchained/chants/divine_judgment.json`
-- `src/main/resources/data/eidolonunchained/chants/gaias_wrath.json`
+## Good Starting Files
 
-## Patron Rituals (Brazier Commands)
+If you want compact reference files first, start with:
 
-### Primal Deity Rituals
-- `src/main/resources/data/eidolonunchained/recipes/light_patronage_ritual.json` - Light Deity
-- `src/main/resources/data/eidolonunchained/recipes/shadow_patronage_ritual.json` - Dark Deity  
-- `src/main/resources/data/eidolonunchained/recipes/nature_patronage_ritual.json` - Nature Deity
+- `codex_entries/text_example.json`
+- `codex_entries/recipe_example.json`
+- `codex_entries/entity_example.json`
+- `research/simple_research_example.json`
+- `facts/speak_with_dark_deity.json`
+- `chants/dark_deity/shadow_communion.json`
 
-### Elemental Deity Rituals
-- `src/main/resources/data/eidolonunchained/recipes/fire_patronage_ritual.json` - Fire Deity
-- `src/main/resources/data/eidolonunchained/recipes/water_patronage_ritual.json` - Water Deity
-- `src/main/resources/data/eidolonunchained/recipes/earth_patronage_ritual.json` - Earth Deity
-- `src/main/resources/data/eidolonunchained/recipes/air_patronage_ritual.json` - Air Deity
+## Important Note
 
-### Dimensional Deity Rituals
-- `src/main/resources/data/eidolonunchained/recipes/twilight_patronage_ritual.json` - Twilight Deity
-- `src/main/resources/data/eidolonunchained/recipes/overworld_patronage_ritual.json` - Overworld Deity
-- `src/main/resources/data/eidolonunchained/recipes/nether_patronage_ritual.json` - Nether Deity
-- `src/main/resources/data/eidolonunchained/recipes/end_patronage_ritual.json` - End Deity
-
-## Research
-
-- `src/main/resources/data/eidolonunchained/research/simple_research_example.json`
-
-How to Test
-
-1) Load the mod, ensure config is valid: ` /eidolon-unchained config status`
-2) Set your AI provider/model if needed
-3) Build an effigy/altar, then perform the sign sequence
-4) Watch action bar feedback and delayed spell execution
-5) Use `/dtask list <player>` or research triggers to validate progression
+Some bundled example README material under the data folder is outdated and still references legacy folders such as `research_chapters/` and `research_entries/`. Use the live runtime loaders and actual bundled file tree as the source of truth instead.

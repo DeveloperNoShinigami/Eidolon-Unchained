@@ -1,0 +1,29 @@
+{
+  "id": "light_communion_study",
+  "stars": 2,
+  "triggers": [
+    {
+      "type": "biome",
+      "biome": "minecraft:meadow",
+      "max_found": 1
+    }
+  ],
+  "tasks": {
+    "0": [
+      {
+        "type": "item",
+        "item": "eidolon:arcane_gold_ingot",
+        "count": 1,
+        "command": "give @s minecraft:gold_nugget 4"
+      }
+    ],
+    "1": [
+      {
+        "type": "ritual_completion",
+        "ritual": "eidolonunchained:light_patronage_ritual",
+        "count": 1
+      }
+    ]
+  },
+  "rewards": []
+}

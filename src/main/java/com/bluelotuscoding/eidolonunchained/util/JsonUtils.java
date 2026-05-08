@@ -20,16 +20,36 @@ public final class JsonUtils {
         @Override
         public boolean shouldSkipField(FieldAttributes f) {
             Class<?> type = f.getDeclaredClass();
+            String fieldName = f.getName();
             if (type == null) return false;
+
+            // Exclude specific fields that cause circular references in mod classes
+            if ("playerRewardHistory".equals(fieldName)) return true;
+            if ("stageTitles".equals(fieldName)) return true;
+            if ("stageRewards".equals(fieldName)) return true;
+            if ("prayerTypes".equals(fieldName)) return true;
+
+            // Exclude any field containing UUID maps that could create cycles
+            if (fieldName.toLowerCase().contains("history") && java.util.Map.class.isAssignableFrom(type)) return true;
+            if (fieldName.toLowerCase().contains("cache") && java.util.Map.class.isAssignableFrom(type)) return true;
+
             // Exclude problematic runtime types from serialization
             if (Thread.class.isAssignableFrom(type)) return true;
             if (ExecutorService.class.isAssignableFrom(type)) return true;
             if (ScheduledExecutorService.class.isAssignableFrom(type)) return true;
             if (ClassLoader.class.isAssignableFrom(type)) return true;
+
+            // Exclude java.lang.ref.Reference types (WeakReference, SoftReference, etc.)
+            if (java.lang.ref.Reference.class.isAssignableFrom(type)) return true;
+
             // Avoid serializing any java.lang/reflect proxies by default
             Package p = type.getPackage();
             String pn = p != null ? p.getName() : "";
-            return pn.startsWith("java.lang.reflect");
+            if (pn.startsWith("java.lang.reflect")) return true;
+            if (pn.startsWith("java.lang.ref")) return true;
+            if (pn.startsWith("java.util.concurrent")) return true;
+
+            return false;
         }
 
         @Override
@@ -39,6 +59,13 @@ public final class JsonUtils {
             if (ExecutorService.class.isAssignableFrom(clazz)) return true;
             if (ScheduledExecutorService.class.isAssignableFrom(clazz)) return true;
             if (ClassLoader.class.isAssignableFrom(clazz)) return true;
+            if (java.lang.ref.Reference.class.isAssignableFrom(clazz)) return true;
+
+            Package p = clazz.getPackage();
+            String pn = p != null ? p.getName() : "";
+            if (pn.startsWith("java.lang.ref")) return true;
+            if (pn.startsWith("java.util.concurrent")) return true;
+
             return false;
         }
     };
@@ -78,5 +105,7 @@ public final class JsonUtils {
             .addSerializationExclusionStrategy(RUNTIME_EXCLUSION)
             .registerTypeAdapterFactory(OPTIONAL_ADAPTER_FACTORY)
             .disableHtmlEscaping()
+            .setLenient()  // Allow malformed JSON to be more forgiving
+            .setPrettyPrinting()  // Make debugging easier
             .create();
 }

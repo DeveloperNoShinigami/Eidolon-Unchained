@@ -1,0 +1,6 @@
+{
+  "id": "eidolonunchained:test_sign",
+  "sprite": "eidolon:particle/wicked_sign",
+  "color": "0xFF9A4DFF",
+  "display_name": "Test"
+}

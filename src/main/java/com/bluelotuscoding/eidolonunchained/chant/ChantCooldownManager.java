@@ -71,6 +71,16 @@ public class ChantCooldownManager {
     }
     
     /**
+     * Set an explicit cooldown duration (in seconds) for a player on a specific chant,
+     * independent of the chant's configured cooldown value.
+     */
+    public static void setCooldownSeconds(Player player, DatapackChant chant, int durationSeconds) {
+        long fakeStartTime = System.currentTimeMillis() - (chant.getCooldown() * 1000L) + (durationSeconds * 1000L);
+        playerChantCooldowns.computeIfAbsent(player.getUUID(), k -> new HashMap<>())
+                           .put(chant.getId(), fakeStartTime);
+    }
+
+    /**
      * Clear cooldown for a specific chant for a player (admin command or special circumstances)
      */
     public static void clearCooldown(Player player, ResourceLocation chantId) {

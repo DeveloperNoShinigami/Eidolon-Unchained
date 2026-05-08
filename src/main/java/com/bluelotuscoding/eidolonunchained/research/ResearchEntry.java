@@ -174,6 +174,9 @@ public class ResearchEntry {
             for (var entry : tasks.entrySet()) {
                 JsonArray array = new JsonArray();
                 for (ResearchTask task : entry.getValue()) {
+                    if (task == null || task.getType() == null) {
+                        continue; // Skip invalid tasks
+                    }
                     JsonObject tObj = new JsonObject();
                     String typeId = task.getType().id().getPath();
                     tObj.addProperty("type", task.getType().id().toString());

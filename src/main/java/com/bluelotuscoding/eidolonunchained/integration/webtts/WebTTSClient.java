@@ -76,7 +76,7 @@ public class WebTTSClient {
     }
 
     private static String getApiKey() {
-        return EidolonUnchainedConfig.WEBTTS_API_KEY.get();
+        return com.bluelotuscoding.eidolonunchained.config.APIKeyManager.getAPIKey("webtts");
     }
 
     public CompletableFuture<List<VoiceInfo>> listVoices() {

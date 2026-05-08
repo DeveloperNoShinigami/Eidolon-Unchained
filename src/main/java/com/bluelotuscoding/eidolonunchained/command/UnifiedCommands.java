@@ -4,6 +4,7 @@ import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
 import com.bluelotuscoding.eidolonunchained.ai.AIDeityManager;
 import com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig;
+import com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker;
 import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
 import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
 import com.bluelotuscoding.eidolonunchained.chat.ConversationHistoryManager;
@@ -12,6 +13,9 @@ import com.bluelotuscoding.eidolonunchained.chat.ConversationMessage;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
 import com.bluelotuscoding.eidolonunchained.events.RitualCompleteEvent;
 import com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient;
+import com.bluelotuscoding.eidolonunchained.research.triggers.InteractionResearchTriggers;
+import com.bluelotuscoding.eidolonunchained.research.triggers.KillResearchTriggers;
+import com.bluelotuscoding.eidolonunchained.research.triggers.RitualResearchTriggers;
 // import elucent.eidolon.capability.IReputation;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -52,7 +56,7 @@ public class UnifiedCommands {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(UnifiedCommands.class);
     
-    // 🎯 SUGGESTION PROVIDERS FOR TAB COMPLETION
+    // TARGET ICON - SUGGESTION PROVIDERS FOR TAB COMPLETION
     
     /**
      * Suggest available deity IDs (namespace:path) without extra comment lines or quoting
@@ -89,6 +93,21 @@ public class UnifiedCommands {
     };
 
     /**
+     * Suggests available facts loaded from facts/*.json
+     */
+    private static final SuggestionProvider<CommandSourceStack> FACT_SUGGESTIONS = (context, builder) -> {
+        List<String> suggestions = new ArrayList<>();
+        try {
+            for (ResourceLocation factId : com.bluelotuscoding.eidolonunchained.data.FactsSuggestionManager.getAllFactIds()) {
+                suggestions.add(factId.toString());
+            }
+        } catch (Exception e) {
+            // Ignore errors during suggestion gathering
+        }
+        return SharedSuggestionProvider.suggest(suggestions, builder);
+    };
+
+    /**
      * Suggest available fate/task IDs aggregated from all deity configs (no comments)
      */
     private static final SuggestionProvider<CommandSourceStack> TASK_ID_SUGGESTIONS = (context, builder) -> {
@@ -105,7 +124,9 @@ public class UnifiedCommands {
                     }
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e2) {
+            // Ignore errors during suggestion gathering
+        }
         return SharedSuggestionProvider.suggest(new ArrayList<>(unique), builder);
     };
     
@@ -149,17 +170,11 @@ public class UnifiedCommands {
     };
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        
-        // Main command tree: /eidolon-unchained
+
         dispatcher.register(Commands.literal("eidolon-unchained")
-            .requires(source -> source.hasPermission(EidolonUnchainedConfig.COMMON.requiredOpLevel.get()))
-            // Unified Player2 login (shared for AI + TTS)
-            .then(Commands.literal("login")
-                .then(Commands.literal("device").executes(UnifiedCommands::startPlayer2AILoginDevice))
-                .then(Commands.literal("status").executes(UnifiedCommands::showPlayer2AILoginStatus))
-                .then(Commands.literal("logout").executes(UnifiedCommands::logoutPlayer2AIP2Key)))
-            
-            // Configuration commands
+            .requires(source -> true)
+
+            // -- config ------------------------------------------------------------
             .then(Commands.literal("config")
                 .then(Commands.literal("reload")
                     .executes(UnifiedCommands::reloadConfig))
@@ -169,11 +184,10 @@ public class UnifiedCommands {
                     .executes(UnifiedCommands::validateConfig))
                 .then(Commands.literal("reset")
                     .executes(UnifiedCommands::resetConfig)))
-            
-            // API key management
+
+            // -- api ---------------------------------------------------------------
             .then(Commands.literal("api")
                 .then(Commands.literal("set")
-                    // Special shortcut for player2ai - no API key needed
                     .then(Commands.literal("player2ai")
                         .executes(UnifiedCommands::setupPlayer2AI))
                     .then(Commands.argument("provider", StringArgumentType.string())
@@ -194,20 +208,81 @@ public class UnifiedCommands {
                 .then(Commands.literal("remove")
                     .then(Commands.argument("provider", StringArgumentType.string())
                         .suggests(API_PROVIDER_SUGGESTIONS)
-                        .executes(UnifiedCommands::removeApiKey)))
-                .then(Commands.literal("retry")
-                    .then(Commands.literal("status")
-                        .executes(UnifiedCommands::showRetryStatus))
-                    .then(Commands.literal("toggle")
-                        .executes(UnifiedCommands::toggleRetry))
-                    .then(Commands.literal("attempts")
-                        .then(Commands.argument("count", IntegerArgumentType.integer(1, 10))
-                            .executes(UnifiedCommands::setMaxRetryAttempts)))
-                    .then(Commands.literal("delay")
-                        .then(Commands.argument("milliseconds", IntegerArgumentType.integer(1000, 10000))
-                            .executes(UnifiedCommands::setRetryDelay)))))
-            
-            // Player2AI specific management
+                        .executes(UnifiedCommands::removeApiKey))))
+
+            // -- deities -----------------------------------------------------------
+            .then(Commands.literal("deities")
+                .then(Commands.literal("list")
+                    .executes(UnifiedCommands::listDeities))
+                .then(Commands.literal("reload")
+                    .executes(UnifiedCommands::reloadDeities))
+                .then(Commands.literal("status")
+                    .then(Commands.argument("deity", ResourceLocationArgument.id())
+                        .suggests(DEITY_SUGGESTIONS)
+                        .executes(UnifiedCommands::showDeityStatus))))
+
+            // -- patron ------------------------------------------------------------
+            .then(Commands.literal("patron")
+                .then(Commands.literal("choose")
+                    .then(Commands.argument("target", net.minecraft.commands.arguments.EntityArgument.player())
+                        .then(Commands.argument("deity", ResourceLocationArgument.id())
+                            .suggests(DEITY_SUGGESTIONS)
+                            .executes(UnifiedCommands::choosePatron)))
+                    .then(Commands.argument("deity", ResourceLocationArgument.id())
+                        .suggests(DEITY_SUGGESTIONS)
+                        .executes(UnifiedCommands::choosePatron)))
+                .then(Commands.literal("abandon")
+                    .executes(UnifiedCommands::abandonPatron))
+                .then(Commands.literal("status")
+                    .executes(UnifiedCommands::patronStatus)))
+
+            // -- prayers -----------------------------------------------------------
+            .then(Commands.literal("prayers")
+                .then(Commands.literal("history")
+                    .executes(UnifiedCommands::showPrayerHistory))
+                .then(Commands.literal("cooldowns")
+                    .executes(UnifiedCommands::showPlayerCooldowns))
+                .then(Commands.literal("clear-cooldown")
+                    .requires(cs -> cs.hasPermission(2))
+                    .then(Commands.argument("player", StringArgumentType.string())
+                        .suggests(PLAYER_SUGGESTIONS)
+                        .executes(UnifiedCommands::clearPrayerCooldown))))
+
+            // -- fates (canonical, replaces tasks) --------------------------------
+            .then(FateCommands.buildNode(PLAYER_SUGGESTIONS, DEITY_SUGGESTIONS, TASK_ID_SUGGESTIONS, RITUAL_SUGGESTIONS))
+
+            // -- chat (direct AI test without effigy) ------------------------------
+            .then(Commands.literal("chat")
+                .then(Commands.argument("deity", ResourceLocationArgument.id())
+                    .suggests(DEITY_SUGGESTIONS)
+                    .then(Commands.argument("message", StringArgumentType.greedyString())
+                        .executes(UnifiedCommands::chatWithDeity))))
+
+            // -- conversations -----------------------------------------------------
+            .then(Commands.literal("conversations")
+                .then(Commands.literal("stats")
+                    .executes(UnifiedCommands::showConversationStats))
+                .then(Commands.literal("clear")
+                    .then(Commands.argument("deity", ResourceLocationArgument.id())
+                        .suggests(DEITY_SUGGESTIONS)
+                        .executes(UnifiedCommands::clearConversationHistory)))
+                .then(Commands.literal("clear-all")
+                    .executes(UnifiedCommands::clearAllConversationHistory)))
+
+            // -- research ----------------------------------------------------------
+            .then(Commands.literal("research")
+                .then(Commands.literal("list")
+                    .executes(UnifiedCommands::listResearchEntries))
+                .then(Commands.literal("reload")
+                    .requires(cs -> cs.hasPermission(2))
+                    .executes(UnifiedCommands::reloadResearch))
+                .then(Commands.literal("clear")
+                    .requires(cs -> cs.hasPermission(2))
+                    .then(Commands.argument("player", StringArgumentType.string())
+                        .suggests(PLAYER_SUGGESTIONS)
+                        .executes(UnifiedCommands::clearPlayerResearch))))
+
+            // -- player2ai ---------------------------------------------------------
             .then(Commands.literal("player2ai")
                 .then(Commands.literal("auth")
                     .then(Commands.literal("auto")
@@ -216,11 +291,9 @@ public class UnifiedCommands {
                     .then(Commands.literal("device")
                         .executes(UnifiedCommands::startPlayer2AILoginDevice))
                     .then(Commands.literal("status")
-            .executes(UnifiedCommands::showPlayer2AILoginStatus)))
+                        .executes(UnifiedCommands::showPlayer2AILoginStatus)))
                 .then(Commands.literal("logout")
                     .executes(UnifiedCommands::logoutPlayer2AIP2Key))
-        // Surface TTS configuration under the player2ai subtree as an alias
-        .then(com.bluelotuscoding.eidolonunchained.command.TTSCommands.buildNode())
                 .then(Commands.literal("test")
                     .executes(UnifiedCommands::testPlayer2AIConnection))
                 .then(Commands.literal("debug-chat")
@@ -242,232 +315,19 @@ public class UnifiedCommands {
                         .then(Commands.argument("deity", ResourceLocationArgument.id())
                             .suggests(DEITY_SUGGESTIONS)
                             .executes(UnifiedCommands::updatePlayer2AIPersonality)))))
-            
-            // Deity management
-            .then(Commands.literal("deities")
-                .then(Commands.literal("list")
-                    .executes(UnifiedCommands::listDeities))
-                .then(Commands.literal("reload")
-                    .executes(UnifiedCommands::reloadDeities))
-                .then(Commands.literal("status")
-                    .then(Commands.argument("deity", ResourceLocationArgument.id())
-                        .suggests(DEITY_SUGGESTIONS)
-                        .executes(UnifiedCommands::showDeityStatus))))
-            
-            // Patron system
-            .then(Commands.literal("patron")
-                .then(Commands.literal("choose")
-                    .then(Commands.argument("deity", StringArgumentType.string())
-                        .suggests(DEITY_SUGGESTIONS)
-                        .executes(UnifiedCommands::choosePatron)))
-                .then(Commands.literal("abandon")
-                    .executes(UnifiedCommands::abandonPatron))
-                .then(Commands.literal("status")
-                    .executes(UnifiedCommands::patronStatus))
-                .then(Commands.literal("titles")
-                    .executes(UnifiedCommands::listPatronTitles))
-                .then(Commands.literal("confirm")
-                    .then(Commands.argument("deity", StringArgumentType.string())
-                        .suggests(DEITY_SUGGESTIONS)
-                        .executes(UnifiedCommands::confirmPatronChoice))))
-            
-            // Chant system
-            .then(Commands.literal("chants")
-                .then(Commands.literal("list")
-                    .executes(UnifiedCommands::listChants))
-                .then(Commands.literal("reload")
-                    .executes(UnifiedCommands::reloadChants))
-                .then(Commands.literal("generate")
-                    .executes(UnifiedCommands::generateChants))
-                .then(Commands.literal("test")
-                    .then(Commands.argument("chant", StringArgumentType.string())
-                        .suggests(CHANT_SUGGESTIONS)
-                        .executes(UnifiedCommands::testChant))))
-            
-            // Prayer system
-            .then(Commands.literal("prayers")
-                .then(Commands.literal("history")
-                    .executes(UnifiedCommands::showPrayerHistory))
-                .then(Commands.literal("clear-cooldown")
-                    .then(Commands.argument("player", StringArgumentType.string())
-                        .suggests(PLAYER_SUGGESTIONS)
-                        .executes(UnifiedCommands::clearPrayerCooldown)))
-                .then(Commands.literal("cooldowns")
-                    .executes(UnifiedCommands::showPlayerCooldowns)))
 
-            // Tasks system (formerly /dtask) — unified under /eidolon-unchained
-            .then(Commands.literal("tasks")
-                .then(Commands.literal("assign")
-                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("deity", ResourceLocationArgument.id()).suggests(DEITY_SUGGESTIONS)
-                            .then(Commands.argument("taskId", StringArgumentType.greedyString()).suggests(TASK_ID_SUGGESTIONS)
-                                .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::assignTask)))))
-                .then(Commands.literal("assignany")
-                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("taskId", StringArgumentType.greedyString()).suggests(TASK_ID_SUGGESTIONS)
-                            .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::assignAnyTask))))
-                .then(Commands.literal("complete")
-                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("taskId", StringArgumentType.greedyString()).suggests(TASK_ID_SUGGESTIONS)
-                            .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::completeTask))))
-                .then(Commands.literal("list")
-                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::listTasks)))
-                .then(Commands.literal("reputation")
-                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("deity", ResourceLocationArgument.id()).suggests(DEITY_SUGGESTIONS)
-                            .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::checkSpecificReputation))))
-                .then(Commands.literal("repall")
-                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::checkAllReputation)))
-                .then(Commands.literal("ritual")
-                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("ritualId", ResourceLocationArgument.id())
-                            .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::markRitualComplete)))))
+            // -- chant -------------------------------------------------------------
+            .then(ChantSlotCommands.buildNode())
 
-            // Fates system (renamed tasks) — canonical
-            .then(Commands.literal("fates")
-                .then(Commands.literal("assign")
-                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("deity", ResourceLocationArgument.id()).suggests(DEITY_SUGGESTIONS)
-                            .then(Commands.argument("fateId", StringArgumentType.greedyString()).suggests(TASK_ID_SUGGESTIONS)
-                                .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::assignTask)))))
-                .then(Commands.literal("assignany")
-                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("fateId", StringArgumentType.greedyString()).suggests(TASK_ID_SUGGESTIONS)
-                            .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::assignAnyTask))))
-                .then(Commands.literal("complete")
-                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("fateId", StringArgumentType.greedyString()).suggests(TASK_ID_SUGGESTIONS)
-                            .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::completeTask))))
-                .then(Commands.literal("list")
-                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::listTasks)))
-                .then(Commands.literal("reputation")
-                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("deity", ResourceLocationArgument.id()).suggests(DEITY_SUGGESTIONS)
-                            .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::checkSpecificReputation))))
-                .then(Commands.literal("repall")
-                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::checkAllReputation)))
-                .then(Commands.literal("ritual")
-                    .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                        .then(Commands.argument("ritualId", ResourceLocationArgument.id())
-                            .executes(com.bluelotuscoding.eidolonunchained.commands.TaskCommands::markRitualComplete)))))
+            // -- tts ---------------------------------------------------------------
+            .then(TTSCommands.buildNode())
 
-            // Conversation system  
-            .then(Commands.literal("conversations")
-                .then(Commands.literal("stats")
-                    .executes(UnifiedCommands::showConversationStats))
-                .then(Commands.literal("clear")
-                    .then(Commands.argument("deity", ResourceLocationArgument.id())
-                        .suggests(DEITY_SUGGESTIONS)
-                        .executes(UnifiedCommands::clearConversationHistory)))
-                .then(Commands.literal("clear-all")
-                    .executes(UnifiedCommands::clearAllConversationHistory)))
-            
-            // Research system
-            .then(Commands.literal("research")
-                .then(Commands.literal("clear")
-                    .then(Commands.argument("player", StringArgumentType.string())
-                        .suggests(PLAYER_SUGGESTIONS)
-                        .executes(UnifiedCommands::clearPlayerResearch)))
-                .then(Commands.literal("reload")
-                    .executes(UnifiedCommands::reloadResearch))
-                .then(Commands.literal("list")
-                    .executes(UnifiedCommands::listResearchEntries)))
-            
-            // 🎯 DEBUG SYSTEM - Reputation & Progression Testing
-            .then(Commands.literal("debug")
-                .requires(cs -> cs.hasPermission(2))
-                .then(Commands.literal("progression")
-                    .then(Commands.argument("player", StringArgumentType.string())
-                        .suggests(PLAYER_SUGGESTIONS)
-                        .executes(UnifiedCommands::debugPlayerProgression)))
-                .then(Commands.literal("force-progression-check")
-                    .then(Commands.argument("player", StringArgumentType.string())
-                        .suggests(PLAYER_SUGGESTIONS)
-                        .executes(UnifiedCommands::forceProgressionCheck)))
-                .then(Commands.literal("test-command")
-                    .then(Commands.argument("command", StringArgumentType.greedyString())
-                        .executes(UnifiedCommands::testDeityCommand)))
-                .then(Commands.literal("reputation")
-                    .then(Commands.argument("player", StringArgumentType.string())
-                        .suggests(PLAYER_SUGGESTIONS)
-                        .then(Commands.argument("deity", ResourceLocationArgument.id())
-                            .suggests(DEITY_SUGGESTIONS)
-                            .executes(UnifiedCommands::debugPlayerReputation))))
-                .then(Commands.literal("ritual")
-                    .then(Commands.literal("list")
-                        .executes(UnifiedCommands::listLoadedRituals))
-                    .then(Commands.literal("test")
-                        .then(Commands.argument("ritual_id", ResourceLocationArgument.id())
-                            .suggests(RITUAL_SUGGESTIONS)
-                            .executes(UnifiedCommands::testRitualExecution)))
-                    .then(Commands.literal("diagnose")
-                        .executes(UnifiedCommands::diagnoseRitualSystem)))
-                .then(Commands.literal("clear-rewards")
-                        .then(Commands.argument("player", StringArgumentType.string())
-                            .suggests(PLAYER_SUGGESTIONS)
-                            .then(Commands.argument("deity", ResourceLocationArgument.id())
-                                .suggests(DEITY_SUGGESTIONS)
-                                .executes(UnifiedCommands::clearPlayerRewards))))
-                .then(Commands.literal("clear-all-rewards")
-                    .then(Commands.argument("player", StringArgumentType.string())
-                        .suggests(PLAYER_SUGGESTIONS)
-                        .executes(UnifiedCommands::clearAllPlayerRewards)))
-                .then(Commands.literal("tier-debug")
-                        .then(Commands.argument("player", StringArgumentType.string())
-                            .suggests(PLAYER_SUGGESTIONS)
-                            .then(Commands.argument("deity", ResourceLocationArgument.id())
-                                .suggests(DEITY_SUGGESTIONS)
-                                .executes(UnifiedCommands::debugTierTracking))))
-                .then(Commands.literal("verify-progression-stages")
-                    .then(Commands.argument("deity", ResourceLocationArgument.id())
-                        .suggests(DEITY_SUGGESTIONS)
-                        .executes(UnifiedCommands::verifyProgressionStages)))
-                .then(Commands.literal("test-tier-progression")
-                    .then(Commands.argument("player", StringArgumentType.string())
-                        .suggests(PLAYER_SUGGESTIONS)
-                        .then(Commands.argument("deity", ResourceLocationArgument.id())
-                            .suggests(DEITY_SUGGESTIONS)
-                            .executes(UnifiedCommands::testTierProgression))))));
+            // -- debug (op only) ---------------------------------------------------
+            .then(DebugCommands.buildNode(PLAYER_SUGGESTIONS, DEITY_SUGGESTIONS, RITUAL_SUGGESTIONS, FACT_SUGGESTIONS)));
 
-            // TTS (Text-To-Speech) commands moved to a separate dispatcher.register below
-
-            // TODO: Reputation system commands - implement these methods when needed
-            /*
-            .then(Commands.literal("reputation")
-                .then(Commands.literal("get")
-                    .then(Commands.argument("player", StringArgumentType.string())
-                        .then(Commands.argument("deity", StringArgumentType.string())
-                            .executes(UnifiedCommands::getPlayerReputation))))
-                .then(Commands.literal("set")
-                    .requires(cs -> cs.hasPermission(2))
-                    .then(Commands.argument("player", StringArgumentType.string())
-                        .then(Commands.argument("deity", StringArgumentType.string()))
-                            .then(Commands.argument("amount", DoubleArgumentType.doubleArg(-100, 100))
-                                .executes(UnifiedCommands::setPlayerReputation)))))
-                .then(Commands.literal("add")
-                    .requires(cs -> cs.hasPermission(2))
-                    .then(Commands.argument("player", StringArgumentType.string())
-                        .then(Commands.argument("deity", StringArgumentType.string())
-                            .then(Commands.argument("amount", DoubleArgumentType.doubleArg(-100, 100))
-                                .executes(UnifiedCommands::addPlayerReputation)))))
-                .then(Commands.literal("list")
-                    .then(Commands.argument("player", StringArgumentType.string())
-                        .executes(UnifiedCommands::listPlayerReputations))))
-            */
-        
-        // Alias commands for convenience (keep only the short root alias)
+        // /eu alias
         dispatcher.register(Commands.literal("eu")
             .redirect(dispatcher.getRoot().getChild("eidolon-unchained")));
-
-    // Canonical nested: /eidolon-unchained chant (no standalone /chant root)
-        dispatcher.register(Commands.literal("eidolon-unchained").then(com.bluelotuscoding.eidolonunchained.command.ChantSlotCommands.buildNode()));
-
-    // TTS subcommands under /eidolon-unchained
-    dispatcher.register(Commands.literal("eidolon-unchained").then(com.bluelotuscoding.eidolonunchained.command.TTSCommands.buildNode()));
     }
     
     // Configuration commands
@@ -705,10 +565,10 @@ public class UnifiedCommands {
                 chants.forEach((id, chant) -> {
                     list.append("§e").append(id).append(": §b").append(chant.getName());
                     if (chant.hasLinkedDeity()) {
-                        list.append(" §a[→ ").append(chant.getLinkedDeity()).append("]");
+                        list.append(" §a[-> ").append(chant.getLinkedDeity()).append("]");
                     }
                     list.append("\n  §7Category: ").append(chant.getCategory())
-                        .append(", Difficulty: ").append("★".repeat(chant.getDifficulty())).append("\n");
+                        .append(", Difficulty: ").append("*".repeat(chant.getDifficulty())).append("\n");
                 });
             }
             
@@ -832,7 +692,7 @@ public class UnifiedCommands {
         if ("player2ai".equals(aiProvider)) {
             boolean isCompliant = com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2HealthSignal.isHealthSignalActive();
             status.append(String.format("§ePlayer2AI Jam Compliance: %s\n", 
-                isCompliant ? "§a✓ COMPLIANT" : "§c✗ NON-COMPLIANT"));
+                isCompliant ? "§a[OK] COMPLIANT" : "§c[X] NON-COMPLIANT"));
         }
         
         context.getSource().sendSuccess(() -> Component.literal(status.toString()), false);
@@ -931,10 +791,18 @@ public class UnifiedCommands {
             
             // Clear research using Eidolon's built-in system
             KnowledgeUtil.resetResearch(player);
+            PlayerContextTracker.clearTriggeredResearchTracking(player);
+            InteractionResearchTriggers.clearTriggeredResearch(player);
+            KillResearchTriggers.clearTriggeredResearch(player);
+            RitualResearchTriggers.clearTriggeredResearch(player);
+            // Clear task progress stored in persistentData NBT so tasks don't auto-complete on re-grant
+            com.bluelotuscoding.eidolonunchained.research.tasks.KillEntitiesTask.clearProgress(player);
+            com.bluelotuscoding.eidolonunchained.research.tasks.CraftItemsTask.clearProgress(player);
+            com.bluelotuscoding.eidolonunchained.research.tasks.UseRitualTask.clearProgress(player);
             
             context.getSource().sendSuccess(() -> 
                 Component.translatable("eidolonunchained.command.research.cleared", playerName), false);
-            player.sendSystemMessage(Component.literal("§6Your research progress has been reset by an administrator."));
+            player.sendSystemMessage(Component.literal("§6Your research progress and trigger discovery state have been reset by an administrator."));
             
             return 1;
         } catch (Exception e) {
@@ -979,6 +847,39 @@ public class UnifiedCommands {
     /**
      * Show conversation statistics for the executing player
      */
+    /**
+     * /eu chat <deity> <message>
+     * Sends a message directly to a deity's AI without requiring an effigy or patron check.
+     * Useful for testing AI responses from the console or while building datapacks.
+     */
+    private static int chatWithDeity(CommandContext<CommandSourceStack> context) {
+        try {
+            if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+                context.getSource().sendFailure(Component.literal("This command must be run by a player."));
+                return 0;
+            }
+            ResourceLocation deityId = ResourceLocationArgument.getId(context, "deity");
+            String message = StringArgumentType.getString(context, "message");
+
+            DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
+            if (deity == null) {
+                context.getSource().sendFailure(Component.literal("Unknown deity: " + deityId));
+                return 0;
+            }
+            if (AIDeityManager.getInstance().getAIConfig(deityId) == null) {
+                context.getSource().sendFailure(Component.literal("No AI config found for deity: " + deityId + ". Check your datapack."));
+                return 0;
+            }
+
+            context.getSource().sendSuccess(() -> Component.literal("§7[" + deity.getName() + "] Sending message..."), false);
+            com.bluelotuscoding.eidolonunchained.chat.DeityChat.processSystemConversation(player, deityId, message, null);
+            return 1;
+        } catch (Exception e) {
+            context.getSource().sendFailure(Component.literal("Error: " + e.getMessage()));
+            return 0;
+        }
+    }
+
     private static int showConversationStats(CommandContext<CommandSourceStack> context) {
         try {
             if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
@@ -1312,24 +1213,61 @@ public class UnifiedCommands {
     
     private static int choosePatron(CommandContext<CommandSourceStack> context) {
         try {
-            if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
-                context.getSource().sendFailure(Component.literal("§cThis command can only be used by players"));
-                return 0;
+            LOGGER.debug("[CMD_DEBUG] choosePatron invoked. Source entity: {} at pos {}", context.getSource().getEntity(), context.getSource().getPosition());
+            ServerPlayer player = null;
+            // If a target player argument was provided, use it
+            if (context.getNodes().stream().anyMatch(n -> n.getNode().getName() != null && n.getNode().getName().equals("target"))) {
+                try {
+                    player = net.minecraft.commands.arguments.EntityArgument.getPlayer(context, "target");
+                    LOGGER.debug("[CMD_DEBUG] Resolved target argument to player: {}", player.getName().getString());
+                } catch (com.mojang.brigadier.exceptions.CommandSyntaxException ex) {
+                    LOGGER.warn("[CMD_DEBUG] Failed to resolve target argument: {}", ex.getMessage());
+                    context.getSource().sendFailure(Component.literal("§cCould not resolve target player: " + ex.getMessage()));
+                    return 0;
+                }
+            } else if (context.getSource().getEntity() instanceof ServerPlayer p) {
+                // Executing player
+                player = p;
+            } else {
+                // No explicit target and command not executed by a player — try to resolve nearest online player
+                LOGGER.debug("[CMD_DEBUG] No explicit target and no player source; attempting nearest-player fallback");
+                var srcPos = context.getSource().getPosition();
+                double best = Double.MAX_VALUE;
+                ServerPlayer nearest = null;
+                for (ServerPlayer sp : context.getSource().getServer().getPlayerList().getPlayers()) {
+                    double dx = sp.getX() - srcPos.x;
+                    double dy = sp.getY() - srcPos.y;
+                    double dz = sp.getZ() - srcPos.z;
+                    double distSq = dx*dx + dy*dy + dz*dz;
+                    if (distSq < best) {
+                        best = distSq;
+                        nearest = sp;
+                    }
+                }
+
+                // Accept nearest player only if within reasonable range (16 blocks)
+                if (nearest != null && best <= (16.0 * 16.0)) {
+                    player = nearest;
+                    LOGGER.debug("[CMD_DEBUG] Nearest-player fallback resolved to {} (distSq={})", player.getName().getString(), best);
+                } else {
+                    LOGGER.debug("[CMD_DEBUG] Nearest-player fallback failed (no nearby players)");
+                    context.getSource().sendFailure(Component.literal("§cNo player context and no target player found nearby. Run this as a player or provide an explicit target."));
+                    return 0;
+                }
             }
-            
-            String deityIdString = StringArgumentType.getString(context, "deity");
-            ResourceLocation deityId = ResourceLocation.tryParse(deityIdString);
+
+            ResourceLocation deityId = ResourceLocationArgument.getId(context, "deity");
             
             if (deityId == null) {
-                context.getSource().sendFailure(Component.literal("§cInvalid deity ID: " + deityIdString));
+                context.getSource().sendFailure(Component.literal("§cInvalid deity ID"));
                 return 0;
             }
             
-            // 🎯 FIXED: Use PatronSystem.choosePatron() which handles reputation triggers properly
+            // !Ž¯ FIXED: Use PatronSystem.choosePatron() which handles reputation triggers properly
             boolean success = com.bluelotuscoding.eidolonunchained.patron.PatronSystem.choosePatron(player, deityId);
             
             if (success) {
-                // 🎯 TRIGGER REPUTATION CHECK - Same as devotion command
+                // !Ž¯ TRIGGER REPUTATION CHECK - Same as devotion command
                 com.bluelotuscoding.eidolonunchained.chat.DeityChat.checkAndHandleTierProgression(player, deityId);
                 
                 // Debug log only - player already gets patron selection message from PatronSystem
@@ -1534,11 +1472,11 @@ public class UnifiedCommands {
     }
     
     // =====================================
-    // 🎯 DEBUG SYSTEM COMMANDS
+    // !Ž¯ DEBUG SYSTEM COMMANDS
     // =====================================
     
     /**
-     * 🔍 DEBUG PLAYER PROGRESSION
+     * !" DEBUG PLAYER PROGRESSION
      * 
      * Shows detailed progression information for a player with all deities.
      * Usage: /eidolon-unchained debug progression <player>
@@ -1591,7 +1529,7 @@ public class UnifiedCommands {
                         
                         context.getSource().sendSuccess(() -> Component.literal(
                             String.format("  §7- §f%s: §e%d rep %s", 
-                                stageName, (int)required, qualified ? "§a✓" : "§c✗")), false);
+                                stageName, (int)required, qualified ? "§a[OK] " : "§c[X]")), false);
                     }
                 }
             }
@@ -1605,7 +1543,7 @@ public class UnifiedCommands {
     }
     
     /**
-     * 🔄 FORCE PROGRESSION CHECK
+     * !"„ FORCE PROGRESSION CHECK
      * 
      * Manually triggers a progression check for a player.
      * Usage: /eidolon-unchained debug force-progression-check <player>
@@ -1642,7 +1580,7 @@ public class UnifiedCommands {
     }
     
     /**
-     * 🧪 TEST DEITY COMMAND
+     * !§ª TEST DEITY COMMAND
      * 
      * Tests command execution as if triggered by deity AI.
      * Usage: /eidolon-unchained debug test-command <command>
@@ -1687,7 +1625,7 @@ public class UnifiedCommands {
     }
     
     /**
-     * 📊 DEBUG PLAYER REPUTATION
+     * !"Š DEBUG PLAYER REPUTATION
      * 
      * Shows detailed reputation information for a player with a specific deity.
      * Usage: /eidolon-unchained debug reputation <player> "deity_id"
@@ -1767,7 +1705,7 @@ public class UnifiedCommands {
                             Object repReq = stageDataMap.get("reputationRequired");
                             if (repReq instanceof Number) {
                                 double required = ((Number) repReq).doubleValue();
-                                String status = reputation >= required ? "§a✓" : "§c✗";
+                                String status = reputation >= required ? "§a[OK] " : "§c[X]";
                                 context.getSource().sendSuccess(() -> Component.literal(
                                     String.format("§7- %s §f%s §7(requires %.0f reputation)", status, stageName, required)
                                 ), false);
@@ -1785,7 +1723,7 @@ public class UnifiedCommands {
     }
     
     /**
-     * 🎭 HELPER METHOD FOR PROGRESSION LEVEL
+     * !Ž­ HELPER METHOD FOR PROGRESSION LEVEL
      * 
      * Gets dynamic progression level for debug commands.
      * This mirrors the logic from our fixed AI system.
@@ -1851,7 +1789,7 @@ public class UnifiedCommands {
     }
     
     /**
-     * 🧹 CLEAR PLAYER REWARDS (For Testing)
+     * !§¹ CLEAR PLAYER REWARDS (For Testing)
      * 
      * Clears reward history for a player with a specific deity.
      * Usage: /eidolon-unchained debug clear-rewards <player> "deity_id"
@@ -1902,7 +1840,7 @@ public class UnifiedCommands {
     }
     
     /**
-     * 🧹 Clear all tier progression tracking for a player (all deities)
+     * !§¹ Clear all tier progression tracking for a player (all deities)
      * Usage: /eidolon-unchained debug clear-all-rewards <player>
      */
     private static int clearAllPlayerRewards(CommandContext<CommandSourceStack> context) {
@@ -1941,7 +1879,7 @@ public class UnifiedCommands {
     }
     
     /**
-     * 🔍 Show tier progression tracking debug information
+     * !" Show tier progression tracking debug information
      * Usage: /eidolon-unchained debug tier-debug <player> <deity>
      */
     private static int debugTierTracking(CommandContext<CommandSourceStack> context) {
@@ -2001,7 +1939,7 @@ public class UnifiedCommands {
     }
     
     /**
-     * 🎯 VERIFY PROGRESSION STAGES - Critical debugging for tier progression issues
+     * !Ž¯ VERIFY PROGRESSION STAGES - Critical debugging for tier progression issues
      * 
      * Validates that progression stages are properly loaded from /deities/ JSON files
      */
@@ -2024,13 +1962,13 @@ public class UnifiedCommands {
             Map<String, Object> stagesMap = deity.getProgressionStages();
             
             if (stagesMap == null || stagesMap.isEmpty()) {
-                context.getSource().sendFailure(Component.literal("§c❌ NO PROGRESSION STAGES FOUND! This is the root cause of tier progression issues."));
+                context.getSource().sendFailure(Component.literal("§c[X] NO PROGRESSION STAGES FOUND! This is the root cause of tier progression issues."));
                 context.getSource().sendFailure(Component.literal("§eCheck if /deities/" + deityLocation.toString().replace(":", "/") + ".json exists and has progression.stages array"));
                 return 0;
             }
             
             context.getSource().sendSuccess(() -> Component.literal(
-                "§a✅ Found " + stagesMap.size() + " progression stages:"), false);
+                "§a[OK] Found " + stagesMap.size() + " progression stages:"), false);
             
             // Sort stages by reputation requirement for logical display
             stagesMap.entrySet().stream()
@@ -2050,7 +1988,7 @@ public class UnifiedCommands {
                     
                     String majorText = (isMajor != null && isMajor) ? " §6[MAJOR]" : "";
                     context.getSource().sendSuccess(() -> Component.literal(
-                        String.format("§b  %s §7(rep: %d) §f→ §e'%s'%s", 
+                        String.format("§b  %s §7(rep: %d) §f-> §e'%s'%s", 
                             stageId, reputation, title, majorText)), false);
                 });
             
@@ -2062,12 +2000,12 @@ public class UnifiedCommands {
             
             progression.getSteps().values().forEach(stage -> {
                 context.getSource().sendSuccess(() -> Component.literal(
-                    String.format("§7  %s → rep: %d, major: %s", 
+                    String.format("§7  %s -> rep: %d, major: %s", 
                         stage.id(), stage.rep(), stage.major())), false);
             });
             
             context.getSource().sendSuccess(() -> Component.literal(
-                "§a✅ Progression stages verification complete!"), false);
+                "§a[OK] Progression stages verification complete!"), false);
                 
             return 1;
             
@@ -2079,7 +2017,7 @@ public class UnifiedCommands {
     }
     
     /**
-     * 🔮 LIST LOADED RITUALS
+     * !"® LIST LOADED RITUALS
      * 
      * Shows all loaded ritual recipes for debugging
      */
@@ -2112,7 +2050,7 @@ public class UnifiedCommands {
     }
     
     /**
-     * 🧪 TEST RITUAL EXECUTION
+     * !§ª TEST RITUAL EXECUTION
      * 
      * Manually triggers a ritual for testing (fires the RitualCompleteEvent)
      */
@@ -2147,7 +2085,7 @@ public class UnifiedCommands {
     }
     
     /**
-     * 🔬 ADVANCED RITUAL DIAGNOSTICS
+     * ! ADVANCED RITUAL DIAGNOSTICS
      * 
      * Performs comprehensive ritual system diagnostics to identify why rituals aren't starting
      */
@@ -2159,7 +2097,7 @@ public class UnifiedCommands {
             return 0;
         }
         
-        StringBuilder diagnostic = new StringBuilder("§6=== 🔬 RITUAL SYSTEM DIAGNOSTICS ===\n");
+        StringBuilder diagnostic = new StringBuilder("§6=== ! RITUAL SYSTEM DIAGNOSTICS ===\n");
         
         try {
             var server = source.getServer();
@@ -2195,7 +2133,7 @@ public class UnifiedCommands {
                 .count();
             
             if (brazierCount == 0) {
-                diagnostic.append("   §c⚠ No braziers found within 10 blocks\n");
+                diagnostic.append("   §cš  No braziers found within 10 blocks\n");
                 diagnostic.append("   §7Suggestion: Place a Brazier and try performing a ritual\n");
             } else {
                 diagnostic.append(String.format("   §a%d brazier(s) found nearby\n", brazierCount));
@@ -2204,26 +2142,23 @@ public class UnifiedCommands {
             // 4. Check registry integration
             diagnostic.append("§e4. Ritual Registry Integration:\n");
             try {
-                var ritualRegistry = elucent.eidolon.registries.RitualRegistry.class;
-                var findMethod = ritualRegistry.getMethod("find", ResourceLocation.class);
-                
                 // Test some known ritual IDs
                 String[] testRituals = {
                     "eidolonunchained:light_patronage_ritual",
                     "eidolonunchained:nature_patronage_ritual", 
                     "eidolonunchained:shadow_patronage_ritual"
                 };
-                
+
                 for (String ritualId : testRituals) {
-                    var ritual = findMethod.invoke(null, new ResourceLocation(ritualId));
+                    var ritual = elucent.eidolon.registries.RitualRegistry.find(new ResourceLocation(ritualId));
                     if (ritual != null) {
-                        diagnostic.append(String.format("   §a✅ %s found in registry\n", ritualId));
+                        diagnostic.append(String.format("   §a[OK] %s found in registry\n", ritualId));
                     } else {
-                        diagnostic.append(String.format("   §c❌ %s NOT in registry\n", ritualId));
+                        diagnostic.append(String.format("   §c[X] %s NOT in registry\n", ritualId));
                     }
                 }
             } catch (Exception e) {
-                diagnostic.append(String.format("   §c❌ Registry access failed: %s\n", e.getMessage()));
+                diagnostic.append(String.format("   §c[X] Registry access failed: %s\n", e.getMessage()));
             }
             
             // 5. Check items in inventory
@@ -2236,11 +2171,11 @@ public class UnifiedCommands {
             boolean hasGoldenApple = inventory.hasAnyMatching(stack -> 
                 stack.getItem().toString().contains("golden_apple"));
             
-            diagnostic.append(String.format("   Codex: %s\n", hasCodex ? "§a✅" : "§c❌"));
-            diagnostic.append(String.format("   Glowstone: %s\n", hasGlowstone ? "§a✅" : "§c❌"));
-            diagnostic.append(String.format("   Golden Apple: %s\n", hasGoldenApple ? "§a✅" : "§c❌"));
+            diagnostic.append(String.format("   Codex: %s\n", hasCodex ? "§a[OK]" : "§c[X]"));
+            diagnostic.append(String.format("   Glowstone: %s\n", hasGlowstone ? "§a[OK]" : "§c[X]"));
+            diagnostic.append(String.format("   Golden Apple: %s\n", hasGoldenApple ? "§a[OK]" : "§c[X]"));
             
-            diagnostic.append("   §c⚠ NOTE: Codex must be in NECROTIC FOCUS, not inventory!\n");
+            diagnostic.append("   §cš  NOTE: Codex must be in NECROTIC FOCUS, not inventory!\n");
             
             // 6. Final recommendations
             diagnostic.append("§e6. Ritual Execution Checklist:\n");
@@ -2259,7 +2194,7 @@ public class UnifiedCommands {
             diagnostic.append("   §79. Watch for ritual symbol and effects\n");
             
         } catch (Exception e) {
-            diagnostic.append(String.format("§c❌ Diagnostic failed: %s\n", e.getMessage()));
+            diagnostic.append(String.format("§c[X] Diagnostic failed: %s\n", e.getMessage()));
         }
         
         source.sendSuccess(() -> Component.literal(diagnostic.toString()), false);
@@ -2460,8 +2395,8 @@ public class UnifiedCommands {
                 APIKeyManager.setAPIKey("player2ai", apiKey);
                 EidolonUnchainedConfig.COMMON.aiProvider.set("player2ai");
                 
-                source.sendSuccess(() -> Component.literal("§a✓ Successfully authenticated with Player2 App!"), false);
-                source.sendSuccess(() -> Component.literal("§a✓ Player2AI set as active AI provider"), false);
+                source.sendSuccess(() -> Component.literal("§a[OK] Successfully authenticated with Player2 App!"), false);
+                source.sendSuccess(() -> Component.literal("§a[OK] Player2AI set as active AI provider"), false);
                 source.sendSuccess(() -> Component.literal("§7API Key: " + maskApiKey(apiKey)), false);
                 return 1;
             } else {
@@ -2501,7 +2436,7 @@ public class UnifiedCommands {
             }
             
             if (diagnostics.contains("AVAILABLE")) {
-                source.sendSuccess(() -> Component.literal("§a✓ Player2 App detected and responding!"), false);
+                source.sendSuccess(() -> Component.literal("§a[OK] Player2 App detected and responding!"), false);
                 source.sendSuccess(() -> Component.literal("§7Try running: /eidolon-unchained player2ai auth auto"), false);
             } else {
                 source.sendFailure(Component.literal("§cNo responsive Player2 App found"));
@@ -2546,7 +2481,7 @@ public class UnifiedCommands {
                 .thenAccept(response -> {
                     if (response.success) {
                         String safeResponse = CommandStringUtils.safeChatDisplay(response.dialogue);
-                        source.sendSuccess(() -> Component.literal("§a✓ Player2AI Response: §f" + safeResponse), false);
+                        source.sendSuccess(() -> Component.literal("§a[OK] Player2AI Response: §f" + safeResponse), false);
                     } else {
                         String safeError = CommandStringUtils.safeChatDisplay(response.dialogue);
                         source.sendFailure(Component.literal("§cPlayer2AI Error: " + safeError));
@@ -2636,7 +2571,7 @@ public class UnifiedCommands {
         }
         String key = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "p2Key");
         com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AuthManager.setCachedP2Key(player, key);
-        context.getSource().sendSuccess(() -> Component.literal("§a✓ Player2 key set for your account (temporary)."), false);
+        context.getSource().sendSuccess(() -> Component.literal("§a[OK] Player2 key set for your account (temporary)."), false);
         return 1;
     }
 
@@ -2646,7 +2581,7 @@ public class UnifiedCommands {
             return 0;
         }
         com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AuthManager.clearCachedP2Key(player);
-        context.getSource().sendSuccess(() -> Component.literal("§a✓ Disconnected your Player2 account for AI."), false);
+        context.getSource().sendSuccess(() -> Component.literal("§a[OK] Disconnected your Player2 account for AI."), false);
         return 1;
     }
     
@@ -2687,4 +2622,54 @@ public class UnifiedCommands {
         if (key == null || key.length() < 8) return "***";
         return key.substring(0, 4) + "***" + key.substring(key.length() - 4);
     }
+
+    // === Facts helper ===
+    private static int grantFact(CommandContext<CommandSourceStack> ctx) {
+        String playerName = StringArgumentType.getString(ctx, "player");
+        ResourceLocation fact = ResourceLocationArgument.getId(ctx, "fact");
+        ServerPlayer sp = findPlayerByName(ctx.getSource(), playerName);
+        if (sp == null) {
+            ctx.getSource().sendFailure(Component.literal("Player not found: " + playerName));
+            return 0;
+        }
+        elucent.eidolon.util.KnowledgeUtil.grantFact(sp, fact);
+        ctx.getSource().sendSuccess(() -> Component.literal("Granted fact " + fact + " to " + playerName), false);
+        return 1;
+    }
+
+    private static int revokeFact(CommandContext<CommandSourceStack> ctx) {
+        String playerName = StringArgumentType.getString(ctx, "player");
+        ResourceLocation fact = ResourceLocationArgument.getId(ctx, "fact");
+        ServerPlayer sp = findPlayerByName(ctx.getSource(), playerName);
+        if (sp == null) {
+            ctx.getSource().sendFailure(Component.literal("Player not found: " + playerName));
+            return 0;
+        }
+        elucent.eidolon.util.KnowledgeUtil.removeFact(sp, fact);
+        ctx.getSource().sendSuccess(() -> Component.literal("Revoked fact " + fact + " from " + playerName), false);
+        return 1;
+    }
+
+    private static int listFacts(CommandContext<CommandSourceStack> ctx) {
+        String playerName = StringArgumentType.getString(ctx, "player");
+        ServerPlayer sp = findPlayerByName(ctx.getSource(), playerName);
+        if (sp == null) {
+            ctx.getSource().sendFailure(Component.literal("Player not found: " + playerName));
+            return 0;
+        }
+        java.util.Set<ResourceLocation> facts = sp.getCapability(elucent.eidolon.capability.IKnowledge.INSTANCE)
+            .map(elucent.eidolon.capability.IKnowledge::getKnownFacts).orElse(java.util.Set.of());
+        StringBuilder sb = new StringBuilder("Known facts for ").append(playerName).append(": ");
+        if (facts.isEmpty()) sb.append("<none>"); else sb.append(facts);
+        ctx.getSource().sendSuccess(() -> Component.literal(sb.toString()), false);
+        return 1;
+    }
+
+    private static ServerPlayer findPlayerByName(CommandSourceStack src, String name) {
+        for (ServerPlayer p : src.getServer().getPlayerList().getPlayers()) {
+            if (p.getName().getString().equalsIgnoreCase(name)) return p;
+        }
+        return null;
+    }
 }
+

@@ -1,0 +1,43 @@
+{
+  "name": "Light Divine Guard Test",
+  "description": "Debug buff chant that applies global and typed divine resistance tuned for Luminae followers.",
+  "category": "debug",
+  "codex_icon": "minecraft:glowstone_dust",
+  "difficulty": 1,
+  "mana_cost": 10,
+  "cooldown": 12,
+  "combat_role": "defense",
+  "show_in_codex": true,
+  "linked_deity": "eidolonunchained:light_deity",
+  "requires_effigy": false,
+  "signs": [
+    "eidolon:sacred",
+    "eidolon:harmony",
+    "eidolon:sacred"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "modify_attribute",
+      "attribute": "eidolonunchained:divine_resistance",
+      "amount": 0.10,
+      "operation": "add",
+      "duration_ticks": 600,
+      "typed_resistances": {
+        "light": 0.25,
+        "dark": -0.10
+      },
+      "modifier_id": "eidolonunchained.light_divine_guard_test",
+      "sign_icon": "eidolon:sacred",
+      "status_effect": "eidolonunchained:light_divine_guard_effect",
+      "particle": "minecraft:end_rod",
+      "particle_count": 10,
+      "particle_spread": 0.25,
+      "particle_speed": 0.01
+    },
+    {
+      "type": "send_message",
+      "message": "Light Divine Guard applied: +global resist, +light typed resist, -dark typed resist (temporary)."
+    }
+  ]
+}

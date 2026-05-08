@@ -2,7 +2,6 @@ package com.bluelotuscoding.eidolonunchained.ai;
 
 import com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2TTSClient;
 import com.bluelotuscoding.eidolonunchained.integration.webtts.WebTTSClient;
-import com.bluelotuscoding.eidolonunchained.integration.googletts.GoogleTTSClient;
 import com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiTTSClient;
 import com.bluelotuscoding.eidolonunchained.integration.tts.TTSVoiceRegistry;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
@@ -26,7 +25,6 @@ public class TTSManager {
     private static TTSManager instance;
     private final Player2TTSClient player2Client;
     private final WebTTSClient webClient;
-    private final GoogleTTSClient googleClient;
     private final GeminiTTSClient geminiClient;
 
     // Cache TTS requests to avoid duplicate processing
@@ -58,7 +56,6 @@ public class TTSManager {
     private TTSManager() {
         this.player2Client = new Player2TTSClient();
         this.webClient = new WebTTSClient();
-        this.googleClient = new GoogleTTSClient();
         this.geminiClient = new GeminiTTSClient();
         // Preload global TTS voice aliases once at startup using the game directory
         try {
@@ -82,13 +79,9 @@ public class TTSManager {
      * This is the main method called by DeityChat
      */
     public CompletableFuture<Boolean> generateAndSendTTS(ServerPlayer player, String text, String deityId) {
-        // Check global TTS enable flag first
-        if (!com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.ENABLE_TTS.get()) {
-            LOGGER.debug("TTS globally disabled");
-            return CompletableFuture.completedFuture(false);
-        }
-
-    TTSSettings settings = getPlayerSettings(player);
+        // Per-player opt-in is the sole gate. The global TOML flag (tts.enabled) is intentionally
+        // NOT checked here — /eu tts enable sets the per-player flag, not the TOML.
+        TTSSettings settings = getPlayerSettings(player);
 
         if (!settings.enabled) {
             LOGGER.debug("TTS disabled for player: {}", player.getName().getString());
@@ -111,6 +104,7 @@ public class TTSManager {
 
         // Resolve AI deity config for per-deity TTS behavior
         AIDeityConfig.TTSConfig deityTTS = null;
+        String aiProvider = null;
         try {
             AIDeityManager aiManager = AIDeityManager.getInstance();
             net.minecraft.resources.ResourceLocation deityRL =
@@ -118,9 +112,21 @@ public class TTSManager {
             AIDeityConfig cfg = aiManager.getAIConfig(deityRL);
             if (cfg != null) {
                 deityTTS = cfg.tts_config;
+                aiProvider = cfg.ai_provider; // Also get the AI provider for TTS inheritance
+
+                // Additional validation logging
+                LOGGER.info("🎵 TTS Config resolution for {}: deityTTS={}, aiProvider={}",
+                    deityId, deityTTS != null ? "present" : "null", aiProvider);
+
+                if (deityTTS != null) {
+                    LOGGER.info("🎵 TTS Config details: provider={}, model={}, enabled={}",
+                        deityTTS.tts_provider, deityTTS.model, deityTTS.enabled);
+                }
+            } else {
+                LOGGER.warn("🎵 No AI deity config found for {}, TTS will use defaults", deityId);
             }
         } catch (Exception e) {
-            LOGGER.debug("Failed to resolve deity TTS config for {}: {}", deityId, e.getMessage());
+            LOGGER.warn("Failed to resolve deity TTS config for {}: {}", deityId, e.getMessage());
         }
 
         // Honor per-deity TTS enable flag
@@ -180,11 +186,20 @@ public class TTSManager {
     final float sendVolume = effectiveVolume;
     final float sendSpeed = effectiveSpeed;
 
-        // Check for deity-specific TTS provider first, fallback to global config
-        String provider = EidolonUnchainedConfig.TTS_PROVIDER.get();
-        if (deityTTS != null && deityTTS.tts_provider != null && !deityTTS.tts_provider.isEmpty()) {
-            provider = deityTTS.tts_provider;
-            LOGGER.info("Using deity-specific TTS provider '{}' for deity {}", provider, deityId);
+        // Determine provider from deity config with AI provider inheritance. TOML is intentionally ignored.
+        String provider;
+        if (deityTTS != null && deityTTS.tts_provider != null && !deityTTS.tts_provider.trim().isEmpty()) {
+            // Explicit TTS provider specified
+            provider = deityTTS.tts_provider.trim();
+            LOGGER.info("🎵 TTS provider (explicit tts_config) for {}: {}", deityId, provider);
+        } else if (aiProvider != null && !aiProvider.trim().isEmpty()) {
+            // Inherit TTS provider from AI provider
+            provider = aiProvider.trim();
+            LOGGER.info("🎵 TTS provider (inherited from ai_provider) for {}: {}", deityId, provider);
+        } else {
+            // Safe default when deity doesn't specify anything
+            provider = "gemini";
+            LOGGER.warn("🎵 No tts_provider or ai_provider in deity config for {} — defaulting to 'gemini'", deityId);
         }
         CompletableFuture<Object> future;
     if ("webapi".equalsIgnoreCase(provider)) {
@@ -220,73 +235,51 @@ public class TTSManager {
                     LOGGER.error("Web TTS error for player {}: {}", player.getName().getString(), throwable.getMessage());
                     return (Object) WebTTSClient.TTSResponse.failure("TTS generation error");
                 });
-        } else if ("google".equalsIgnoreCase(provider)) {
-            // Map to Google TTS request
-            java.util.List<String> voiceIds = voice != null && !"auto".equals(voice)
-                ? java.util.Arrays.asList(voice) : java.util.Collections.emptyList();
-            double speed = (double) sendSpeed;
-            String fmt = deityTTS != null && deityTTS.audio_format != null && !deityTTS.audio_format.isEmpty()
-                ? deityTTS.audio_format
-                : EidolonUnchainedConfig.TTS_DEFAULT_AUDIO_FORMAT.get();
-            String gender = deityTTS != null && deityTTS.voice_gender != null && !deityTTS.voice_gender.isEmpty()
-                ? deityTTS.voice_gender
-                : EidolonUnchainedConfig.TTS_DEFAULT_GENDER.get();
-            String lang = deityTTS != null && deityTTS.voice_language != null && !deityTTS.voice_language.isEmpty()
-                ? deityTTS.voice_language
-                : EidolonUnchainedConfig.TTS_DEFAULT_LANGUAGE.get();
+        } else if ("google".equalsIgnoreCase(provider) || "gemini".equalsIgnoreCase(provider)) {
+            // Use Gemini TTS
+            String geminiModel = (deityTTS != null && deityTTS.model != null && !deityTTS.model.trim().isEmpty())
+                ? deityTTS.model.trim()
+                : "gemini-2.5-flash-preview-tts";
 
-            final GoogleTTSClient.TTSRequest greq = new GoogleTTSClient.TTSRequest(text, voiceIds, speed, fmt, gender, lang);
-            future = googleClient.speak(greq)
+            LOGGER.info("🎵 Using Gemini TTS model: {} for deity: {}", geminiModel, deityId);
+            
+            // Get player context for voice selection
+            final Integer[] playerReputationRef = {null};
+            final String[] playerBiomeRef = {null};
+            
+            try {
+                // Get player reputation for context-aware voice selection
+                player.level().getCapability(elucent.eidolon.capability.IReputation.INSTANCE).ifPresent(reputation -> {
+                    playerReputationRef[0] = (int) reputation.getReputation(player.getUUID(), 
+                        new net.minecraft.resources.ResourceLocation(deityId.contains(":") ? deityId : "eidolonunchained:" + deityId));
+                });
+                
+                // Get current biome for context-aware voice selection
+                playerBiomeRef[0] = player.level().getBiome(player.blockPosition())
+                    .unwrapKey()
+                    .map(key -> key.location().toString())
+                    .orElse(null);
+            } catch (Exception e) {
+                LOGGER.debug("Could not get player context for TTS: {}", e.getMessage());
+            }
+            
+            future = geminiClient.generateTTS(text, voice, geminiModel, deityTTS, playerReputationRef[0], playerBiomeRef[0])
                 .thenApply(response -> {
                     activeRequests.remove(cacheKey);
                     if (response.success) {
+                        // Send with effective playback parameters
                         sendTTSToPlayer(player, response, sendVolume, sendSpeed);
-                        lastUsedPath.put(player.getUUID().toString(), "google");
+                        lastUsedPath.put(player.getUUID().toString(), "gemini");
                     } else {
-                        LOGGER.warn("Google TTS failed for {}: {}", player.getName().getString(), response.error);
+                        LOGGER.warn("Gemini TTS failed for {}: {}", player.getName().getString(), response.error);
                     }
                     return (Object) response;
                 })
                 .exceptionally(throwable -> {
                     activeRequests.remove(cacheKey);
-                    LOGGER.error("Google TTS error for player {}: {}", player.getName().getString(), throwable.getMessage());
-                    return (Object) GoogleTTSClient.TTSResponse.failure("TTS generation error");
-                });
-        } else if ("gemini".equalsIgnoreCase(provider)) {
-            // Use new Gemini TTS implementation
-            String voiceName = voice != null && !"auto".equals(voice) ? voice : "Charon"; // Default to Charon for dark deities
-            String model = "gemini-2.5-flash-preview-tts"; // Default TTS model from official docs
-
-            // Use global Gemini API key from APIKeyManager (same system as other providers)
-            String apiKey = com.bluelotuscoding.eidolonunchained.config.APIKeyManager.getAPIKey("gemini");
-
-            // Check if we have a valid API key
-            if (apiKey == null || apiKey.trim().isEmpty()) {
-                LOGGER.error("No Gemini API key configured - set it with /eidolon-unchained api set gemini <key>");
-                future = CompletableFuture.completedFuture(WebTTSClient.TTSResponse.failure("Gemini API key not configured"));
-            } else {
-                // Use the existing GeminiTTSClient
-                com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiTTSClient geminiClient = 
-                    new com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiTTSClient();
-                    
-                future = geminiClient.generateTTS(text, voiceName, model)
-                .thenApply(ttsResponse -> {
-                    activeRequests.remove(cacheKey);
-                    if (ttsResponse.success && ttsResponse.audioData != null) {
-                        sendTTSToPlayer(player, ttsResponse, sendVolume, sendSpeed);
-                        lastUsedPath.put(player.getUUID().toString(), "gemini");
-                        return (Object) ttsResponse;
-                    } else {
-                        LOGGER.error("Gemini TTS failed for player {}: {}", player.getName().getString(), ttsResponse.error);
-                        return (Object) WebTTSClient.TTSResponse.failure("Gemini TTS generation error: " + ttsResponse.error);
-                    }
-                })
-                .exceptionally(throwable -> {
-                    activeRequests.remove(cacheKey);
                     LOGGER.error("Gemini TTS error for player {}: {}", player.getName().getString(), throwable.getMessage());
-                    return (Object) WebTTSClient.TTSResponse.failure("Gemini TTS generation error");
+                    return (Object) com.bluelotuscoding.eidolonunchained.integration.webtts.WebTTSClient.TTSResponse.failure("Gemini TTS generation error");
                 });
-            }
         } else {
             // Default to Player2 client
             // Resolve funding preference constraints from deity config
@@ -342,7 +335,6 @@ public class TTSManager {
         return future.thenApply(response -> {
             if (response instanceof Player2TTSClient.TTSResponse p2) return p2.success;
             if (response instanceof WebTTSClient.TTSResponse web) return web.success;
-            if (response instanceof GoogleTTSClient.TTSResponse g) return g.success;
             return false;
         });
     }
@@ -363,10 +355,6 @@ public class TTSManager {
             } else if (responseObj instanceof WebTTSClient.TTSResponse r2) {
                 audioUrl = r2.audioUrl; audioData = r2.audioData;
                 LOGGER.info("WebTTSClient response - URL: {}, audioData length: {}",
-                        audioUrl != null, audioData != null ? audioData.length : 0);
-            } else if (responseObj instanceof GoogleTTSClient.TTSResponse r3) {
-                audioUrl = r3.audioUrl; audioData = r3.audioData;
-                LOGGER.info("GoogleTTSClient response - URL: {}, audioData length: {}",
                         audioUrl != null, audioData != null ? audioData.length : 0);
             }
 
@@ -409,16 +397,7 @@ public class TTSManager {
                 } catch (Throwable t) {
                     LOGGER.error("Exception during VoiceChat spatial playback: {}", t.getMessage(), t);
                 }
-                
-                // Check if audio data is too large for Minecraft packets (1MB limit)
-                if (audioData.length > 1048576) { // 1MB limit
-                    LOGGER.error("Audio data too large ({} bytes) for Minecraft packet limit (1MB). This suggests the TTS provider returned uncompressed audio. Consider requesting compressed format.", audioData.length);
-                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        "§c[TTS] Audio too large for transmission - try a shorter message"));
-                    return;
-                }
-                
-                // Send audio data directly if it fits
+                // Send audio data directly
                 TTSAudioPacket packet = new TTSAudioPacket(null, audioData, volume, speed);
                 EidolonUnchainedNetworking.sendToPlayer(player, packet);
                 LOGGER.info("Sent TTS audio data packet to player: {}", player.getName().getString());
@@ -442,6 +421,7 @@ public class TTSManager {
                 case "player2-web" -> "§bPlayer2 Web";
                 case "server-funded" -> "§dServer Funded";
                 case "webapi" -> "§aWeb API";
+                case "gemini" -> "§eGemini TTS";
                 default -> "§7" + path;
             };
             player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[TTS] Path: " + label));
@@ -458,22 +438,17 @@ public class TTSManager {
      * List available TTS voices for the current provider.
      */
     public CompletableFuture<java.util.List<WebTTSClient.VoiceInfo>> listVoices() {
-        String provider = EidolonUnchainedConfig.TTS_PROVIDER.get();
-        if ("webapi".equalsIgnoreCase(provider)) {
-            return webClient.listVoices();
-        } else if ("google".equalsIgnoreCase(provider)) {
-            return googleClient.listVoices().thenApply(list -> {
-                java.util.List<WebTTSClient.VoiceInfo> mapped = new java.util.ArrayList<>();
-                for (GoogleTTSClient.VoiceInfo v : list) {
-                    mapped.add(new WebTTSClient.VoiceInfo(v.id));
-                }
-                return mapped;
-            });
-        } else if ("player2ai".equalsIgnoreCase(provider) || "player2".equalsIgnoreCase(provider)) {
-            // Return static list of Player2AI voices
-            return CompletableFuture.completedFuture(getPlayer2Voices());
+        // Do not read provider from TOML; return a union of commonly available voices.
+        // This is used for suggestions/UI and not bound to a single provider.
+        try {
+            java.util.List<WebTTSClient.VoiceInfo> combined = new java.util.ArrayList<>();
+            combined.addAll(getGeminiVoices());
+            combined.addAll(getPlayer2Voices());
+            return CompletableFuture.completedFuture(combined);
+        } catch (Exception e) {
+            LOGGER.debug("Failed to assemble voice list: {}", e.getMessage());
+            return CompletableFuture.completedFuture(java.util.Collections.emptyList());
         }
-        return CompletableFuture.completedFuture(java.util.Collections.emptyList());
     }
 
     /**
@@ -518,6 +493,48 @@ public class TTSManager {
 
         return voices;
     }
+
+    /**
+     * Get list of available Gemini voices
+     */
+    private java.util.List<WebTTSClient.VoiceInfo> getGeminiVoices() {
+        java.util.List<WebTTSClient.VoiceInfo> voices = new java.util.ArrayList<>();
+
+        // All 30 Gemini TTS voices (from GeminiTTSClient.GeminiVoice enum)
+        voices.add(new WebTTSClient.VoiceInfo("Aoede"));        // Divine muse
+        voices.add(new WebTTSClient.VoiceInfo("Archer"));       // Noble warrior
+        voices.add(new WebTTSClient.VoiceInfo("Charon"));       // Death's ferryman
+        voices.add(new WebTTSClient.VoiceInfo("Euterpe"));      // Music and joy
+        voices.add(new WebTTSClient.VoiceInfo("Fenrir"));       // Fierce wolf
+        voices.add(new WebTTSClient.VoiceInfo("Helios"));       // Sun god
+        voices.add(new WebTTSClient.VoiceInfo("Hermes"));       // Swift messenger
+        voices.add(new WebTTSClient.VoiceInfo("Kore"));         // Maiden of spring
+        voices.add(new WebTTSClient.VoiceInfo("Puck"));         // Mischievous sprite
+        voices.add(new WebTTSClient.VoiceInfo("River"));        // Flowing stream
+        voices.add(new WebTTSClient.VoiceInfo("Rouge"));        // Bold and daring
+        voices.add(new WebTTSClient.VoiceInfo("Sage"));         // Wise elder
+        voices.add(new WebTTSClient.VoiceInfo("Seeker"));       // Curious wanderer
+        voices.add(new WebTTSClient.VoiceInfo("Solo"));         // Independent spirit
+        voices.add(new WebTTSClient.VoiceInfo("Thalia"));       // Comedy muse
+        voices.add(new WebTTSClient.VoiceInfo("Terpsichore"));  // Dance muse
+        voices.add(new WebTTSClient.VoiceInfo("Urania"));       // Astronomy muse
+        voices.add(new WebTTSClient.VoiceInfo("Zephyr"));       // Gentle wind
+        voices.add(new WebTTSClient.VoiceInfo("Erebus"));       // Primordial darkness
+        voices.add(new WebTTSClient.VoiceInfo("Florian"));      // Flower bearer
+        voices.add(new WebTTSClient.VoiceInfo("Orion"));        // Hunter constellation
+        voices.add(new WebTTSClient.VoiceInfo("Nova"));         // Stellar explosion
+        voices.add(new WebTTSClient.VoiceInfo("Pixie"));        // Playful fairy
+        voices.add(new WebTTSClient.VoiceInfo("Anthem"));       // Triumphant song
+        voices.add(new WebTTSClient.VoiceInfo("Journey"));      // Epic adventure
+        voices.add(new WebTTSClient.VoiceInfo("Legacy"));       // Ancient wisdom
+        voices.add(new WebTTSClient.VoiceInfo("Quest"));        // Bold seeker
+        voices.add(new WebTTSClient.VoiceInfo("Spirit"));       // Ethereal essence
+        voices.add(new WebTTSClient.VoiceInfo("Lore"));         // Ancient knowledge
+        voices.add(new WebTTSClient.VoiceInfo("Echo"));         // Resounding voice
+
+        return voices;
+    }
+
 
     /**
      * Get TTS settings for a player, creating defaults if needed
@@ -596,17 +613,7 @@ public class TTSManager {
      * Check if server funding is available (API key configured)
      */
     private boolean isServerFundingAvailable() {
-        String provider = EidolonUnchainedConfig.TTS_PROVIDER.get();
-        if ("google".equalsIgnoreCase(provider)) {
-            String cred = EidolonUnchainedConfig.GOOGLE_TTS_CREDENTIALS_PATH.get();
-            if (cred == null || cred.isBlank()) return false;
-            try { return new java.io.File(cred).exists(); } catch (Throwable t) { return false; }
-        }
-        if ("webapi".equalsIgnoreCase(provider)) {
-            String base = EidolonUnchainedConfig.WEBTTS_BASE_URL.get();
-            return base != null && !base.isBlank();
-        }
-        String apiKey = EidolonUnchainedConfig.PLAYER2_API_KEY.get();
+        String apiKey = com.bluelotuscoding.eidolonunchained.config.APIKeyManager.getAPIKey("player2ai");
         return apiKey != null && !apiKey.isEmpty();
     }
 

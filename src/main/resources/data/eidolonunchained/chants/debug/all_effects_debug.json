@@ -1,0 +1,34 @@
+{
+  "name": "All Effects Debug",
+  "description": "Debug chant that triggers all supported chant effects in one cast.",
+  "category": "debug",
+  "codex_icon": "minecraft:command_block",
+  "difficulty": 1,
+  "mana_cost": 100,
+  "cooldown": 15,
+  "show_in_codex": true,
+  "requires_effigy": false,
+  "signs": [
+    "eidolon:wicked",
+    "eidolon:sacred",
+    "eidolon:harmony"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "modify_attribute",
+      "attribute": "eidolon:magic_power",
+      "amount": 0.50,
+      "operation": "add",
+      "duration_ticks": 200,
+      "modifier_id": "eu_debug.magic_power_debuff",
+      "apply_self": false,
+      "sign_icon": "eidolon:wicked",
+      "status_effect": "eidolonunchained:debug_magic_power_burden",
+      "particle": "minecraft:enchant",
+      "particle_count": 12,
+      "particle_spread": 0.3,
+      "particle_speed": 0.01
+    }
+  ]
+}

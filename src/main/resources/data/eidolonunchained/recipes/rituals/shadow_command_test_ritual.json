@@ -1,0 +1,27 @@
+{
+  "type": "eidolon:ritual_brazier_command",
+  "symbol": "eidolon:particle/death_sign",
+  "color": 6291583,
+  "reagent": [
+    {
+      "item": "eidolon:soul_shard"
+    }
+  ],
+  "pedestalItems": [
+    {
+      "item": "eidolon:death_essence"
+    },
+    {
+      "item": "minecraft:bone"
+    }
+  ],
+  "focusItems": [
+    {
+      "item": "eidolon:codex"
+    }
+  ],
+  "commands": [
+    "tellraw @p[distance=..16] {\"text\":\"[EidolonUnchained] Command ritual test fired successfully.\",\"color\":\"light_purple\"}",
+    "playsound minecraft:block.enchantment_table.use player @p[distance=..16] ~ ~ ~ 1 1"
+  ]
+}

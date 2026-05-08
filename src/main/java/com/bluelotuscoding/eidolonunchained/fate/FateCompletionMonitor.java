@@ -346,16 +346,6 @@ public class FateCompletionMonitor {
                         // Send the completion message through chat to trigger AI response
                         finalPlayer.getServer().execute(() -> {
                             try {
-                                // Use the same pattern as tier progression - processDeityConversation with callback
-                                java.lang.reflect.Method method = DeityChat.class.getDeclaredMethod(
-                                    "processDeityConversation",
-                                    net.minecraft.server.level.ServerPlayer.class,
-                                    net.minecraft.resources.ResourceLocation.class,
-                                    String.class,
-                                    Runnable.class
-                                );
-                                method.setAccessible(true);
-
                                 // Create callback that executes AFTER AI action bar message completes
                                 Runnable completionCallback = () -> {
                                     try {
@@ -387,19 +377,13 @@ public class FateCompletionMonitor {
                                                     finalPlayer.getServer().execute(() -> {
                                                         try {
                                                             // Check if player is still in conversation
-                                                            java.lang.reflect.Method isInConversationMethod = DeityChat.class.getDeclaredMethod(
-                                                                "isInConversation", net.minecraft.server.level.ServerPlayer.class);
-                                                            isInConversationMethod.setAccessible(true);
-                                                            boolean inConversation = (Boolean) isInConversationMethod.invoke(null, finalPlayer);
+                                                            boolean inConversation = DeityChat.isInConversation(finalPlayer);
 
                                                             if (inConversation) {
                                                                 finalPlayer.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6⟦ Divine Conversation Concluded ⟧"));
 
                                                                 // End conversation
-                                                                java.lang.reflect.Method endConversationMethod = DeityChat.class.getDeclaredMethod(
-                                                                    "endConversation", net.minecraft.server.level.ServerPlayer.class);
-                                                                endConversationMethod.setAccessible(true);
-                                                                endConversationMethod.invoke(null, finalPlayer);
+                                                                DeityChat.endConversation(finalPlayer);
 
                                                                 LOGGER.info("🔚 Auto-closed fate completion conversation for player {}",
                                                                     finalPlayer.getName().getString());
@@ -423,7 +407,7 @@ public class FateCompletionMonitor {
                                 };
 
                                 // Execute with callback (same pattern as tier progression)
-                                method.invoke(null, finalPlayer, finalDeityId, completionMessage, completionCallback);
+                                DeityChat.processSystemConversation(finalPlayer, finalDeityId, completionMessage, completionCallback);
                                 LOGGER.info("AI completion response triggered for fate {} with auto-close callback", taskId);
 
                             } catch (Exception ex) {

@@ -1,0 +1,25 @@
+{
+  "name": "Heal Self Threshold Example",
+  "description": "Example support chant for self HP threshold handling.",
+  "category": "debug",
+  "codex_icon": "minecraft:golden_apple",
+  "difficulty": 1,
+  "mana_cost": 0,
+  "cooldown": 4,
+  "combat_role": "support",
+  "mob_priority_weight": 10,
+  "show_in_codex": true,
+  "requires_effigy": false,
+  "signs": [
+    "eidolon:harmony",
+    "eidolon:sacred",
+    "eidolon:wicked"
+  ],
+  "requirements": [],
+  "effects": [
+    {
+      "type": "run_command",
+      "command": "effect give @s minecraft:regeneration 6 1 true"
+    }
+  ]
+}

@@ -1,10 +1,7 @@
 package com.bluelotuscoding.eidolonunchained.integration.gemini;
-
-import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.bluelotuscoding.eidolonunchained.integration.webtts.WebTTSClient;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -183,9 +180,20 @@ public class GeminiTTSClient {
     }
 
     private String selectVoiceFromConfig(String defaultVoice, com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig.TTSConfig ttsConfig, Integer playerReputation, String playerBiome) {
+        // If no config, just return what we were given (may be null; handled by fromString later)
         if (ttsConfig == null) return defaultVoice;
 
-        // Check voice aliases first
+        // Normalize missing/auto voice early and prefer configured fallback
+        boolean isMissingOrAuto = (defaultVoice == null || defaultVoice.isEmpty() || "auto".equalsIgnoreCase(defaultVoice));
+        if (isMissingOrAuto) {
+            if (ttsConfig.backup_voice != null && !ttsConfig.backup_voice.isEmpty()) {
+                return ttsConfig.backup_voice;
+            }
+            // Fall back to a safe dark deity voice
+            return GeminiVoice.CHARON.getVoiceName();
+        }
+
+        // Check voice aliases first (safe even if alias map contains null keys)
         if (ttsConfig.voice_aliases != null && ttsConfig.voice_aliases.containsKey(defaultVoice)) {
             return ttsConfig.voice_aliases.get(defaultVoice);
         }
@@ -211,10 +219,11 @@ public class GeminiTTSClient {
             return ttsConfig.biome_voices.get(playerBiome);
         }
 
-        // Use backup voice if primary voice is not available
+        // Use backup voice if primary voice resolves to default baseline
         if (ttsConfig.backup_voice != null && !ttsConfig.backup_voice.isEmpty()) {
             GeminiVoice primary = GeminiVoice.fromString(defaultVoice);
-            if (primary == GeminiVoice.CHARON && !defaultVoice.equals(primary.getVoiceName())) {
+            // If our resolved primary is the baseline (Charon) but the provided string isn't explicitly Charon, prefer backup
+            if (primary == GeminiVoice.CHARON && (defaultVoice == null || !defaultVoice.equalsIgnoreCase(primary.getVoiceName()))) {
                 return ttsConfig.backup_voice;
             }
         }
@@ -287,26 +296,11 @@ public class GeminiTTSClient {
             }
         }
 
-        // Determine audio format from TTS config, default to compressed format for bandwidth efficiency
-        String audioFormat = "MP3"; // Default to MP3 - conversion handled by VoiceChatIntegration
-        if (ttsConfig != null && ttsConfig.audio_format != null && !ttsConfig.audio_format.isEmpty()) {
-            // Map deity config audio format to Gemini API format
-            String configFormat = ttsConfig.audio_format.toUpperCase();
-            audioFormat = switch (configFormat) {
-                case "MP3" -> "MP3"; // Request MP3 for file size efficiency
-                case "WAV" -> "LINEAR16"; // Gemini's WAV format - better for sample rate handling
-                case "FLAC" -> "FLAC";
-                case "OGG" -> "OGG_OPUS";
-                case "OPUS" -> "OGG_OPUS";
-                case "PCM", "LINEAR16" -> "LINEAR16";
-                default -> {
-                    LOGGER.warn("Unknown audio format '{}' in TTS config, using MP3", ttsConfig.audio_format);
-                    yield "MP3";
-                }
-            };
-        }
-
-        LOGGER.debug("Requesting audio format: {}", audioFormat);
+        // NOTE: Gemini TTS API only supports voice selection, NOT audio format specification
+        // Audio is always returned as LINEAR16 PCM at 24kHz regardless of config
+        // The audio_format config is used by VoiceChatIntegration for processing, not API requests
+        LOGGER.debug("Creating Gemini TTS request (audio format determined by API, config '{}' used for processing)",
+                    ttsConfig != null ? ttsConfig.audio_format : "default");
 
         return String.format("""
             {

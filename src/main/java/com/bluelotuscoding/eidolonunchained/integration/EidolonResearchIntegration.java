@@ -3,23 +3,17 @@ package com.bluelotuscoding.eidolonunchained.integration;
 import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
 import com.bluelotuscoding.eidolonunchained.research.ResearchChapter;
 import com.bluelotuscoding.eidolonunchained.research.ResearchEntry;
-import com.bluelotuscoding.eidolonunchained.research.conditions.ResearchCondition;
 import com.mojang.logging.LogUtils;
 import elucent.eidolon.api.research.Research;
+import elucent.eidolon.api.research.ResearchTask;
 import elucent.eidolon.registries.Researches;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.slf4j.Logger;
 
-// No reflection imports needed
-
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,23 +24,17 @@ import java.util.Map;
  * CRITICAL: Integration is now called from ResearchDataManager after resource loading
  * completes to ensure proper timing - research entries must be loaded before injection.
  * 
- * Since Eidolon's research system is client-side only, this entire class is client-only.
+ * The research table validates task completion on both the client and the server,
+ * so custom research definitions must be registered on both sides.
  */
-@OnlyIn(Dist.CLIENT)
 public class EidolonResearchIntegration {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     /**
      * Injects our custom research entries into Eidolon's research system.
-     * Now called from ResearchDataManager after resource loading completes.
+     * Now called from ResearchDataManager after resource loading completes on both sides.
      */
     public static void injectCustomResearch() {
-        // Skip integration on dedicated server since research system is client-side
-        if (FMLEnvironment.dist == Dist.DEDICATED_SERVER) {
-            LOGGER.info("Skipping research integration on dedicated server (research system is client-side)");
-            return;
-        }
-        
         try {
             Map<ResourceLocation, ResearchChapter> customChapters = ResearchDataManager.getLoadedResearchChapters();
             LOGGER.info("Attempting to register {} custom research chapters", customChapters.size());
@@ -122,6 +110,7 @@ public class EidolonResearchIntegration {
         private final ItemStack icon;
         private final ResearchEntry.ResearchType type;
         private final List<ResourceLocation> prerequisites;
+        private final Map<Integer, List<ResearchTask>> configuredTasks = new HashMap<>();
 
         protected CustomResearch(ResearchEntry entry, int stars) {
             super(entry.getId(), stars);
@@ -130,6 +119,33 @@ public class EidolonResearchIntegration {
             this.icon = entry.getIcon();
             this.type = entry.getType();
             this.prerequisites = entry.getPrerequisites();
+
+            for (Map.Entry<Integer, List<com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask>> taskEntry : entry.getTasks().entrySet()) {
+                List<ResearchTask> specialTasks = new ArrayList<>();
+
+                for (com.bluelotuscoding.eidolonunchained.research.tasks.ResearchTask task : taskEntry.getValue()) {
+                    ResearchTask convertedTask = ResearchDataManager.convertToEidolonTask(task);
+                    if (convertedTask != null) {
+                        specialTasks.add(convertedTask);
+                    }
+                }
+
+                configuredTasks.put(taskEntry.getKey(), List.copyOf(specialTasks));
+                if (!specialTasks.isEmpty()) {
+                    addSpecialTasks(taskEntry.getKey(), specialTasks.toArray(new ResearchTask[0]));
+                } else {
+                    LOGGER.warn("Research {} step {} has explicit datapack tasks but none could be converted", entry.getId(), taskEntry.getKey());
+                }
+            }
+        }
+
+        @Override
+        public List<ResearchTask> getTasks(int rootSeed, int done) {
+            if (configuredTasks.containsKey(done)) {
+                return configuredTasks.get(done);
+            }
+
+            return super.getTasks(rootSeed, done);
         }
     }
 }

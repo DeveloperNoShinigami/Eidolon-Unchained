@@ -1,41 +1,96 @@
 # AI Deity System
 
-What It Does
+The AI deity system is loaded from `data/*/ai_deities/*.json` through `AIDeityManager`. It layers provider selection, personality rules, prayer behavior, patron rules, task data, and TTS settings on top of a base deity.
 
-- Replaces standard prayer effects with an AI conversation when using special prayers.
-- Initiated by `AIDeityPrayerSpell`, which opens `DeityChat` with the target deity.
-- Effigy presence and readiness are verified before conversation begins.
+## Core Authoring Surface
 
-Code Highlights
+The canonical AI config fields currently center on:
 
-- `AIDeityPrayerSpell` — `src/main/java/com/bluelotuscoding/eidolonunchained/spells/AIDeityPrayerSpell.java`
-  - Validates effigy, reputation, and config
-  - Starts conversation: `DeityChat.startConversation(serverPlayer, aiDeityId)`
-- `EffigyEffectsManager` — conversation‑linked effigy visuals and audio
-- `EidolonUnchainedConfig` — AI provider, models, retry, and display options
+- `deity`
+- `ai_provider`
+- `personality`
+- `behavior_rules`
+- `prayer_configs`
+- `api_settings`
+- `tts_config`
+- `patron_config`
+- `task_config`
 
-Full JSON Reference
+## Conversation Routing
 
-- See wiki/Datapacks/AI-Deity-JSON.md for all fields, defaults, and examples.
+`DeityChat` resolves provider usage in this order:
 
-Deity Definitions
+- use the deity's configured `ai_provider` when available
+- fall back to the global provider if the deity-specific key is missing
+- create the runtime provider through `AIProviderFactory`
 
-- Managed by `DatapackDeityManager`
-- Provide deity IDs, display names/colors, and (optionally) per‑deity AI settings
+The current provider factory supports:
 
-Providers
+- Gemini
+- Player2AI
+- OpenRouter
+- OpenAI as a future fallback stub, not a real implementation
 
-- `gemini`, `player2ai`, `openrouter`, `openai`, `proxy`
-- Set via command: ` /eidolon-unchained api set <provider> <key>`
-- Model selection: ` /eidolon-unchained api set-model <model>`
+## Prayer Configuration
 
-Display Modes
+Prayer behavior is driven by the `prayer_configs` map.
 
-- Title/subtitle or action bar typing with configurable speed/wrapping
-- Config toggles for logging and retry/backoff on transient errors
+- Each prayer type can define its own prompt, command whitelist, reference commands, reputation gate, and cooldown.
+- The prayer type resolver prefers chant context first, then falls back to message-based inference.
 
-Troubleshooting
+## Patron And Task Coupling
 
-- "Deity not found" ⇒ missing/unloaded datapack deity ID
-- "No effigy found" ⇒ ensure altar/effigy placement near the player
-- Conversation not starting ⇒ check `enable_ai_deities` and provider API key/model
+AI configs also own:
+
+- patron relationship rules
+- follower and enemy personality modifiers
+- task or fate templates attached into `task_config.availableTasks`
+
+This means the AI layer is where deity conversation, patron gating, and fate assignment meet.# AI Deity System
+
+The AI deity layer is loaded from `data/*/ai_deities/` through `AIDeityManager`. It attaches conversation behavior, prayer configuration, patron behavior, task templates, provider selection, and TTS metadata to base deity records.
+
+## Runtime Role
+
+An AI deity config is what turns a normal datapack deity into an interactive deity.
+
+It provides:
+
+- `ai_provider`
+- `personality`
+- `prayer_configs`
+- `api_settings`
+- `tts_config`
+- `patron_config`
+- `task_config`
+
+## Provider Selection
+
+Conversation routing uses `AIProviderFactory`.
+
+- `gemini` is supported
+- `player2ai` is supported
+- `openrouter` is supported
+- `openai` currently falls back instead of providing a real implementation
+
+If a deity-specific provider is not configured with a usable key, the chat layer can fall back to the global provider configuration.
+
+## Linking And Timing
+
+The data-loading order matters.
+
+- deities load first
+- AI configs link to deity IDs afterward
+- prayer spell registration happens after AI configs are linked
+- fate attachment may be deferred if AI configs are not ready yet
+
+## Patron And Prayer Layers
+
+The AI config is also where the more advanced interaction rules live:
+
+- patron allegiance filtering
+- opposing and allied deity relationships
+- prayer-type prompts and command pools
+- response modifiers based on patron status, progression, biome, and time
+
+This means the base deity JSON is not enough on its own to produce AI behavior.

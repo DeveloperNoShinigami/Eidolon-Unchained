@@ -11,6 +11,7 @@ import elucent.eidolon.common.deity.Deities;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
+import com.bluelotuscoding.eidolonunchained.util.UnifiedDynamicSystemLoader;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -38,7 +39,7 @@ import java.util.HashMap;
  * }
  */
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
-public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
+public class DatapackDeityManager extends UnifiedDynamicSystemLoader {
     private static final org.slf4j.Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = com.bluelotuscoding.eidolonunchained.util.JsonUtils.GSON;
     private static DatapackDeityManager INSTANCE;
@@ -47,7 +48,7 @@ public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
     private static final Map<ResourceLocation, DatapackDeity> deities = new HashMap<>();
     
     public DatapackDeityManager() {
-        super(GSON, "deities");
+        super(GSON, "deities", "eidolonunchained");
         INSTANCE = this;
     }
     
@@ -81,39 +82,29 @@ public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
     protected void apply(Map<ResourceLocation, JsonElement> resourceMap,
                         ResourceManager resourceManager, ProfilerFiller profiler) {
         LOGGER.info("Loading datapack deities...");
-        
-        int loaded = 0;
-        int errors = 0;
-        
-        for (Map.Entry<ResourceLocation, JsonElement> entry : resourceMap.entrySet()) {
-            ResourceLocation location = entry.getKey();
-            JsonElement element = entry.getValue();
-            
-            if (!element.isJsonObject()) {
-                LOGGER.warn("Skipping non-object JSON at {}", location);
-                continue;
-            }
-            
-            try {
-                loadDeity(location, element.getAsJsonObject());
-                loaded++;
-            } catch (Exception e) {
-                LOGGER.error("Failed to load deity from {}", location, e);
-                errors++;
-            }
-        }
-        
-        LOGGER.info("Loaded {} datapack deities with {} errors", loaded, errors);
-        
-        // Create codex entries for deity progression stages
-        try {
-            com.bluelotuscoding.eidolonunchained.integration.DeityProgressionCodexIntegration.createProgressionCodexEntries();
-        } catch (Exception e) {
-            LOGGER.error("Failed to create deity progression codex entries", e);
-        }
-        
+
+        // Prepare AI deity manager for a deity reload without wiping already-linked configs.
+        // This avoids clearing server-side AI configs before AI configs are re-linked,
+        // which caused "AI config not found" behavior during gameplay.
+        com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance().prepareForDeityReload();
+
+        // Use UnifiedDynamicSystemLoader to normalize entries and process each via handleEntry
+        deities.clear();
+        super.apply(resourceMap, resourceManager, profiler);
+
+        LOGGER.info("Loaded {} datapack deities", deities.size());
+
         // Notify that deities have been loaded - AI system can now link to them
         MinecraftForge.EVENT_BUS.post(new DatapackDeitiesLoadedEvent(deities));
+    }
+
+    @Override
+    protected void handleEntry(ResourceLocation location, JsonObject json) throws Exception {
+        if (json == null || !json.isJsonObject()) {
+            LOGGER.warn("Skipping non-object JSON at {}", location);
+            return;
+        }
+        loadDeity(location, json);
     }
     
     private void loadDeity(ResourceLocation location, JsonObject json) {
@@ -155,6 +146,21 @@ public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
         if (json.has("abandon")) {
             loadAbandonConfiguration(deity, json.getAsJsonObject("abandon"));
         }
+
+        // Link to a native Eidolon deity for reputation mirroring
+        if (json.has("linked_eidolon_deity")) {
+            deity.setLinkedEidolonDeity(new ResourceLocation(json.get("linked_eidolon_deity").getAsString()));
+        }
+
+        // Optional base deity damage type used by deity-linked combat chants.
+        if (json.has("deity_damage_type")) {
+            ResourceLocation deityDamageType = ResourceLocation.tryParse(json.get("deity_damage_type").getAsString());
+            if (deityDamageType != null) {
+                deity.setDeityDamageType(deityDamageType);
+            } else {
+                LOGGER.warn("Invalid deity_damage_type '{}' for deity {}", json.get("deity_damage_type").getAsString(), deityId);
+            }
+        }
         
         // Extract and register AI configuration if present
         if (json.has("ai_configuration")) {
@@ -166,11 +172,12 @@ public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
             }
         }
         
-        // Register with Eidolon's deity system
-        Deities.register(deity);
-        
         // Store in our static map for easy access
         deities.put(deityId, deity);
+        
+        // Register with Eidolon's deity system IMMEDIATELY
+        // This ensures the deity is available in Deities.find() before DatapackDeitiesLoadedEvent fires
+        Deities.register(deity);
         
         LOGGER.info("Registered datapack deity: {} ({})", deityId, name);
     }
@@ -340,7 +347,17 @@ public class DatapackDeityManager extends SimpleJsonResourceReloadListener {
         try {
             // Convert the JSON to an AIDeityConfig object
             AIDeityConfig config = GSON.fromJson(aiConfig, AIDeityConfig.class);
-            
+
+            // WORKAROUND: Manual TTS config parsing if GSON failed
+            if (config.tts_config == null && aiConfig.has("tts_config")) {
+                try {
+                    JsonObject ttsJson = aiConfig.getAsJsonObject("tts_config");
+                    config.tts_config = GSON.fromJson(ttsJson, AIDeityConfig.TTSConfig.class);
+                } catch (Exception e) {
+                    LOGGER.error("Failed to manually parse TTS config for {}: {}", deityId, e.getMessage());
+                }
+            }
+
             // Ensure the deity ID matches
             if (config.deity_id == null) {
                 config.deity_id = deityId;

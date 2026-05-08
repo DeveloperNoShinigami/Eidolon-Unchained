@@ -2,19 +2,34 @@
   "linked_deity": "eidolonunchained:dark_deity",
   "task_id": "veil_reader",
   "display_name": "Reader of the Veil",
-  "description": "Obtain an Enchanted Book (any) and spend a night in deep caves.",
+  "description": "Carry an unholy symbol into the Deep Dark and complete a Shadow Communion where sunlight cannot follow.",
   "progression_tier": "dark_acolyte",
   "requirements": [
-    { "type": "collect_items", "items": [{ "item": "minecraft:enchanted_book", "count": 1 }] },
-    { "type": "location", "value": "underground" },
-    { "type": "time", "value": "night" }
+    {
+      "type": "collect_items",
+      "items": [
+        {
+          "item": "eidolon:unholy_symbol",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "type": "location",
+      "value": "underground"
+    },
+    {
+      "type": "ritual",
+      "value": "eidolonunchained:shadow_communion"
+    }
   ],
   "rewards": {
     "reputation": 10,
     "commands": [
       "effect give {player} minecraft:night_vision 600 0",
-      "give {player} eidolon:unholy_symbol 1"
-    ]
+      "give {player} eidolon:research_notes 1"
+    ],
+    "progression_unlock": "shadow_priest"
   },
   "cooldown_hours": 18,
   "repeatable": false,
@@ -22,13 +37,13 @@
     "trigger_conditions": {
       "min_reputation": 15,
       "max_reputation": 45,
-      "auto_assign_probability": 0.3,
-      "min_reputation_for_auto_assign": 25
+      "auto_assign_probability": 0.35,
+      "min_reputation_for_auto_assign": 20
     },
-    "assignment_prompt": "Acolyte, read where the sun cannot reach and learn the veiled script.",
+    "assignment_prompt": "Walk where the world falls quiet. Let the Deep Dark hear your communion and return with its silence intact.",
     "completion_phrases": [
-      "The ink drinks the light for you.",
-      "You hear what the dark does not say."
+      "You have learned to read what darkness writes without ink.",
+      "The veil parts more easily for you now."
     ]
   }
 }

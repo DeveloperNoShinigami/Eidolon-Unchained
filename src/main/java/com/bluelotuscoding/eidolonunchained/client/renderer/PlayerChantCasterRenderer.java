@@ -10,6 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.phys.Vec3;
@@ -47,13 +48,17 @@ public class PlayerChantCasterRenderer {
         if (signs.isEmpty()) return;
         
         // Render the chant using exact ChantCasterEntity logic
-        renderPlayerChantSigns(event.getPoseStack(), event.getPartialTick(), player, signs);
+        renderChantSigns(event.getPoseStack(), event.getPartialTick(), player, signs);
     }
     
     /**
      * Render floating signs around player using exact ChantCasterRenderer logic
      */
-    private static void renderPlayerChantSigns(PoseStack mStack, float pticks, Player player, List<Sign> signs) {
+    public static void renderChantSigns(PoseStack mStack, float pticks, LivingEntity caster, List<Sign> signs) {
+        renderChantSigns(mStack, pticks, caster, signs, caster.getViewVector(pticks));
+    }
+
+    public static void renderChantSigns(PoseStack mStack, float pticks, LivingEntity caster, List<Sign> signs, Vec3 look) {
         mStack.pushPose();
         
         // Use the same buffers as ChantCasterRenderer
@@ -69,15 +74,13 @@ public class PlayerChantCasterRenderer {
 
         // Camera-relative positioning for world rendering
         Vec3 cameraPos = mc.gameRenderer.getMainCamera().getPosition();
-        double px = Mth.lerp(pticks, player.xOld, player.getX());
-        double py = Mth.lerp(pticks, player.yOld, player.getY());
-        double pz = Mth.lerp(pticks, player.zOld, player.getZ());
+        double px = Mth.lerp(pticks, caster.xOld, caster.getX());
+        double py = Mth.lerp(pticks, caster.yOld, caster.getY());
+        double pz = Mth.lerp(pticks, caster.zOld, caster.getZ());
         
         // Translate to player position relative to camera (at eye level)
         mStack.translate(px - cameraPos.x, py - cameraPos.y + 1.0, pz - cameraPos.z);
 
-        // Player's look direction (like ChantCasterRenderer)
-        Vec3 look = player.getLookAngle();
         double yaw = Mth.atan2(look.x, look.z);
         Vec3 left = new Vec3(Math.cos(yaw), 0, -Math.sin(yaw));
         Vec3 up = left.cross(look);
@@ -108,7 +111,7 @@ public class PlayerChantCasterRenderer {
                 TextureAtlasSprite spr = mc.getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(s.getSprite());
 
                 // Brightness animation (exactly like ChantCasterRenderer)
-                float brightMod = Mth.clamp(Mth.sin(a + Mth.TWO_PI * player.tickCount / 20), 0, 1);
+                float brightMod = Mth.clamp(Mth.sin(a + Mth.TWO_PI * caster.tickCount / 20), 0, 1);
                 brightMod *= brightMod;
                 brightMod = 0.6f + 0.4f * brightMod;
 

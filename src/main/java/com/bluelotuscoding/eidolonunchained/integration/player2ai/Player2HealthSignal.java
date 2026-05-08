@@ -26,6 +26,8 @@ public class Player2HealthSignal {
     
     private static transient ScheduledExecutorService healthSignalExecutor;
     private static boolean healthSignalActive = false;
+    private static int consecutiveFailures = 0;
+    private static boolean warnedOnce = false;
     
     /**
      * Start the health signal system
@@ -43,6 +45,18 @@ public class Player2HealthSignal {
             LOGGER.debug("Player2AI not active, skipping health signal");
             return;
         }
+
+        // Do not start if the local Player2 app is not available to avoid log spam
+        try {
+            if (!Player2AIClient.isPlayer2AppAvailable()) {
+                LOGGER.info("Player2AI app not detected locally; health signal will not start (will start when Player2 becomes available)");
+                return;
+            }
+        } catch (Throwable t) {
+            // If any unexpected error occurs during availability check, do not start
+            LOGGER.debug("Skipping health signal due to availability check error: {}", t.getMessage());
+            return;
+        }
         
         healthSignalExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "Player2AI-HealthSignal");
@@ -58,7 +72,8 @@ public class Player2HealthSignal {
             try {
                 sendHealthSignal();
             } catch (Exception e) {
-                LOGGER.warn("Health signal failed: {}", e.getMessage());
+                // Rare path; sendHealthSignal already handles logging/backoff
+                LOGGER.debug("Health signal runnable error: {}", e.getMessage());
             }
         }, HEALTH_SIGNAL_INTERVAL, HEALTH_SIGNAL_INTERVAL, TimeUnit.SECONDS);
         
@@ -88,6 +103,8 @@ public class Player2HealthSignal {
         }
         
         healthSignalActive = false;
+    warnedOnce = false;
+    consecutiveFailures = 0;
         LOGGER.info("Player2AI health signal stopped");
     }
     
@@ -109,7 +126,7 @@ public class Player2HealthSignal {
             connection.setReadTimeout(10000);
             
             // Add API key if we have one
-            String apiKey = EidolonUnchainedConfig.COMMON.player2aiApiKey.get();
+            String apiKey = com.bluelotuscoding.eidolonunchained.config.APIKeyManager.getAPIKey("player2ai");
             if (apiKey != null && !apiKey.trim().isEmpty() && 
                 !apiKey.contains("localhost") && !apiKey.contains("127.0.0.1")) {
                 connection.setRequestProperty("X-API-Key", apiKey);
@@ -121,12 +138,33 @@ public class Player2HealthSignal {
             int responseCode = connection.getResponseCode();
             if (responseCode >= 200 && responseCode < 300) {
                 LOGGER.debug("Health signal sent successfully (response: {})", responseCode);
+                // Reset failure tracking on success
+                consecutiveFailures = 0;
+                warnedOnce = false;
             } else {
-                LOGGER.warn("Health signal failed with response code: {}", responseCode);
+                consecutiveFailures++;
+                if (!warnedOnce) {
+                    LOGGER.warn("Health signal failed with response code: {}", responseCode);
+                    warnedOnce = true;
+                } else {
+                    LOGGER.debug("Health signal failed ({}), consecutiveFailures={}", responseCode, consecutiveFailures);
+                }
             }
             
         } catch (Exception e) {
-            LOGGER.warn("Failed to send health signal: {}", e.getMessage());
+            consecutiveFailures++;
+            String msg = e.getMessage() == null ? e.toString() : e.getMessage();
+            if (!warnedOnce) {
+                LOGGER.warn("Failed to send health signal: {}", msg);
+                warnedOnce = true;
+            } else {
+                LOGGER.debug("Failed to send health signal: {} (suppressed)", msg);
+            }
+            // If repeated failures, stop the health signal to avoid log spam and retry cost
+            if (consecutiveFailures >= 3) {
+                LOGGER.info("Player2AI health signal disabled after {} consecutive failures; will remain off until Player2 is available and provider is activated again.", consecutiveFailures);
+                stopHealthSignal();
+            }
         }
     }
     
