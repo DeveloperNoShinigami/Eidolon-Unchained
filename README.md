@@ -1,191 +1,54 @@
-# Troubleshooting Codex Translation Errors
+# Eidolon Unchained 2.0
 
-## Common Format Errors
+A KubeJS-centric extension layer for **Eidolon: Repraised** on Minecraft 1.20.1 / Forge. It wraps Eidolon's real APIs
+for KubeJS scripts and adds the systems Eidolon does not have: scriptable deities, deity-bound chants, a unified caster
+model for players, mobs and bosses, deity damage with resistance and penetration, custom effigies and AI-driven deities.
 
-If you see a "Format error" in a codex page, it is often caused by a percent sign (`%`) in your translation string. Minecraft's translation system treats `%` as the start of a format specifier (like `%s` or `%1$s`). If your translation string contains a `%` but the code does not provide arguments, you will get a format error.
+This branch (`2.0-kubejs`) is a clean rewrite. The historical datapack version lives on `main`; the last Java version
+of 1.x is on `1.20.1_v3.9.0.9_Conversion`.
 
-### How to Fix
+## Status
 
-- **Escape percent signs:** Use `%%` instead of `%` in your translation strings to display a literal percent sign.
-- **Remove unused format specifiers:** If you do not intend to use arguments, make sure your translation string does not contain `%s`, `%1$s`, etc.
+Phase 1 of the implementation order ("clean base"): the mod loads, pins its dependency baseline, registers its KubeJS
+plugin, fires one diagnostic event per script type and validates the Eidolon API surfaces it will wrap. Nothing
+gameplay-facing exists yet.
 
-#### Example
+## Requirements
 
-**Incorrect:**
+| Mod | Version | Note |
+|---|---|---|
+| Minecraft / Forge | 1.20.1 / 47.4.10+ | Java 17 |
+| Eidolon: Repraised | 0.3.13+ | mod ID `eidolon` |
+| KubeJS | 2001.6.5+ | plus Rhino 2001.2.2+ and Architectury 9.1.12+ |
+| Curios | 5.14.1+ | |
+| GeckoLib | 4.8.4+ | deity avatars and effigies |
 
-```json
-"eidolonunchained.codex.entry.crystal_rituals.placement": "Proper crystal placement can increase ritual effectiveness by up to 300%."
-```
-
-**Correct:**
-
-```json
-"eidolonunchained.codex.entry.crystal_rituals.placement": "Proper crystal placement can increase ritual effectiveness by up to 300%%."
-```
-
-This will prevent Minecraft from showing a format error and display the percent sign as intended.
-# Eidolon Unchained
-
-An addon mod for **Eidolon: Repraised** that expands the mystical world with new chapters, rituals, and other Eidolon-focused content.
-
-## Description
-
-Eidolon Unchained is designed to enhance your Eidolon experience by adding:
-- New chapters and storylines  
-- Additional rituals and magical practices
-- Enhanced mystical content
-- Integration with Curios API for mystical accessories
-- Advanced codex system with proper translation support
-- Allows developers and modders to datapack Eidolon codex features and implement spells
-
-## Features
-
-### Enhanced Codex System
-- **Advanced Monster Studies**: Comprehensive guide to magical creatures and their behaviors
-- **Rare Monster Variants**: Documentation of unusual monster behaviors and variants  
-- **Advanced Summoning Techniques**: For experienced practitioners of spectral manipulation
-- **Crystal Ritual Mastery**: Advanced techniques for crystal-based magical workings
-- **Advanced Void Techniques**: Expanding upon void amulets and void manipulation
-
-### Translation System Improvements
-- Robust translation caching for better performance
-- Fallback translation system for missing keys
-- Consistent language file structure
-- Proper TitlePage integration with automatic title generation
-
-## Dependencies
-
-This mod requires the following mods to function:
-
-### Required Dependencies
-- **Minecraft**: 1.20.1
-- **Minecraft Forge**: 47.4.0+
-- **Eidolon: Repraised**: 0.3.8+ 
-- **Curios API**: 5.14.1+
-
-## Installation
-
-1. Install Minecraft Forge 47.4.0 or higher for Minecraft 1.20.1
-2. Download and install Eidolon: Repraised
-3. Download and install Curios API
-4. Place the Eidolon Unchained mod file in your `mods` folder
-5. Launch the game
-
-## Codex Development Guide
-
-For a step-by-step tutorial see [Codex Tutorial](docs/codex_tutorial.md). For a comprehensive reference see [Codex Reference](docs/codex_reference.md).
-
-### Creating New Codex Entries
-
-#### 1. JSON Entry Structure
-Create JSON files in `src/main/resources/data/eidolonunchained/codex_entries/`:
-
-```json
-{
-  "target_chapter": "CHAPTER_NAME",
-  "pages": [
-    {
-      "type": "title",
-      "text": "eidolonunchained.codex.entry.your_entry"
-    },
-    {
-      "type": "text",
-      "text": "eidolonunchained.codex.entry.your_entry.details"
-    },
-    {
-      "type": "entity",
-      "entity": "minecraft:zombie"
-    },
-    {
-      "type": "crafting",
-      "recipe": "eidolon:arcane_gold_ingot"
-    }
-  ]
-}
-```
-
-#### 2. Language File Structure
-Add translations to `src/main/resources/assets/eidolonunchained/lang/en_us.json`:
-
-```json
-{
-  "eidolonunchained.codex.entry.your_entry.title": "Your Entry Title",
-  "eidolonunchained.codex.entry.your_entry": "Main content that appears on the title page alongside the title.",
-  "eidolonunchained.codex.entry.your_entry.details": "Additional detailed information for subsequent pages."
-}
-```
-
-#### 3. TitlePage System
-The TitlePage system automatically handles title generation:
-- **Input**: Base key (e.g., `"eidolonunchained.codex.entry.crystal_rituals"`)
-- **Title**: Automatically appends `.title` to get the title text
-- **Content**: Uses the base key for the main page content
-
-This means each title page displays both the title and introductory content together.
-
-#### 4. Page Types
-Available page types:
-- **`title`**: Creates a page with both title and content
-- **`text`**: Plain text content
-- **`entity`**: Displays an entity with information
-- **`crafting`**: Shows a crafting recipe
-- **`ritual`**: Displays ritual information
-
-#### 5. Translation Best Practices
-- Use consistent naming: `eidolonunchained.codex.entry.[entry_name].[section]`
-- Always provide both base keys and `.title` versions
-- Keep content concise but descriptive
-- Use proper punctuation and formatting
-
-### Translation System Features
-
-#### Caching System
-The enhanced translation system includes:
-- **Memory caching** for frequently accessed translations
-- **Direct language file access** for fallback translations
-- **Performance optimization** for large codex entries
-
-#### Error Handling
-- Graceful fallback to English translations
-- Debug logging for missing translation keys
-- Automatic error recovery for malformed entries
-
-## Development
-
-This mod is built using:
-- Minecraft Forge 47.4.0
-- ForgeGradle
-- Java 17
-
-### Building from Source
+## Building
 
 ```bash
 ./gradlew build
 ```
 
-### Dependencies Setup
+The jar lands in `build/libs/`. `./gradlew runClient` starts a development client with every dependency.
 
-The mod integrates with:
-- Eidolon: Repraised API for mystical content
-- Curios API for wearable mystical items
+## Script smoke test
 
-### Recent Improvements
+Copy `examples/kubejs/` over your instance's `kubejs/` folder. On startup, server start and world join the log shows
+`[EU smoke] startup ok`, `[EU smoke] server ok` and `[EU smoke] client ok`, plus the Eidolon API validation report.
 
-#### Version 1.0.0 Updates
-- **Fixed TitlePage Integration**: Resolved title display issues through bytecode analysis
-- **Enhanced Translation System**: Added caching and fallback mechanisms
-- **Consistent JSON Structure**: Standardized all codex entry formats
-- **Language File Optimization**: Removed duplicate entries and improved organization
-- **Recipe Page Support**: Fixed "air" display issues in crafting pages
+```js
+// startup_scripts
+EidolonUnchainedEvents.init(event => {
+    console.info(`EU ${EidolonUnchained.version()} on Eidolon ${EidolonUnchained.eidolonVersion()}`)
+})
+```
 
-## Authors
+## Design
 
-**Blue Lotus Coding**
+Requirements, decisions and the implementation order are kept outside this repository, in the project's ICM
+(`projects/eidolon-unchained/`). The one rule that applies everywhere: EU never fakes an Eidolon API. It either calls an
+existing Eidolon API, uses an existing KubeJS mechanism, or adds an EU abstraction that is labelled as such.
 
 ## License
 
-All Rights Reserved
-
-## Version
-
-Current Version: 1.0.0
+All rights reserved. See `LICENSE`.

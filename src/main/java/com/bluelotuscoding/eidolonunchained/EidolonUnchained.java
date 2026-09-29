@@ -1,98 +1,51 @@
 package com.bluelotuscoding.eidolonunchained;
 
-import com.bluelotuscoding.eidolonunchained.data.CodexDataManager;
-import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
-import com.bluelotuscoding.eidolonunchained.integration.ModIntegration;
+import com.bluelotuscoding.eidolonunchained.api.EidolonApiValidation;
 import com.mojang.logging.LogUtils;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 
-// The value here should match an entry in the META-INF/mods.toml file
-@Mod(EidolonUnchained.MODID)
-public class EidolonUnchained
-{
-    // Define mod id in a common place for everything to reference
-    public static final String MODID = "eidolonunchained";
-    // Directly reference a slf4j logger
-    private static final Logger LOGGER = LogUtils.getLogger();
-    
-    // Create a Deferred Register to hold Blocks which will all be registered under the "eidolonunchained" namespace
-    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
-    // Create a Deferred Register to hold Items which will all be registered under the "eidolonunchained" namespace
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
-    // Create a Deferred Register to hold CreativeModeTabs which will all be registered under the "eidolonunchained" namespace
-    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+/**
+ * Eidolon Unchained 2.0: a KubeJS-centric extension layer for Eidolon Repraised.
+ * <p>
+ * Phase 1 ("clean base") only establishes the mod, its pinned dependency baseline, the KubeJS plugin and an
+ * API validation pass. Every later system is added as a thin wrapper over a real Eidolon API (spec §2).
+ */
+@Mod(EidolonUnchained.MOD_ID)
+public final class EidolonUnchained {
+    public static final String MOD_ID = "eidolonunchained";
+    public static final Logger LOGGER = LogUtils.getLogger();
 
-    public EidolonUnchained()
-    {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        
-        // Register the commonSetup method for modloading
-        modEventBus.addListener(this::commonSetup);
-
-        // Register the Deferred Register to the mod event bus so blocks get registered
-        BLOCKS.register(modEventBus);
-        // Register the Deferred Register to the mod event bus so items get registered
-        ITEMS.register(modEventBus);
-        // Register the Deferred Register to the mod event bus so tabs get registered
-        CREATIVE_MODE_TABS.register(modEventBus);
-
-        // Register our mod's config
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
-
-        // Register ourselves for server and other game events we are interested in
+    public EidolonUnchained(FMLJavaModLoadingContext context) {
+        context.registerConfig(ModConfig.Type.COMMON, EUConfig.SPEC);
+        context.getModEventBus().addListener(this::commonSetup);
         MinecraftForge.EVENT_BUS.register(this);
+        LOGGER.info("Eidolon Unchained {} loading (Eidolon {}, KubeJS {}, GeckoLib {})",
+                version(), modVersion("eidolon"), modVersion("kubejs"), modVersion("geckolib"));
     }
 
-    private void commonSetup(final FMLCommonSetupEvent event)
-    {
-        // Some common setup code
-        LOGGER.info("Eidolon Unchained is loading!");
-        LOGGER.info("Expanding the world of Eidolon with new chapters, rituals, and mystical content...");
-        
-        // Initialize data managers for codex and research extensions
-        CodexDataManager.init();
-        ResearchDataManager.init();
-        
-        // Initialize mod integrations
-        ModIntegration.init();
+    private void commonSetup(FMLCommonSetupEvent event) {
+        event.enqueueWork(() -> {
+            if (EUConfig.VALIDATE_EIDOLON_API.get()) {
+                EidolonApiValidation.run();
+            }
+        });
     }
 
-    // You can use SubscribeEvent and let the Event Bus discover methods to call
-    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event)
-    {
-        // Do something when the server starts
-        LOGGER.info("Eidolon Unchained server starting...");
-        
-        LOGGER.info("About to log loaded data...");
-        // Log our loaded data
-        CodexDataManager.logLoadedData();
-        ResearchDataManager.logLoadedData();
-        
-        LOGGER.info("About to attempt integration...");
-        // Now inject our custom entries into Eidolon's systems
-        try {
-            LOGGER.info("Calling attemptIntegrationIfNeeded...");
-            com.bluelotuscoding.eidolonunchained.integration.EidolonCodexIntegration.attemptIntegrationIfNeeded();
-            LOGGER.info("Integration call completed successfully");
-        } catch (Exception e) {
-            LOGGER.error("Failed to integrate with Eidolon codex system", e);
-        }
-        LOGGER.info("Server starting event completed");
+    /** This mod's version as declared in its mod file. */
+    public static String version() {
+        return modVersion(MOD_ID);
+    }
+
+    /** The loaded version of a mod, or "absent" when it is not loaded. */
+    public static String modVersion(String modId) {
+        return ModList.get().getModContainerById(modId)
+                .map(c -> c.getModInfo().getVersion().toString())
+                .orElse("absent");
     }
 }

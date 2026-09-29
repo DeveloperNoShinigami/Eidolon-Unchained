@@ -1,0 +1,2 @@
+# KubeJS plugin classes (one per line; optional trailing mod-id conditions, or "client").
+com.bluelotuscoding.eidolonunchained.kubejs.EUKubeJSPlugin
