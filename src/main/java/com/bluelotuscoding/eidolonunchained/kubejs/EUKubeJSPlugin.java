@@ -9,6 +9,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dev.latvian.mods.kubejs.KubeJSPlugin;
 import dev.latvian.mods.kubejs.generator.AssetJsonGenerator;
+import dev.latvian.mods.kubejs.recipe.schema.RegisterRecipeSchemasEvent;
 import dev.latvian.mods.kubejs.script.BindingsEvent;
 import dev.latvian.mods.kubejs.script.ScriptType;
 import dev.latvian.mods.kubejs.util.ClassFilter;
@@ -36,6 +37,12 @@ public class EUKubeJSPlugin extends KubeJSPlugin {
     @Override
     public void registerBindings(BindingsEvent event) {
         event.add("EidolonUnchained", EUBinding.INSTANCE);
+    }
+
+    /** T2: chant recipe schemas, so {@code ServerEvents.recipes(e => e.recipes.eidolon.chant(...))} needs no datapack. */
+    @Override
+    public void registerRecipeSchemas(RegisterRecipeSchemasEvent event) {
+        EURecipeSchemas.register(event);
     }
 
     /** {@code player.eidolon}: knowledge, reputation and soul helpers on every player (decision D29). */

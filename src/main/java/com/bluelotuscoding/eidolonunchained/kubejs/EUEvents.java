@@ -10,6 +10,8 @@ import dev.latvian.mods.kubejs.event.StartupEventJS;
 import dev.latvian.mods.kubejs.script.ScriptType;
 import dev.latvian.mods.kubejs.server.ServerEventJS;
 import elucent.eidolon.api.deity.ReputationEvent;
+import elucent.eidolon.api.spells.SpellCastEvent;
+import elucent.eidolon.codex.CodexEvents;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
@@ -22,6 +24,8 @@ import net.minecraftforge.fml.common.Mod;
  *   <li>{@code init} (startup): after startup scripts load.</li>
  *   <li>{@code serverReady} (server): when the server has started.</li>
  *   <li>{@code clientReady} (client): when the local player has joined a world.</li>
+ *   <li>{@code spellCast} (server, cancel() blocks the cast) / {@code spellCasted}: Eidolon's {@code SpellCastEvent.Pre/Post}; extra id = spell id.</li>
+ *   <li>{@code codexPreInit / codexPostInit} (client): Eidolon's {@code CodexEvents}.</li>
  *   <li>{@code reputationChanged / stageUnlocked / stageLocked} (server): Eidolon's {@link ReputationEvent}s; the
  *   optional extra id is a deity id, e.g. {@code stageUnlocked('eidolon:dark', e => …)}.</li>
  * </ul>
@@ -35,6 +39,10 @@ public final class EUEvents {
     public static final EventHandler REPUTATION_CHANGED = GROUP.server("reputationChanged", () -> ReputationEventJS.class).extra(Extra.ID);
     public static final EventHandler STAGE_UNLOCKED = GROUP.server("stageUnlocked", () -> ReputationEventJS.class).extra(Extra.ID);
     public static final EventHandler STAGE_LOCKED = GROUP.server("stageLocked", () -> ReputationEventJS.class).extra(Extra.ID);
+    public static final EventHandler SPELL_CAST = GROUP.server("spellCast", () -> SpellCastEventJS.class).extra(Extra.ID).hasResult();
+    public static final EventHandler SPELL_CASTED = GROUP.server("spellCasted", () -> SpellCastEventJS.class).extra(Extra.ID);
+    public static final EventHandler CODEX_PRE_INIT = GROUP.client("codexPreInit", () -> CodexEventJS.class);
+    public static final EventHandler CODEX_POST_INIT = GROUP.client("codexPostInit", () -> CodexEventJS.class);
 
     private EUEvents() {
     }
@@ -65,6 +73,18 @@ public final class EUEvents {
         if (STAGE_LOCKED.hasListeners()) STAGE_LOCKED.post(ScriptType.SERVER, event.deity.getId(), new ReputationEventJS(event));
     }
 
+    @SubscribeEvent
+    public static void onSpellCastPre(SpellCastEvent.Pre event) {
+        if (!SPELL_CAST.hasListeners() || event.world.isClientSide()) return;
+        var result = SPELL_CAST.post(ScriptType.SERVER, event.spell.getRegistryName(), new SpellCastEventJS(event));
+        if (result.interruptFalse()) event.setCanceled(true);
+    }
+
+    @SubscribeEvent
+    public static void onSpellCastPost(SpellCastEvent.Post event) {
+        if (SPELL_CASTED.hasListeners() && !event.world.isClientSide()) SPELL_CASTED.post(ScriptType.SERVER, event.spell.getRegistryName(), new SpellCastEventJS(event));
+    }
+
     @Mod.EventBusSubscriber(modid = EidolonUnchained.MOD_ID, value = Dist.CLIENT)
     public static final class Client {
         private Client() {
@@ -74,6 +94,16 @@ public final class EUEvents {
         public static void onLoggedIn(ClientPlayerNetworkEvent.LoggingIn event) {
             log("clientReady", ScriptType.CLIENT);
             CLIENT_READY.post(ScriptType.CLIENT, new ClientEventJS());
+        }
+
+        @SubscribeEvent
+        public static void onCodexPreInit(CodexEvents.PreInit event) {
+            if (CODEX_PRE_INIT.hasListeners()) CODEX_PRE_INIT.post(ScriptType.CLIENT, new CodexEventJS(event));
+        }
+
+        @SubscribeEvent
+        public static void onCodexPostInit(CodexEvents.PostInit event) {
+            if (CODEX_POST_INIT.hasListeners()) CODEX_POST_INIT.post(ScriptType.CLIENT, new CodexEventJS(event));
         }
     }
 

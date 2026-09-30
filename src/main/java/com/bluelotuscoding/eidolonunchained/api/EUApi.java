@@ -7,6 +7,7 @@ import elucent.eidolon.common.deity.Deities;
 import elucent.eidolon.registries.Researches;
 import elucent.eidolon.registries.Runes;
 import elucent.eidolon.registries.Signs;
+import elucent.eidolon.registries.Spells;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -37,6 +38,27 @@ public final class EUApi {
 
     public static DeityBuilder extendDeity(String id) {
         return new DeityBuilder(Ids.of(id, "deity"), true);
+    }
+
+    public static SpellBuilder spell(String id) {
+        return new SpellBuilder(Ids.newId(id, "spell"));
+    }
+
+    public static SpellBuilder.Prayer prayer(String id) {
+        return new SpellBuilder.Prayer(Ids.newId(id, "prayer"));
+    }
+
+    public static List<String> spells() {
+        return Spells.getSpells().stream().map(sp -> sp.getRegistryName().toString()).toList();
+    }
+
+    public static RitualBuilder ritual(String id) {
+        return new RitualBuilder(Ids.newId(id, "ritual"));
+    }
+
+    /** Ids of the rituals scripts declared (Eidolon keeps its own ritual map private). */
+    public static List<String> rituals() {
+        return EURegistry.declared(EURegistry.Stage.RITUALS).stream().map(ResourceLocation::toString).toList();
     }
 
     // ---- helpers ----

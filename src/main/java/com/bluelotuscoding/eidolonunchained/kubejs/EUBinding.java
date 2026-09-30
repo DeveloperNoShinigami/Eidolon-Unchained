@@ -5,9 +5,11 @@ import com.bluelotuscoding.eidolonunchained.api.DeityBuilder;
 import com.bluelotuscoding.eidolonunchained.api.EUApi;
 import com.bluelotuscoding.eidolonunchained.api.EidolonApiValidation;
 import com.bluelotuscoding.eidolonunchained.api.ResearchBuilder;
+import com.bluelotuscoding.eidolonunchained.api.RitualBuilder;
 import com.bluelotuscoding.eidolonunchained.api.RuneBuilder;
 import com.bluelotuscoding.eidolonunchained.api.SignBuilder;
 import com.bluelotuscoding.eidolonunchained.api.SoulHelper;
+import com.bluelotuscoding.eidolonunchained.api.SpellBuilder;
 import dev.latvian.mods.kubejs.typings.Info;
 import elucent.eidolon.api.deity.Deity;
 import elucent.eidolon.api.spells.Rune;
@@ -57,6 +59,21 @@ public final class EUBinding {
         return EUApi.extendDeity(id);
     }
 
+    @Info("Declare a scripted spell: .cost(n).delay(t).canCast((level,pos,player)=>bool).cast((level,pos,player)=>…).deity(id).minReputation(n); its signs are an eidolon:chant recipe with the same id")
+    public SpellBuilder spell(String id) {
+        return EUApi.spell(id);
+    }
+
+    @Info("Declare an effigy prayer (Eidolon's PrayerSpell): .deity(id).cost(n).reputation(n).power(x).signs(...)")
+    public SpellBuilder.Prayer prayer(String id) {
+        return EUApi.prayer(id);
+    }
+
+    @Info("Declare a ritual: .symbol(rl).color(rgb).require(item, n).requireHealth(n).requireFocus(item).invariant(item).onComplete((level,pos)=>…); a ritual_brazier recipe names it")
+    public RitualBuilder ritual(String id) {
+        return EUApi.ritual(id);
+    }
+
     // ---- helpers (any script type with a server-side entity) ----
 
     @Info("Eidolon's soul of any living entity: mana, maxMana, takeMana, giveMana, setMaxMana, ethereal health")
@@ -84,6 +101,14 @@ public final class EUBinding {
 
     public List<String> researches() {
         return EUApi.researches();
+    }
+
+    public List<String> spells() {
+        return EUApi.spells();
+    }
+
+    public List<String> rituals() {
+        return EUApi.rituals();
     }
 
     public List<String> deities() {
