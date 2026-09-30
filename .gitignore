@@ -25,3 +25,7 @@ run
 
 # Files from Forge MDK
 forge*changelog.txt
+
+# dev run logs
+/run_*.log
+/*.log
