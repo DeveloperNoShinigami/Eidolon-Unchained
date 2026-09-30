@@ -1,5 +1,6 @@
 package com.bluelotuscoding.eidolonunchained;
 
+import com.bluelotuscoding.eidolonunchained.api.EURegistry;
 import com.bluelotuscoding.eidolonunchained.api.EidolonApiValidation;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.common.MinecraftForge;
@@ -34,6 +35,7 @@ public final class EidolonUnchained {
             if (EUConfig.VALIDATE_EIDOLON_API.get()) {
                 EidolonApiValidation.run();
             }
+            EURegistry.registerAll();      // T1: replay the startup scripts' declarations into Eidolon, in order
         });
     }
 
