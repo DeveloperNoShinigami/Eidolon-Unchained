@@ -53,6 +53,19 @@ public final class EUEvents {
     public static final EventHandler MOB_CHANT_SIGN = GROUP.server("mobChantSign", () -> MobChantEventJS.class).extra(Extra.ID);
     public static final EventHandler MOB_CHANT_CAST = GROUP.server("mobChantCast", () -> MobChantEventJS.class).extra(Extra.ID).hasResult();
     public static final EventHandler MOB_CHANT_INTERRUPTED = GROUP.server("mobChantInterrupted", () -> MobChantEventJS.class).extra(Extra.ID);
+    // Phase 4: world events EU detects (Eidolon and KubeJS post none of these); extra id = the biome, structure, research … id
+    public static final EventHandler ENTERED_BIOME = GROUP.server("enteredBiome", () -> WorldEventJS.class).extra(Extra.ID);
+    public static final EventHandler LEFT_BIOME = GROUP.server("leftBiome", () -> WorldEventJS.class).extra(Extra.ID);
+    public static final EventHandler ENTERED_STRUCTURE = GROUP.server("enteredStructure", () -> WorldEventJS.class).extra(Extra.ID);
+    public static final EventHandler LEFT_STRUCTURE = GROUP.server("leftStructure", () -> WorldEventJS.class).extra(Extra.ID);
+    public static final EventHandler LEARNED_RESEARCH = GROUP.server("learnedResearch", () -> WorldEventJS.class).extra(Extra.ID);
+    public static final EventHandler LEARNED_FACT = GROUP.server("learnedFact", () -> WorldEventJS.class).extra(Extra.ID);
+    public static final EventHandler LEARNED_SIGN = GROUP.server("learnedSign", () -> WorldEventJS.class).extra(Extra.ID);
+    public static final EventHandler LEARNED_RUNE = GROUP.server("learnedRune", () -> WorldEventJS.class).extra(Extra.ID);
+    public static final EventHandler RITUAL_COMPLETED = GROUP.server("ritualCompleted", () -> WorldEventJS.class).extra(Extra.ID);
+    public static final EventHandler ENTHRALLED = GROUP.server("enthralled", () -> WorldEventJS.class).extra(Extra.ID);
+    public static final EventHandler TAMED = GROUP.server("tamed", () -> WorldEventJS.class).extra(Extra.ID);
+    public static final EventHandler DISCOVERIES = GROUP.server("discoveries", () -> DiscoveriesEventJS.class);
     public static final EventHandler CODEX_PRE_INIT = GROUP.client("codexPreInit", () -> CodexEventJS.class);
     public static final EventHandler CODEX_POST_INIT = GROUP.client("codexPostInit", () -> CodexEventJS.class);
 
@@ -63,6 +76,41 @@ public final class EUEvents {
     }
 
     /** D35: imbued right-click casts and Deity's Protection retaliations, both cancelable. */
+    /** Phase 4: routes EU's detected world events to the matching script event. */
+    static void hookWorld() {
+        var map = new java.util.HashMap<String, EventHandler>();
+        map.put("biome", ENTERED_BIOME);
+        map.put("biome_left", LEFT_BIOME);
+        map.put("structure", ENTERED_STRUCTURE);
+        map.put("structure_left", LEFT_STRUCTURE);
+        map.put("research", LEARNED_RESEARCH);
+        map.put("fact", LEARNED_FACT);
+        map.put("sign", LEARNED_SIGN);
+        map.put("rune", LEARNED_RUNE);
+        map.put("ritual", RITUAL_COMPLETED);
+        map.put("enthrall", ENTHRALLED);
+        map.put("tame", TAMED);
+        com.bluelotuscoding.eidolonunchained.world.WorldEvents.onScript = ctx -> {
+            var handler = map.get(ctx.getKind());
+            if (handler == null || !handler.hasListeners()) return;
+            var id = ctx.getId();
+            if (id != null) handler.post(ScriptType.SERVER, new net.minecraft.resources.ResourceLocation(id), new WorldEventJS(ctx));
+            else handler.post(ScriptType.SERVER, new WorldEventJS(ctx));
+        };
+    }
+
+    /** Phase 4: (re)build the scripted discoveries (server start and /reload). */
+    static void postDiscoveries(net.minecraft.server.MinecraftServer server) {
+        com.bluelotuscoding.eidolonunchained.api.condition.Discoveries.beginScripted();
+        if (DISCOVERIES.hasListeners()) DISCOVERIES.post(ScriptType.SERVER, new DiscoveriesEventJS(server));
+        com.bluelotuscoding.eidolonunchained.api.condition.Discoveries.endScripted();
+    }
+
+    @SubscribeEvent
+    public static void onDatapackSync(net.minecraftforge.event.OnDatapackSyncEvent event) {
+        if (event.getPlayer() == null) postDiscoveries(event.getPlayerList().getServer());   // /reload
+    }
+
     static void hookWeapons() {
         com.bluelotuscoding.eidolonunchained.imbue.ImbueCasting.onImbueCast = (player, weapon, chant) ->
                 !IMBUE_CAST.hasListeners() || !IMBUE_CAST.post(ScriptType.SERVER, chant, new WeaponChantEventJS(player, null, weapon, chant.toString(), 0)).interruptFalse();
@@ -103,6 +151,7 @@ public final class EUEvents {
 
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
+        postDiscoveries(event.getServer());
         log("serverReady", ScriptType.SERVER);
         SERVER_READY.post(ScriptType.SERVER, new ServerEventJS(event.getServer()));
     }

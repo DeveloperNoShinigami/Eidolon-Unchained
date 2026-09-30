@@ -53,6 +53,7 @@ public final class ScriptedSpell extends StaticSpell {
     boolean imbuable = true;
     int imbueCost = 4;
     int protectionCost = 2;
+    @Nullable com.bluelotuscoding.eidolonunchained.api.condition.Condition requires;
 
     private final @Nullable CastCheck canCast;
     private final CastAction cast;
@@ -92,7 +93,16 @@ public final class ScriptedSpell extends StaticSpell {
         return protectionCost;
     }
 
+    /** Phase 4: the chant's .requires condition for this caster, target and place. */
+    public boolean requirementsMet(Level level, BlockPos pos, @Nullable Player player, @Nullable LivingEntity target) {
+        if (requires == null) return true;
+        var ctx = new com.bluelotuscoding.eidolonunchained.api.condition.EventContext("chant").at(level, pos)
+                .id(getRegistryName()).with("chant", getRegistryName()).with("deity", deity).player(player).entity(target);
+        return requires.matches(ctx);
+    }
+
     public boolean canMobCast(Level level, BlockPos pos, LivingEntity caster, @Nullable LivingEntity target) {
+        if (!requirementsMet(level, caster.blockPosition(), null, target)) return false;
         if (mobCanCast == null) return true;
         try {
             return mobCanCast.test(level, pos, caster, target);
@@ -137,6 +147,10 @@ public final class ScriptedSpell extends StaticSpell {
                 sp.displayClientMessage(Component.translatable("eidolonunchained.spell.reputation_too_low"), true);
                 return false;
             }
+        }
+        if (!requirementsMet(level, pos, player, null)) {
+            if (player instanceof ServerPlayer sp) sp.displayClientMessage(Component.translatable("eidolonunchained.chant.conditions_unmet"), true);
+            return false;
         }
         if (canCast == null) return true;
         try {

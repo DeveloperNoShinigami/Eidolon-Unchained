@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 /**
- * Sign and rune sprites live in the block atlas. Every builder that declares one contributes a supplier here, and the
+ * Sign and rune sprites live in the block atlas (ritual symbols use Eidolon's own vfx/ folder rule instead). Every builder that declares one contributes a supplier here, and the
  * KubeJS plugin turns the set into a generated {@code eidolonunchained:atlases/blocks.json} so the sprites get stitched
  * without the script pack writing atlas JSON by hand.
  */

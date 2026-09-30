@@ -31,5 +31,7 @@
   "eidolonunchained.hexblade.awakened_damage": "Awakened damage: +%s",
   "eidolonunchained.hexblade.elemental": "Elemental power: %s",
   "eidolonunchained.hexblade.energy": "Energy: %s / %s",
-  "eidolonunchained.hexblade.shift": "Hold Shift for details"
+  "eidolonunchained.hexblade.shift": "Hold Shift for details",
+  "eidolonunchained.chant.conditions_unmet": "The chant finds no purchase here (its conditions are not met)",
+  "eidolonunchained.ritual.refused": "The flames gutter: this rite's conditions are not met"
 }

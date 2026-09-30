@@ -24,5 +24,12 @@
   "chant.eu_examples.dark_rebuke": "Dark Rebuke",
   "chant.eu_examples.shadow_bolt": "Shadow Bolt",
   "chant.eu_examples.nightfall": "Nightfall",
-  "chant.eu_examples.clear_skies": "Clear Skies"
+  "chant.eu_examples.clear_skies": "Clear Skies",
+  "eu_examples.discovery.sea_memory": "The sea remembers the drowned, and now so do you.",
+  "eu_examples.discovery.deep_dark": "In the silence, a sign of storms takes shape in your mind.",
+  "eu_examples.discovery.forgotten": "The Forgotten's last breath carries Myrkul's rites to you.",
+  "eu_examples.discovery.storm_rite": "Myrkul approves of the storm (+5)",
+  "eu_examples.discovery.thrall": "The dead obey you. You have learned what that means.",
+  "eidolon.fact.eu_examples.sea_memory": "Sea Memory",
+  "eidolon.fact.eu_examples.thrall_master": "Thrall Master"
 }

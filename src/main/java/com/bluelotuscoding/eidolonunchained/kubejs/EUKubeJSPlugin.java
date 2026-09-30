@@ -35,6 +35,7 @@ public class EUKubeJSPlugin extends KubeJSPlugin {
         EUEvents.hookChant();
         EUEvents.hookMobChant();
         EUEvents.hookWeapons();
+        EUEvents.hookWorld();
         EidolonUnchained.LOGGER.info("KubeJS plugin registered: event group '{}'", EUEvents.GROUP);
     }
 

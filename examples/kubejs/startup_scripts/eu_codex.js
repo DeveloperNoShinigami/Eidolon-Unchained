@@ -20,4 +20,4 @@ EidolonUnchained.codex.chapter('eu_examples:myrkul_lore')
     .titlePage('eu_examples.codex.myrkul.intro', 'minecraft:wither_skeleton_skull')
     .textPage('eu_examples.codex.myrkul.body')
     .entityPage('minecraft:wither_skeleton')
-    .ritualPage('eidolon:kjs/eu_examples_storm_rite')
+    .ritualPage('eu_examples:storm_rite')            // the ritual's id: its brazier recipe carries the same id

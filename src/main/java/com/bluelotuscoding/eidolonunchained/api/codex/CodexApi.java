@@ -129,7 +129,7 @@ public final class CodexApi {
             return page("entity", entityId);
         }
 
-        @Info("RitualPage: an Eidolon ritual recipe id (eidolon:ritual_brazier… recipe), as the brazier shows it")
+        @Info("RitualPage: the ritual brazier recipe id; for scripted rituals that is the ritual id itself, e.g. 'mypack:storm_rite'")
         public ChapterBuilder ritualPage(String ritualRecipeId) {
             return page("ritual", ritualRecipeId);
         }

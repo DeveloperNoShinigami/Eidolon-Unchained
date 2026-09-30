@@ -31,6 +31,7 @@ public final class SpellBuilder {
     boolean imbuable = true;
     int imbueCost = 4;
     int protectionCost = 2;
+    com.bluelotuscoding.eidolonunchained.api.condition.Condition requires;
 
     SpellBuilder(ResourceLocation id) {
         this.id = id;
@@ -104,6 +105,12 @@ public final class SpellBuilder {
         return this;
     }
 
+    @Info("A condition (EidolonUnchained.conditions) that must hold to cast: checked for players and mobs, next to mana and reputation")
+    public SpellBuilder requires(com.bluelotuscoding.eidolonunchained.api.condition.Condition condition) {
+        this.requires = condition;
+        return this;
+    }
+
     @Info("Soul shards needed to bind this (deity-bound) chant to a Deity's Protection piece (1-4, default 2)")
     public SpellBuilder protectionCost(int shards) {
         this.protectionCost = Math.max(1, Math.min(4, shards));
@@ -121,6 +128,7 @@ public final class SpellBuilder {
         spell.imbuable = imbuable;
         spell.imbueCost = imbueCost;
         spell.protectionCost = protectionCost;
+        spell.requires = requires;
         Spells.register(spell);
     }
 

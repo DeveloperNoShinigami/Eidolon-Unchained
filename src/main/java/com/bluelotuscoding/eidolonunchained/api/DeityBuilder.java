@@ -94,6 +94,12 @@ public final class DeityBuilder {
         return this;
     }
 
+    @dev.latvian.mods.kubejs.typings.Info("A condition (EidolonUnchained.conditions) the last .stage(...) also requires; the stage stays locked until it holds")
+    public DeityBuilder require(com.bluelotuscoding.eidolonunchained.api.condition.Condition condition) {
+        lastStage().reqs.add(player -> condition.test(player));
+        return this;
+    }
+
     public DeityBuilder maxReputation(int max) {
         this.maxReputation = max;
         return this;

@@ -38,6 +38,9 @@ public final class EUBinding {
     /** {@code EidolonUnchained.tasks.items(...)} / {@code .xp(...)} for research builders. */
     public final ResearchBuilder.Tasks tasks = ResearchBuilder.Tasks.INSTANCE;
 
+    /** {@code EidolonUnchained.conditions}: the Phase 4 condition library (any script type). */
+    public final com.bluelotuscoding.eidolonunchained.api.condition.Conditions conditions = com.bluelotuscoding.eidolonunchained.api.condition.Conditions.INSTANCE;
+
     private EUBinding() {
     }
 

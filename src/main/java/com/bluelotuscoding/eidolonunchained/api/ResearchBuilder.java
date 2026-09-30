@@ -26,6 +26,16 @@ public final class ResearchBuilder {
         EURegistry.declare(EURegistry.Stage.RESEARCH, id, "research", this::register);
     }
 
+    @dev.latvian.mods.kubejs.typings.Info("A discovery that grants this research: a trigger (kill, biome, structure, ritual, chant … as in discoveries) and conditions")
+    public ResearchBuilder discoveredBy(String kind, com.bluelotuscoding.eidolonunchained.api.condition.Condition... conditions) {
+        var d = com.bluelotuscoding.eidolonunchained.api.condition.Discoveries.declareStartup(new ResourceLocation(id.getNamespace(), "research/" + id.getPath() + "/" + kind + "_" + (discoveryCount++)))
+                .on(kind).grantResearch(id.toString());
+        for (var c : conditions) d.when(c);
+        return this;
+    }
+
+    private int discoveryCount = 0;
+
     @Info("Difficulty: how many task steps the research has")
     public ResearchBuilder stars(int stars) {
         if (stars < 1) throw new IllegalArgumentException("Eidolon Unchained: research '" + id + "' stars must be >= 1");

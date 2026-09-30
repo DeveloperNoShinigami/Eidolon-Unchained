@@ -40,6 +40,28 @@ public final class EUCommands {
                                     c.getSource().sendSuccess(() -> Component.literal("Scroll of " + id), false);
                                     return 1;
                                 })))
+                // /eu discoveries list | reset [id]: the active discoveries; forget them for yourself (testing)
+                .then(Commands.literal("discoveries")
+                        .then(Commands.literal("list").executes(c -> {
+                            var all = com.bluelotuscoding.eidolonunchained.api.condition.Discoveries.all();
+                            c.getSource().sendSuccess(() -> Component.literal(all.size() + " discoveries"), false);
+                            for (var d : all) c.getSource().sendSuccess(() -> Component.literal(" " + d), false);
+                            return all.size();
+                        }))
+                        .then(Commands.literal("reset").requires(s -> s.hasPermission(2))
+                                .executes(c -> {
+                                    com.bluelotuscoding.eidolonunchained.api.condition.Discovery.forget(c.getSource().getPlayerOrException(), null);
+                                    c.getSource().sendSuccess(() -> Component.literal("Your discoveries are forgotten"), false);
+                                    return 1;
+                                })
+                                .then(Commands.argument("id", net.minecraft.commands.arguments.ResourceLocationArgument.id())
+                                        .suggests((c, b) -> SharedSuggestionProvider.suggest(com.bluelotuscoding.eidolonunchained.api.condition.Discoveries.all().stream().map(d -> d.id().toString()), b))
+                                        .executes(c -> {
+                                            var id = net.minecraft.commands.arguments.ResourceLocationArgument.getId(c, "id");
+                                            com.bluelotuscoding.eidolonunchained.api.condition.Discovery.forget(c.getSource().getPlayerOrException(), id);
+                                            c.getSource().sendSuccess(() -> Component.literal("Forgotten: " + id), false);
+                                            return 1;
+                                        }))))
                 .then(Commands.literal("chant")
                         .then(Commands.literal("assign")
                                 .then(Commands.argument("slot", IntegerArgumentType.integer(1, PlayerChantState.SLOTS))

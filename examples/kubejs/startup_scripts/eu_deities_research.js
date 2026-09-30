@@ -13,6 +13,7 @@ EidolonUnchained.deity('eu_examples:myrkul')
         .requireResearch('eu_examples:necromantic_rites')
         .requireSign('eu_examples:storm')
     .stage('eu_examples:reaper', 40, true)
+        .require(EidolonUnchained.conditions.player().knowsResearch('eu_examples:necromantic_rites'))   // Phase 4: a condition as a stage requirement
     .maxReputation(100)
     .onStageUnlocked((player, stage) => player.tell(`§bMyrkul acknowledges you: ${stage}`))
     .onReputationChanged((player, oldRep, newRep) => console.info(`[EU example] Myrkul rep ${oldRep} -> ${newRep} for ${player.username}`))

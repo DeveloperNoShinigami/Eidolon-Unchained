@@ -97,3 +97,19 @@ Play a clip from a server script: `entity.triggerAnim('manifest', 'manifest')` (
 
 The bone spear is a GeckoLib projectile (`eu_examples:bone_spear`) thrown by the Myrkul chant `bone_volley`
 (soul, wicked, soul): `EidolonUnchained.projectile(caster).entity('eu_examples:bone_spear').speed(1.8).shoot()`.
+
+## Conditions, events and discoveries (Phase 4)
+
+`server_scripts/eu_discoveries.js`: walk into any ocean for the first test (a fact and an action-bar line); the others
+need the Deep Dark, a zombie named "The Forgotten" (`/summon minecraft:zombie ~ ~ ~ {CustomName:'"The Forgotten"'}`),
+the Storm Rite, Eidolon's enthrall chant on an undead, or a Nether fortress with 10 Dark reputation.
+
+```
+/eu discoveries list
+```
+
+```
+/eu discoveries reset
+```
+
+Conditions also gate the Storm Rite and `call_storm` (not in the Nether) and Myrkul's reaper stage (needs Necromantic Rites).

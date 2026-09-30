@@ -28,6 +28,8 @@ minecraft {
             // Dependency mods (KubeJS, GeckoLib) ship mixins with SRG names; remap them onto the dev mappings.
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            // EU's own mixin (Phase 4: the brazier's ritual completion). It targets Eidolon's names, so no refmap is needed.
+            arg '-mixin.config=eidolonunchained.mixins.json'
             mods {
                 "${mod_id}" {
                     source sourceSets.main
@@ -146,7 +148,8 @@ tasks.named('jar', Jar).configure {
                 'Implementation-Title'    : project.name,
                 'Implementation-Version'  : project.jar.archiveVersion,
                 'Implementation-Vendor'   : mod_authors,
-                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                'MixinConfigs'            : 'eidolonunchained.mixins.json'
         ])
     }
     finalizedBy 'reobfJar'

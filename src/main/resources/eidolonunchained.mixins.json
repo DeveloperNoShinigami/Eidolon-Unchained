@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.bluelotuscoding.eidolonunchained.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "BrazierTileEntityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

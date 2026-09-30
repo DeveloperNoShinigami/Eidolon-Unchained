@@ -59,8 +59,7 @@ public final class EURecipeSchemas {
     public static final RecipeKey<Boolean> KEEP_NBT = BooleanComponent.BOOLEAN.key("keepNbtOfReagent").optional(false);
 
     /** {@code eidolon:ritual_brazier}: reagent + pedestal/focus items trigger a registered ritual ({@code GenericRitualRecipe.Serializer}). */
-    public static final RecipeSchema RITUAL_BRAZIER = new RecipeSchema(RITUAL, REAGENT, PEDESTAL_ITEMS, FOCUS_ITEMS, HEALTH, INVARIANT_ITEMS)
-            .uniqueId(r -> r.getValue(RITUAL).replace(':', '_').replace('/', '_'))
+    public static final RecipeSchema RITUAL_BRAZIER = new RecipeSchema(RitualRecipeJS.class, RitualRecipeJS::new, RITUAL, REAGENT, PEDESTAL_ITEMS, FOCUS_ITEMS, HEALTH, INVARIANT_ITEMS)
             .constructor(RITUAL, REAGENT)
             .constructor(RITUAL, REAGENT, PEDESTAL_ITEMS, FOCUS_ITEMS)
             .constructor(RITUAL, REAGENT, PEDESTAL_ITEMS, FOCUS_ITEMS, HEALTH)
@@ -114,6 +113,23 @@ public final class EURecipeSchemas {
                 .register("chant_conversion", CHANT_CONVERSION)
                 .register("ritual_brazier", RITUAL_BRAZIER)
                 .register("ritual_brazier_crafting", RITUAL_BRAZIER_CRAFTING);
+    }
+
+    /**
+     * A {@code ritual_brazier} recipe whose id is the ritual id it names ({@code mypack:storm_rite}), like chant recipes.
+     * Without this KubeJS would name it {@code eidolon:kjs/...}, and Eidolon's codex {@code RitualPage} rewrites every
+     * {@code eidolon:} recipe id to {@code eidolon:rituals/...}, so a codex ritual page could never find it.
+     * {@code .id(...)} still overrides it (e.g. two recipes for one ritual).
+     */
+    public static class RitualRecipeJS extends RecipeJS {
+        @Override
+        public ResourceLocation getOrCreateId() {
+            if (id == null) {
+                var ritual = getValue(RITUAL);
+                if (ritual != null && ResourceLocation.isValidResourceLocation(ritual) && !ritual.startsWith("eidolon:")) id = new ResourceLocation(ritual);
+            }
+            return super.getOrCreateId();
+        }
     }
 
     /** A chant recipe whose id is the spell id it names. */
