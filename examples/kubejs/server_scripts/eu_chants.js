@@ -5,6 +5,7 @@ ServerEvents.recipes(event => {
     event.recipes.eidolon.chant('eu_examples:bone_shield', ['eidolon:wicked', 'eidolon:soul', 'eidolon:wicked'])
     event.recipes.eidolon.chant('eu_examples:grave_curse', ['eidolon:wicked', 'eidolon:wicked', 'eidolon:wicked'])
     event.recipes.eidolon.chant('eu_examples:dark_rebuke', ['eidolon:wicked', 'eidolon:blood', 'eidolon:wicked'])
+    event.recipes.eidolon.chant('eu_examples:bone_volley', ['eidolon:soul', 'eidolon:wicked', 'eidolon:soul'])
     event.recipes.eidolon.chant('eu_examples:shadow_bolt', ['eidolon:wicked', 'eidolon:wicked', 'eidolon:soul'])
 
     // A command chant: signs, commands run as the server, mana cost.

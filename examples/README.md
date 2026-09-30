@@ -73,3 +73,27 @@ pays the level's mana share, and the signs flash over the wearer. Test shortcut:
 ```
 /give @p eu_examples:bone_blade
 ```
+
+## Deity avatars and a GeckoLib projectile (EntityJS)
+
+The three studio models are registered through EntityJS (`startup_scripts/eu_entities.js`); the geo/animation files were
+converted from the Blockbench projects with `knowledge/deity-models/tools/bb2gecko.py`. Idle loops; the other clips are
+triggerable controllers named after the clip.
+
+```
+/summon eu_examples:myrkul_avatar
+```
+
+```
+/summon eu_examples:dark_avatar
+```
+
+```
+/summon eu_examples:light_avatar
+```
+
+Play a clip from a server script: `entity.triggerAnim('manifest', 'manifest')` (controller name, trigger name), e.g.
+`EntityEvents.spawned('eu_examples:myrkul_avatar', e => e.entity.triggerAnim('manifest', 'manifest'))`.
+
+The bone spear is a GeckoLib projectile (`eu_examples:bone_spear`) thrown by the Myrkul chant `bone_volley`
+(soul, wicked, soul): `EidolonUnchained.projectile(caster).entity('eu_examples:bone_spear').speed(1.8).shoot()`.

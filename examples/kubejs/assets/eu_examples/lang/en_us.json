@@ -12,5 +12,15 @@
   "eu_examples.codex.myrkul.intro": "He who sits upon the bones of all things.",
   "eu_examples.codex.myrkul.body": "Myrkul rises from a rift of soul-fire, a mound of the dead piling beneath him. Those who earn his regard may call on his boon; those who fail him feed the pile.",
   "eidolon.codex.category.eu_examples.necromancy": "Necromancy",
-  "eu_examples.storm.codex.sign": "The Storm Sign"
+  "eu_examples.storm.codex.sign": "The Storm Sign",
+  "entity.eu_examples.myrkul_avatar": "Myrkul",
+  "entity.eu_examples.dark_avatar": "The Dark",
+  "entity.eu_examples.light_avatar": "The Light",
+  "entity.eu_examples.bone_spear": "Bone Spear",
+  "chant.eu_examples.bone_volley": "Bone Volley",
+  "chant.eu_examples.call_storm": "Call of the Storm",
+  "chant.eu_examples.grave_curse": "Grave Curse",
+  "chant.eu_examples.bone_shield": "Bone Shield",
+  "chant.eu_examples.dark_rebuke": "Dark Rebuke",
+  "chant.eu_examples.shadow_bolt": "Shadow Bolt"
 }
