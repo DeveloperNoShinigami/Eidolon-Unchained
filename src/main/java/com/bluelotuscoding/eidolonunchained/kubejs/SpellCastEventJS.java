@@ -9,7 +9,7 @@ import net.minecraft.world.entity.player.Player;
 import java.util.Arrays;
 import java.util.List;
 
-/** {@code EidolonUnchainedEvents.spellCast} (before, cancelable) / {@code spellCasted} (after): Eidolon's {@link SpellCastEvent}. */
+/** {@code EidolonUnchainedEvents.chantCast} (before, cancelable) / {@code chantCasted} (after): Eidolon's {@link SpellCastEvent}. */
 public class SpellCastEventJS extends PlayerEventJS {
     private final SpellCastEvent event;
 
@@ -22,8 +22,8 @@ public class SpellCastEventJS extends PlayerEventJS {
         return event.player;
     }
 
-    @Info("Spell id")
-    public String getSpell() {
+    @Info("Chant id")
+    public String getChant() {
         return event.spell.getRegistryName().toString();
     }
 

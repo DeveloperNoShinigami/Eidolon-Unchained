@@ -23,6 +23,8 @@ public class EUKubeJSPlugin extends KubeJSPlugin {
     @Override
     public void registerEvents() {
         EUEvents.GROUP.register();
+        EUEvents.hookChant();
+        EUEvents.hookMobChant();
         EidolonUnchained.LOGGER.info("KubeJS plugin registered: event group '{}'", EUEvents.GROUP);
     }
 

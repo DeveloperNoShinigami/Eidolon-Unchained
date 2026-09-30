@@ -64,20 +64,26 @@ public final class EUCodex {
         for (var c : CodexDecls.categories().values()) {
             var index = new Index(c.nameKey);
             categories.put(c.id, index);
-            CodexChapters.categories.add(new Category(c.id.getNamespace() + "." + c.id.getPath(), stack(c.icon), c.color, index));
+            var cat = new Category(c.id.getNamespace() + "." + c.id.getPath(), stack(c.icon), c.color, index);
+            if (c.order != null) CodexChapters.categories.add(Math.min(c.order, CodexChapters.categories.size()), cat);
+            else CodexChapters.categories.add(cat);
         }
 
         // 2. chapters
-        var entriesByCategory = new LinkedHashMap<ResourceLocation, List<IndexPage.IndexEntry>>();
+        var entriesByCategory = new LinkedHashMap<ResourceLocation, List<Entry>>();
         for (var d : CodexDecls.chapters().values()) {
             var pages = new ArrayList<Page>();
+            var placed = new ArrayList<Object[]>();               // {position, page} for pages with .at(n)
             for (var p : d.pages) {
                 try {
-                    pages.add(page(p, d.id));
+                    var built = page(p, d.id);
+                    if (p.at != null) placed.add(new Object[]{p.at, built}); else pages.add(built);
                 } catch (RuntimeException e) {
                     EidolonUnchained.LOGGER.error("Codex: chapter '{}' page {} {} skipped: {}", d.id, p.kind(), p.args(), e.getMessage());
                 }
             }
+            placed.sort(java.util.Comparator.comparingInt(o -> (Integer) o[0]));
+            for (var o : placed) pages.add(Math.min((Integer) o[0], pages.size()), (Page) o[1]);
             if (d.appendTo != null) {
                 var target = eidolonChapter(d.appendTo);
                 if (target == null) { EidolonUnchained.LOGGER.error("Codex: chapter '{}': unknown appendTo target '{}'", d.id, d.appendTo); continue; }
@@ -92,7 +98,22 @@ public final class EUCodex {
                 for (var c : CodexDecls.categories().values()) if (c.entries.contains(d.id)) category = c.id;
             }
             if (category == null) { EidolonUnchained.LOGGER.warn("Codex: chapter '{}' is in no category and no category lists it; unreachable", d.id); continue; }
-            entriesByCategory.computeIfAbsent(category, k -> new ArrayList<>()).add(new IndexPage.IndexEntry(chapter, stack(d.icon)));
+            entriesByCategory.computeIfAbsent(category, k -> new ArrayList<>()).add(new Entry(d, new IndexPage.IndexEntry(chapter, stack(d.icon))));
+        }
+        // explicit chapter order (D36): .order(n) entries first by n, then the rest in builder order, honouring .before/.after
+        for (var list : entriesByCategory.values()) {
+            var ordered = new ArrayList<Entry>();
+            var rest = new ArrayList<Entry>();
+            for (var e : list) (e.decl.order != null ? ordered : rest).add(e);
+            ordered.sort(java.util.Comparator.comparingInt(e -> e.decl.order));
+            for (var e : rest) {
+                int idx = -1;
+                if (e.decl.before != null) idx = indexOf(ordered, e.decl.before);
+                if (e.decl.after != null) { int j = indexOf(ordered, e.decl.after); if (j >= 0) idx = j + 1; }
+                if (idx >= 0) ordered.add(idx, e); else ordered.add(e);
+            }
+            list.clear();
+            list.addAll(ordered);
         }
 
         // 3. index entries: a scripted category's own index, or an IndexPage appended to an Eidolon index
@@ -100,7 +121,7 @@ public final class EUCodex {
             Index index = categories.get(e.getKey());
             if (index == null) index = eidolonIndex(e.getKey());
             if (index == null) { EidolonUnchained.LOGGER.error("Codex: unknown category '{}' for {} chapter(s)", e.getKey(), e.getValue().size()); continue; }
-            var list = e.getValue();
+            var list = e.getValue().stream().map(en -> en.entry).toList();
             for (int i = 0; i < list.size(); i += 6) {
                 index.addPage(new IndexPage(list.subList(i, Math.min(list.size(), i + 6)).toArray(new IndexPage.IndexEntry[0])));
             }
@@ -124,6 +145,14 @@ public final class EUCodex {
         }
         EidolonUnchained.LOGGER.info("Codex: applied {} scripted categor{}, {} chapter(s), {} fallback sign tile(s)",
                 categories.size(), categories.size() == 1 ? "y" : "ies", chapters.size(), fallback.size());
+    }
+
+    private record Entry(CodexDecls.ChapterDecl decl, IndexPage.IndexEntry entry) {
+    }
+
+    private static int indexOf(List<Entry> list, ResourceLocation chapterId) {
+        for (int i = 0; i < list.size(); i++) if (list.get(i).decl.id.equals(chapterId)) return i;
+        return -1;
     }
 
     private static Page page(CodexDecls.PageDecl p, ResourceLocation chapter) {

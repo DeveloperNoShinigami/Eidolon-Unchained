@@ -22,9 +22,12 @@ import java.util.List;
  */
 public final class PlayerHelper {
     private final Player player;
+    /** {@code player.data.eidolon.chant}: slots and the in-progress sequence (Phase 3). */
+    public final ChantHelper chant;
 
     public PlayerHelper(Player player) {
         this.player = player;
+        this.chant = new ChantHelper(player);
     }
 
     // ---- knowledge ----

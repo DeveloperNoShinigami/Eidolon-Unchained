@@ -139,6 +139,31 @@ public final class CodexApi {
             return page("chant", textKey, spellId);
         }
 
+        @Info("Put the last added page at this position in the chapter (0 = first); default is builder order")
+        public ChapterBuilder at(int position) {
+            if (decl.pages.isEmpty()) throw new IllegalStateException("Eidolon Unchained: .at() needs a page before it");
+            decl.pages.get(decl.pages.size() - 1).at = Math.max(0, position);
+            return this;
+        }
+
+        @Info("Position of this chapter in its category index (0 = first); default is builder order after existing entries")
+        public ChapterBuilder order(int position) {
+            decl.order = Math.max(0, position);
+            return this;
+        }
+
+        @Info("List this chapter right before another scripted chapter in the same category")
+        public ChapterBuilder before(String chapterId) {
+            decl.before = Ids.of(chapterId, "codex chapter");
+            return this;
+        }
+
+        @Info("List this chapter right after another scripted chapter in the same category")
+        public ChapterBuilder after(String chapterId) {
+            decl.after = Ids.of(chapterId, "codex chapter");
+            return this;
+        }
+
         private ChapterBuilder page(String kind, String... args) {
             decl.pages.add(new CodexDecls.PageDecl(kind, List.of(args)));
             return this;
@@ -171,6 +196,12 @@ public final class CodexApi {
 
         public CategoryBuilder color(int packedRgb) {
             decl.color = Ids.rgb(packedRgb);
+            return this;
+        }
+
+        @Info("Tab position (0 = first tab, before Eidolon's); default is after Eidolon's tabs in builder order")
+        public CategoryBuilder order(int position) {
+            decl.order = Math.max(0, position);
             return this;
         }
 

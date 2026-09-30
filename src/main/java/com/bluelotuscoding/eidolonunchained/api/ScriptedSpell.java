@@ -3,11 +3,13 @@ package com.bluelotuscoding.eidolonunchained.api;
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import elucent.eidolon.api.spells.SignSequence;
 import elucent.eidolon.capability.IReputation;
+import elucent.eidolon.capability.ISoul;
 import elucent.eidolon.common.spell.StaticSpell;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +33,26 @@ public final class ScriptedSpell extends StaticSpell {
         void cast(Level level, BlockPos pos, Player player);
     }
 
+    /** The mob path (rule C3): a LivingEntity caster and its target. */
+    public interface MobCast {
+        void cast(Level level, BlockPos pos, LivingEntity caster, @Nullable LivingEntity target);
+    }
+
+    public interface MobCheck {
+        boolean test(Level level, BlockPos pos, LivingEntity caster, @Nullable LivingEntity target);
+    }
+
+    /** The targeted path (imbued right-click at what you look at, Deity's Protection retaliation, mobs when no mobCast). */
+    public interface TargetCast {
+        void cast(Level level, LivingEntity caster, LivingEntity target);
+    }
+
+    @Nullable MobCast mobCast;
+    @Nullable MobCheck mobCanCast;
+    @Nullable TargetCast targetCast;
+    boolean imbuable = true;
+    int imbueCost = 4;
+
     private final @Nullable CastCheck canCast;
     private final CastAction cast;
     private final @Nullable ResourceLocation deity;
@@ -47,6 +69,53 @@ public final class ScriptedSpell extends StaticSpell {
 
     public @Nullable ResourceLocation deity() {
         return deity;
+    }
+
+    public double minReputation() {
+        return minReputation;
+    }
+
+    public boolean hasMobPath() {
+        return mobCast != null || targetCast != null;
+    }
+
+    public boolean isImbuable() {
+        return imbuable;
+    }
+
+    public int imbueCost() {
+        return imbueCost;
+    }
+
+    public boolean canMobCast(Level level, BlockPos pos, LivingEntity caster, @Nullable LivingEntity target) {
+        if (mobCanCast == null) return true;
+        try {
+            return mobCanCast.test(level, pos, caster, target);
+        } catch (RuntimeException e) {
+            EidolonUnchained.LOGGER.error("spell '{}' mobCanCast threw: {}", getRegistryName(), e.toString());
+            return false;
+        }
+    }
+
+    public void castByMob(Level level, BlockPos pos, LivingEntity caster, @Nullable LivingEntity target) {
+        try {
+            if (mobCast != null) mobCast.cast(level, pos, caster, target);
+            else if (targetCast != null && target != null) targetCast.cast(level, caster, target);
+        } catch (RuntimeException e) {
+            EidolonUnchained.LOGGER.error("spell '{}' mobCast threw: {}", getRegistryName(), e.toString());
+        }
+    }
+
+    /** true when the spell has a targeted path and it ran. */
+    public boolean castAt(Level level, LivingEntity caster, LivingEntity target) {
+        if (targetCast == null) return false;
+        try {
+            targetCast.cast(level, caster, target);
+            return true;
+        } catch (RuntimeException e) {
+            EidolonUnchained.LOGGER.error("spell '{}' targetCast threw: {}", getRegistryName(), e.toString());
+            return false;
+        }
     }
 
     @Override
@@ -75,6 +144,7 @@ public final class ScriptedSpell extends StaticSpell {
 
     @Override
     public void cast(Level level, BlockPos pos, Player player) {
+        ISoul.expendMana(player, getCost());          // as Eidolon's own spells do in their cast (creative pays nothing)
         try {
             cast.cast(level, pos, player);
         } catch (RuntimeException e) {

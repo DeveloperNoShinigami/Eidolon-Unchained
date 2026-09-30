@@ -1,10 +1,13 @@
 package com.bluelotuscoding.eidolonunchained.kubejs;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
+import com.bluelotuscoding.eidolonunchained.api.CasterBuilder;
+import com.bluelotuscoding.eidolonunchained.api.CasterHelper;
 import com.bluelotuscoding.eidolonunchained.api.DeityBuilder;
 import com.bluelotuscoding.eidolonunchained.api.EUApi;
 import com.bluelotuscoding.eidolonunchained.api.EidolonApiValidation;
 import com.bluelotuscoding.eidolonunchained.api.PlayerHelper;
+import com.bluelotuscoding.eidolonunchained.api.ProjectileBuilder;
 import com.bluelotuscoding.eidolonunchained.api.ResearchBuilder;
 import com.bluelotuscoding.eidolonunchained.api.RitualBuilder;
 import com.bluelotuscoding.eidolonunchained.api.RuneBuilder;
@@ -65,8 +68,8 @@ public final class EUBinding {
         return EUApi.extendDeity(id);
     }
 
-    @Info("Declare a scripted spell: .cost(n).delay(t).canCast((level,pos,player)=>bool).cast((level,pos,player)=>…).deity(id).minReputation(n); its signs are an eidolon:chant recipe with the same id")
-    public SpellBuilder spell(String id) {
+    @Info("Declare a chant: .cost(n).delay(t).canCast((level,pos,player)=>bool).cast((level,pos,player)=>…).deity(id).minReputation(n); its signs are an eidolon:chant recipe with the same id")
+    public SpellBuilder chant(String id) {
         return EUApi.spell(id);
     }
 
@@ -78,6 +81,25 @@ public final class EUBinding {
     @Info("Declare a ritual: .symbol(rl).color(rgb).require(item, n).requireHealth(n).requireFocus(item).invariant(item).onComplete((level,pos)=>…); a ritual_brazier recipe names it")
     public RitualBuilder ritual(String id) {
         return EUApi.ritual(id);
+    }
+
+    @Info("Declare a mob caster profile: .chants(...).deity(id).mana(max, regen).castInterval(t).signDelay(t).range(min,max).requireLineOfSight(b).cooldown(spell,t).targetPolicy(p)")
+    public CasterBuilder caster(String id) {
+        return EUApi.caster(id);
+    }
+
+    @Info("A mob's caster state: isCaster(), profile(), chants(), setProfile(id), clearProfile(), grantChant(id), refresh()")
+    public CasterHelper caster(LivingEntity entity) {
+        return EUApi.caster(entity);
+    }
+
+    public List<String> casterProfiles() {
+        return EUApi.casterProfiles();
+    }
+
+    @Info("Inside a cast body: shoot a projectile from the caster. .entity(id) shoots any projectile entity type (EntityJS/GeckoLib ones included); otherwise EU's chant_projectile with .color/.size/.speed/.gravity/.lifetime/.homing/.onHit")
+    public ProjectileBuilder projectile(LivingEntity caster) {
+        return EUApi.projectile(caster);
     }
 
     // ---- helpers (any script type with a server-side entity) ----
@@ -114,7 +136,8 @@ public final class EUBinding {
         return EUApi.researches();
     }
 
-    public List<String> spells() {
+    @Info("Ids of every registered chant, Eidolon's and scripted")
+    public List<String> chants() {
         return EUApi.spells();
     }
 

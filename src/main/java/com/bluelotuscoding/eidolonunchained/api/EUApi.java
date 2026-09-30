@@ -62,6 +62,22 @@ public final class EUApi {
         return EURegistry.declared(EURegistry.Stage.RITUALS).stream().map(ResourceLocation::toString).toList();
     }
 
+    public static CasterBuilder caster(String id) {
+        return new CasterBuilder(Ids.newId(id, "caster profile"));
+    }
+
+    public static CasterHelper caster(LivingEntity entity) {
+        return new CasterHelper(entity);
+    }
+
+    public static List<String> casterProfiles() {
+        return com.bluelotuscoding.eidolonunchained.casting.CasterProfile.REGISTRY.keySet().stream().map(ResourceLocation::toString).toList();
+    }
+
+    public static ProjectileBuilder projectile(LivingEntity caster) {
+        return new ProjectileBuilder(caster);
+    }
+
     // ---- helpers ----
 
     /** The same helper KubeJS attaches as {@code player.data.eidolon}. */

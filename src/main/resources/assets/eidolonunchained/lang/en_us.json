@@ -1,3 +1,17 @@
 {
-  "eidolonunchained.spell.reputation_too_low": "Your deity does not answer: your devotion is too low"
+  "eidolonunchained.spell.reputation_too_low": "Your deity does not answer: your devotion is too low",
+  "key.categories.eidolonunchained": "Eidolon Unchained",
+  "key.eidolonunchained.clear": "Cancel chant",
+  "key.eidolonunchained.slot_1": "Sign slot 1",
+  "key.eidolonunchained.slot_2": "Sign slot 2",
+  "key.eidolonunchained.slot_3": "Sign slot 3",
+  "key.eidolonunchained.slot_4": "Sign slot 4",
+  "key.eidolonunchained.slot_5": "Sign slot 5",
+  "key.eidolonunchained.slot_6": "Sign slot 6",
+  "key.eidolonunchained.slot_7": "Sign slot 7",
+  "key.eidolonunchained.slot_8": "Sign slot 8",
+  "key.eidolonunchained.slot_9": "Sign slot 9",
+  "command.eidolonunchained.chant.assigned": "Slot %s: %s",
+  "command.eidolonunchained.chant.assign_failed": "Slot %s not assigned: you must know that sign",
+  "command.eidolonunchained.chant.unassigned": "Slot %s cleared"
 }

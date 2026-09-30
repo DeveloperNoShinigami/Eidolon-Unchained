@@ -19,7 +19,7 @@ import java.util.function.Consumer;
  */
 public final class EURegistry {
     /** Replay order. Later stages may look up anything an earlier stage registered. */
-    public enum Stage { SIGNS, RUNES, RESEARCH, DEITIES, RITUALS, SPELLS }
+    public enum Stage { SIGNS, RUNES, RESEARCH, DEITIES, RITUALS, SPELLS, CASTERS }
 
     private static final Map<Stage, LinkedHashMap<ResourceLocation, Declaration>> DECLARATIONS = new LinkedHashMap<>();
     private static boolean registered = false;

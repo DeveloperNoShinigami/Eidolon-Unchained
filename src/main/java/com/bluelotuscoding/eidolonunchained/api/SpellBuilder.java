@@ -25,6 +25,11 @@ public final class SpellBuilder {
     ScriptedSpell.CastAction cast;
     ResourceLocation deity;
     double minReputation = 0;
+    ScriptedSpell.MobCast mobCast;
+    ScriptedSpell.MobCheck mobCanCast;
+    ScriptedSpell.TargetCast targetCast;
+    boolean imbuable = true;
+    int imbueCost = 4;
 
     SpellBuilder(ResourceLocation id) {
         this.id = id;
@@ -68,11 +73,47 @@ public final class SpellBuilder {
         return this;
     }
 
+    @Info("Mob path (rule C3): (level, pos, caster, target) => …; without it (or targetCast) mobs skip the chant")
+    public SpellBuilder mobCast(ScriptedSpell.MobCast fn) {
+        this.mobCast = fn;
+        return this;
+    }
+
+    @Info("(level, pos, caster, target) => boolean, checked before a mob casts")
+    public SpellBuilder mobCanCast(ScriptedSpell.MobCheck fn) {
+        this.mobCanCast = fn;
+        return this;
+    }
+
+    @Info("Targeted path: (level, caster, target) => …; used by imbued weapons, Deity's Protection, and mobs when mobCast is absent")
+    public SpellBuilder targetCast(ScriptedSpell.TargetCast fn) {
+        this.targetCast = fn;
+        return this;
+    }
+
+    @Info("Keep this chant off imbued weapons (every chant is imbuable by default, D35)")
+    public SpellBuilder notImbuable() {
+        this.imbuable = false;
+        return this;
+    }
+
+    @Info("Soul shards needed to imbue a weapon with this chant (default 4)")
+    public SpellBuilder imbueCost(int shards) {
+        this.imbueCost = Math.max(0, shards);
+        return this;
+    }
+
     private void register(ResourceLocation id) {
         if (cast == null) throw new IllegalStateException("spell '" + id + "' has no .cast(...)");
         if (Spells.find(id) != null) throw new IllegalStateException("a spell with id '" + id + "' already exists");
         if (deity != null && Deities.find(deity) == null) throw new IllegalStateException("spell '" + id + "': unknown deity '" + deity + "'");
-        Spells.register(new ScriptedSpell(id, cost, delay, canCast, cast, deity, minReputation));
+        var spell = new ScriptedSpell(id, cost, delay, canCast, cast, deity, minReputation);
+        spell.mobCast = mobCast;
+        spell.mobCanCast = mobCanCast;
+        spell.targetCast = targetCast;
+        spell.imbuable = imbuable;
+        spell.imbueCost = imbueCost;
+        Spells.register(spell);
     }
 
     /** {@code EidolonUnchained.prayer(id)}: Eidolon's {@code PrayerSpell}, cast at an effigy with fixed signs. */

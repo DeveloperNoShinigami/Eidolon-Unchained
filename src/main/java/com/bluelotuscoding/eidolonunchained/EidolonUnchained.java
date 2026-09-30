@@ -2,6 +2,8 @@ package com.bluelotuscoding.eidolonunchained;
 
 import com.bluelotuscoding.eidolonunchained.api.EURegistry;
 import com.bluelotuscoding.eidolonunchained.api.EidolonApiValidation;
+import com.bluelotuscoding.eidolonunchained.entity.EUEntities;
+import com.bluelotuscoding.eidolonunchained.network.EUNetwork;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.ModList;
@@ -25,6 +27,8 @@ public final class EidolonUnchained {
     public EidolonUnchained(FMLJavaModLoadingContext context) {
         context.registerConfig(ModConfig.Type.COMMON, EUConfig.SPEC);
         context.getModEventBus().addListener(this::commonSetup);
+        EUNetwork.register();
+        EUEntities.register(context.getModEventBus());
         MinecraftForge.EVENT_BUS.register(this);
         LOGGER.info("Eidolon Unchained {} loading (Eidolon {}, KubeJS {}, GeckoLib {})",
                 version(), modVersion("eidolon"), modVersion("kubejs"), modVersion("geckolib"));

@@ -15,7 +15,18 @@ import java.util.Set;
  */
 public final class CodexDecls {
     /** One page: its kind and the arguments the kind needs (ids and lang keys as strings). */
-    public record PageDecl(String kind, List<String> args) {
+    public static final class PageDecl {
+        public final String kind;
+        public final List<String> args;
+        public Integer at;                          // explicit position in the chapter (0 = first); null = builder order
+
+        PageDecl(String kind, List<String> args) {
+            this.kind = kind;
+            this.args = args;
+        }
+
+        public String kind() { return kind; }
+        public List<String> args() { return args; }
     }
 
     public static final class ChapterDecl {
@@ -24,6 +35,8 @@ public final class CodexDecls {
         public ResourceLocation category;          // where its index entry goes (scripted or Eidolon category id)
         public ResourceLocation appendTo;          // an existing chapter to append the pages to instead
         public String icon;                        // item id for the index entry
+        public Integer order;                      // position in the category index (0 = first); null = builder order
+        public ResourceLocation before, after;     // or anchor next to another scripted chapter
         public final List<PageDecl> pages = new ArrayList<>();
 
         ChapterDecl(ResourceLocation id) {
@@ -37,6 +50,7 @@ public final class CodexDecls {
         public String nameKey;
         public String icon = "minecraft:book";
         public int color = 0xFFFFFFFF;
+        public Integer order;                      // tab position (0 = first tab); null = after Eidolon's tabs, builder order
         public final List<ResourceLocation> entries = new ArrayList<>();
 
         CategoryDecl(ResourceLocation id) {

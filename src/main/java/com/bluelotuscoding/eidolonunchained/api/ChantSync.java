@@ -22,7 +22,25 @@ import java.util.Map;
  */
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MOD_ID)
 public final class ChantSync {
+    private static final Map<net.minecraft.resources.ResourceLocation, java.util.List<elucent.eidolon.api.spells.Sign>> SEQUENCES = new HashMap<>();
+
     private ChantSync() {
+    }
+
+    /** True when some chant recipe's sequence is longer than {@code prefix} and starts with it (active chanting waits for it). */
+    public static boolean hasLongerSequenceStartingWith(java.util.List<elucent.eidolon.api.spells.Sign> prefix) {
+        for (var seq : SEQUENCES.values()) {
+            if (seq.size() <= prefix.size()) continue;
+            boolean ok = true;
+            for (int i = 0; i < prefix.size(); i++) if (!seq.get(i).getRegistryName().equals(prefix.get(i).getRegistryName())) { ok = false; break; }
+            if (ok) return true;
+        }
+        return false;
+    }
+
+    /** The current chant recipe's signs for a spell id (empty when it has none). */
+    public static java.util.List<elucent.eidolon.api.spells.Sign> sequenceOf(net.minecraft.resources.ResourceLocation spell) {
+        return SEQUENCES.getOrDefault(spell, java.util.List.of());
     }
 
     @SubscribeEvent
@@ -41,6 +59,7 @@ public final class ChantSync {
         for (var type : Spells.chantTypes) {
             for (ChantRecipe recipe : server.getRecipeManager().getAllRecipesFor(type)) {
                 byId.put(recipe.getId(), new SignSequence(recipe.signs()));
+                SEQUENCES.put(recipe.getId(), java.util.List.of(recipe.signs()));
             }
         }
         int linked = 0, orphaned = 0;
