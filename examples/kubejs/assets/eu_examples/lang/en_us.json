@@ -1,0 +1,16 @@
+{
+  "eu_examples.sign.storm": "Storm",
+  "eu_examples.rune.tempest": "Tempest",
+  "eu_examples.deity.myrkul": "Myrkul, the Necromantic Throne",
+  "eu_examples.research.necromantic_rites": "Necromantic Rites",
+  "eu_examples.ritual.storm_rite": "Storm Rite",
+  "eu_examples.codex.chapter.storm_lore": "The Storm Sign",
+  "eu_examples.codex.storm.intro": "A sign torn from the sky itself.",
+  "eu_examples.codex.storm.body": "Chanted with Soul on either side, the Storm sign calls lightning down on whatever the chanter looks at, but only while the heavens are already restless.",
+  "eu_examples.codex.storm.chant": "Soul, Storm, Soul: the Call of the Storm.",
+  "eu_examples.codex.chapter.myrkul_lore": "Myrkul, the Necromantic Throne",
+  "eu_examples.codex.myrkul.intro": "He who sits upon the bones of all things.",
+  "eu_examples.codex.myrkul.body": "Myrkul rises from a rift of soul-fire, a mound of the dead piling beneath him. Those who earn his regard may call on his boon; those who fail him feed the pile.",
+  "eidolon.codex.category.eu_examples.necromancy": "Necromancy",
+  "eu_examples.storm.codex.sign": "The Storm Sign"
+}

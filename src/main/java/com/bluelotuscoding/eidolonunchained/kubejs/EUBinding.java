@@ -4,17 +4,20 @@ import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.api.DeityBuilder;
 import com.bluelotuscoding.eidolonunchained.api.EUApi;
 import com.bluelotuscoding.eidolonunchained.api.EidolonApiValidation;
+import com.bluelotuscoding.eidolonunchained.api.PlayerHelper;
 import com.bluelotuscoding.eidolonunchained.api.ResearchBuilder;
 import com.bluelotuscoding.eidolonunchained.api.RitualBuilder;
 import com.bluelotuscoding.eidolonunchained.api.RuneBuilder;
 import com.bluelotuscoding.eidolonunchained.api.SignBuilder;
 import com.bluelotuscoding.eidolonunchained.api.SoulHelper;
 import com.bluelotuscoding.eidolonunchained.api.SpellBuilder;
+import com.bluelotuscoding.eidolonunchained.api.codex.CodexApi;
 import dev.latvian.mods.kubejs.typings.Info;
 import elucent.eidolon.api.deity.Deity;
 import elucent.eidolon.api.spells.Rune;
 import elucent.eidolon.api.spells.Sign;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.fml.ModList;
 
 import java.util.List;
@@ -25,6 +28,9 @@ import java.util.List;
  */
 public final class EUBinding {
     public static final EUBinding INSTANCE = new EUBinding();
+
+    /** {@code EidolonUnchained.codex.chapter(...)} / {@code .category(...)}: script-authored codex content (D31). */
+    public final CodexApi codex = CodexApi.INSTANCE;
 
     /** {@code EidolonUnchained.tasks.items(...)} / {@code .xp(...)} for research builders. */
     public final ResearchBuilder.Tasks tasks = ResearchBuilder.Tasks.INSTANCE;
@@ -75,6 +81,11 @@ public final class EUBinding {
     }
 
     // ---- helpers (any script type with a server-side entity) ----
+
+    @Info("Knowledge, reputation and soul helper of a player; the same object as player.data.eidolon")
+    public PlayerHelper player(Player player) {
+        return EUApi.player(player);
+    }
 
     @Info("Eidolon's soul of any living entity: mana, maxMana, takeMana, giveMana, setMaxMana, ethereal health")
     public SoulHelper soul(LivingEntity entity) {

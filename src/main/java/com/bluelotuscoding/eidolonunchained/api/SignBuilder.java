@@ -38,6 +38,12 @@ public final class SignBuilder {
         return this;
     }
 
+    /** Keep the sign off the fallback "scripted signs" codex page (it stays chantable only where a script places it). */
+    public SignBuilder hidden() {
+        com.bluelotuscoding.eidolonunchained.api.codex.CodexDecls.hideSign(id);
+        return this;
+    }
+
     ResourceLocation spriteOrNull() {
         return sprite;
     }

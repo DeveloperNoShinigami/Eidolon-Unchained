@@ -1,5 +1,5 @@
 // Phase 2 example: player helpers and reputation events (server scripts).
-// /kubejs hand is not needed; these run on join so the log shows the calls working.
+// KubeJS exposes attached helpers as player.data.<name>, so the helper is player.data.eidolon (or EidolonUnchained.player(p)).
 
 EidolonUnchainedEvents.serverReady(event => {
     console.info(`[EU example] deities: ${EidolonUnchained.deities()} | signs: ${EidolonUnchained.signs().length} | researches: ${EidolonUnchained.researches().length}`)
@@ -9,7 +9,11 @@ EidolonUnchainedEvents.serverReady(event => {
 
 PlayerEvents.loggedIn(event => {
     const p = event.player
-    console.info(`[EU example] ${p.username}: knows storm sign? ${p.eidolon.knowsSign('eu_examples:storm')}; mana ${p.eidolon.soul().mana}/${p.eidolon.soul().maxMana}; Myrkul rep ${p.eidolon.reputation('eu_examples:myrkul')} stage ${p.eidolon.stage('eu_examples:myrkul')}`)
+    // Teach the example chant's signs so it can be tried straight away (Eidolon's KnowledgeUtil.grantSign)
+    p.data.eidolon.grantSign('eidolon:soul'); p.data.eidolon.grantSign('eu_examples:storm')
+    // Give the test player some mana to chant with (Eidolon's ISoul setMaxMagic/setMagic)
+    if (p.data.eidolon.soul().maxMana < 100) { p.data.eidolon.soul().setMaxMana(100); p.data.eidolon.soul().setMana(100) }
+    console.info(`[EU example] ${p.username}: knows storm sign? ${p.data.eidolon.knowsSign('eu_examples:storm')}; mana ${p.data.eidolon.soul().mana}/${p.data.eidolon.soul().maxMana}; Myrkul rep ${p.data.eidolon.reputation('eu_examples:myrkul')} stage ${p.data.eidolon.stage('eu_examples:myrkul')}`)
 })
 
 EidolonUnchainedEvents.reputationChanged(e => console.info(`[EU example] rep ${e.deity}: ${e.oldRep} -> ${e.newRep} (${e.player.username})`))

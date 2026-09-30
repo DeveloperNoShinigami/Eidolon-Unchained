@@ -10,6 +10,7 @@ import elucent.eidolon.registries.Signs;
 import elucent.eidolon.registries.Spells;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
 
@@ -62,6 +63,12 @@ public final class EUApi {
     }
 
     // ---- helpers ----
+
+    /** The same helper KubeJS attaches as {@code player.data.eidolon}. */
+    public static PlayerHelper player(Player player) {
+        if (player == null) throw new IllegalArgumentException("Eidolon Unchained: player(p) needs a player");
+        return new PlayerHelper(player);
+    }
 
     public static SoulHelper soul(LivingEntity entity) {
         return SoulHelper.of(entity);
