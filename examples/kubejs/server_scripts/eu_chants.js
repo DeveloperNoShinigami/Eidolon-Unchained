@@ -8,9 +8,13 @@ ServerEvents.recipes(event => {
     event.recipes.eidolon.chant('eu_examples:bone_volley', ['eidolon:soul', 'eidolon:wicked', 'eidolon:soul'])
     event.recipes.eidolon.chant('eu_examples:shadow_bolt', ['eidolon:wicked', 'eidolon:wicked', 'eidolon:soul'])
 
-    // A command chant: signs, commands run as the server, mana cost.
+    // Command chants (Eidolon's command_chant: signs, commands, mana cost). The commands run at permission level 2 with the
+    // chanter as @s; who may chant them is config commandChantPermissionLevel (D34, default 0 = anyone).
     event.recipes.eidolon.command_chant('eu_examples:clear_skies', ['eidolon:sacred', 'eidolon:sacred', 'eidolon:flame'],
         ['weather clear'], 10)
+    event.recipes.eidolon.command_chant('eu_examples:nightfall', ['eidolon:soul', 'eidolon:soul', 'eidolon:wicked'],
+        ['time set night', 'title @s actionbar {"text":"Night answers your chant","color":"dark_purple"}',
+         'particle minecraft:soul ~ ~1 ~ 0.6 0.8 0.6 0.02 40'], 15)
 })
 
 EidolonUnchainedEvents.chantCast(e => console.info(`[EU example] ${e.player.username} chants ${e.chant} with ${e.signs}`))

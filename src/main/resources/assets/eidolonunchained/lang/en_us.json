@@ -1,5 +1,6 @@
 {
   "eidolonunchained.spell.reputation_too_low": "Your deity does not answer: your devotion is too low",
+  "eidolonunchained.chant.command_not_permitted": "The words have no power in your mouth (command chants need a higher permission level)",
   "key.categories.eidolonunchained": "Eidolon Unchained",
   "key.eidolonunchained.clear": "Cancel chant",
   "key.eidolonunchained.imbued": "View imbued chants (hold)",

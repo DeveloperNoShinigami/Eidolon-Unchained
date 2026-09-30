@@ -41,7 +41,9 @@ public final class EUConfig {
                 .defineInRange("chantCommitDelayTicks", 4, 0, 60);
         CHANT_BUILD_SIGN_DELAY_TICKS = b.comment("Ticks between signs when a chant is cast for the player (imbued weapon, Deity's Protection, scripts): every cast builds up.")
                 .defineInRange("chantBuildSignDelayTicks", 6, 0, 40);
-        COMMAND_CHANT_PERMISSION_LEVEL = b.comment("Permission level a player needs to trigger command chants (decision D34: 0 = anyone; the pack author is trusted).")
+        COMMAND_CHANT_PERMISSION_LEVEL = b.comment("Permission level a player needs to trigger command chants (decision D34: 0 = anyone; the pack author is trusted).",
+                        "Checked on every path (chanting, codex, scrolls, imbued weapons). The commands themselves run at level 2, as Eidolon does,",
+                        "and only when the server allows command blocks (enable-command-block=true on a dedicated server).")
                 .defineInRange("commandChantPermissionLevel", 0, 0, 4);
         MOB_DEFAULT_MAX_MANA = b.comment("Mana pool every mob gets (rule C5), so held imbued weapons and Deity's Protection can charge them. 0 = only caster profiles have mana.")
                 .defineInRange("mobDefaultMaxMana", 100.0, 0.0, 10000.0);
