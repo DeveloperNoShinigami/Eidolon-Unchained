@@ -137,6 +137,11 @@ public final class RitualBuilder {
         return this;
     }
 
+    @Info("The same with a plain function: ctx => boolean (ctx.player = nearest player, ctx.level, ctx.pos = the brazier)")
+    public RitualBuilder requires(com.bluelotuscoding.eidolonunchained.api.condition.Conditions.ContextTest fn) {
+        return requires(com.bluelotuscoding.eidolonunchained.api.condition.Condition.of(fn));
+    }
+
     private static Supplier<IRequirement> itemRequirement(String itemOrTag) {
         if (itemOrTag.startsWith("#")) {
             var tag = TagKey.create(ForgeRegistries.ITEMS.getRegistryKey(), Ids.of(itemOrTag.substring(1), "item tag"));

@@ -69,6 +69,11 @@ public final class Discovery {
         return this;
     }
 
+    @Info("The same with a plain function: ctx => boolean")
+    public Discovery when(Conditions.ContextTest fn) {
+        return when(Condition.of(fn));
+    }
+
     public Discovery grantResearch(String id) {
         research.add(Ids.of(id, "research"));
         return this;

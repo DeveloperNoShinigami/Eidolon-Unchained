@@ -100,6 +100,11 @@ public final class DeityBuilder {
         return this;
     }
 
+    @dev.latvian.mods.kubejs.typings.Info("The same with a plain function: ctx => boolean (ctx.player)")
+    public DeityBuilder require(com.bluelotuscoding.eidolonunchained.api.condition.Conditions.ContextTest fn) {
+        return require(com.bluelotuscoding.eidolonunchained.api.condition.Condition.of(fn));
+    }
+
     public DeityBuilder maxReputation(int max) {
         this.maxReputation = max;
         return this;

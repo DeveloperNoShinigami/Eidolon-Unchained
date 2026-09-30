@@ -111,6 +111,11 @@ public final class SpellBuilder {
         return this;
     }
 
+    @Info("The same with a plain function: ctx => boolean (ctx.player, ctx.entity = the target, ctx.level, ctx.pos)")
+    public SpellBuilder requires(com.bluelotuscoding.eidolonunchained.api.condition.Conditions.ContextTest fn) {
+        return requires(com.bluelotuscoding.eidolonunchained.api.condition.Condition.of(fn));
+    }
+
     @Info("Soul shards needed to bind this (deity-bound) chant to a Deity's Protection piece (1-4, default 2)")
     public SpellBuilder protectionCost(int shards) {
         this.protectionCost = Math.max(1, Math.min(4, shards));

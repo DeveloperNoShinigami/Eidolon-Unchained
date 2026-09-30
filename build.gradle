@@ -118,6 +118,11 @@ dependencies {
     // EntityJS: scripted GeckoLib entities/projectiles for the chant projectile showcase (Phase 3).
     runtimeOnly fg.deobf("curse.maven:entityjs-967617:${entityjs_curse_file}")
     // Hexblades Renewed: the user's 1.20.1 port, built into libs/ (see gradle.properties). Skipped when the jar is absent.
+    // Test-only tools (see gradle.properties): Waystones + Balm, Mob Battle Mod, spark.
+    runtimeOnly fg.deobf("curse.maven:waystones-245755:${waystones_curse_file}")
+    runtimeOnly fg.deobf("curse.maven:balm-531761:${balm_curse_file}")
+    runtimeOnly fg.deobf("curse.maven:mob-battle-mod-268746:${mobbattle_curse_file}")
+    runtimeOnly fg.deobf("curse.maven:spark-361579:${spark_curse_file}")
     if (file("libs/hexblades-${hexblades_version}.jar").exists()) {
         runtimeOnly fg.deobf("alexthw.hexblades:hexblades:${hexblades_version}")
     }

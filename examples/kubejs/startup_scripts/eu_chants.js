@@ -3,7 +3,7 @@
 // A plain chant: strikes lightning where the caster looks (4 blocks ahead, like Eidolon's own spells aim).
 // .imbueCost(2): two soul shards (two reagent slots) imbue it into a weapon at the worktable (D35).
 EidolonUnchained.chant('eu_examples:call_storm')
-    .requires(EidolonUnchained.conditions.not(EidolonUnchained.conditions.dimension('minecraft:the_nether')))   // Phase 4: a chant condition
+    .requires(ctx => String(ctx.level.dimension) != 'minecraft:the_nether')   // Phase 4: a plain function works wherever a condition does
     .imbueCost(2)
     .cost(30)
     .delay(8)

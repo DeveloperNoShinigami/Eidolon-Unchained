@@ -1,6 +1,6 @@
 // Phase 4 example: discoveries (server scripts, rebuilt on /reload). "When this happens, and these conditions hold, give this."
 // Each is once per player unless .repeatable(); /eu discoveries reset forgets them for testing, /eu discoveries list shows them.
-const C = EidolonUnchained.conditions
+var C = EidolonUnchained.conditions   // Phase 4 condition library (var: KubeJS files share one scope, so each file may repeat it)
 
 EidolonUnchainedEvents.discoveries(event => {
     // Easy to test: the first time you walk into any ocean biome.
@@ -38,12 +38,13 @@ EidolonUnchainedEvents.discoveries(event => {
         .grantFact('eu_examples:thrall_master')
         .message('eu_examples.discovery.thrall')
 
-    // Reaching a fortress while the Dark regards you.
+    // Reaching a fortress while Myrkul regards you. (Not the Dark: Eidolon caps Dark reputation at 3 until the player
+    // knows its "Sacrifice Mob" research, so a Dark >= 10 condition can't pass early in a playthrough.)
     event.create('eu_examples:fortress_omen')
         .on('structure', 'minecraft:fortress')
-        .when(C.player().reputation('eidolon:dark', 10))
-        .reputation('eidolon:dark', 3)
-        .run(ctx => ctx.player.tell('§5The fortress walls hum with a familiar darkness.'))
+        .when(C.player().reputation('eu_examples:myrkul', 10))
+        .reputation('eu_examples:myrkul', 3)
+        .run(ctx => ctx.player.tell('§5The fortress walls hum; Myrkul has walked these halls.'))
 })
 
 // The new events, for anything a discovery cannot express (extra id filters work like the other events).

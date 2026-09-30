@@ -58,6 +58,16 @@ public class Condition {
         return new Condition("(" + description + ") or (" + other.describe() + ")", ctx -> matches(ctx) || other.matches(ctx));
     }
 
+    @Info("The opposite: C.dimension('minecraft:the_nether').not()")
+    public Condition not() {
+        return negate();
+    }
+
+    /** A condition from a script function, for builders that take either. */
+    public static Condition of(Conditions.ContextTest fn) {
+        return new Condition("script test", fn::test);
+    }
+
     public Condition negate() {
         return new Condition("not (" + description + ")", ctx -> !matches(ctx));
     }
