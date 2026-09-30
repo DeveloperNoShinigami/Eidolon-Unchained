@@ -30,6 +30,7 @@ public final class SpellBuilder {
     ScriptedSpell.TargetCast targetCast;
     boolean imbuable = true;
     int imbueCost = 4;
+    int protectionCost = 2;
 
     SpellBuilder(ResourceLocation id) {
         this.id = id;
@@ -97,9 +98,15 @@ public final class SpellBuilder {
         return this;
     }
 
-    @Info("Soul shards needed to imbue a weapon with this chant (default 4)")
+    @Info("Soul shards needed to imbue a weapon with this chant (1-4, default 4: one per reagent slot)")
     public SpellBuilder imbueCost(int shards) {
-        this.imbueCost = Math.max(0, shards);
+        this.imbueCost = Math.max(1, Math.min(4, shards));
+        return this;
+    }
+
+    @Info("Soul shards needed to bind this (deity-bound) chant to a Deity's Protection piece (1-4, default 2)")
+    public SpellBuilder protectionCost(int shards) {
+        this.protectionCost = Math.max(1, Math.min(4, shards));
         return this;
     }
 
@@ -113,6 +120,7 @@ public final class SpellBuilder {
         spell.targetCast = targetCast;
         spell.imbuable = imbuable;
         spell.imbueCost = imbueCost;
+        spell.protectionCost = protectionCost;
         Spells.register(spell);
     }
 

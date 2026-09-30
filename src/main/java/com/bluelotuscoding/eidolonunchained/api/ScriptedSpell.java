@@ -52,6 +52,7 @@ public final class ScriptedSpell extends StaticSpell {
     @Nullable TargetCast targetCast;
     boolean imbuable = true;
     int imbueCost = 4;
+    int protectionCost = 2;
 
     private final @Nullable CastCheck canCast;
     private final CastAction cast;
@@ -85,6 +86,10 @@ public final class ScriptedSpell extends StaticSpell {
 
     public int imbueCost() {
         return imbueCost;
+    }
+
+    public int protectionCost() {
+        return protectionCost;
     }
 
     public boolean canMobCast(Level level, BlockPos pos, LivingEntity caster, @Nullable LivingEntity target) {

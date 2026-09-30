@@ -64,6 +64,10 @@ public final class PlayerChantState {
     private @Nullable Spell winding;            // the spell being wound up (D38: cast directly from the player)
     private @Nullable SignSequence windingSeq;
     private long castAt = -1;
+    private final List<Sign> building = new ArrayList<>();   // signs still to show for a scripted/imbued cast
+    private @Nullable Spell buildingSpell;
+    private long nextSignAt = -1;
+    private @Nullable Runnable releaseAction;
 
     private PlayerChantState(ServerPlayer player) {
         this.player = player;
@@ -96,6 +100,7 @@ public final class PlayerChantState {
     }
 
     public void addSign(Sign sign) {
+        if (isBusy()) return;                                           // a chant is already building or winding up
         if (!KnowledgeUtil.knowsSign(player, sign)) return;             // Eidolon's rule: only known signs
         if (sequence.size() >= EUConfig.MAX_CHANT_LENGTH.get()) { fizzle(); return; }
         if (!onSign.apply(player, sign)) return;
@@ -117,7 +122,10 @@ public final class PlayerChantState {
 
     public void clear(ClearReason reason) {
         commitAt = -1;
-        if (reason == ClearReason.PLAYER || reason == ClearReason.LOGOUT) { winding = null; windingSeq = null; castAt = -1; }
+        if (reason == ClearReason.PLAYER || reason == ClearReason.LOGOUT) {
+            winding = null; windingSeq = null; castAt = -1;
+            building.clear(); buildingSpell = null; releaseAction = null;
+        }
         if (sequence.isEmpty()) return;
         sequence.clear();
         if (reason != ClearReason.LOGOUT) {
@@ -143,23 +151,62 @@ public final class PlayerChantState {
         var spell = Spells.find(seq, player.level());
         if (spell == null) { fizzle(); return false; }
         if (!onCast.apply(player, List.copyOf(sequence))) { clear(ClearReason.PLAYER); return false; }
+        startWindup(spell, seq);
+        return true;
+    }
+
+    /**
+     * D35/D38: cast a given chant from the player (imbued weapons, Deity's Protection, scripts). The chant is
+     * <em>built up</em> like any other: its signs appear one by one (config {@code chantBuildSignDelayTicks}), then
+     * the wind-up, then the cast; the player need not know the signs. {@code action} replaces the player cast path
+     * on release (Deity's Protection casts the targeted path at the attacker); null = the normal canCast/cast.
+     * False while another chant is building or winding up.
+     */
+    public boolean castSpell(Spell spell, List<Sign> signs, @Nullable Runnable action) {
+        if (winding != null || buildingSpell != null) return false;
+        sequence.clear();
+        commitAt = -1;
+        building.clear();
+        building.addAll(signs);
+        buildingSpell = spell;
+        releaseAction = action;
+        nextSignAt = now();
+        tick();                                  // the first sign shows at once
+        return true;
+    }
+
+    public boolean castSpell(Spell spell, List<Sign> signs) {
+        return castSpell(spell, signs, null);
+    }
+
+    public boolean isWinding() {
+        return winding != null;
+    }
+
+    public boolean isBusy() {
+        return winding != null || buildingSpell != null;
+    }
+
+    private void startWindup(Spell spell, SignSequence seq) {
         winding = spell;
         windingSeq = seq;
         castAt = now() + Math.max(0, spell.getDelay());
         sequence.clear();
         sync();
         if (castAt <= now()) release();
-        return true;
     }
 
     private void release() {
-        var spell = winding; var seq = windingSeq;
-        winding = null; windingSeq = null; castAt = -1;
+        var spell = winding; var seq = windingSeq; var action = releaseAction;
+        winding = null; windingSeq = null; castAt = -1; releaseAction = null;
         sync();                                                             // the ring disappears on release
         if (spell == null || seq == null) return;
         var level = player.level();
         var pos = player.blockPosition();
-        if (spell.canCast(level, pos, player, seq)) {
+        if (action != null) {
+            action.run();
+            Networking.sendToTracking(level, pos, new SpellCastPacket(player, pos, spell, seq));
+        } else if (spell.canCast(level, pos, player, seq)) {
             spell.cast(level, pos, player, seq);
             Networking.sendToTracking(level, pos, new SpellCastPacket(player, pos, spell, seq));
         } else if (level instanceof ServerLevel sl) {
@@ -183,6 +230,7 @@ public final class PlayerChantState {
 
     /** The spell the current sequence resolves to, or null (never casts). */
     public @Nullable Spell resolved() {
+        if (buildingSpell != null) return buildingSpell;
         if (sequence.isEmpty()) return null;
         return Spells.find(new SignSequence(sequence), player.level());
     }
@@ -190,6 +238,21 @@ public final class PlayerChantState {
     /** Every tick: release a wound-up cast; fire a pending match once its commit window passed; fizzle an idle sequence. */
     public void tick() {
         long t = now();
+        if (buildingSpell != null) {                                        // a scripted/imbued chant building its signs
+            if (t >= nextSignAt) {
+                if (building.isEmpty()) {
+                    var spell = buildingSpell; buildingSpell = null;
+                    startWindup(spell, new SignSequence(new ArrayList<>(sequence)));
+                } else {
+                    var sign = building.remove(0);
+                    sequence.add(sign);
+                    showSign(sign);
+                    nextSignAt = t + EUConfig.CHANT_BUILD_SIGN_DELAY_TICKS.get();
+                    sync();
+                }
+            }
+            return;
+        }
         if (winding != null) {
             if (t >= castAt) release();
             return;                                                         // the ring renderer shows the wind-up (D41)

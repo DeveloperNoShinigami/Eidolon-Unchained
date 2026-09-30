@@ -56,7 +56,18 @@ public final class EUEvents {
     public static final EventHandler CODEX_PRE_INIT = GROUP.client("codexPreInit", () -> CodexEventJS.class);
     public static final EventHandler CODEX_POST_INIT = GROUP.client("codexPostInit", () -> CodexEventJS.class);
 
+    public static final EventHandler IMBUE_CAST = GROUP.server("imbueCast", () -> WeaponChantEventJS.class).extra(Extra.ID).hasResult();
+    public static final EventHandler PROTECTION_TRIGGERED = GROUP.server("protectionTriggered", () -> WeaponChantEventJS.class).extra(Extra.ID).hasResult();
+
     private EUEvents() {
+    }
+
+    /** D35: imbued right-click casts and Deity's Protection retaliations, both cancelable. */
+    static void hookWeapons() {
+        com.bluelotuscoding.eidolonunchained.imbue.ImbueCasting.onImbueCast = (player, weapon, chant) ->
+                !IMBUE_CAST.hasListeners() || !IMBUE_CAST.post(ScriptType.SERVER, chant, new WeaponChantEventJS(player, null, weapon, chant.toString(), 0)).interruptFalse();
+        com.bluelotuscoding.eidolonunchained.imbue.ImbueCasting.onProtection = (wearer, attacker, piece, chant, level) ->
+                !PROTECTION_TRIGGERED.hasListeners() || !PROTECTION_TRIGGERED.post(ScriptType.SERVER, chant, new WeaponChantEventJS(wearer, attacker, piece, chant.toString(), level)).interruptFalse();
     }
 
     /** Wires the server chant state's script hooks to the events above (called once by the plugin). */

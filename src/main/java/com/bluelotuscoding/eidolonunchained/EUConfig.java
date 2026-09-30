@@ -10,8 +10,16 @@ public final class EUConfig {
     public static final ForgeConfigSpec.IntValue MAX_CHANT_LENGTH;
     public static final ForgeConfigSpec.IntValue CHANT_IDLE_CLEAR_SECONDS;
     public static final ForgeConfigSpec.IntValue CHANT_COMMIT_DELAY_TICKS;
+    public static final ForgeConfigSpec.IntValue CHANT_BUILD_SIGN_DELAY_TICKS;
     public static final ForgeConfigSpec.IntValue COMMAND_CHANT_PERMISSION_LEVEL;
     public static final ForgeConfigSpec.DoubleValue MOB_CHANT_INTERRUPT_FRACTION;
+    public static final ForgeConfigSpec.DoubleValue MOB_DEFAULT_MAX_MANA;
+    public static final ForgeConfigSpec.DoubleValue MOB_DEFAULT_MANA_REGEN;
+    public static final ForgeConfigSpec.IntValue MAX_IMBUED_CHANTS;
+    public static final ForgeConfigSpec.IntValue IMBUE_SHARDS_DEFAULT;
+    public static final ForgeConfigSpec.IntValue IMBUE_CAST_COOLDOWN_TICKS;
+    public static final ForgeConfigSpec.ConfigValue<java.util.List<? extends Double>> PROTECTION_MANA_SHARE;
+    public static final ForgeConfigSpec.ConfigValue<java.util.List<? extends Integer>> PROTECTION_COOLDOWN_TICKS;
 
     static {
         var b = new ForgeConfigSpec.Builder();
@@ -30,11 +38,30 @@ public final class EUConfig {
         CHANT_IDLE_CLEAR_SECONDS = b.comment("Seconds without input after which an unfinished chant fizzles.")
                 .defineInRange("chantIdleClearSeconds", 8, 1, 120);
         CHANT_COMMIT_DELAY_TICKS = b.comment("Active chanting: when the signs already match a chant but a longer chant starts the same way, wait this many ticks for another sign before firing.")
-                .defineInRange("chantCommitDelayTicks", 8, 0, 60);
+                .defineInRange("chantCommitDelayTicks", 4, 0, 60);
+        CHANT_BUILD_SIGN_DELAY_TICKS = b.comment("Ticks between signs when a chant is cast for the player (imbued weapon, Deity's Protection, scripts): every cast builds up.")
+                .defineInRange("chantBuildSignDelayTicks", 6, 0, 40);
         COMMAND_CHANT_PERMISSION_LEVEL = b.comment("Permission level a player needs to trigger command chants (decision D34: 0 = anyone; the pack author is trusted).")
                 .defineInRange("commandChantPermissionLevel", 0, 0, 4);
+        MOB_DEFAULT_MAX_MANA = b.comment("Mana pool every mob gets (rule C5), so held imbued weapons and Deity's Protection can charge them. 0 = only caster profiles have mana.")
+                .defineInRange("mobDefaultMaxMana", 100.0, 0.0, 10000.0);
+        MOB_DEFAULT_MANA_REGEN = b.comment("Mana a mob without a caster profile regenerates per second.")
+                .defineInRange("mobDefaultManaRegen", 0.5, 0.0, 1000.0);
         MOB_CHANT_INTERRUPT_FRACTION = b.comment("A single hit of at least this fraction of a mob's max health interrupts its chant (D34: 0.25). 0 = any hit, >1 = never.")
                 .defineInRange("mobChantInterruptFraction", 0.25, 0.0, 2.0);
+        b.pop();
+        b.push("imbue");
+        MAX_IMBUED_CHANTS = b.comment("One chant per weapon (default 1): once a weapon carries a chant, the scroll of any other chant does nothing on it.",
+                        "Above 1 a weapon holds several chants and the view key + right-click cycles them.")
+                .defineInRange("maxImbuedChants", 1, 1, 9);
+        IMBUE_SHARDS_DEFAULT = b.comment("Soul shards (one per reagent slot, 1-4) to imbue a chant that sets no .imbueCost, e.g. Eidolon's own chants.")
+                .defineInRange("imbueShardsDefault", 4, 1, 4);
+        IMBUE_CAST_COOLDOWN_TICKS = b.comment("Item cooldown after casting an imbued chant by right-click.")
+                .defineInRange("imbueCastCooldownTicks", 20, 0, 1200);
+        PROTECTION_MANA_SHARE = b.comment("Deity's Protection: the share of the chant's mana the wearer pays, per enchantment level I, II, III.")
+                .defineList("deitysProtectionManaShare", java.util.List.of(1.0, 0.66, 0.33), o -> o instanceof Number);
+        PROTECTION_COOLDOWN_TICKS = b.comment("Deity's Protection: ticks between retaliations of one piece, per enchantment level I, II, III.")
+                .defineList("deitysProtectionCooldownTicks", java.util.List.of(200, 140, 80), o -> o instanceof Integer);
         b.pop();
         SPEC = b.build();
     }

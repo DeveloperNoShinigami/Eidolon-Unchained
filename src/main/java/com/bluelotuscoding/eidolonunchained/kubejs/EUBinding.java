@@ -114,6 +114,25 @@ public final class EUBinding {
         return EUApi.soul(entity);
     }
 
+    @Info("Imbued chants on a weapon and Deity's Protection on a piece: chants(), active(), imbue(id), cast(player), protect(id), protectionChant()")
+    public com.bluelotuscoding.eidolonunchained.api.ImbueHelper imbued(net.minecraft.world.item.ItemStack stack) {
+        return EUApi.imbued(stack);
+    }
+
+    @Info("A hexblade (scripted 'eidolonunchained:hexblade' item or a Hexblades Renewed blade): isHexblade(), isAwakened(), elementalPower(), deity(), setAwakened(player, b)")
+    public com.bluelotuscoding.eidolonunchained.api.HexbladeHelper hexblade(net.minecraft.world.item.ItemStack stack) {
+        return EUApi.hexblade(stack);
+    }
+
+    @Info("A written chant scroll (Eidolon's item) for a chant that has a recipe; empty otherwise")
+    public net.minecraft.world.item.ItemStack scroll(String chantId) {
+        return EUApi.scroll(chantId);
+    }
+
+    public boolean hexbladesLoaded() {
+        return com.bluelotuscoding.eidolonunchained.api.HexbladeHelper.hexbladesLoaded();
+    }
+
     // ---- lookups ----
 
     public List<String> signs() {

@@ -29,6 +29,8 @@ public final class EidolonUnchained {
         context.getModEventBus().addListener(this::commonSetup);
         EUNetwork.register();
         EUEntities.register(context.getModEventBus());
+        com.bluelotuscoding.eidolonunchained.imbue.EUEnchantments.register(context.getModEventBus());
+        com.bluelotuscoding.eidolonunchained.imbue.ImbueRecipe.register(context.getModEventBus());
         MinecraftForge.EVENT_BUS.register(this);
         LOGGER.info("Eidolon Unchained {} loading (Eidolon {}, KubeJS {}, GeckoLib {})",
                 version(), modVersion("eidolon"), modVersion("kubejs"), modVersion("geckolib"));

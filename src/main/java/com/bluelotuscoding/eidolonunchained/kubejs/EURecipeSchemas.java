@@ -72,10 +72,41 @@ public final class EURecipeSchemas {
             .constructor(OUTPUT, REAGENT, PEDESTAL_ITEMS, FOCUS_ITEMS)
             .constructor(OUTPUT, REAGENT, PEDESTAL_ITEMS, FOCUS_ITEMS, HEALTH, KEEP_NBT);
 
+    // Scripted imbue / protect recipes (ImbueRecipe.Serializer): the chant, what the centre item must match, shard slots.
+    /** Optional so KubeJS can also parse the two generic recipes this mod ships (no chant: read from the scroll). */
+    public static final RecipeKey<String> CHANT_ID = StringComponent.ID.key("chant").optional("");
+    public static final RecipeKey<InputItem> WEAPON = ItemComponents.INPUT.key("weapon").optional(InputItem.EMPTY).alwaysWrite();
+    public static final RecipeKey<Integer> SHARDS = NumberComponent.INT.key("shards").optional(-1).alwaysWrite();
+
+    /**
+     * {@code event.recipes.eidolonunchained.imbue('mypack:call_storm', '#minecraft:swords', 2)}: at the worktable, an item the
+     * ingredient matches in the centre + the written scroll of that chant in a reagent slot (Eidolon's way) + that many
+     * soul shard slots → the same item with the chant. {@code shards} -1 = the chant's own cost. A weapon a scripted
+     * recipe names is taken out of the generic scroll recipe: another chant's scroll does nothing on it.
+     */
+    public static final RecipeSchema IMBUE = new RecipeSchema(CHANT_ID, WEAPON, SHARDS)
+            .uniqueId(r -> {
+                var w = r.getValue(WEAPON);
+                String weapon = "any";
+                if (w != null && !w.isEmpty()) {
+                    var json = w.ingredient.toJson();
+                    if (json.isJsonObject() && json.getAsJsonObject().has("item")) weapon = json.getAsJsonObject().get("item").getAsString();
+                    else if (json.isJsonObject() && json.getAsJsonObject().has("tag")) weapon = "tag_" + json.getAsJsonObject().get("tag").getAsString();
+                    else weapon = Integer.toHexString(json.toString().hashCode());
+                }
+                return (r.getValue(CHANT_ID) + "_" + weapon).replaceAll("[^a-z0-9_./-]", "_");
+            })
+            .constructor(CHANT_ID)
+            .constructor(CHANT_ID, WEAPON)
+            .constructor(CHANT_ID, WEAPON, SHARDS);
+
     private EURecipeSchemas() {
     }
 
     public static void register(RegisterRecipeSchemasEvent event) {
+        event.namespace("eidolonunchained")
+                .register("imbue", IMBUE)
+                .register("protect", IMBUE);
         event.namespace("eidolon")
                 .register("chant", CHANT)
                 .register("command_chant", COMMAND_CHANT)

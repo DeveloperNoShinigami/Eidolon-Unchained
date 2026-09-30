@@ -55,3 +55,19 @@ description='''${mod_description}'''
     versionRange="${geckolib_version_range}"
     ordering="AFTER"
     side="BOTH"
+
+# Optional integrations (decision D9): Hexblades Renewed (scripted hexblades read its blades; its deity is usable) and
+# EntityJS (scripted GeckoLib projectiles for `.entity(id)`).
+[[dependencies.${mod_id}]]
+    modId="hexblades"
+    mandatory=false
+    versionRange="[0.1.0,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="entityjs"
+    mandatory=false
+    versionRange="[0.7,)"
+    ordering="AFTER"
+    side="BOTH"

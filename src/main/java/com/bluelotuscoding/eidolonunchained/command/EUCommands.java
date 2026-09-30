@@ -24,15 +24,31 @@ public final class EUCommands {
     @SubscribeEvent
     public static void onRegister(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("eu")
+                // /eu scroll <chant>: a written chant scroll (what the Scriptorium would write), for testing and admins.
+                .then(Commands.literal("scroll").requires(s -> s.hasPermission(2))
+                        .then(Commands.argument("chant", net.minecraft.commands.arguments.ResourceLocationArgument.id())
+                                .suggests((c, b) -> SharedSuggestionProvider.suggest(elucent.eidolon.registries.Spells.getSpellMap().keySet().stream().map(Object::toString), b))
+                                .executes(c -> {
+                                    var player = c.getSource().getPlayerOrException();
+                                    var id = net.minecraft.commands.arguments.ResourceLocationArgument.getId(c, "chant");
+                                    var scroll = com.bluelotuscoding.eidolonunchained.imbue.ImbueRecipe.scrollFor(id);
+                                    if (scroll.isEmpty()) {
+                                        c.getSource().sendFailure(Component.literal("No chant recipe (sign sequence) for " + id));
+                                        return 0;
+                                    }
+                                    if (!player.getInventory().add(scroll)) player.drop(scroll, false);
+                                    c.getSource().sendSuccess(() -> Component.literal("Scroll of " + id), false);
+                                    return 1;
+                                })))
                 .then(Commands.literal("chant")
                         .then(Commands.literal("assign")
                                 .then(Commands.argument("slot", IntegerArgumentType.integer(1, PlayerChantState.SLOTS))
-                                        .then(Commands.argument("sign", StringArgumentType.string())
+                                        .then(Commands.argument("sign", net.minecraft.commands.arguments.ResourceLocationArgument.id())
                                                 .suggests((c, b) -> SharedSuggestionProvider.suggest(Signs.getSigns().stream().map(s -> s.getRegistryName().toString()), b))
                                                 .executes(c -> {
                                                     var player = c.getSource().getPlayerOrException();
                                                     int slot = IntegerArgumentType.getInteger(c, "slot");
-                                                    var sign = StringArgumentType.getString(c, "sign");
+                                                    var sign = net.minecraft.commands.arguments.ResourceLocationArgument.getId(c, "sign").toString();
                                                     PlayerChantState.of(player).assign(slot - 1, sign);
                                                     var now = PlayerChantState.of(player).slotIds().get(slot - 1);
                                                     c.getSource().sendSuccess(() -> Component.translatable(now.isEmpty() ? "command.eidolonunchained.chant.assign_failed" : "command.eidolonunchained.chant.assigned", slot, now), false);

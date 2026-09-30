@@ -20,11 +20,21 @@ import net.minecraft.resources.ResourceLocation;
  * {@code EidolonUnchainedEvents} group, and generates the client assets scripted content needs.
  */
 public class EUKubeJSPlugin extends KubeJSPlugin {
+    /** KubeJS item type {@code 'eidolonunchained:hexblade'}: a Hexblades-style blade bound to any deity. */
+    @Override
+    public void init() {
+        dev.latvian.mods.kubejs.registry.RegistryInfo.ITEM.addType("eidolonunchained:hexblade",
+                com.bluelotuscoding.eidolonunchained.hexblade.HexbladeItemBuilder.class, com.bluelotuscoding.eidolonunchained.hexblade.HexbladeItemBuilder::new);
+        dev.latvian.mods.kubejs.registry.RegistryInfo.ITEM.addType("hexblade",
+                com.bluelotuscoding.eidolonunchained.hexblade.HexbladeItemBuilder.class, com.bluelotuscoding.eidolonunchained.hexblade.HexbladeItemBuilder::new);
+    }
+
     @Override
     public void registerEvents() {
         EUEvents.GROUP.register();
         EUEvents.hookChant();
         EUEvents.hookMobChant();
+        EUEvents.hookWeapons();
         EidolonUnchained.LOGGER.info("KubeJS plugin registered: event group '{}'", EUEvents.GROUP);
     }
 
@@ -33,6 +43,7 @@ public class EUKubeJSPlugin extends KubeJSPlugin {
         // Scripts may touch Eidolon's public API surface and this mod's own API package, nothing deeper.
         filter.allow("elucent.eidolon.api");
         filter.allow("com.bluelotuscoding.eidolonunchained.api");
+        filter.allow("com.bluelotuscoding.eidolonunchained.hexblade");
         filter.deny("com.bluelotuscoding.eidolonunchained.kubejs");
     }
 

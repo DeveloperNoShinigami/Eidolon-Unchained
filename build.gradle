@@ -89,6 +89,8 @@ repositories {
         url = "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/"
         content { includeGroup "software.bernie.geckolib" }
     }
+    // Hexblades Renewed is built from the user's source into libs/ (no Maven publication).
+    flatDir { dirs 'libs' }
 }
 
 dependencies {
@@ -109,6 +111,14 @@ dependencies {
 
     // GeckoLib: runtime for the deity avatars and effigies (D10).
     implementation fg.deobf("software.bernie.geckolib:geckolib-forge-${minecraft_version}:${geckolib_version}")
+
+    // Optional integrations, present in the dev runtime only (both are optional dependencies in mods.toml).
+    // EntityJS: scripted GeckoLib entities/projectiles for the chant projectile showcase (Phase 3).
+    runtimeOnly fg.deobf("curse.maven:entityjs-967617:${entityjs_curse_file}")
+    // Hexblades Renewed: the user's 1.20.1 port, built into libs/ (see gradle.properties). Skipped when the jar is absent.
+    if (file("libs/hexblades-${hexblades_version}.jar").exists()) {
+        runtimeOnly fg.deobf("alexthw.hexblades:hexblades:${hexblades_version}")
+    }
 }
 
 tasks.named('processResources', ProcessResources).configure {

@@ -90,6 +90,21 @@ public final class EUApi {
         return SoulHelper.of(entity);
     }
 
+    /** Imbued chants and Deity's Protection on an item (D35). */
+    public static ImbueHelper imbued(net.minecraft.world.item.ItemStack stack) {
+        return new ImbueHelper(stack);
+    }
+
+    /** A written chant scroll for a chant (Eidolon's item with the chant's current signs); empty when it has no recipe. */
+    public static net.minecraft.world.item.ItemStack scroll(String chantId) {
+        return com.bluelotuscoding.eidolonunchained.imbue.ImbueRecipe.scrollFor(Ids.of(chantId, "chant"));
+    }
+
+    /** A scripted hexblade or a Hexblades Renewed blade. */
+    public static HexbladeHelper hexblade(net.minecraft.world.item.ItemStack stack) {
+        return new HexbladeHelper(stack);
+    }
+
     // ---- look up (any time after registration) ----
 
     public static List<String> signs() {

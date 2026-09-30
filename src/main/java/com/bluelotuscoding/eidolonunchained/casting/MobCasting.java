@@ -51,9 +51,10 @@ public final class MobCasting {
     public static void onTick(LivingEvent.LivingTickEvent event) {
         if (!(event.getEntity() instanceof Mob mob) || mob.level().isClientSide() || mob.tickCount % 20 != 0) return;
         var p = CasterProfileResolver.cached(mob);
-        if (p == null || p.regenPerSecond <= 0) return;
+        float regen = p != null ? p.regenPerSecond : EUConfig.MOB_DEFAULT_MANA_REGEN.get().floatValue();
+        if (regen <= 0) return;
         mob.getCapability(ISoul.INSTANCE).ifPresent(soul -> {
-            if (soul.getMagic() < soul.getMaxMagic()) soul.setMagic(Math.min(soul.getMaxMagic(), soul.getMagic() + p.regenPerSecond));
+            if (soul.getMagic() < soul.getMaxMagic()) soul.setMagic(Math.min(soul.getMaxMagic(), soul.getMagic() + regen));
         });
     }
 
@@ -82,7 +83,11 @@ public final class MobCasting {
         } else {
             var goal = GOALS.remove(mob);
             if (goal != null) mob.goalSelector.removeGoal(goal);
-            mob.getCapability(ISoul.INSTANCE).ifPresent(soul -> soul.setMaxMagic(0));
+            // rule C5: every mob has a mana pool (config mobDefaultMaxMana) so held weapons and armour can charge it
+            float base = EUConfig.MOB_DEFAULT_MAX_MANA.get().floatValue();
+            mob.getCapability(ISoul.INSTANCE).ifPresent(soul -> {
+                if (soul.getMaxMagic() != base) { soul.setMaxMagic(base); soul.setMagic(Math.min(soul.getMagic() > 0 && before == null ? soul.getMagic() : base, base)); }
+            });
         }
         return p;
     }
