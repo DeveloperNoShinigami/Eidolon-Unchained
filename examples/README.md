@@ -2,6 +2,22 @@
 
 Copy `kubejs/` over your instance's `kubejs/` folder. Everything is declared in startup scripts (client scripts only react).
 
+## Layout
+
+The scripts sit in an `eu_examples/` folder under each script type (KubeJS loads subfolders recursively), split by god:
+`common/` holds what is shared or not tied to one god, and `myrkul/`, `light/` and `dark/` hold everything about that god.
+
+| Folder | startup_scripts | server_scripts |
+|---|---|---|
+| `common/` | `smoke.js`, `signs_runes.js` (Storm sign, Tempest rune), `research.js` (Necromantic Rites), `chants.js` (call_storm), `rites.js` (Storm Rite, Renunciation), `codex.js` (Storm and pantheon chapters) | `smoke.js`, `chants.js` (call_storm and command chant recipes, chant events, golden sword imbue), `rituals.js` (Storm Rite, crafting ritual, Renunciation), `discoveries.js` (sea_memory, deep_dark_whispers, storm_rite_favor, discovery events), `followers.js`, `player_helpers.js` |
+| `myrkul/` | `deity.js`, `chants.js` (bone_shield, grave_curse, myrkul_prayer, bone_volley), `rites.js` (Pact of the Grave), `avatar.js` (avatar and bone spear), `hexblade.js` (bone blade), `codex.js` (Necromancy category and chapter) | `recipes.js` (chant, imbue, protect and Pact recipes), `discoveries.js` (forgotten_lore, thrall_master, fortress_omen, myrkul_calls) |
+| `light/` | `deity.js`, `avatar.js`, `rites.js` (Vow of Light) | `recipes.js` (Vow of Light), `discoveries.js` (light_calls, bane_of_the_grave) |
+| `dark/` | `deity.js`, `avatar.js`, `rites.js` (Vow of Night), `chants.js` (dark_rebuke, shadow_bolt, the dark_caster profile) | `recipes.js` (chant and Vow of Night recipes), `discoveries.js` (dark_calls) |
+
+`client_scripts/eu_examples/common/` holds the client smoke test and the codex event. Scripts of one type share one
+scope, so a file that needs the condition library repeats `var C = EidolonUnchained.conditions`; one event (recipes,
+discoveries, entity registry) may be handled in several files.
+
 ## Trying mob casting (Phase 3)
 
 A skeleton that casts `eu_examples:shadow_bolt` at its target, from the `eu_examples:dark_caster` profile in its NBT:
@@ -76,7 +92,7 @@ pays the level's mana share, and the signs flash over the wearer. Test shortcut:
 
 ## Deity avatars and a GeckoLib projectile (EntityJS)
 
-The three studio models are registered through EntityJS (`startup_scripts/eu_entities.js`); the geo/animation files were
+The three studio models are registered through EntityJS (`startup_scripts/eu_examples/{myrkul,light,dark}/avatar.js`); the geo/animation files were
 converted from the Blockbench projects with `knowledge/deity-models/tools/bb2gecko.py`. Idle loops; the other clips are
 triggerable controllers named after the clip.
 
@@ -100,9 +116,9 @@ The bone spear is a GeckoLib projectile (`eu_examples:bone_spear`) thrown by the
 
 ## Conditions, events and discoveries (Phase 4)
 
-`server_scripts/eu_discoveries.js`: walk into any ocean for the first test (a fact and an action-bar line); the others
+`server_scripts/eu_examples/*/discoveries.js`: walk into any ocean for the first test (a fact and an action-bar line); the others
 need the Deep Dark, a zombie named "The Forgotten" (`/summon minecraft:zombie ~ ~ ~ {CustomName:'"The Forgotten"'}`),
-the Storm Rite, Eidolon's enthrall chant on an undead, or a Nether fortress with 10 Dark reputation.
+the Storm Rite, Eidolon's enthrall chant on an undead, or a Nether fortress with 10 Myrkul reputation (Eidolon caps the Dark at 3 until "Sacrifice Mob" is known).
 
 ```
 /eu discoveries list

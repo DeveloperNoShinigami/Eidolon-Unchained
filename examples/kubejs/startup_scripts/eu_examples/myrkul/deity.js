@@ -1,11 +1,5 @@
-// Phase 2 example: research, a custom deity (Myrkul) and an extension of an Eidolon deity (startup scripts).
+// Phase 2 example: a custom deity, Myrkul (startup scripts). His research is in common/research.js.
 var C = EidolonUnchained.conditions   // Phase 4 condition library (var: KubeJS files share one scope, so each file may repeat it)
-
-EidolonUnchained.research('eu_examples:necromantic_rites')
-    .stars(2)
-    .foundOn('minecraft:soul_sand')
-    .foundOn('minecraft:wither_skeleton')
-    .task(2, EidolonUnchained.tasks.items('minecraft:bone', 8))
 
 // Phase 5: Myrkul keeps the default .patronRequired(true): he gives no reputation until the player pledges to him
 // (/eu patron set <player> eu_examples:myrkul), one major patron at a time. .maxMana(n) on a stage is the max mana
@@ -29,25 +23,3 @@ EidolonUnchained.deity('eu_examples:myrkul')
     .maxReputation(100)
     .onStageUnlocked((player, stage) => player.tell(`§bMyrkul acknowledges you: ${stage}`))
     .onReputationChanged((player, oldRep, newRep) => console.info(`[EU example] Myrkul rep ${oldRep} -> ${newRep} for ${player.username}`))
-
-EidolonUnchained.extendDeity('eidolon:light')
-    .followers('minecraft:iron_golem')                        // Phase 5: golems serve the Light
-    .calling({
-        greeting: 'eu_examples.calling.light.greeting', question: 'eu_examples.calling.light.question',
-        accept: 'eu_examples.calling.light.accept', decline: 'eu_examples.calling.light.decline',
-        silence: 'eu_examples.calling.light.silence',
-        yes: ['yes', 'i will', 'i accept', 'i will walk in your light'], no: ['no', 'never'], wait: 60, callAgainAfter: 1200,
-        voice: 'minecraft:block.note_block.chime'   // any sound id; default eidolon:chant_word
-    })
-    .model('eu_examples:light_avatar')
-    .stage('eu_examples:sun_champion', 60, true)
-    .onStageUnlocked((player, stage) => player.tell(`§eThe Light exalts you: ${stage}`))
-
-EidolonUnchained.extendDeity('eidolon:dark')
-    .calling({
-        greeting: 'eu_examples.calling.dark.greeting', question: 'eu_examples.calling.dark.question',
-        accept: 'eu_examples.calling.dark.accept', decline: 'eu_examples.calling.dark.decline',
-        silence: 'eu_examples.calling.dark.silence',
-        yes: ['yes', 'i will', 'i accept'], no: ['no', 'never'], wait: 60, callAgainAfter: 600,
-        voice: 'eidolon:wraith_ambient'
-    })
