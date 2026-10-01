@@ -1,3 +1,9 @@
+buildscript {
+    // ASM's remapper (asm-commons) for patchSrgMixinMods; ForgeGradle already brings ASM core.
+    repositories { mavenCentral() }
+    dependencies { classpath 'org.ow2.asm:asm-commons:9.5' }
+}
+
 plugins {
     id 'eclipse'
     id 'idea'
@@ -128,7 +134,8 @@ dependencies {
     // EntityJS: scripted GeckoLib entities/projectiles for the chant projectile showcase (Phase 3).
     runtimeOnly fg.deobf("curse.maven:entityjs-967617:${entityjs_curse_file}")
     // Hexblades Renewed: the user's 1.20.1 port, built into libs/ (see gradle.properties). Skipped when the jar is absent.
-    // Test-only tools (see gradle.properties): Waystones + Balm, Mob Battle Mod, spark. (MmmMmmMmmMmm was tried: its Architectury-built mixins name SRG methods without a refmap, so it cannot load in a ForgeGradle dev run.)
+    // Test-only tools (see gradle.properties): Waystones + Balm, Mob Battle Mod, spark. MmmMmmMmmMmm + Moonlight are
+    // added from patchSrgMixinMods below.
     runtimeOnly fg.deobf("curse.maven:waystones-245755:${waystones_curse_file}")
     runtimeOnly fg.deobf("curse.maven:balm-531761:${balm_curse_file}")
     runtimeOnly fg.deobf("curse.maven:mob-battle-mod-268746:${mobbattle_curse_file}")
@@ -136,6 +143,103 @@ dependencies {
     if (file("libs/hexblades-${hexblades_version}.jar").exists()) {
         runtimeOnly fg.deobf("alexthw.hexblades:hexblades:${hexblades_version}")
     }
+}
+
+// Test-only mods built with Architectury (MmmMmmMmmMmm and its library Moonlight): their mixin classes keep SRG member
+// names (m_123_/f_123_) in @Shadow/@Accessor/@Invoker members and in annotation strings, often with no refmap, so fg.deobf
+// alone leaves mixin targets that do not exist in the official-mapped dev game. patchSrgMixinMods takes the fg.deobf jars
+// and renames every remaining SRG member name (declarations, references and annotation strings) to its official name
+// from createSrgToMcp's output.srg (SRG ids are globally unique). Dev runtime only; jar-in-jar contents are kept as is.
+def srgMixinMods = [
+        dummmmmmy: "curse.maven:mmmmmmmmmmmm-225738:${dummy_curse_file}",
+        moonlight: "curse.maven:selene-499980:${moonlight_curse_file}",
+]
+srgMixinMods.each { name, coords ->
+    def conf = configurations.create("srgMixinMod_${name}") { transitive = false }
+    dependencies.add(conf.name, fg.deobf(coords))
+}
+def patchSrgMixinMods = tasks.register('patchSrgMixinMods') {
+    def srgFile = file('build/createSrgToMcp/output.srg')
+    dependsOn 'createSrgToMcp'
+    srgMixinMods.keySet().each { inputs.files(configurations.getByName("srgMixinMod_${it}")) }
+    inputs.file(srgFile)
+    srgMixinMods.keySet().each { outputs.file("build/srgMixinMods/${it}.jar") }
+    doLast {
+        def srgName = ~/^[mf]_\d+_$/
+        def srgToken = ~/\b[mf]_\d+_\b/
+        Map<String, String> names = [:]
+        srgFile.eachLine { line ->
+            def p = line.split(' ')
+            String from = null, to = null
+            if (p[0] == 'MD:') { from = p[1]; to = p[3] } else if (p[0] == 'FD:') { from = p[1]; to = p[2] }
+            if (from != null) {
+                from = from.substring(from.lastIndexOf('/') + 1)
+                if (from ==~ srgName) names[from] = to.substring(to.lastIndexOf('/') + 1)
+            }
+        }
+        def mapName = { String n -> (n ==~ srgName) ? names.getOrDefault(n, n) : n }
+        def remapper = new org.objectweb.asm.commons.Remapper() {
+            String mapMethodName(String owner, String n, String desc) { mapName(n) }
+            String mapFieldName(String owner, String n, String desc) { mapName(n) }
+            String mapInvokeDynamicMethodName(String n, String desc) { mapName(n) }
+        }
+        def patchStrings
+        patchStrings = { Object v -> (v instanceof String) ? v.replaceAll(srgToken) { names.getOrDefault(it, it) } : v }
+        def annotationRemapper
+        annotationRemapper = { String desc, org.objectweb.asm.AnnotationVisitor av ->
+            new org.objectweb.asm.commons.AnnotationRemapper(org.objectweb.asm.Opcodes.ASM9, desc, av, remapper) {
+                void visit(String n, Object v) { super.visit(n, patchStrings(v)) }
+                protected org.objectweb.asm.AnnotationVisitor createAnnotationRemapper(String d, org.objectweb.asm.AnnotationVisitor inner) {
+                    annotationRemapper(d, inner)
+                }
+            }
+        }
+        srgMixinMods.keySet().each { name ->
+            def input = configurations.getByName("srgMixinMod_${name}").singleFile
+            def output = file("build/srgMixinMods/${name}.jar")
+            output.parentFile.mkdirs()
+            new java.util.zip.ZipFile(input).withCloseable { zip ->
+                new java.util.zip.ZipOutputStream(new FileOutputStream(output)).withCloseable { out ->
+                    zip.entries().each { e ->
+                        byte[] bytes = zip.getInputStream(e).bytes
+                        if (e.name.endsWith('.class')) {
+                            def writer = new org.objectweb.asm.ClassWriter(0)
+                            def visitor = new org.objectweb.asm.commons.ClassRemapper(writer, remapper) {
+                                protected org.objectweb.asm.AnnotationVisitor createAnnotationRemapper(String d, org.objectweb.asm.AnnotationVisitor av) {
+                                    annotationRemapper(d, av)
+                                }
+                                protected org.objectweb.asm.MethodVisitor createMethodRemapper(org.objectweb.asm.MethodVisitor mv) {
+                                    new org.objectweb.asm.commons.MethodRemapper(org.objectweb.asm.Opcodes.ASM9, mv, remapper) {
+                                        protected org.objectweb.asm.AnnotationVisitor createAnnotationRemapper(String d, org.objectweb.asm.AnnotationVisitor av) {
+                                            annotationRemapper(d, av)
+                                        }
+                                    }
+                                }
+                                protected org.objectweb.asm.FieldVisitor createFieldRemapper(org.objectweb.asm.FieldVisitor fv) {
+                                    new org.objectweb.asm.commons.FieldRemapper(org.objectweb.asm.Opcodes.ASM9, fv, remapper) {
+                                        protected org.objectweb.asm.AnnotationVisitor createAnnotationRemapper(String d, org.objectweb.asm.AnnotationVisitor av) {
+                                            annotationRemapper(d, av)
+                                        }
+                                    }
+                                }
+                            }
+                            new org.objectweb.asm.ClassReader(bytes).accept(visitor, 0)
+                            bytes = writer.toByteArray()
+                        }
+                        def copy = new java.util.zip.ZipEntry(e.name)
+                        copy.time = e.time
+                        out.putNextEntry(copy)
+                        out.write(bytes)
+                        out.closeEntry()
+                    }
+                }
+            }
+            logger.lifecycle("patchSrgMixinMods: ${input.name} -> ${output.name}")
+        }
+    }
+}
+dependencies {
+    runtimeOnly files(patchSrgMixinMods)
 }
 
 tasks.named('processResources', ProcessResources).configure {
