@@ -11,6 +11,7 @@ EidolonUnchained.research('eu_examples:necromantic_rites')
 // (/eu patron set <player> eu_examples:myrkul), one major patron at a time. .maxMana(n) on a stage is the max mana
 // his followers hold while they have that stage (a floor under Eidolon's prayer value; reaching it fills the gap once).
 EidolonUnchained.deity('eu_examples:myrkul')
+    .followers('#minecraft:skeletons', 'minecraft:wither')   // Phase 5: these mobs follow Myrkul and may use his power
     .color(111, 245, 216)
     .model('eu_examples:myrkul')
     .stage('eu_examples:acolyte', 10, true).maxMana(60)
@@ -23,6 +24,7 @@ EidolonUnchained.deity('eu_examples:myrkul')
     .onReputationChanged((player, oldRep, newRep) => console.info(`[EU example] Myrkul rep ${oldRep} -> ${newRep} for ${player.username}`))
 
 EidolonUnchained.extendDeity('eidolon:light')
+    .followers('minecraft:iron_golem')                        // Phase 5: golems serve the Light
     .model('eu_examples:light_avatar')
     .stage('eu_examples:sun_champion', 60, true)
     .onStageUnlocked((player, stage) => player.tell(`§eThe Light exalts you: ${stage}`))

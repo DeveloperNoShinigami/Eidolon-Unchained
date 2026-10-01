@@ -123,36 +123,54 @@ public final class EUCommands {
     private static final SuggestionProvider<CommandSourceStack> DEITIES = (c, b) ->
             SharedSuggestionProvider.suggest(Deities.getDeities().stream().map(d -> d.getId().toString()), b);
 
+    // Players pledge (major patron, minor pledges, reputation); a mob simply has a patron, saved on it (D55).
     private static LiteralArgumentBuilder<CommandSourceStack> patron() {
         return Commands.literal("patron").requires(s -> s.hasPermission(2))
                 .then(Commands.literal("get")
-                        .then(Commands.argument("player", EntityArgument.player())
+                        .then(Commands.argument("target", EntityArgument.entity())
                                 .executes(c -> {
-                                    var player = EntityArgument.getPlayer(c, "player");
-                                    var major = Patrons.majorPatron(player);
-                                    var minor = Patrons.minorPledges(player);
+                                    var target = EntityArgument.getEntity(c, "target");
                                     var none = Component.translatable("command.eidolonunchained.patron.none");
-                                    c.getSource().sendSuccess(() -> Component.translatable("command.eidolonunchained.patron.get", player.getDisplayName(),
-                                            major == null ? none : Component.literal(major.toString()),
-                                            minor.isEmpty() ? none : Component.literal(String.join(", ", minor.stream().map(Object::toString).toList()))), false);
-                                    return major == null ? 0 : 1;
+                                    if (target instanceof net.minecraft.server.level.ServerPlayer player) {
+                                        var major = Patrons.majorPatron(player);
+                                        var minor = Patrons.minorPledges(player);
+                                        c.getSource().sendSuccess(() -> Component.translatable("command.eidolonunchained.patron.get", player.getDisplayName(),
+                                                major == null ? none : Component.literal(major.toString()),
+                                                minor.isEmpty() ? none : Component.literal(String.join(", ", minor.stream().map(Object::toString).toList()))), false);
+                                        return major == null ? 0 : 1;
+                                    }
+                                    var patron = Patrons.patronOf(target);
+                                    c.getSource().sendSuccess(() -> Component.translatable("command.eidolonunchained.patron.get_mob", target.getDisplayName(),
+                                            patron == null ? none : Component.literal(patron.toString())), false);
+                                    return patron == null ? 0 : 1;
                                 })))
                 .then(Commands.literal("set")
-                        .then(Commands.argument("player", EntityArgument.player())
+                        .then(Commands.argument("target", EntityArgument.entity())
                                 .then(Commands.argument("deity", ResourceLocationArgument.id()).suggests(DEITIES)
                                         .executes(c -> {
-                                            var player = EntityArgument.getPlayer(c, "player");
+                                            var target = EntityArgument.getEntity(c, "target");
                                             var deity = ResourceLocationArgument.getId(c, "deity");
-                                            var failure = Patrons.pledge(player, deity);
-                                            if (failure != null) {
-                                                c.getSource().sendFailure(failure);
+                                            if (target instanceof net.minecraft.server.level.ServerPlayer player) {
+                                                var failure = Patrons.pledge(player, deity);
+                                                if (failure != null) {
+                                                    c.getSource().sendFailure(failure);
+                                                    return 0;
+                                                }
+                                            } else if (target instanceof net.minecraft.world.entity.LivingEntity mob) {
+                                                if (Deities.find(deity) == null) {
+                                                    c.getSource().sendFailure(Component.translatable("eidolonunchained.patron.unknown_deity", deity.toString()));
+                                                    return 0;
+                                                }
+                                                Patrons.setMobPatron(mob, deity);
+                                            } else {
+                                                c.getSource().sendFailure(Component.translatable("command.eidolonunchained.patron.not_living", target.getDisplayName()));
                                                 return 0;
                                             }
-                                            c.getSource().sendSuccess(() -> Component.translatable("command.eidolonunchained.patron.set", player.getDisplayName(), deity.toString()), true);
+                                            c.getSource().sendSuccess(() -> Component.translatable("command.eidolonunchained.patron.set", target.getDisplayName(), deity.toString()), true);
                                             return 1;
                                         }))))
                 .then(Commands.literal("revoke")
-                        .then(Commands.argument("player", EntityArgument.player())
+                        .then(Commands.argument("target", EntityArgument.entity())
                                 .executes(c -> revoke(c, null, 0))
                                 .then(Commands.argument("deity", ResourceLocationArgument.id()).suggests(DEITIES)
                                         .executes(c -> revoke(c, ResourceLocationArgument.getId(c, "deity"), 0))
@@ -161,7 +179,19 @@ public final class EUCommands {
     }
 
     private static int revoke(CommandContext<CommandSourceStack> c, ResourceLocation deity, double reputation) throws CommandSyntaxException {
-        var player = EntityArgument.getPlayer(c, "player");
+        var target = EntityArgument.getEntity(c, "target");
+        if (!(target instanceof net.minecraft.server.level.ServerPlayer player)) {
+            // a mob: clears the patron saved on it (its type or caster profile may still give it one)
+            if (!(target instanceof net.minecraft.world.entity.LivingEntity mob)) {
+                c.getSource().sendFailure(Component.translatable("command.eidolonunchained.patron.not_living", target.getDisplayName()));
+                return 0;
+            }
+            Patrons.setMobPatron(mob, null);
+            var now = Patrons.patronOf(mob);
+            c.getSource().sendSuccess(() -> Component.translatable("command.eidolonunchained.patron.mob_cleared", target.getDisplayName(),
+                    now == null ? Component.translatable("command.eidolonunchained.patron.none") : Component.literal(now.toString())), true);
+            return 1;
+        }
         var revoked = Patrons.revoke(player, deity, reputation);
         if (revoked.isEmpty()) {
             c.getSource().sendFailure(deity == null

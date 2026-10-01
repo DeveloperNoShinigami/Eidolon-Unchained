@@ -109,6 +109,58 @@ public final class Patrons {
         return Component.translatableWithFallback(deity.getNamespace() + ".deity." + deity.getPath(), sb.toString());
     }
 
+    // ---- mobs (D55) ----
+
+    /** Deity -> entity type ids and '#tags' whose members follow it (from {@code deity(...).followers(...)}). */
+    private static final Map<ResourceLocation, List<String>> FOLLOWERS = new HashMap<>();
+
+    public static void declareFollowers(ResourceLocation deity, List<String> specs) {
+        FOLLOWERS.computeIfAbsent(deity, k -> new ArrayList<>()).addAll(specs);
+    }
+
+    /**
+     * The entity's patron, or null. Players: their major patron. Mobs, in this order: one set on the mob itself
+     * ({@code /eu patron set}), its caster profile's {@code .deity}, then a deity listing its type in {@code .followers}.
+     */
+    @Nullable
+    public static ResourceLocation patronOf(net.minecraft.world.entity.Entity entity) {
+        if (entity instanceof Player player) return majorPatron(player);
+        if (!(entity instanceof LivingEntity living)) return null;
+        var own = living.getPersistentData().getCompound(NBT_ROOT).getString(NBT_PATRON);
+        if (!own.isEmpty()) return ResourceLocation.tryParse(own);
+        if (living instanceof net.minecraft.world.entity.Mob mob) {
+            var profile = com.bluelotuscoding.eidolonunchained.casting.CasterProfileResolver.cached(mob);
+            if (profile != null && profile.deity != null) return profile.deity;
+        }
+        var typeId = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(living.getType());
+        for (var e : FOLLOWERS.entrySet()) {
+            for (var spec : e.getValue()) {
+                if (spec.startsWith("#")) {
+                    var tag = ResourceLocation.tryParse(spec.substring(1));
+                    if (tag != null && living.getType().is(net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE, tag))) return e.getKey();
+                } else if (spec.equals(String.valueOf(typeId))) return e.getKey();
+            }
+        }
+        return null;
+    }
+
+    /** Sets (or with null, clears) the patron saved on one mob. */
+    public static void setMobPatron(LivingEntity mob, @Nullable ResourceLocation deity) {
+        var root = mob.getPersistentData().getCompound(NBT_ROOT);
+        if (deity == null) root.remove(NBT_PATRON); else root.putString(NBT_PATRON, deity.toString());
+        mob.getPersistentData().put(NBT_ROOT, root);
+    }
+
+    /**
+     * May this entity use the deity's power (D47.7, D55)? A free deity ({@code patronRequired(false)}) answers anyone;
+     * a major one only its followers: a player pledged to it, a mob whose patron it is.
+     */
+    public static boolean isFollower(net.minecraft.world.entity.Entity entity, @Nullable ResourceLocation deity) {
+        if (deity == null || !isRequired(deity)) return true;
+        if (entity instanceof Player player) return pledged(player, deity);
+        return deity.equals(patronOf(entity));
+    }
+
     // ---- state ----
 
     @Nullable

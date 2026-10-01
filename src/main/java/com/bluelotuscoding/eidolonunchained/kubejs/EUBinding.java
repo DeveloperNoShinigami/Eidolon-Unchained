@@ -112,6 +112,12 @@ public final class EUBinding {
         return EUApi.player(player);
     }
 
+    @dev.latvian.mods.kubejs.typings.Info("The patron of a player or mob ('ns:id'), or null (D55)")
+    public String patronOf(net.minecraft.world.entity.Entity entity) {
+        var id = com.bluelotuscoding.eidolonunchained.patron.Patrons.patronOf(entity);
+        return id == null ? null : id.toString();
+    }
+
     @Info("Eidolon's soul of any living entity: mana, maxMana, takeMana, giveMana, setMaxMana, ethereal health")
     public SoulHelper soul(LivingEntity entity) {
         return EUApi.soul(entity);

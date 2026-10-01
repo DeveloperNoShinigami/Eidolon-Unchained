@@ -39,6 +39,8 @@ public final class Discovery {
     @Nullable String message;
     @Nullable Action action;
     boolean once = true;
+    /** With repeatable: how many times per player (0 = no limit). */
+    int times = 0;
 
     public Discovery(ResourceLocation id) {
         this.id = id;
@@ -121,6 +123,15 @@ public final class Discovery {
     @Info("Every time it triggers")
     public Discovery repeatable() {
         this.once = false;
+        this.times = 0;
+        return this;
+    }
+
+    @Info("Up to this many times per player")
+    public Discovery repeatable(int times) {
+        if (times < 1) throw new IllegalArgumentException("Eidolon Unchained: discovery '" + id + "': repeatable(n) needs n >= 1");
+        this.once = times == 1;
+        this.times = times;
         return this;
     }
 
@@ -136,6 +147,7 @@ public final class Discovery {
     void apply(EventContext ctx) {
         var player = ctx.getPlayer();
         if (once && hasDiscovered(player, id)) return;
+        if (!once && times > 0 && count(player, id) >= times) return;
         var helper = new PlayerHelper(player);
         try {
             for (var r : research) helper.grantResearch(r.toString());
@@ -152,6 +164,7 @@ public final class Discovery {
             EidolonUnchained.LOGGER.error("discovery '{}' failed: {}", id, e.toString());
         }
         if (once) markDiscovered(player, id);
+        else if (times > 0) addCount(player, id);
         EidolonUnchained.LOGGER.debug("discovery {} for {} ({})", id, player.getName().getString(), ctx);
     }
 
@@ -177,16 +190,36 @@ public final class Discovery {
         persisted.put(Player.PERSISTED_NBT_TAG, tag);
     }
 
+    /** How many times a limited repeatable discovery has fired for the player. */
+    public static int count(Player player, ResourceLocation id) {
+        return player.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getCompound(ROOT).getCompound("discovery_counts").getInt(id.toString());
+    }
+
+    private static void addCount(Player player, ResourceLocation id) {
+        var persisted = player.getPersistentData();
+        var tag = persisted.getCompound(Player.PERSISTED_NBT_TAG);
+        var root = tag.getCompound(ROOT);
+        root.putInt("v", 1);
+        var counts = root.getCompound("discovery_counts");
+        counts.putInt(id.toString(), counts.getInt(id.toString()) + 1);
+        root.put("discovery_counts", counts);
+        tag.put(ROOT, root);
+        persisted.put(Player.PERSISTED_NBT_TAG, tag);
+    }
+
     public static void forget(Player player, @Nullable ResourceLocation id) {
         var persisted = player.getPersistentData();
         var tag = persisted.getCompound(Player.PERSISTED_NBT_TAG);
         var root = tag.getCompound(ROOT);
-        if (id == null) root.remove("discoveries");
+        if (id == null) { root.remove("discoveries"); root.remove("discovery_counts"); }
         else {
             var list = root.getList("discoveries", Tag.TAG_STRING);
             var out = new ListTag();
             for (int i = 0; i < list.size(); i++) if (!list.getString(i).equals(id.toString())) out.add(list.get(i));
             root.put("discoveries", out);
+            var counts = root.getCompound("discovery_counts");
+            counts.remove(id.toString());
+            root.put("discovery_counts", counts);
         }
         tag.put(ROOT, root);
         persisted.put(Player.PERSISTED_NBT_TAG, tag);

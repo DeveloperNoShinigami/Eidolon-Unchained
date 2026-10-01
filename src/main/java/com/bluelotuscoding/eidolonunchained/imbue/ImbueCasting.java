@@ -148,6 +148,7 @@ public final class ImbueCasting {
         long now = wearer.level().getGameTime();
         if (ImbueNbt.isOnCooldown(piece, now)) return skip(wearer, id, "cooldown");
         if (!(Spells.find(id) instanceof ScriptedSpell spell) || spell.deity() == null) return skip(wearer, id, "not a deity-bound scripted chant");
+        if (!com.bluelotuscoding.eidolonunchained.patron.Patrons.isFollower(wearer, spell.deity())) return skip(wearer, id, "the wearer does not follow " + spell.deity());
         if (!spell.hasMobPath()) {
             if (WARNED.add(id)) EidolonUnchained.LOGGER.warn("Deity's Protection: chant '{}' has no .targetCast/.mobCast, so it cannot retaliate", id);
             return false;

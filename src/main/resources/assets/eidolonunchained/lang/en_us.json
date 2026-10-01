@@ -53,5 +53,10 @@
   "eidolonunchained.ritual.no_patron": "You follow no god to renounce",
   "eidolonunchained.ritual.no_performer": "No one stands at the brazier to make the vow",
   "eidolonunchained.ritual.pledged": "You are now pledged to %s",
-  "eidolonunchained.ritual.revoked": "%s no longer answers you"
+  "eidolonunchained.ritual.revoked": "%s no longer answers you",
+  "eidolonunchained.spell.not_follower": "%s does not answer those who do not follow it",
+  "eidolonunchained.hexblade.not_follower": "The blade sleeps: you do not follow %s",
+  "command.eidolonunchained.patron.get_mob": "%s: patron %s",
+  "command.eidolonunchained.patron.not_living": "%s cannot follow a god",
+  "command.eidolonunchained.patron.mob_cleared": "%s: patron cleared (now %s, from its type or caster profile)"
 }

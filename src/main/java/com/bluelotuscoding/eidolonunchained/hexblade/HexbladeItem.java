@@ -131,6 +131,11 @@ public class HexbladeItem extends SwordItem {
     /** Awakens (only when fully charged, as Hexblades does) or puts the blade to sleep; recomputes the powers. */
     public boolean setAwakened(ItemStack stack, Player player, boolean awaken) {
         if (awaken && stack.getDamageValue() != 0) return false;
+        if (awaken && !com.bluelotuscoding.eidolonunchained.patron.Patrons.isFollower(player, s.deity)) {   // D47.7: the blade answers its god's followers only
+            if (player instanceof net.minecraft.server.level.ServerPlayer sp) sp.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                    "eidolonunchained.hexblade.not_follower", com.bluelotuscoding.eidolonunchained.patron.Patrons.deityName(s.deity)), true);
+            return false;
+        }
         double devotion = devotion(player);
         var hex = state(stack);
         hex.putBoolean("awakened", awaken);

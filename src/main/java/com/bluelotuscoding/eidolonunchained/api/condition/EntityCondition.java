@@ -61,6 +61,13 @@ public final class EntityCondition extends Condition {
         return narrow("undead", ctx -> e(ctx) != null && e(ctx).getMobType() == MobType.UNDEAD);
     }
 
+    @Info("Follows this god: a player's major patron, or a mob's patron (D55)")
+    public EntityCondition patron(String deityId) {
+        var id = net.minecraft.resources.ResourceLocation.tryParse(deityId);
+        if (id == null) throw new IllegalArgumentException("Eidolon Unchained: bad deity id '" + deityId + "'");
+        return narrow("patron " + id, ctx -> e(ctx) != null && id.equals(com.bluelotuscoding.eidolonunchained.patron.Patrons.patronOf(e(ctx))));
+    }
+
     @Info("Health below this fraction of max (0..1)")
     public EntityCondition healthBelow(double fraction) {
         return narrow("health < " + fraction, ctx -> e(ctx) != null && e(ctx).getHealth() < e(ctx).getMaxHealth() * fraction);

@@ -45,6 +45,13 @@ EidolonUnchainedEvents.discoveries(event => {
         .when(C.player().reputation('eu_examples:myrkul', 10))
         .reputation('eu_examples:myrkul', 3)
         .run(ctx => ctx.player.tell('§5The fortress walls hum; Myrkul has walked these halls.'))
+    // Phase 5: followers. Each of Myrkul's followers you kill (skeletons, the wither, or anyone pledged to him) pleases
+    // the Light, ten times at most.
+    event.create('eu_examples:bane_of_the_grave')
+        .on('kill')
+        .when(C.entity().patron('eu_examples:myrkul'))
+        .reputation('eidolon:light', 1)
+        .repeatable(10)
 })
 
 // The new events, for anything a discovery cannot express (extra id filters work like the other events).

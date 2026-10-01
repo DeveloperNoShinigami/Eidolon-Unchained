@@ -102,6 +102,7 @@ public final class ScriptedSpell extends StaticSpell {
     }
 
     public boolean canMobCast(Level level, BlockPos pos, LivingEntity caster, @Nullable LivingEntity target) {
+        if (!com.bluelotuscoding.eidolonunchained.patron.Patrons.isFollower(caster, deity)) return false;   // D55: a mob needs that patron
         if (!requirementsMet(level, caster.blockPosition(), null, target)) return false;
         if (mobCanCast == null) return true;
         try {
@@ -140,6 +141,11 @@ public final class ScriptedSpell extends StaticSpell {
 
     @Override
     public boolean canCast(Level level, BlockPos pos, Player player) {
+        if (deity != null && player instanceof ServerPlayer sp && !com.bluelotuscoding.eidolonunchained.patron.Patrons.isFollower(sp, deity)) {
+            sp.displayClientMessage(Component.translatable("eidolonunchained.spell.not_follower",
+                    com.bluelotuscoding.eidolonunchained.patron.Patrons.deityName(deity)), true);
+            return false;
+        }
         if (deity != null && player instanceof ServerPlayer sp) {
             var rep = sp.server.overworld().getCapability(IReputation.INSTANCE).resolve()
                     .map(r -> r.getReputation(player, deity)).orElse(0.0);

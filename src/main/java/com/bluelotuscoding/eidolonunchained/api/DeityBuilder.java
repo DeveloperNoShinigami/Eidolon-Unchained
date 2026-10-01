@@ -27,6 +27,7 @@ public final class DeityBuilder {
     Integer color;
     ResourceLocation model;
     Integer maxReputation;
+    final List<String> followers = new ArrayList<>();
     Boolean patronRequired;
     Boolean requiresCalling;
     final List<StageDecl> stages = new ArrayList<>();
@@ -116,6 +117,16 @@ public final class DeityBuilder {
         return this;
     }
 
+    @Info("Mob types that follow this god: entity ids or '#tags', e.g. '#minecraft:skeletons', 'minecraft:wither' (D55)")
+    public DeityBuilder followers(String... entityTypesOrTags) {
+        for (var spec : entityTypesOrTags) {
+            var t = spec.trim();
+            Ids.of(t.startsWith("#") ? t.substring(1) : t, "entity type");      // validates the id
+            followers.add(t);
+        }
+        return this;
+    }
+
     @Info("Whether the deity gives reputation only after a pledge (default true: a major god, one at a time; false: a minor spirit anyone may follow)")
     public DeityBuilder patronRequired(boolean required) {
         this.patronRequired = required;
@@ -182,6 +193,7 @@ public final class DeityBuilder {
         // D47: required unless the script says otherwise; an extension of Eidolon's own deities leaves it to the config.
         Boolean required = patronRequired != null ? patronRequired : (extend ? null : Boolean.TRUE);
         Patrons.declare(deity.getId(), required, requiresCalling, stageMana);
+        if (!followers.isEmpty()) Patrons.declareFollowers(deity.getId(), followers);
         DeityHooks.register(deity.getId(), model, onUnlock, onLock, onChange);
         EidolonUnchained.LOGGER.debug("deity '{}': {} stage(s), model {}", id, stages.size(), model);
     }
