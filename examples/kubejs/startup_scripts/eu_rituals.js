@@ -10,3 +10,27 @@ EidolonUnchained.ritual('eu_examples:storm_rite')
         level.spawnLightning(pos.x, pos.y + 1, pos.z, false)
         level.server.runCommandSilent(`weather thunder`)
     })
+
+// Phase 5: patron rites. Completing one pledges the performer (the nearest player) to the god, or ends a pledge.
+// A major god won't share its follower: if the performer already follows another major god, the brazier refuses
+// at once, the pedestals keep their items and the reagent comes back.
+EidolonUnchained.ritual('eu_examples:pact_of_the_grave')
+    .symbol('eidolon:particle/summon_ritual')
+    .color(111, 245, 216)
+    .grantsPatron('eu_examples:myrkul')
+
+EidolonUnchained.ritual('eu_examples:vow_of_light')
+    .symbol('eidolon:particle/daylight_ritual')
+    .color(255, 230, 150)
+    .grantsPatron('eidolon:light')
+
+EidolonUnchained.ritual('eu_examples:vow_of_night')
+    .symbol('eidolon:particle/moonlight_ritual')
+    .color(120, 60, 170)
+    .grantsPatron('eidolon:dark')
+
+// Ends every pledge (reputation with each left at 0); .revokePatron('eu_examples:myrkul', -10) would end one and leave a grudge.
+EidolonUnchained.ritual('eu_examples:renunciation')
+    .symbol('eidolon:particle/purify_ritual')
+    .color(220, 220, 220)
+    .revokePatron()

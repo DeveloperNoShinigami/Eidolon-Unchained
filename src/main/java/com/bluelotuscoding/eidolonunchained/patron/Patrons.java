@@ -98,6 +98,17 @@ public final class Patrons {
         return s != null && s.requiresCalling;
     }
 
+    /**
+     * A deity's name for messages: lang {@code <ns>.deity.<path>} (EU ships {@code eidolon.deity.light/dark}), else the
+     * id's path in title case.
+     */
+    public static Component deityName(ResourceLocation deity) {
+        var words = deity.getPath().replace('_', ' ').split(" ");
+        var sb = new StringBuilder();
+        for (var w : words) if (!w.isEmpty()) sb.append(sb.length() == 0 ? "" : " ").append(Character.toUpperCase(w.charAt(0))).append(w.substring(1));
+        return Component.translatableWithFallback(deity.getNamespace() + ".deity." + deity.getPath(), sb.toString());
+    }
+
     // ---- state ----
 
     @Nullable

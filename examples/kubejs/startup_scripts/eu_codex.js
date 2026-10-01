@@ -22,6 +22,7 @@ EidolonUnchained.codex.chapter('eu_examples:myrkul_lore')
     .entityPage('eu_examples:myrkul_avatar', { text: 'eu_examples.codex.myrkul.avatar', rotate: -20,
         animation: 'manifest', then: 'idle', arrivalScale: 0.9, hideBelowGround: true })   // rises out of his rift, then idles at full size
     .ritualPage('eu_examples:storm_rite')            // the ritual's id: its brazier recipe carries the same id
+    .ritualPage('eu_examples:pact_of_the_grave')     // Phase 5: pledges the performer to Myrkul
 
 // The pantheon: Eidolon's own deities as EntityJS avatars, each on a bestiary spread (name and text facing the model).
 // Each steps out of its gate when the page is reached: arrivalScale shrinks it while the gate is up (the gate is larger
@@ -34,3 +35,6 @@ EidolonUnchained.codex.chapter('eu_examples:pantheon')
         animation: 'manifest', then: 'idle', arrivalScale: 0.6, hideBehind: 2.25 })
     .entityPage('eu_examples:dark_avatar', { text: 'eu_examples.codex.pantheon.dark',
         animation: 'manifest', then: 'idle', arrivalScale: 0.55, hideBehind: 2.15 })
+    .ritualPage('eu_examples:vow_of_light')           // Phase 5: pledges to the Light
+    .ritualPage('eu_examples:vow_of_night')           // Phase 5: pledges to the Dark
+    .ritualPage('eu_examples:renunciation')           // Phase 5: ends every pledge

@@ -44,5 +44,14 @@
   "command.eidolonunchained.patron.revoked": "%s no longer pledged to %s (reputation %s)",
   "command.eidolonunchained.patron.revoke_none": "%s has no pledge to revoke",
   "command.eidolonunchained.mana.show": "%s: %s / %s mana",
-  "command.eidolonunchained.mana.no_targets": "No target has mana"
+  "command.eidolonunchained.mana.no_targets": "No target has mana",
+  "eidolon.deity.light": "the Light",
+  "eidolon.deity.dark": "the Dark",
+  "eidolonunchained.ritual.jealous": "%s will not share you with %s",
+  "eidolonunchained.ritual.already_follower": "You already follow %s",
+  "eidolonunchained.ritual.not_follower": "You do not follow %s",
+  "eidolonunchained.ritual.no_patron": "You follow no god to renounce",
+  "eidolonunchained.ritual.no_performer": "No one stands at the brazier to make the vow",
+  "eidolonunchained.ritual.pledged": "You are now pledged to %s",
+  "eidolonunchained.ritual.revoked": "%s no longer answers you"
 }

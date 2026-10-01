@@ -38,5 +38,9 @@
   "eu_examples.discovery.storm_rite": "Myrkul approves of the storm (+5)",
   "eu_examples.discovery.thrall": "The dead obey you. You have learned what that means.",
   "eidolon.fact.eu_examples.sea_memory": "Sea Memory",
-  "eidolon.fact.eu_examples.thrall_master": "Thrall Master"
+  "eidolon.fact.eu_examples.thrall_master": "Thrall Master",
+  "eu_examples.ritual.pact_of_the_grave": "Pact of the Grave",
+  "eu_examples.ritual.vow_of_light": "Vow of Light",
+  "eu_examples.ritual.vow_of_night": "Vow of Night",
+  "eu_examples.ritual.renunciation": "Renunciation"
 }
