@@ -1,6 +1,8 @@
 package com.bluelotuscoding.eidolonunchained.hexblade;
 
 import com.bluelotuscoding.eidolonunchained.api.Ids;
+import com.google.gson.JsonObject;
+import dev.latvian.mods.kubejs.generator.AssetJsonGenerator;
 import dev.latvian.mods.kubejs.item.custom.HandheldItemBuilder;
 import dev.latvian.mods.kubejs.typings.Info;
 import net.minecraft.network.chat.Component;
@@ -21,6 +23,41 @@ public class HexbladeItemBuilder extends HandheldItemBuilder {
     public HexbladeItemBuilder(ResourceLocation id) {
         super(id, 3F, -2.4F);
         maxDamage = 1250;                 // the energy pool (Hexblades' patron tier: 1250)
+    }
+
+    @Info("""
+            GeckoLib look 'ns:name': a 3D model in hand, on the ground and in frames; texture() stays the flat icon in GUI slots.
+            Files: geo/item/name.geo.json, animations/item/name.animation.json (clips awaken, awakened, sleep, dormant),
+            textures/item/name_geo.png (+ name_geo_glowmask.png to glow), models/item/name_geo.json (display transforms)""")
+    public HexbladeItemBuilder geoModel(String id) {
+        settings.geoModel = new ResourceLocation(id);
+        return this;
+    }
+
+    /** With geoModel: GUI slots show the flat texture (forge:item_layers), every other view the GeckoLib renderer. */
+    @Override
+    public void generateAssetJsons(AssetJsonGenerator generator) {
+        if (settings.geoModel == null || modelJson != null) {
+            super.generateAssetJsons(generator);
+            return;
+        }
+        if (textureJson.size() == 0) texture(newID("item/", "").toString());
+        var gui = new JsonObject();
+        gui.addProperty("loader", "forge:item_layers");
+        gui.add("textures", textureJson.deepCopy());
+        var perspectives = new JsonObject();
+        perspectives.add("gui", gui);
+        var base = new JsonObject();
+        base.addProperty("parent", HexbladeGeo.displayModel(settings.geoModel).toString());
+        var model = new JsonObject();
+        model.addProperty("loader", "forge:separate_transforms");
+        model.addProperty("gui_light", "front");
+        var particle = new JsonObject();
+        particle.add("particle", textureJson.get("layer0"));
+        model.add("textures", particle);
+        model.add("base", base);
+        model.add("perspectives", perspectives);
+        generator.json(AssetJsonGenerator.asItemModelLocation(id), model);
     }
 
     @Info("The deity the blade is bound to: devotion (reputation) with it scales the awakened powers")
