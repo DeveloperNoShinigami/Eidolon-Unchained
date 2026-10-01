@@ -21,14 +21,15 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.living.ShieldBlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -41,7 +42,10 @@ import java.util.WeakHashMap;
  * same wind-up, ring, mana and {@code SpellCastEvent}s as active chanting; the player need not know the signs);
  * the view key + right-click cycles the active chant. <b>Deity's Protection:</b> when a wearer is hurt by a living
  * attacker, the highest-level piece whose bound chant is ready casts that chant's targeted path at the attacker,
- * charging the wearer a share of the mana; the chant's signs flash as a ring over the wearer.
+ * charging the wearer a share of the mana; the chant's signs flash as a ring over the wearer. A shield carrying a
+ * Deity's Protection chant casts it the same way when it blocks a hit (D51). Chant cooldowns live on the item stack
+ * ({@link ImbueNbt#setCooldown}), never in vanilla's per-item-type cooldowns, so a shield on chant cooldown still blocks
+ * and an axe still disables it as usual.
  */
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MOD_ID)
 public final class ImbueCasting {
@@ -58,7 +62,8 @@ public final class ImbueCasting {
     public static ProtectionHook onProtection = (w, a, p, c, l) -> true;
 
     private static final EquipmentSlot[] PROTECTION_SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND};
-    private static final Map<LivingEntity, EnumMap<EquipmentSlot, Long>> COOLDOWNS = new WeakHashMap<>();
+    /** The last hit that retaliated, per wearer: a partly blocked hit fires both ShieldBlockEvent and LivingHurtEvent. */
+    private static final Map<LivingEntity, DamageSource> HANDLED = new WeakHashMap<>();
     private static final Map<LivingEntity, Long> FLASHES = new WeakHashMap<>();
     private static final Set<ResourceLocation> WARNED = new HashSet<>();
 
@@ -78,7 +83,8 @@ public final class ImbueCasting {
     public static boolean castImbued(ServerPlayer player, ItemStack weapon) {
         var id = ImbueNbt.activeChant(weapon);
         if (id == null) return false;
-        if (player.getCooldowns().isOnCooldown(weapon.getItem())) return false;
+        long now = player.level().getGameTime();
+        if (ImbueNbt.isOnCooldown(weapon, now)) return false;
         var spell = Spells.find(id);
         if (spell == null) {
             player.displayClientMessage(Component.translatable("eidolonunchained.imbue.unknown_chant", id.toString()), true);
@@ -87,7 +93,7 @@ public final class ImbueCasting {
         if (PlayerChantState.of(player).isBusy()) return false;               // already chanting something
         if (!onImbueCast.test(player, weapon, id)) return false;
         boolean ok = PlayerChantState.of(player).castSpell(spell, ChantSync.sequenceOf(id));   // builds up, winds up, casts
-        if (ok) player.getCooldowns().addCooldown(weapon.getItem(), EUConfig.IMBUE_CAST_COOLDOWN_TICKS.get());
+        if (ok) ImbueNbt.setCooldown(weapon, now, EUConfig.IMBUE_CAST_COOLDOWN_TICKS.get());
         return ok;
     }
 
@@ -107,28 +113,40 @@ public final class ImbueCasting {
         var wearer = event.getEntity();
         if (wearer.level().isClientSide() || event.getAmount() <= 0) return;
         if (!(event.getSource().getEntity() instanceof LivingEntity attacker) || attacker == wearer) return;
-        var pieces = new ArrayList<ItemStack[]>();                       // [piece], ordered by level (highest first)
-        var slots = new ArrayList<EquipmentSlot>();
+        if (HANDLED.get(wearer) == event.getSource()) return;              // the shield already answered this hit
+        var pieces = new ArrayList<ItemStack>();                          // ordered by level (highest first)
         for (var slot : PROTECTION_SLOTS) {
             var piece = wearer.getItemBySlot(slot);
-            if (ImbueNbt.protectionLevel(piece) > 0 && ImbueNbt.protectionChant(piece) != null) { pieces.add(new ItemStack[]{piece}); slots.add(slot); }
+            if (isProtection(piece)) pieces.add(piece);
         }
-        if (pieces.isEmpty()) return;
-        var order = new ArrayList<Integer>();
-        for (int i = 0; i < pieces.size(); i++) order.add(i);
-        order.sort((a, b) -> Integer.compare(ImbueNbt.protectionLevel(pieces.get(b)[0]), ImbueNbt.protectionLevel(pieces.get(a)[0])));
-        for (int i : order) {
-            if (retaliate(wearer, attacker, pieces.get(i)[0], slots.get(i))) break;       // one retaliation per hit
+        pieces.sort((a, b) -> Integer.compare(ImbueNbt.protectionLevel(b), ImbueNbt.protectionLevel(a)));
+        for (var piece : pieces) {
+            if (retaliate(wearer, attacker, piece)) { HANDLED.put(wearer, event.getSource()); break; }   // one retaliation per hit
         }
     }
 
-    private static boolean retaliate(LivingEntity wearer, LivingEntity attacker, ItemStack piece, EquipmentSlot slot) {
+    /** A chant-bearing shield casts its chant at the attacker when it blocks (D51); blocking itself is untouched. */
+    @SubscribeEvent
+    public static void onShieldBlock(ShieldBlockEvent event) {
+        var wearer = event.getEntity();
+        if (wearer.level().isClientSide() || event.isCanceled()) return;
+        if (!(event.getDamageSource().getEntity() instanceof LivingEntity attacker) || attacker == wearer) return;
+        var shield = wearer.getUseItem();
+        if (!isProtection(shield) || HANDLED.get(wearer) == event.getDamageSource()) return;
+        if (retaliate(wearer, attacker, shield)) HANDLED.put(wearer, event.getDamageSource());
+    }
+
+    private static boolean isProtection(ItemStack piece) {
+        return ImbueNbt.protectionLevel(piece) > 0 && ImbueNbt.protectionChant(piece) != null;
+    }
+
+    /** Casts the piece's bound chant at the attacker: reputation, mana share and cooldown by level, script hook, build-up. */
+    private static boolean retaliate(LivingEntity wearer, LivingEntity attacker, ItemStack piece) {
         int level = ImbueNbt.protectionLevel(piece);
         var id = ImbueNbt.protectionChant(piece);
         if (id == null) return false;
         long now = wearer.level().getGameTime();
-        var cds = COOLDOWNS.computeIfAbsent(wearer, k -> new EnumMap<>(EquipmentSlot.class));
-        if (cds.getOrDefault(slot, 0L) > now) return skip(wearer, id, "cooldown");
+        if (ImbueNbt.isOnCooldown(piece, now)) return skip(wearer, id, "cooldown");
         if (!(Spells.find(id) instanceof ScriptedSpell spell) || spell.deity() == null) return skip(wearer, id, "not a deity-bound scripted chant");
         if (!spell.hasMobPath()) {
             if (WARNED.add(id)) EidolonUnchained.LOGGER.warn("Deity's Protection: chant '{}' has no .targetCast/.mobCast, so it cannot retaliate", id);
@@ -145,10 +163,8 @@ public final class ImbueCasting {
         // creative players pay nothing; a mob without a mana pool (no caster profile) is carried by the deity
         boolean free = (wearer instanceof Player p && p.isCreative()) || (!(wearer instanceof Player) && (soul == null || soul.getMaxMagic() <= 0));
         if (!free && cost > 0 && (soul == null || soul.getMagic() < cost)) return skip(wearer, id, "not enough mana (" + (soul == null ? "no soul" : soul.getMagic() + "/" + cost) + ")");
+        if (wearer instanceof ServerPlayer sp && PlayerChantState.of(sp).isBusy()) return skip(wearer, id, "busy chanting");   // try the next hit
         if (!onProtection.test(wearer, attacker, piece, id, level)) return skip(wearer, id, "cancelled by a script");
-        if (!free && cost > 0) soul.setMagic(soul.getMagic() - cost);
-        var cools = EUConfig.PROTECTION_COOLDOWN_TICKS.get();
-        cds.put(slot, now + (cools.isEmpty() ? 100 : cools.get(Math.min(level, cools.size()) - 1)));
         // every cast builds up: the signs one by one, the wind-up, then the targeted path at the attacker
         Runnable cast = () -> {
             if (!attacker.isAlive()) return;
@@ -156,10 +172,13 @@ public final class ImbueCasting {
         };
         var signs = ChantSync.sequenceOf(id);
         if (wearer instanceof ServerPlayer sp) {
-            if (!PlayerChantState.of(sp).castSpell(spell, signs, cast)) { cds.remove(slot); return false; }   // busy chanting: try the next hit
+            if (!PlayerChantState.of(sp).castSpell(spell, signs, cast)) return skip(wearer, id, "busy chanting");
         } else {
             build(wearer, signs, spell.getDelay(), cast);
         }
+        if (!free && cost > 0) soul.setMagic(soul.getMagic() - cost);
+        var cools = EUConfig.PROTECTION_COOLDOWN_TICKS.get();
+        ImbueNbt.setCooldown(piece, now, cools.isEmpty() ? 100 : cools.get(Math.min(level, cools.size()) - 1));   // on the stack: syncs with the slot
         return true;
     }
 
