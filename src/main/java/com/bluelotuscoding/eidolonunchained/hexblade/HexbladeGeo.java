@@ -5,6 +5,9 @@ import net.minecraft.world.item.ItemStack;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.core.keyframe.event.data.ParticleKeyframeData;
+
+import java.util.function.Consumer;
 
 /**
  * The optional GeckoLib look of a scripted hexblade ({@code .geoModel('ns:name')}). The files, all under the item's
@@ -20,6 +23,13 @@ import software.bernie.geckolib.core.animation.RawAnimation;
 public final class HexbladeGeo {
     private HexbladeGeo() {
     }
+
+    /**
+     * Receives the particle keyframes ({@code particle_effects}: effect + locator) of the clip being played. GeckoLib fires
+     * them while the client renderer animates a stack, so the renderer sets this and spawns them at the locator.
+     */
+    public static Consumer<ParticleKeyframeData> particleSink = data -> {
+    };
 
     public static ResourceLocation geo(ResourceLocation id) {
         return new ResourceLocation(id.getNamespace(), "geo/item/" + id.getPath() + ".geo.json");
@@ -63,6 +73,6 @@ public final class HexbladeGeo {
             if (first[0] == null) first[0] = awake;
             else if (awake != first[0]) changed[0] = true;
             return state.setAndContinue(changed[0] ? (awake ? awaken : sleep) : (awake ? awakened : dormant));
-        });
+        }).setParticleKeyframeHandler(event -> particleSink.accept(event.getKeyframeData()));
     }
 }
