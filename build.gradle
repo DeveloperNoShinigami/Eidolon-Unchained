@@ -42,6 +42,8 @@ minecraft {
         }
 
         server {
+            // Own folder, so a dev client and a dev server can run side by side.
+            workingDirectory project.file('run-server')
             property 'forge.enabledGameTestNamespaces', mod_id
             args '--nogui'
         }

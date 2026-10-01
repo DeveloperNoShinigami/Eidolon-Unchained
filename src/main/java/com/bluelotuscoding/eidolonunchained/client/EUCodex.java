@@ -12,7 +12,6 @@ import elucent.eidolon.codex.CodexChapters;
 import elucent.eidolon.codex.CodexEvents;
 import elucent.eidolon.codex.CraftingPage;
 import elucent.eidolon.codex.CruciblePage;
-import elucent.eidolon.codex.EntityPage;
 import elucent.eidolon.codex.Index;
 import elucent.eidolon.codex.IndexPage;
 import elucent.eidolon.codex.Page;
@@ -77,6 +76,11 @@ public final class EUCodex {
             for (var p : d.pages) {
                 try {
                     var built = page(p, d.id);
+                    if (p.at == null && p.entity != null && p.entity.text() != null) {
+                        // Eidolon's bestiary layout: the name and text on the left page, the model facing it on the right
+                        if (pages.size() % 2 == 1) pages.add(new TextPage(""));
+                        pages.add(new TitlePage(p.entity.text(), ((AnimatedEntityPage) built).descriptionId()));
+                    }
                     if (p.at != null) placed.add(new Object[]{p.at, built}); else pages.add(built);
                 } catch (RuntimeException e) {
                     EidolonUnchained.LOGGER.error("Codex: chapter '{}' page {} {} skipped: {}", d.id, p.kind(), p.args(), e.getMessage());
@@ -133,9 +137,7 @@ public final class EUCodex {
             if (CodexDecls.isPlaced(id) || CodexDecls.isHidden(id)) continue;
             Sign sign = Signs.find(id);
             if (sign == null) continue;
-            var info = new Chapter(id.getNamespace() + ".codex.chapter." + id.getPath(),
-                    new TitlePage(id.getNamespace() + ".codex.sign." + id.getPath()), new SignPage(sign));
-            fallback.add(new SignIndexPage.SignEntry(info, sign));
+            fallback.add(new SignIndexPage.SignEntry(signInfo(id, id.getNamespace() + ".codex.chapter." + id.getPath()), sign));
             EidolonUnchained.LOGGER.info("Codex: sign '{}' is on no scripted sign-index page; added to the scripted-signs page in Eidolon's Signs category", id);
         }
         if (!fallback.isEmpty() && CodexChapters.SIGNS_INDEX != null) {
@@ -166,8 +168,7 @@ public final class EUCodex {
                 var entries = new ArrayList<SignIndexPage.SignEntry>();
                 for (var s : a) {
                     var sign = sign(s);
-                    var info = new Chapter(s.replace(':', '.') + ".codex.sign", new SignPage(sign));
-                    entries.add(new SignIndexPage.SignEntry(info, sign));
+                    entries.add(new SignIndexPage.SignEntry(signInfo(sign.getRegistryName(), s.replace(':', '.') + ".codex.sign"), sign));
                 }
                 yield new SignIndexPage(entries.toArray(new SignIndexPage.SignEntry[0]));
             }
@@ -180,7 +181,7 @@ public final class EUCodex {
                 var rl = Ids.of(a.get(0), "entity");
                 var type = ForgeRegistries.ENTITY_TYPES.getValue(rl);
                 if (type == null || !ForgeRegistries.ENTITY_TYPES.containsKey(rl)) throw new IllegalArgumentException("unknown entity '" + a.get(0) + "'");
-                yield new EntityPage(type);
+                yield new AnimatedEntityPage(type, p.entity == null ? CodexDecls.EntityOptions.DEFAULT : p.entity);   // Eidolon's page, animated
             }
             case "ritual" -> new RitualPage(Ids.of(a.get(0), "ritual recipe"));
             case "chant" -> {
@@ -190,6 +191,14 @@ public final class EUCodex {
             }
             default -> throw new IllegalArgumentException("unknown page kind '" + p.kind() + "'");
         };
+    }
+
+    /**
+     * A sign's info chapter, opened from its sign-index tile. Shaped like Eidolon's own (title page with the sign's
+     * description, then the sign): text {@code <ns>.codex.sign.<path>}, heading {@code <ns>.codex.sign.<path>.title}.
+     */
+    private static Chapter signInfo(ResourceLocation id, String chapterTitleKey) {
+        return new Chapter(chapterTitleKey, new TitlePage(id.getNamespace() + ".codex.sign." + id.getPath()), new SignPage(Signs.find(id)));
     }
 
     private static Sign sign(String id) {

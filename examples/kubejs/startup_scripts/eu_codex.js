@@ -19,5 +19,18 @@ EidolonUnchained.codex.chapter('eu_examples:myrkul_lore')
     .icon('minecraft:wither_skeleton_skull')
     .titlePage('eu_examples.codex.myrkul.intro', 'minecraft:wither_skeleton_skull')
     .textPage('eu_examples.codex.myrkul.body')
-    .entityPage('minecraft:wither_skeleton')
+    .entityPage('eu_examples:myrkul_avatar', { text: 'eu_examples.codex.myrkul.avatar', rotate: -20,
+        animation: 'manifest', then: 'idle', arrivalScale: 0.9, hideBelowGround: true })   // rises out of his rift, then idles at full size
     .ritualPage('eu_examples:storm_rite')            // the ritual's id: its brazier recipe carries the same id
+
+// The pantheon: Eidolon's own deities as EntityJS avatars, each on a bestiary spread (name and text facing the model).
+// Each steps out of its gate when the page is reached: arrivalScale shrinks it while the gate is up (the gate is larger
+// than the deity), then it eases back to full size for the idle; hideBehind (blocks behind the avatar, just past the back
+// of each gate) hides it until it comes through.
+EidolonUnchained.codex.chapter('eu_examples:pantheon')
+    .category('eidolon:theurgy')
+    .icon('minecraft:nether_star')
+    .entityPage('eu_examples:light_avatar', { text: 'eu_examples.codex.pantheon.light',
+        animation: 'manifest', then: 'idle', arrivalScale: 0.6, hideBehind: 2.25 })
+    .entityPage('eu_examples:dark_avatar', { text: 'eu_examples.codex.pantheon.dark',
+        animation: 'manifest', then: 'idle', arrivalScale: 0.55, hideBehind: 2.15 })

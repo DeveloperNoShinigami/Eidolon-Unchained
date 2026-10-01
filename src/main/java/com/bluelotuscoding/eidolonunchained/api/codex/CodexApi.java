@@ -124,9 +124,45 @@ public final class CodexApi {
             return page("smelting", resultId, inputId);
         }
 
-        @Info("EntityPage: an entity rendered on the page")
+        @Info("EntityPage: an entity rendered on the page; animated models play from the start each time the page is opened")
         public ChapterBuilder entityPage(String entityId) {
-            return page("entity", entityId);
+            return entityPage(entityId, java.util.Map.of());
+        }
+
+        @Info("EntityPage with options: { text: 'lang.key' (a facing page titled with the entity's name, as Eidolon's bestiary does), and for GeckoLib models scale: 1.0 (standard size, 1 fills the frame), rotate: -30 (yaw), animation: 'manifest' (played from the start when the page is reached), then: 'idle' (looped afterwards; without it the last frame holds), arrivalScale: 0.6 (size while the arrival clip plays, easing back to scale), hideBelowGround: true, hideBehind: 2.0 (blocks behind the model past which nothing is drawn) }")
+        public ChapterBuilder entityPage(String entityId, java.util.Map<String, Object> options) {
+            double scale = 1.0, rotate = -30;
+            Double arrivalScale = null, hideBehind = null;
+            String animation = null, then = null, text = null;
+            boolean hideBelowGround = false, gecko = false;
+            for (var e : options.entrySet()) {
+                switch (e.getKey()) {
+                    case "text" -> text = String.valueOf(e.getValue());
+                    case "scale" -> { scale = number(e.getValue(), "scale"); gecko = true; }
+                    case "arrivalScale" -> { arrivalScale = number(e.getValue(), "arrivalScale"); gecko = true; }
+                    case "rotate" -> { rotate = number(e.getValue(), "rotate"); gecko = true; }
+                    case "animation" -> { animation = String.valueOf(e.getValue()); gecko = true; }
+                    case "then" -> { then = String.valueOf(e.getValue()); gecko = true; }
+                    case "hideBelowGround" -> {
+                        if (!(e.getValue() instanceof Boolean flag)) throw new IllegalArgumentException("entityPage option 'hideBelowGround' must be true or false");
+                        hideBelowGround = flag;
+                        gecko = true;
+                    }
+                    case "hideBehind" -> { hideBehind = number(e.getValue(), "hideBehind"); gecko = true; }
+                    default -> throw new IllegalArgumentException("entityPage '" + entityId + "': unknown option '" + e.getKey()
+                            + "' (text, scale, arrivalScale, rotate, animation, then, hideBelowGround, hideBehind)");
+                }
+            }
+            if (scale <= 0 || (arrivalScale != null && arrivalScale <= 0)) throw new IllegalArgumentException("entityPage '" + entityId + "': scales must be > 0");
+            if (animation == null && (then != null || arrivalScale != null)) throw new IllegalArgumentException("entityPage '" + entityId + "': 'then' and 'arrivalScale' need an 'animation'");
+            page("entity", entityId);
+            decl.pages.get(decl.pages.size() - 1).entity = new CodexDecls.EntityOptions(scale, arrivalScale, rotate, animation, then, hideBelowGround, hideBehind, text, gecko);
+            return this;
+        }
+
+        private static double number(Object value, String key) {
+            if (value instanceof Number n) return n.doubleValue();
+            throw new IllegalArgumentException("entityPage option '" + key + "' must be a number");
         }
 
         @Info("RitualPage: the ritual brazier recipe id; for scripted rituals that is the ritual id itself, e.g. 'mypack:storm_rite'")

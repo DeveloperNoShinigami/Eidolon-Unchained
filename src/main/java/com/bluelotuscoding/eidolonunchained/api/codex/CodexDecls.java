@@ -19,6 +19,7 @@ public final class CodexDecls {
         public final String kind;
         public final List<String> args;
         public Integer at;                          // explicit position in the chapter (0 = first); null = builder order
+        public EntityOptions entity;                // kind "entity": how the model is shown (null = Eidolon's defaults)
 
         PageDecl(String kind, List<String> args) {
             this.kind = kind;
@@ -27,6 +28,16 @@ public final class CodexDecls {
 
         public String kind() { return kind; }
         public List<String> args() { return args; }
+    }
+
+    /**
+     * {@code entityPage(id, {...})}. {@code scale} is the standard size (1 = fills the page's frame); {@code arrivalScale}
+     * applies while the arrival clip plays, then eases back to {@code scale}. {@code text} adds a facing title page (the
+     * entity's name over that text), as Eidolon's own bestiary pages do.
+     */
+    public record EntityOptions(double scale, Double arrivalScale, double rotate, String animation, String then,
+                                boolean hideBelowGround, Double hideBehind, String text, boolean geckoOptions) {
+        public static final EntityOptions DEFAULT = new EntityOptions(1, null, -30, null, null, false, null, null, false);
     }
 
     public static final class ChapterDecl {
