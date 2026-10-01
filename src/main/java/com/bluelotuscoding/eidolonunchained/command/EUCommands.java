@@ -66,6 +66,7 @@ public final class EUCommands {
                         .then(Commands.literal("reset").requires(s -> s.hasPermission(2))
                                 .executes(c -> {
                                     com.bluelotuscoding.eidolonunchained.api.condition.Discovery.forget(c.getSource().getPlayerOrException(), null);
+                                    com.bluelotuscoding.eidolonunchained.patron.Callings.forget(c.getSource().getPlayerOrException());
                                     c.getSource().sendSuccess(() -> Component.literal("Your discoveries are forgotten"), false);
                                     return 1;
                                 })

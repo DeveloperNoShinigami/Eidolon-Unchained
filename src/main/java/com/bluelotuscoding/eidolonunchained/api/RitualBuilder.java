@@ -237,6 +237,8 @@ public final class RitualBuilder {
             var major = com.bluelotuscoding.eidolonunchained.patron.Patrons.majorPatron(player);
             var majorAfter = major != null && revokes(player, major) ? null : major;
             for (var d : grants) {
+                if (com.bluelotuscoding.eidolonunchained.patron.Patrons.requiresCalling(d) && !com.bluelotuscoding.eidolonunchained.patron.Callings.wasCalled(player, d))
+                    return net.minecraft.network.chat.Component.translatable("eidolonunchained.ritual.not_called", com.bluelotuscoding.eidolonunchained.patron.Patrons.deityName(d));
                 if (com.bluelotuscoding.eidolonunchained.patron.Patrons.pledged(player, d) && !revokes(player, d))
                     return net.minecraft.network.chat.Component.translatable("eidolonunchained.ritual.already_follower", com.bluelotuscoding.eidolonunchained.patron.Patrons.deityName(d));
                 if (com.bluelotuscoding.eidolonunchained.patron.Patrons.isRequired(d) && majorAfter != null && !majorAfter.equals(d))

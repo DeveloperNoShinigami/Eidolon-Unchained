@@ -18,7 +18,7 @@ import java.util.Set;
 
 /**
  * A discovery (Phase 4, spec §8): "when this happens, and these conditions hold, give this". Declared in server scripts
- * through {@code EidolonUnchainedEvents.discoveries(e => e.create(id)…)} (rebuilt on server start and {@code /reload}) or
+ * through {@code EidolonUnchainedEvents.discoveries(e => e.discover(id)…)} (rebuilt on server start and {@code /reload}) or
  * as {@code research(id).discoveredBy(...)} in startup scripts. Once per player by default, remembered in the player's
  * persistent NBT {@code eidolonunchained.discoveries} (rule C6).
  */
@@ -41,6 +41,9 @@ public final class Discovery {
     boolean once = true;
     /** With repeatable: how many times per player (0 = no limit). */
     int times = 0;
+    /** Fires on every n-th match (1 = every match). */
+    int count = 1;
+    final List<ResourceLocation> offers = new ArrayList<>();
 
     public Discovery(ResourceLocation id) {
         this.id = id;
@@ -114,6 +117,19 @@ public final class Discovery {
         return this;
     }
 
+    @Info("Fires on the n-th matching event (counted per player), e.g. .count(10) on 'kill' = the tenth kill")
+    public Discovery count(int n) {
+        if (n < 1) throw new IllegalArgumentException("Eidolon Unchained: discovery '" + id + "': count(n) needs n >= 1");
+        this.count = n;
+        return this;
+    }
+
+    @Info("The god calls the player: its greeting and question are typed out and the player answers in chat (deity(...).calling sets the words)")
+    public Discovery offersPatronage(String deityId) {
+        offers.add(Ids.of(deityId, "deity"));
+        return this;
+    }
+
     @Info("Once per player (the default)")
     public Discovery once() {
         this.once = true;
@@ -148,6 +164,7 @@ public final class Discovery {
         var player = ctx.getPlayer();
         if (once && hasDiscovered(player, id)) return;
         if (!once && times > 0 && count(player, id) >= times) return;
+        if (count > 1 && !step(player, id, count)) return;
         var helper = new PlayerHelper(player);
         try {
             for (var r : research) helper.grantResearch(r.toString());
@@ -160,6 +177,8 @@ public final class Discovery {
             }
             if (message != null) player.displayClientMessage(Component.translatableWithFallback(message, message), true);
             if (action != null) action.run(ctx);
+            if (player instanceof net.minecraft.server.level.ServerPlayer sp)
+                for (var god : offers) com.bluelotuscoding.eidolonunchained.patron.Callings.offer(sp, god);
         } catch (RuntimeException e) {
             EidolonUnchained.LOGGER.error("discovery '{}' failed: {}", id, e.toString());
         }
@@ -190,6 +209,22 @@ public final class Discovery {
         persisted.put(Player.PERSISTED_NBT_TAG, tag);
     }
 
+    /** Counts one more match toward {@code .count(n)}; true (and the count starts over) on the n-th. */
+    private static boolean step(Player player, ResourceLocation id, int n) {
+        var persisted = player.getPersistentData();
+        var tag = persisted.getCompound(Player.PERSISTED_NBT_TAG);
+        var root = tag.getCompound(ROOT);
+        root.putInt("v", 1);
+        var progress = root.getCompound("discovery_progress");
+        int now = progress.getInt(id.toString()) + 1;
+        boolean fire = now >= n;
+        progress.putInt(id.toString(), fire ? 0 : now);
+        root.put("discovery_progress", progress);
+        tag.put(ROOT, root);
+        persisted.put(Player.PERSISTED_NBT_TAG, tag);
+        return fire;
+    }
+
     /** How many times a limited repeatable discovery has fired for the player. */
     public static int count(Player player, ResourceLocation id) {
         return player.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getCompound(ROOT).getCompound("discovery_counts").getInt(id.toString());
@@ -211,7 +246,7 @@ public final class Discovery {
         var persisted = player.getPersistentData();
         var tag = persisted.getCompound(Player.PERSISTED_NBT_TAG);
         var root = tag.getCompound(ROOT);
-        if (id == null) { root.remove("discoveries"); root.remove("discovery_counts"); }
+        if (id == null) { root.remove("discoveries"); root.remove("discovery_counts"); root.remove("discovery_progress"); }
         else {
             var list = root.getList("discoveries", Tag.TAG_STRING);
             var out = new ListTag();
@@ -220,6 +255,9 @@ public final class Discovery {
             var counts = root.getCompound("discovery_counts");
             counts.remove(id.toString());
             root.put("discovery_counts", counts);
+            var progress = root.getCompound("discovery_progress");
+            progress.remove(id.toString());
+            root.put("discovery_progress", progress);
         }
         tag.put(ROOT, root);
         persisted.put(Player.PERSISTED_NBT_TAG, tag);

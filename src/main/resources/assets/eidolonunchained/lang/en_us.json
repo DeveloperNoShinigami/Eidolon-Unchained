@@ -58,5 +58,17 @@
   "eidolonunchained.hexblade.not_follower": "The blade sleeps: you do not follow %s",
   "command.eidolonunchained.patron.get_mob": "%s: patron %s",
   "command.eidolonunchained.patron.not_living": "%s cannot follow a god",
-  "command.eidolonunchained.patron.mob_cleared": "%s: patron cleared (now %s, from its type or caster profile)"
+  "command.eidolonunchained.patron.mob_cleared": "%s: patron cleared (now %s, from its type or caster profile)",
+  "eidolonunchained.calling.greeting": "I have watched you, %s.",
+  "eidolonunchained.calling.question": "Will you follow me?",
+  "eidolonunchained.calling.accept": "Then you are mine.",
+  "eidolonunchained.calling.decline": "So be it.",
+  "eidolonunchained.calling.silence": "Silence is an answer too.",
+  "eidolonunchained.calling.bound": "You are bound to %2$s. Come to me when you are free.",
+  "eidolonunchained.calling.hint": "(answer in chat)",
+  "eidolonunchained.calling.you": "You: %s",
+  "eidolonunchained.calling.unclear": "Answer yes or no.",
+  "eidolonunchained.ritual.not_called": "%s has not called you",
+  "eidolonunchained.patron.title.pledged": "is now your patron",
+  "eidolonunchained.patron.title.revoked": "no longer answers you"
 }

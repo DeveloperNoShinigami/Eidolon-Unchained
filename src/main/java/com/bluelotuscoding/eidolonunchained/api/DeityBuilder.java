@@ -28,6 +28,7 @@ public final class DeityBuilder {
     ResourceLocation model;
     Integer maxReputation;
     final List<String> followers = new ArrayList<>();
+    com.bluelotuscoding.eidolonunchained.patron.Callings.Settings calling;
     Boolean patronRequired;
     Boolean requiresCalling;
     final List<StageDecl> stages = new ArrayList<>();
@@ -117,6 +118,50 @@ public final class DeityBuilder {
         return this;
     }
 
+    @Info("How this god calls a player (offersPatronage in a discovery): { greeting, question, accept, decline, silence, bound: lang keys or text (%s = the player; bound also gets the other god), yes: ['yes', ...], no: ['no', ...], wait: seconds (60), callAgainAfter: seconds or 'never' (default), voice: a sound id played as the words type out (default 'eidolon:chant_word') }")
+    public DeityBuilder calling(java.util.Map<String, Object> options) {
+        var def = com.bluelotuscoding.eidolonunchained.patron.Callings.Settings.DEFAULT;
+        String greeting = def.greeting(), question = def.question(), accept = def.accept(), decline = def.decline(),
+                silence = def.silence(), bound = def.bound();
+        List<String> yes = def.yes(), no = def.no();
+        int wait = def.waitTicks();
+        long again = def.callAgainTicks();
+        var voice = def.voice();
+        for (var e : options.entrySet()) {
+            var v = e.getValue();
+            switch (e.getKey()) {
+                case "greeting" -> greeting = String.valueOf(v);
+                case "question" -> question = String.valueOf(v);
+                case "accept" -> accept = String.valueOf(v);
+                case "decline" -> decline = String.valueOf(v);
+                case "silence" -> silence = String.valueOf(v);
+                case "bound" -> bound = String.valueOf(v);
+                case "yes" -> yes = words(v, "yes");
+                case "no" -> no = words(v, "no");
+                case "wait" -> wait = (int) Math.round(seconds(v, "wait") * 20);
+                case "voice" -> voice = Ids.of(String.valueOf(v), "sound");
+                case "callAgainAfter" -> again = "never".equals(String.valueOf(v)) ? -1 : Math.round(seconds(v, "callAgainAfter") * 20);
+                default -> throw new IllegalArgumentException("Eidolon Unchained: deity '" + id + "': unknown calling option '" + e.getKey()
+                        + "' (greeting, question, accept, decline, silence, bound, yes, no, wait, callAgainAfter, voice)");
+            }
+        }
+        this.calling = new com.bluelotuscoding.eidolonunchained.patron.Callings.Settings(greeting, question, accept, decline, silence, bound, yes, no, wait, again, voice);
+        return this;
+    }
+
+    private List<String> words(Object v, String key) {
+        var out = new ArrayList<String>();
+        if (v instanceof Iterable<?> it) for (var o : it) out.add(String.valueOf(o));
+        else out.add(String.valueOf(v));
+        if (out.isEmpty()) throw new IllegalArgumentException("Eidolon Unchained: deity '" + id + "': calling '" + key + "' needs at least one phrase");
+        return List.copyOf(out);
+    }
+
+    private double seconds(Object v, String key) {
+        if (v instanceof Number n && n.doubleValue() > 0) return n.doubleValue();
+        throw new IllegalArgumentException("Eidolon Unchained: deity '" + id + "': calling '" + key + "' must be a number of seconds > 0" + ("callAgainAfter".equals(key) ? " or 'never'" : ""));
+    }
+
     @Info("Mob types that follow this god: entity ids or '#tags', e.g. '#minecraft:skeletons', 'minecraft:wither' (D55)")
     public DeityBuilder followers(String... entityTypesOrTags) {
         for (var spec : entityTypesOrTags) {
@@ -194,6 +239,7 @@ public final class DeityBuilder {
         Boolean required = patronRequired != null ? patronRequired : (extend ? null : Boolean.TRUE);
         Patrons.declare(deity.getId(), required, requiresCalling, stageMana);
         if (!followers.isEmpty()) Patrons.declareFollowers(deity.getId(), followers);
+        if (calling != null) com.bluelotuscoding.eidolonunchained.patron.Callings.declare(deity.getId(), calling);
         DeityHooks.register(deity.getId(), model, onUnlock, onLock, onChange);
         EidolonUnchained.LOGGER.debug("deity '{}': {} stage(s), model {}", id, stages.size(), model);
     }

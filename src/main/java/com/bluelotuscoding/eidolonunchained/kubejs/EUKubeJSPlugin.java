@@ -25,8 +25,6 @@ public class EUKubeJSPlugin extends KubeJSPlugin {
     public void init() {
         dev.latvian.mods.kubejs.registry.RegistryInfo.ITEM.addType("eidolonunchained:hexblade",
                 com.bluelotuscoding.eidolonunchained.hexblade.HexbladeItemBuilder.class, com.bluelotuscoding.eidolonunchained.hexblade.HexbladeItemBuilder::new);
-        dev.latvian.mods.kubejs.registry.RegistryInfo.ITEM.addType("hexblade",
-                com.bluelotuscoding.eidolonunchained.hexblade.HexbladeItemBuilder.class, com.bluelotuscoding.eidolonunchained.hexblade.HexbladeItemBuilder::new);
     }
 
     @Override

@@ -62,8 +62,7 @@ public final class ImbueNbt {
 
     public static List<ResourceLocation> chants(ItemStack stack) {
         var grant = root(stack).getCompound("caster_grant");
-        var key = grant.contains("chants", Tag.TAG_LIST) ? "chants" : "spells";
-        var list = grant.getList(key, Tag.TAG_STRING);
+        var list = grant.getList("chants", Tag.TAG_STRING);
         var out = new ArrayList<ResourceLocation>(list.size());
         for (int i = 0; i < list.size(); i++) {
             var rl = ResourceLocation.tryParse(list.getString(i));
@@ -112,7 +111,6 @@ public final class ImbueNbt {
         var list = new ListTag();
         for (var c : chants) list.add(StringTag.valueOf(c.toString()));
         grant.put("chants", list);
-        grant.remove("spells");
         root.put("caster_grant", grant);
         if (chants.isEmpty()) { root.remove("caster_grant"); root.remove("imbue"); }
     }

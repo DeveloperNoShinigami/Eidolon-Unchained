@@ -27,6 +27,8 @@ public final class EUNetwork {
                 .encoder(MobChantStatePacket::encode).decoder(MobChantStatePacket::decode).consumerMainThread(MobChantStatePacket::handle).add();
         CHANNEL.messageBuilder(ImbueInputPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(ImbueInputPacket::encode).decoder(ImbueInputPacket::decode).consumerMainThread(ImbueInputPacket::handle).add();
+        CHANNEL.messageBuilder(CallingPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(CallingPacket::encode).decoder(CallingPacket::decode).consumerMainThread(CallingPacket::handle).add();
     }
 
     public static void sendTo(ServerPlayer player, Object packet) {

@@ -411,11 +411,24 @@ public final class Patrons {
 
     private static void fire(ServerPlayer player, ResourceLocation deity, @Nullable ResourceLocation previous, boolean granted) {
         EidolonUnchained.LOGGER.debug("{} {} {}", player.getName().getString(), granted ? "pledged to" : "revoked", deity);
+        announce(player, deity, granted);
         try {
             onChanged.changed(player, deity, previous, granted);
         } catch (RuntimeException e) {
             EidolonUnchained.LOGGER.error("patronChanged listener threw: {}", e.toString());
         }
+    }
+
+    /** The moment on screen: the god's name as a title in its colour, and what changed beneath it. */
+    private static void announce(ServerPlayer player, ResourceLocation deity, boolean granted) {
+        var d = Deities.find(deity);
+        int color = d == null ? 0xFFFFFF : ((int) (d.getRed() * 255) << 16) | ((int) (d.getGreen() * 255) << 8) | (int) (d.getBlue() * 255);
+        player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket(10, 60, 20));
+        player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket(
+                Component.translatable(granted ? "eidolonunchained.patron.title.pledged" : "eidolonunchained.patron.title.revoked").withStyle(s -> s.withColor(0xDDDDDD))));
+        player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket(deityName(deity).copy().withStyle(s -> s.withColor(color))));
+        player.level().playSound(null, player.blockPosition(), granted ? net.minecraft.sounds.SoundEvents.TOTEM_USE : net.minecraft.sounds.SoundEvents.BEACON_DEACTIVATE,
+                net.minecraft.sounds.SoundSource.PLAYERS, granted ? 0.6f : 0.8f, granted ? 1.2f : 0.7f);
     }
 
     private static CompoundTag data(Player player) {

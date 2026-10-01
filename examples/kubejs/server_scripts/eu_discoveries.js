@@ -1,23 +1,23 @@
 // Phase 4 example: discoveries (server scripts, rebuilt on /reload). "When this happens, and these conditions hold, give this."
-// Each is once per player unless .repeatable(); /eu discoveries reset forgets them for testing, /eu discoveries list shows them.
+// Each is once per player unless .repeatable([n]); /eu discoveries reset forgets them for testing, /eu discoveries list shows them.
 var C = EidolonUnchained.conditions   // Phase 4 condition library (var: KubeJS files share one scope, so each file may repeat it)
 
 EidolonUnchainedEvents.discoveries(event => {
     // Easy to test: the first time you walk into any ocean biome.
-    event.create('eu_examples:sea_memory')
+    event.discover('eu_examples:sea_memory')
         .on('biome')
         .when(C.biome('#minecraft:is_ocean'))
         .grantFact('eu_examples:sea_memory')
         .message('eu_examples.discovery.sea_memory')
 
     // Entering the Deep Dark teaches the Storm sign.
-    event.create('eu_examples:deep_dark_whispers')
+    event.discover('eu_examples:deep_dark_whispers')
         .on('biome', 'minecraft:deep_dark')
         .grantSign('eu_examples:storm')
         .message('eu_examples.discovery.deep_dark')
 
     // Killing a zombie named "The Forgotten" teaches Necromantic Rites, if Myrkul regards you at all.
-    event.create('eu_examples:forgotten_lore')
+    event.discover('eu_examples:forgotten_lore')
         .on('kill')
         .when(C.entity('minecraft:zombie').named('The Forgotten'))
         .when(C.player().reputation('eu_examples:myrkul', 0))
@@ -25,14 +25,14 @@ EidolonUnchainedEvents.discoveries(event => {
         .message('eu_examples.discovery.forgotten')
 
     // Every Storm Rite you finish pleases Myrkul a little.
-    event.create('eu_examples:storm_rite_favor')
+    event.discover('eu_examples:storm_rite_favor')
         .on('ritual', 'eu_examples:storm_rite')
         .reputation('eu_examples:myrkul', 5)
         .message('eu_examples.discovery.storm_rite')
         .repeatable()
 
     // Enthralling any undead with Eidolon's enthrall chant.
-    event.create('eu_examples:thrall_master')
+    event.discover('eu_examples:thrall_master')
         .on('enthrall')
         .when(C.entity().undead())
         .grantFact('eu_examples:thrall_master')
@@ -40,14 +40,33 @@ EidolonUnchainedEvents.discoveries(event => {
 
     // Reaching a fortress while Myrkul regards you. (Not the Dark: Eidolon caps Dark reputation at 3 until the player
     // knows its "Sacrifice Mob" research, so a Dark >= 10 condition can't pass early in a playthrough.)
-    event.create('eu_examples:fortress_omen')
+    event.discover('eu_examples:fortress_omen')
         .on('structure', 'minecraft:fortress')
         .when(C.player().reputation('eu_examples:myrkul', 10))
         .reputation('eu_examples:myrkul', 3)
         .run(ctx => ctx.player.tell('§5The fortress walls hum; Myrkul has walked these halls.'))
+    // Phase 5: callings. A god calls the player; they answer in chat (deity(...).calling sets the words).
+    // Repeatable: every n-th match tries again; the calling itself skips followers and waits out its cooldown.
+    event.discover('eu_examples:light_calls')
+        .on('kill')
+        .when(C.entity().undead())
+        .count(10)                                   // every tenth undead you put to rest
+        .offersPatronage('eidolon:light')
+        .repeatable()
+    event.discover('eu_examples:dark_calls')
+        .on('kill')
+        .when(C.night())
+        .count(5)                                    // every fifth kill under the night sky
+        .offersPatronage('eidolon:dark')
+        .repeatable()
+    event.discover('eu_examples:myrkul_calls')
+        .on('kill')
+        .when(C.entity('minecraft:zombie').named('The Forgotten'))
+        .offersPatronage('eu_examples:myrkul')   // once (the default): Myrkul asks a single time
+
     // Phase 5: followers. Each of Myrkul's followers you kill (skeletons, the wither, or anyone pledged to him) pleases
     // the Light, ten times at most.
-    event.create('eu_examples:bane_of_the_grave')
+    event.discover('eu_examples:bane_of_the_grave')
         .on('kill')
         .when(C.entity().patron('eu_examples:myrkul'))
         .reputation('eidolon:light', 1)

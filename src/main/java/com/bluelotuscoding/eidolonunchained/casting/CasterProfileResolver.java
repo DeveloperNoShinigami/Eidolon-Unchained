@@ -60,9 +60,8 @@ public final class CasterProfileResolver {
         var effective = base != null ? base.copy(new ResourceLocation(ROOT, "resolved")) : new CasterProfile(new ResourceLocation(ROOT, "resolved"));
         if (base == null) effective.spells.clear();
 
-        // entity overrides ("chants" is the D40 key; "spells" is still read)
+        // entity overrides
         applyList(entityTag, "chants", effective.spells);
-        applyList(entityTag, "spells", effective.spells);
         if (entityTag.contains("deity")) effective.deity = ResourceLocation.tryParse(entityTag.getString("deity"));
         if (entityTag.contains("max_mana")) effective.maxMana = entityTag.getFloat("max_mana");
         if (entityTag.contains("regen")) effective.regenPerSecond = entityTag.getFloat("regen");
@@ -78,7 +77,6 @@ public final class CasterProfileResolver {
         // equipment grants: add spells, deity if none, mana
         for (var g : grants) {
             applyList(g, "chants", effective.spells);
-            applyList(g, "spells", effective.spells);
             if (effective.deity == null && g.contains("deity")) effective.deity = ResourceLocation.tryParse(g.getString("deity"));
             if (g.contains("max_mana_add")) effective.maxMana += g.getFloat("max_mana_add");
         }
@@ -115,9 +113,9 @@ public final class CasterProfileResolver {
         var root = mob.getPersistentData().getCompound(ROOT);
         root.putInt("v", 1);
         var caster = root.getCompound("caster");
-        var list = caster.getList("spells", Tag.TAG_STRING);
+        var list = caster.getList("chants", Tag.TAG_STRING);
         list.add(net.minecraft.nbt.StringTag.valueOf(spell.toString()));
-        caster.put("spells", list);
+        caster.put("chants", list);
         root.put("caster", caster);
         mob.getPersistentData().put(ROOT, root);
     }

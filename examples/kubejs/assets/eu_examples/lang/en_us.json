@@ -42,5 +42,20 @@
   "eu_examples.ritual.pact_of_the_grave": "Pact of the Grave",
   "eu_examples.ritual.vow_of_light": "Vow of Light",
   "eu_examples.ritual.vow_of_night": "Vow of Night",
-  "eu_examples.ritual.renunciation": "Renunciation"
+  "eu_examples.ritual.renunciation": "Renunciation",
+  "eu_examples.calling.light.greeting": "I have watched you, %s. Your blade gives rest to the restless dead.",
+  "eu_examples.calling.light.question": "Will you walk in my light?",
+  "eu_examples.calling.light.accept": "Then rise, my champion. Carry my light where the dead still walk.",
+  "eu_examples.calling.light.decline": "The door stays open. I will not call again.",
+  "eu_examples.calling.light.silence": "You hesitate. I will ask again another day.",
+  "eu_examples.calling.dark.greeting": "You hunt when the sun is gone, %s. I like that.",
+  "eu_examples.calling.dark.question": "Will you give yourself to the night?",
+  "eu_examples.calling.dark.accept": "Good. The night remembers its own.",
+  "eu_examples.calling.dark.decline": "Then walk in the light, and see how far it reaches.",
+  "eu_examples.calling.dark.silence": "Silence. The night can wait.",
+  "eu_examples.calling.myrkul.greeting": "The Forgotten lies still, %s, and I felt its last breath.",
+  "eu_examples.calling.myrkul.question": "Will you serve the Throne of Bones?",
+  "eu_examples.calling.myrkul.accept": "Kneel, then. The dead will know your name.",
+  "eu_examples.calling.myrkul.decline": "All come to me in the end.",
+  "eu_examples.calling.myrkul.silence": "All come to me in the end. You will too."
 }
