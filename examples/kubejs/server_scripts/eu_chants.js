@@ -2,10 +2,10 @@
 ServerEvents.recipes(event => {
     // The first argument is the chant id; the recipe gets the same id, which is how Eidolon links them.
     event.recipes.eidolon.chant('eu_examples:call_storm', ['eidolon:soul', 'eu_examples:storm', 'eidolon:soul'])
-    event.recipes.eidolon.chant('eu_examples:bone_shield', ['eidolon:wicked', 'eidolon:soul', 'eidolon:wicked'])
-    event.recipes.eidolon.chant('eu_examples:grave_curse', ['eidolon:wicked', 'eidolon:wicked', 'eidolon:wicked'])
-    event.recipes.eidolon.chant('eu_examples:dark_rebuke', ['eidolon:wicked', 'eidolon:blood', 'eidolon:wicked'])
-    event.recipes.eidolon.chant('eu_examples:bone_volley', ['eidolon:soul', 'eidolon:wicked', 'eidolon:soul'])
+    event.recipes.eidolon.chant('eu_examples:bone_shield', ['eidolon:soul', 'eidolon:wicked', 'eidolon:wicked'])   // wicked, soul, wicked is Hexblades' hex_pray
+    event.recipes.eidolon.chant('eu_examples:grave_curse', ['eidolon:death', 'eidolon:wicked', 'eidolon:death'])   // wicked x3 is Eidolon's Dark Prayer
+    event.recipes.eidolon.chant('eu_examples:dark_rebuke', ['eidolon:wicked', 'eidolon:blood', 'eidolon:blood'])   // wicked, blood, wicked is Eidolon's Dark Animal Sacrifice
+    event.recipes.eidolon.chant('eu_examples:bone_volley', ['eidolon:soul', 'eidolon:death', 'eidolon:soul'])   // soul, wicked, soul is Myrkul's prayer
     event.recipes.eidolon.chant('eu_examples:shadow_bolt', ['eidolon:wicked', 'eidolon:wicked', 'eidolon:soul'])
 
     // Command chants (Eidolon's command_chant: signs, commands, mana cost). The commands run at permission level 2 with the

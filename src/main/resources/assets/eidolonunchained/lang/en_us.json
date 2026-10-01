@@ -33,5 +33,16 @@
   "eidolonunchained.hexblade.energy": "Energy: %s / %s",
   "eidolonunchained.hexblade.shift": "Hold Shift for details",
   "eidolonunchained.chant.conditions_unmet": "The chant finds no purchase here (its conditions are not met)",
-  "eidolonunchained.ritual.refused": "The flames gutter: this rite's conditions are not met"
+  "eidolonunchained.ritual.refused": "The flames gutter: this rite's conditions are not met",
+  "eidolonunchained.patron.unknown_deity": "Unknown deity %s",
+  "eidolonunchained.patron.already_pledged": "%s is already pledged to %s",
+  "eidolonunchained.patron.other_major": "%s already follows %s; revoke that pledge first",
+  "eidolonunchained.patron.not_pledged": "%s is not pledged to %s",
+  "command.eidolonunchained.patron.get": "%s: patron %s, pledges %s",
+  "command.eidolonunchained.patron.none": "none",
+  "command.eidolonunchained.patron.set": "%s pledged to %s",
+  "command.eidolonunchained.patron.revoked": "%s no longer pledged to %s (reputation %s)",
+  "command.eidolonunchained.patron.revoke_none": "%s has no pledge to revoke",
+  "command.eidolonunchained.mana.show": "%s: %s / %s mana",
+  "command.eidolonunchained.mana.no_targets": "No target has mana"
 }

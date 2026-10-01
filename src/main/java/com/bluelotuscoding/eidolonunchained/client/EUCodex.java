@@ -126,8 +126,14 @@ public final class EUCodex {
             if (index == null) index = eidolonIndex(e.getKey());
             if (index == null) { EidolonUnchained.LOGGER.error("Codex: unknown category '{}' for {} chapter(s)", e.getKey(), e.getValue().size()); continue; }
             var list = e.getValue().stream().map(en -> en.entry).toList();
+            // a scripted category's first index page carries its title, as Eidolon's own categories do
+            // (heading from lang 'eidolon.codex.category.<ns>.<path>.title', the tab's key plus '.title')
+            boolean titled = categories.containsKey(e.getKey());
             for (int i = 0; i < list.size(); i += 6) {
-                index.addPage(new IndexPage(list.subList(i, Math.min(list.size(), i + 6)).toArray(new IndexPage.IndexEntry[0])));
+                var entries = list.subList(i, Math.min(list.size(), i + 6)).toArray(new IndexPage.IndexEntry[0]);
+                index.addPage(titled && i == 0
+                        ? new elucent.eidolon.codex.TitledIndexPage("eidolon.codex.category." + e.getKey().getNamespace() + "." + e.getKey().getPath(), entries)
+                        : new IndexPage(entries));
             }
         }
 

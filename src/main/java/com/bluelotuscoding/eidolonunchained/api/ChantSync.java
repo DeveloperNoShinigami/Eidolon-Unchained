@@ -55,6 +55,7 @@ public final class ChantSync {
     }
 
     public static void refresh(MinecraftServer server) {
+        SEQUENCES.clear();
         Map<net.minecraft.resources.ResourceLocation, SignSequence> byId = new HashMap<>();
         for (var type : Spells.chantTypes) {
             for (ChantRecipe recipe : server.getRecipeManager().getAllRecipesFor(type)) {
@@ -74,5 +75,37 @@ public final class ChantSync {
             EidolonUnchained.LOGGER.info("Chant recipes linked to scripted spells: {} linked{}", linked,
                     orphaned == 0 ? "" : ", " + orphaned + " spell(s) have no eidolon:chant recipe with their id and cannot be chanted");
         }
+        warnClashes();
+    }
+
+    /**
+     * Two chants with the same signs: Eidolon resolves a sequence to the first match, so the other one can never be
+     * chanted or written to a scroll (a scroll of it reads as the first). Checks recipe against recipe, and recipes
+     * against Eidolon's fixed-sign spells (its prayers and sacrifices, and scripted prayers).
+     */
+    private static void warnClashes() {
+        Map<String, java.util.List<net.minecraft.resources.ResourceLocation>> byKey = new HashMap<>();
+        for (var e : SEQUENCES.entrySet()) byKey.computeIfAbsent(key(e.getValue()), k -> new java.util.ArrayList<>()).add(e.getKey());
+        for (var e : byKey.entrySet()) {
+            if (e.getValue().size() > 1) EidolonUnchained.LOGGER.warn("Chants {} share the signs {}: only one of them can be chanted", e.getValue(), e.getKey());
+        }
+        for (var e : SEQUENCES.entrySet()) {
+            var seq = new SignSequence(e.getValue().toArray(new elucent.eidolon.api.spells.Sign[0]));
+            for (var spell : Spells.getSpellMap().values()) {
+                if (spell instanceof ScriptedSpell || spell.getRegistryName().equals(e.getKey()) || SEQUENCES.containsKey(spell.getRegistryName())) continue;
+                try {
+                    if (spell.matches(seq)) EidolonUnchained.LOGGER.warn("Chant {} has the same signs ({}) as {}: a scroll or chant of them is read as {}",
+                            e.getKey(), key(e.getValue()), spell.getRegistryName(), spell.getRegistryName());
+                } catch (RuntimeException ignored) {
+                    // a spell whose signs are only set once a recipe resolves it
+                }
+            }
+        }
+    }
+
+    private static String key(java.util.List<elucent.eidolon.api.spells.Sign> signs) {
+        var sb = new StringBuilder();
+        for (var s : signs) sb.append(sb.length() == 0 ? "" : ", ").append(s.getRegistryName());
+        return sb.toString();
     }
 }
