@@ -7,9 +7,9 @@ StartupEvents.registry('item', event => {
         .texture('eu_examples:item/bone_blade')     // the flat icon, shown in inventory and other GUI slots
         // GeckoLib look everywhere else (hand, ground, item frames, other players and mobs): assets/eu_examples/
         // geo/item/bone_blade.geo.json, animations/item/bone_blade.animation.json, textures/item/bone_blade_geo.png
-        // (+ _glowmask: the teal soul-fire glows) and models/item/bone_blade_geo.json (hand/world display transforms).
-        // Awakening plays the 'awaken' transformation (the spine spreads over soul-fire, barbs and horns grow, the
-        // skull's eyes light), loops 'awakened', and on sleep plays 'sleep' back to the 'dormant' blade.
+        // (+ _glowmask: the skull's eyes glow) and models/item/bone_blade_geo.json (hand/world display transforms).
+        // Awakening plays the 'awaken' transformation (the spine spreads in bursts of teal soul-fire particles, barbs and horns grow, the skull's jaw drops and its
+        // eyes light), loops 'awakened', and on sleep plays 'sleep' back to the 'dormant' blade.
         .geoModel('eu_examples:bone_blade')
         .tier('netherite')
         .attackDamageBaseline(4)                 // dormant damage = baseline + tier bonus
