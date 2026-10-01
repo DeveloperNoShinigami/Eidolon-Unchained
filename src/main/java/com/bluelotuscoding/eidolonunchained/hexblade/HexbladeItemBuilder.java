@@ -67,8 +67,8 @@ public class HexbladeItemBuilder extends HandheldItemBuilder {
     }
 
     @Info("Energy recharged per tick while dormant (default 5); also the reserve kept when the blade sleeps")
-    public HexbladeItemBuilder rechargeTicks(int ticks) {
-        settings.rechargeTicks = Math.max(0, ticks);
+    public HexbladeItemBuilder rechargePerTick(int energy) {
+        settings.rechargePerTick = Math.max(0, energy);
         return this;
     }
 

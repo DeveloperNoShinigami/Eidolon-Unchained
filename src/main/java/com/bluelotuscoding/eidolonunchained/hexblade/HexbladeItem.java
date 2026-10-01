@@ -64,7 +64,7 @@ public class HexbladeItem extends SwordItem implements GeoItem {
     public static final class Settings {
         public ResourceLocation deity;
         public @Nullable ResourceLocation geoModel;   // GeckoLib look (HexbladeGeo); null = the flat item model
-        public int rechargeTicks = 5;
+        public int rechargePerTick = 5;
         public ResourceLocation divineDamage;
         public int drainPerTick = 2;
         public int hitEnergy = 10;
@@ -229,13 +229,13 @@ public class HexbladeItem extends SwordItem implements GeoItem {
             }
         }
         if (awakened && !player.isCreative()) {
-            if (energyLeft(stack) > s.rechargeTicks + 1) {
+            if (energyLeft(stack) > s.rechargePerTick + 1) {
                 stack.hurtAndBreak(s.drainPerTick, player, p -> p.broadcastBreakEvent(EquipmentSlot.MAINHAND));
             } else {
                 setAwakened(stack, player, false);                 // spent: the blade sleeps
             }
         } else if (stack.getDamageValue() > 0) {
-            stack.setDamageValue(Math.max(stack.getDamageValue() - s.rechargeTicks, 0));
+            stack.setDamageValue(Math.max(stack.getDamageValue() - s.rechargePerTick, 0));
         }
     }
 
