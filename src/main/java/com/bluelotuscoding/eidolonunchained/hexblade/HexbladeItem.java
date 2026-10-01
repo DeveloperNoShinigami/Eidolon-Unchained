@@ -28,6 +28,15 @@ import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import software.bernie.geckolib.animatable.GeoItem;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.util.GeckoLibUtil;
+
+import java.util.function.Consumer;
 
 import java.util.List;
 
@@ -38,7 +47,7 @@ import java.util.List;
  * {@code StartupEvents.registry('item', e => e.create('mypack:bone_blade', 'eidolonunchained:hexblade').deity(...)…)}.
  * State lives in {@code eidolonunchained:{v:1, hexblade:{awakened, damage, speed, elemental}}} (rule C6).
  */
-public class HexbladeItem extends SwordItem {
+public class HexbladeItem extends SwordItem implements GeoItem {
     public interface DevotionFn {
         double apply(double devotion);
     }
@@ -54,6 +63,7 @@ public class HexbladeItem extends SwordItem {
     /** Everything the builder decided. */
     public static final class Settings {
         public ResourceLocation deity;
+        public @Nullable ResourceLocation geoModel;   // GeckoLib look (HexbladeGeo); null = the flat item model
         public int rechargeTicks = 5;
         public int drainPerTick = 2;
         public int hitEnergy = 10;
@@ -80,6 +90,34 @@ public class HexbladeItem extends SwordItem {
         this.s = settings;
         this.baseAttack = attackBaseline + tier.getAttackDamageBonus();
         this.baseSpeed = speedBaseline;
+    }
+
+    // ---- GeckoLib look (only when the builder set geoModel) ----
+
+    private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        if (s.geoModel != null) controllers.add(HexbladeGeo.controller(this, s.geoModel));
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return geoCache;
+    }
+
+    @Override
+    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
+        consumer.accept(new IClientItemExtensions() {           // runs in the Item constructor: read settings lazily
+            private BlockEntityWithoutLevelRenderer renderer;
+
+            @Override
+            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                if (s.geoModel == null) return IClientItemExtensions.super.getCustomRenderer();
+                if (renderer == null) renderer = new com.bluelotuscoding.eidolonunchained.client.HexbladeGeoRenderer(s.geoModel);
+                return renderer;
+            }
+        });
     }
 
     public Settings settings() {
@@ -179,6 +217,7 @@ public class HexbladeItem extends SwordItem {
 
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
+        if (s.geoModel != null && level instanceof ServerLevel sl) GeoItem.getOrAssignId(stack, sl);   // each blade animates on its own
         if (level.isClientSide() || !(entity instanceof Player player)) return;
         boolean awakened = isAwakened(stack);
         if (s.whileHeld != null && (selected || player.getOffhandItem() == stack)) {
