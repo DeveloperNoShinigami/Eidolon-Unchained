@@ -18,11 +18,11 @@ StartupEvents.registry('item', event => {
         .deity('eu_examples:myrkul')             // devotion with Myrkul scales the awakened powers
         .rechargeTicks(5).drainPerTick(2).hitEnergy(10)
         .elementalRatio(10)                      // elemental power = devotion / 10
+        .divineDamage('eu_examples:necrotic')   // Phase 5 (opt-in): awakened hits deal the elemental power as Myrkul's necrotic damage
         .awakenedDamage(devotion => 2 + devotion / 10)
         .awakenedSpeed(devotion => 0.2)
         .onHit((stack, target, attacker, awakened) => {
             if (awakened) {
-                target.attack(EidolonUnchained.hexblade(stack).elementalPower())
                 target.potionEffects.add('minecraft:wither', 60, 0)
             }
         })
