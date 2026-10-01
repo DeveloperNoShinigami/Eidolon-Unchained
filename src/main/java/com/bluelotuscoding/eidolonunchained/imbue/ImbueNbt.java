@@ -26,7 +26,8 @@ import java.util.List;
  * eidolonunchained:{v:1,
  *   caster_grant:{chants:["ns:id", …]},     // the imbued chants; a mob holding the weapon casts them (rule C4)
  *   imbue:{active:0},                       // which chant the player's right-click casts
- *   protection:{chant:"ns:id", deity:"ns:id"}}   // Deity's Protection: the bound chant
+ *   protection:{chant:"ns:id", deity:"ns:id"},   // Deity's Protection: the bound chant
+ *   cooldown:{until:L, total:I}}            // chant cooldown of this stack (D51): ends at level game time 'until'
  * </pre>
  */
 public final class ImbueNbt {
@@ -139,6 +140,36 @@ public final class ImbueNbt {
         p.putString("chant", chant.toString());
         if (deity != null) p.putString("deity", deity.toString());
         root.put("protection", p);
+    }
+
+    // ---- chant cooldown (D51): per stack, never vanilla's per-item-type cooldown, so a shield on it still blocks ----
+
+    public static void setCooldown(ItemStack stack, long now, int ticks) {
+        if (stack.isEmpty()) return;
+        var root = editRoot(stack);
+        if (ticks <= 0) { root.remove("cooldown"); return; }
+        var cd = new CompoundTag();
+        cd.putLong("until", now + ticks);
+        cd.putInt("total", ticks);
+        root.put("cooldown", cd);
+    }
+
+    /** Ticks left on the stack's chant cooldown at game time {@code now} (fractional for render smoothing). */
+    public static double cooldownRemaining(ItemStack stack, double now) {
+        var cd = root(stack).getCompound("cooldown");
+        return cd.contains("until") ? Math.max(0, cd.getLong("until") - now) : 0;
+    }
+
+    /** 1 just after the cooldown starts, 0 when it is over. */
+    public static float cooldownFraction(ItemStack stack, double now) {
+        var cd = root(stack).getCompound("cooldown");
+        int total = cd.getInt("total");
+        if (total <= 0) return 0;
+        return (float) Math.min(1, cooldownRemaining(stack, now) / total);
+    }
+
+    public static boolean isOnCooldown(ItemStack stack, long now) {
+        return cooldownRemaining(stack, now) > 0;
     }
 
     // ---- names ----
