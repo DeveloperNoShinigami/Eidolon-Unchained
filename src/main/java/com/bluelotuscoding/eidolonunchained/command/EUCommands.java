@@ -2,9 +2,23 @@ package com.bluelotuscoding.eidolonunchained.command;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.casting.PlayerChantState;
+import com.bluelotuscoding.eidolonunchained.patron.Patrons;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import elucent.eidolon.capability.ISoul;
+import elucent.eidolon.common.deity.Deities;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -14,7 +28,8 @@ import elucent.eidolon.registries.Signs;
 
 /**
  * {@code /eu} (decision D23). Phase 3 adds the player-facing chant subcommands (level 0: a player manages their own
- * slots); the admin subcommands from P6 (level 2) arrive with their phases.
+ * slots); the admin subcommands from P6 (level 2) arrive with their phases. Phase 5: {@code patron get|set|revoke}
+ * and {@code mana get|set|add|take|max} (level 2).
  */
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MOD_ID)
 public final class EUCommands {
@@ -62,6 +77,8 @@ public final class EUCommands {
                                             c.getSource().sendSuccess(() -> Component.literal("Forgotten: " + id), false);
                                             return 1;
                                         }))))
+                .then(patron())
+                .then(mana())
                 .then(Commands.literal("chant")
                         .then(Commands.literal("assign")
                                 .then(Commands.argument("slot", IntegerArgumentType.integer(1, PlayerChantState.SLOTS))
@@ -99,5 +116,104 @@ public final class EUCommands {
                             PlayerChantState.of(player).clear(PlayerChantState.ClearReason.PLAYER);
                             return 1;
                         }))));
+    }
+
+    // ---- /eu patron get|set|revoke (D47, level 2) ----
+
+    private static final SuggestionProvider<CommandSourceStack> DEITIES = (c, b) ->
+            SharedSuggestionProvider.suggest(Deities.getDeities().stream().map(d -> d.getId().toString()), b);
+
+    private static LiteralArgumentBuilder<CommandSourceStack> patron() {
+        return Commands.literal("patron").requires(s -> s.hasPermission(2))
+                .then(Commands.literal("get")
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .executes(c -> {
+                                    var player = EntityArgument.getPlayer(c, "player");
+                                    var major = Patrons.majorPatron(player);
+                                    var minor = Patrons.minorPledges(player);
+                                    var none = Component.translatable("command.eidolonunchained.patron.none");
+                                    c.getSource().sendSuccess(() -> Component.translatable("command.eidolonunchained.patron.get", player.getDisplayName(),
+                                            major == null ? none : Component.literal(major.toString()),
+                                            minor.isEmpty() ? none : Component.literal(String.join(", ", minor.stream().map(Object::toString).toList()))), false);
+                                    return major == null ? 0 : 1;
+                                })))
+                .then(Commands.literal("set")
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .then(Commands.argument("deity", ResourceLocationArgument.id()).suggests(DEITIES)
+                                        .executes(c -> {
+                                            var player = EntityArgument.getPlayer(c, "player");
+                                            var deity = ResourceLocationArgument.getId(c, "deity");
+                                            var failure = Patrons.pledge(player, deity);
+                                            if (failure != null) {
+                                                c.getSource().sendFailure(failure);
+                                                return 0;
+                                            }
+                                            c.getSource().sendSuccess(() -> Component.translatable("command.eidolonunchained.patron.set", player.getDisplayName(), deity.toString()), true);
+                                            return 1;
+                                        }))))
+                .then(Commands.literal("revoke")
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .executes(c -> revoke(c, null, 0))
+                                .then(Commands.argument("deity", ResourceLocationArgument.id()).suggests(DEITIES)
+                                        .executes(c -> revoke(c, ResourceLocationArgument.getId(c, "deity"), 0))
+                                        .then(Commands.argument("reputation", DoubleArgumentType.doubleArg())
+                                                .executes(c -> revoke(c, ResourceLocationArgument.getId(c, "deity"), DoubleArgumentType.getDouble(c, "reputation")))))));
+    }
+
+    private static int revoke(CommandContext<CommandSourceStack> c, ResourceLocation deity, double reputation) throws CommandSyntaxException {
+        var player = EntityArgument.getPlayer(c, "player");
+        var revoked = Patrons.revoke(player, deity, reputation);
+        if (revoked.isEmpty()) {
+            c.getSource().sendFailure(deity == null
+                    ? Component.translatable("command.eidolonunchained.patron.revoke_none", player.getDisplayName())
+                    : Component.translatable("eidolonunchained.patron.not_pledged", player.getDisplayName(), deity.toString()));
+            return 0;
+        }
+        for (var d : revoked)
+            c.getSource().sendSuccess(() -> Component.translatable("command.eidolonunchained.patron.revoked", player.getDisplayName(), d.toString(), reputation), true);
+        return revoked.size();
+    }
+
+    // ---- /eu mana get|set|add|take|max (D50, level 2): Eidolon's ISoul magic, called mana as in game ----
+
+    private enum ManaOp { SET, ADD, TAKE, MAX }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> mana() {
+        var root = Commands.literal("mana").requires(s -> s.hasPermission(2))
+                .then(Commands.literal("get")
+                        .then(Commands.argument("targets", EntityArgument.entities())
+                                .executes(c -> mana(c, null, 0))));
+        for (var op : ManaOp.values()) {
+            root.then(Commands.literal(op.name().toLowerCase(java.util.Locale.ROOT))
+                    .then(Commands.argument("targets", EntityArgument.entities())
+                            .then(Commands.argument("amount", FloatArgumentType.floatArg(0))
+                                    .executes(c -> mana(c, op, FloatArgumentType.getFloat(c, "amount"))))));
+        }
+        return root;
+    }
+
+    private static int mana(CommandContext<CommandSourceStack> c, ManaOp op, float amount) throws CommandSyntaxException {
+        int n = 0;
+        for (var entity : EntityArgument.getEntities(c, "targets")) {
+            if (!(entity instanceof LivingEntity living)) continue;
+            var soul = living.getCapability(ISoul.INSTANCE).resolve().orElse(null);
+            if (soul == null) continue;
+            if (op != null) {
+                switch (op) {
+                    case SET -> soul.setMagic(amount);
+                    case ADD -> soul.giveMagic(amount);
+                    case TAKE -> soul.takeMagic(amount);
+                    case MAX -> soul.setMaxMagic(amount);
+                }
+                // a player's max is re-floored by their stages (Patrons); the value set here becomes Eidolon's own max
+                if (op == ManaOp.MAX && living instanceof ServerPlayer sp) Patrons.refreshMana(sp);
+                Patrons.syncSoul(living);
+            }
+            n++;
+            c.getSource().sendSuccess(() -> Component.translatable("command.eidolonunchained.mana.show", living.getDisplayName(),
+                    String.format(java.util.Locale.ROOT, "%.1f", soul.getMagic()), String.format(java.util.Locale.ROOT, "%.1f", soul.getMaxMagic())), op != null);
+        }
+        if (n == 0) c.getSource().sendFailure(Component.translatable("command.eidolonunchained.mana.no_targets"));
+        return n;
     }
 }

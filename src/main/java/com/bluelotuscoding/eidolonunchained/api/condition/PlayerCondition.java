@@ -2,6 +2,7 @@ package com.bluelotuscoding.eidolonunchained.api.condition;
 
 import com.bluelotuscoding.eidolonunchained.api.Ids;
 import com.bluelotuscoding.eidolonunchained.api.PlayerHelper;
+import com.bluelotuscoding.eidolonunchained.patron.Patrons;
 import dev.latvian.mods.kubejs.typings.Info;
 import elucent.eidolon.common.deity.Deities;
 import net.minecraft.server.level.ServerPlayer;
@@ -38,6 +39,23 @@ public final class PlayerCondition extends Condition {
             for (var s : deity.getProgression().getSteps().values()) if (s.id().equals(stage)) return rep >= s.rep();
             return false;
         });
+    }
+
+    @Info("The player's major patron is this deity")
+    public PlayerCondition patron(String deityId) {
+        var deity = Ids.of(deityId, "deity");
+        return narrow("patron " + deity, ctx -> deity.equals(Patrons.majorPatron(p(ctx))));
+    }
+
+    @Info("The player has a major patron")
+    public PlayerCondition hasPatron() {
+        return narrow("has a patron", ctx -> Patrons.majorPatron(p(ctx)) != null);
+    }
+
+    @Info("The player is pledged to this deity (as major patron or a minor pledge)")
+    public PlayerCondition pledged(String deityId) {
+        var deity = Ids.of(deityId, "deity");
+        return narrow("pledged " + deity, ctx -> Patrons.pledged(p(ctx), deity));
     }
 
     public PlayerCondition knowsResearch(String id) {

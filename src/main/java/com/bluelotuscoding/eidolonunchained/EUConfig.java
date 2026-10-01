@@ -20,6 +20,7 @@ public final class EUConfig {
     public static final ForgeConfigSpec.IntValue IMBUE_CAST_COOLDOWN_TICKS;
     public static final ForgeConfigSpec.ConfigValue<java.util.List<? extends Double>> PROTECTION_MANA_SHARE;
     public static final ForgeConfigSpec.ConfigValue<java.util.List<? extends Integer>> PROTECTION_COOLDOWN_TICKS;
+    public static final ForgeConfigSpec.BooleanValue PATRON_REQUIRED_FOR_EIDOLON_DEITIES;
 
     static {
         var b = new ForgeConfigSpec.Builder();
@@ -64,6 +65,11 @@ public final class EUConfig {
                 .defineList("deitysProtectionManaShare", java.util.List.of(1.0, 0.66, 0.33), o -> o instanceof Number);
         PROTECTION_COOLDOWN_TICKS = b.comment("Deity's Protection: ticks between retaliations of one piece, per enchantment level I, II, III.")
                 .defineList("deitysProtectionCooldownTicks", java.util.List.of(200, 140, 80), o -> o instanceof Integer);
+        b.pop();
+        b.push("patrons");
+        PATRON_REQUIRED_FOR_EIDOLON_DEITIES = b.comment("Eidolon's own deities (eidolon:light, eidolon:dark) give no reputation until the player pledges to them (D47),",
+                        "unless a script sets .patronRequired(...) through extendDeity. Every other deity defaults to true in its script.")
+                .define("patronRequiredForEidolonDeities", true);
         b.pop();
         SPEC = b.build();
     }
