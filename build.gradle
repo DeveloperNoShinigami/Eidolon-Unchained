@@ -3,6 +3,7 @@ plugins {
     id 'idea'
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id 'org.spongepowered.mixin' version '0.7.+'
 }
 
 version = mod_version
@@ -28,8 +29,7 @@ minecraft {
             // Dependency mods (KubeJS, GeckoLib) ship mixins with SRG names; remap them onto the dev mappings.
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            // EU's own mixin (Phase 4: the brazier's ritual completion). It targets Eidolon's names, so no refmap is needed.
-            arg '-mixin.config=eidolonunchained.mixins.json'
+            // EU's own mixins: the config is added to every run by the mixin block below.
             mods {
                 "${mod_id}" {
                     source sourceSets.main
@@ -60,6 +60,13 @@ minecraft {
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+// EU's mixins (brazier ritual completion, Eidolon's mana bar). Most targets are Eidolon names (remap = false); the
+// Minecraft ones are written to a refmap so they resolve to SRG names in the built jar.
+mixin {
+    add sourceSets.main, 'eidolonunchained.refmap.json'
+    config 'eidolonunchained.mixins.json'
+}
 
 repositories {
     // ForgeGradle adds the Forge maven and Maven Central.
@@ -99,6 +106,7 @@ repositories {
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
     // Eidolon Repraised: the mod this one extends. Its mod ID is "eidolon".
     implementation fg.deobf("curse.maven:eidolon-repraised-870250:${eidolon_curse_file}")
