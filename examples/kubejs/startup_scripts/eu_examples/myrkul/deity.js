@@ -21,5 +21,6 @@ EidolonUnchained.deity('eu_examples:myrkul')
     .stage('eu_examples:reaper', 40, true).maxMana(150)
         .require(C.player().knowsResearch('eu_examples:necromantic_rites'))   // Phase 4: a condition as a stage requirement
     .maxReputation(100)
+    .devotion([[0, 1.0], [25, 1.15], [100, 2.0]])   // Phase 5: his divine damage grows with your reputation (linear between points)
     .onStageUnlocked((player, stage) => player.tell(`§bMyrkul acknowledges you: ${stage}`))
     .onReputationChanged((player, oldRep, newRep) => console.info(`[EU example] Myrkul rep ${oldRep} -> ${newRep} for ${player.username}`))

@@ -21,6 +21,7 @@ public final class EUConfig {
     public static final ForgeConfigSpec.ConfigValue<java.util.List<? extends Double>> PROTECTION_MANA_SHARE;
     public static final ForgeConfigSpec.ConfigValue<java.util.List<? extends Integer>> PROTECTION_COOLDOWN_TICKS;
     public static final ForgeConfigSpec.BooleanValue PATRON_REQUIRED_FOR_EIDOLON_DEITIES;
+    public static final ForgeConfigSpec.DoubleValue DIVINE_WEAKNESS_FLOOR;
 
     static {
         var b = new ForgeConfigSpec.Builder();
@@ -70,6 +71,10 @@ public final class EUConfig {
         PATRON_REQUIRED_FOR_EIDOLON_DEITIES = b.comment("Eidolon's own deities (eidolon:light, eidolon:dark) give no reputation until the player pledges to them (D47),",
                         "unless a script sets .patronRequired(...) through extendDeity. Every other deity defaults to true in its script.")
                 .define("patronRequiredForEidolonDeities", true);
+        b.pop();
+        b.push("divine_damage");
+        DIVINE_WEAKNESS_FLOOR = b.comment("Lowest effective percent resistance to divine damage after penetration: -1.0 means a weakness can at most double a hit.")
+                .defineInRange("weaknessFloor", -1.0, -10.0, 0.0);
         b.pop();
         SPEC = b.build();
     }

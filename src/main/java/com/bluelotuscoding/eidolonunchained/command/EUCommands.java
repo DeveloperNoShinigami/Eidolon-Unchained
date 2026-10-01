@@ -79,6 +79,13 @@ public final class EUCommands {
                                             return 1;
                                         }))))
                 .then(patron())
+                // /eu damage debug: every divine hit you deal or take prints its steps (level 2)
+                .then(Commands.literal("damage").requires(src -> src.hasPermission(2))
+                        .then(Commands.literal("debug").executes(c -> {
+                            boolean on = com.bluelotuscoding.eidolonunchained.damage.DivineDamages.toggleDebug(c.getSource().getPlayerOrException());
+                            c.getSource().sendSuccess(() -> Component.translatable(on ? "command.eidolonunchained.damage.debug_on" : "command.eidolonunchained.damage.debug_off"), false);
+                            return 1;
+                        })))
                 .then(mana())
                 .then(Commands.literal("chant")
                         .then(Commands.literal("assign")

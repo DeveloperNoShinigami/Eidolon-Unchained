@@ -18,9 +18,13 @@ EidolonUnchained.chant('eu_examples:grave_curse')
     .protectionCost(1)
     .cast((level, pos, player) => {                       // chanted by hand: curse what the player looks at
         const hit = player.rayTrace(12)
-        if (hit.entity) { hit.entity.potionEffects.add('minecraft:wither', 100, 1); hit.entity.potionEffects.add('minecraft:slowness', 100, 1) }
+        if (hit.entity) {
+            hit.entity.hurt(EidolonUnchained.damageSource('eu_examples:necrotic', player), 4)   // Phase 5: Myrkul's necrotic damage
+            hit.entity.potionEffects.add('minecraft:wither', 100, 1); hit.entity.potionEffects.add('minecraft:slowness', 100, 1)
+        }
     })
     .targetCast((level, caster, target) => {              // retaliation / imbued / mob path
+        target.hurt(EidolonUnchained.damageSource('eu_examples:necrotic', caster), 4)
         target.potionEffects.add('minecraft:wither', 100, 1)
         target.potionEffects.add('minecraft:slowness', 100, 1)
         level.spawnParticles('minecraft:soul', true, target.x, target.y + 1, target.z, 0.3, 0.5, 0.3, 12, 0.02)

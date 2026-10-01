@@ -47,6 +47,12 @@ public class HexbladeItemBuilder extends HandheldItemBuilder {
         return this;
     }
 
+    @Info("Awakened hits deal the blade's elemental power as this divine damage (D56: opt-in), e.g. 'eu_examples:necrotic'")
+    public HexbladeItemBuilder divineDamage(String damageId) {
+        settings.divineDamage = Ids.of(damageId, "divine damage");
+        return this;
+    }
+
     @Info("Elemental power = devotion / ratio while awakened (default 10; 0 disables)")
     public HexbladeItemBuilder elementalRatio(double ratio) {
         settings.elementalRatio = ratio;

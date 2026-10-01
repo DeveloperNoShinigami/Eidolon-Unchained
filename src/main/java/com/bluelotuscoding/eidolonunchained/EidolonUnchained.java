@@ -41,7 +41,8 @@ public final class EidolonUnchained {
             if (EUConfig.VALIDATE_EIDOLON_API.get()) {
                 EidolonApiValidation.run();
             }
-            EURegistry.registerAll();      // T1: replay the startup scripts' declarations into Eidolon, in order
+            EURegistry.registerAll();
+            com.bluelotuscoding.eidolonunchained.damage.DivineDamages.validate();      // T1: replay the startup scripts' declarations into Eidolon, in order
         });
     }
 

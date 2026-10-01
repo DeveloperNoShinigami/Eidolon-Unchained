@@ -53,6 +53,12 @@ public final class EUApi {
         return Spells.getSpells().stream().map(sp -> sp.getRegistryName().toString()).toList();
     }
 
+    public static DivineDamageBuilder divineDamage(String id) {
+        if (com.bluelotuscoding.eidolonunchained.damage.DivineDamages.attributesRegistered())
+            throw new IllegalStateException("Eidolon Unchained: divine damage '" + id + "' was declared after attributes registered. Declare it in startup scripts.");
+        return new DivineDamageBuilder(com.bluelotuscoding.eidolonunchained.damage.DivineDamages.declare(Ids.newId(id, "divine damage")));
+    }
+
     public static RitualBuilder ritual(String id) {
         return new RitualBuilder(Ids.newId(id, "ritual"));
     }

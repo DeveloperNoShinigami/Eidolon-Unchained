@@ -55,6 +55,7 @@ public class HexbladeItem extends SwordItem {
     public static final class Settings {
         public ResourceLocation deity;
         public int rechargeTicks = 5;
+        public ResourceLocation divineDamage;
         public int drainPerTick = 2;
         public int hitEnergy = 10;
         public double elementalRatio = 10;
@@ -210,6 +211,8 @@ public class HexbladeItem extends SwordItem {
                 EidolonUnchained.LOGGER.error("hexblade onHit threw: {}", e.toString());
             }
         }
+        if (awakened && s.divineDamage != null && !attacker.level().isClientSide())   // D56: opt-in divine element
+            com.bluelotuscoding.eidolonunchained.damage.DivineDamages.queueHit(target, attacker, s.divineDamage, elementalPower(stack));
         stack.setDamageValue(Math.max(stack.getDamageValue() - s.hitEnergy, 0));   // a hit feeds the blade
         return true;
     }

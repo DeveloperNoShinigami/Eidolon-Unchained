@@ -29,6 +29,7 @@ public final class DeityBuilder {
     Integer maxReputation;
     final List<String> followers = new ArrayList<>();
     com.bluelotuscoding.eidolonunchained.patron.Callings.Settings calling;
+    com.bluelotuscoding.eidolonunchained.damage.DivineDamages.Curve devotion;
     Boolean patronRequired;
     Boolean requiresCalling;
     final List<StageDecl> stages = new ArrayList<>();
@@ -162,6 +163,25 @@ public final class DeityBuilder {
         throw new IllegalArgumentException("Eidolon Unchained: deity '" + id + "': calling '" + key + "' must be a number of seconds > 0" + ("callAgainAfter".equals(key) ? " or 'never'" : ""));
     }
 
+    @Info("Divine damage scaling by the attacker's reputation with this god: points [[rep, multiplier], ...], linear between them and flat beyond the ends")
+    public DeityBuilder devotion(java.util.List<?> points) {
+        if (points.isEmpty()) throw new IllegalArgumentException("Eidolon Unchained: deity '" + id + "': devotion needs at least one [rep, multiplier] point");
+        var out = new double[points.size()][];
+        for (int i = 0; i < out.length; i++) {
+            if (!(points.get(i) instanceof java.util.List<?> p) || p.size() != 2 || !(p.get(0) instanceof Number r) || !(p.get(1) instanceof Number m))
+                throw new IllegalArgumentException("Eidolon Unchained: deity '" + id + "': devotion point " + i + " must be [reputation, multiplier]");
+            out[i] = new double[]{r.doubleValue(), m.doubleValue()};
+        }
+        this.devotion = com.bluelotuscoding.eidolonunchained.damage.DivineDamages.points(out);
+        return this;
+    }
+
+    @Info("The same with a function: rep => multiplier (if it throws, the multiplier is 1 and the error is logged once)")
+    public DeityBuilder devotion(com.bluelotuscoding.eidolonunchained.damage.DivineDamages.Curve fn) {
+        this.devotion = fn;
+        return this;
+    }
+
     @Info("Mob types that follow this god: entity ids or '#tags', e.g. '#minecraft:skeletons', 'minecraft:wither' (D55)")
     public DeityBuilder followers(String... entityTypesOrTags) {
         for (var spec : entityTypesOrTags) {
@@ -240,6 +260,7 @@ public final class DeityBuilder {
         Patrons.declare(deity.getId(), required, requiresCalling, stageMana);
         if (!followers.isEmpty()) Patrons.declareFollowers(deity.getId(), followers);
         if (calling != null) com.bluelotuscoding.eidolonunchained.patron.Callings.declare(deity.getId(), calling);
+        if (devotion != null) com.bluelotuscoding.eidolonunchained.damage.DivineDamages.setCurve(deity.getId(), devotion);
         DeityHooks.register(deity.getId(), model, onUnlock, onLock, onChange);
         EidolonUnchained.LOGGER.debug("deity '{}': {} stage(s), model {}", id, stages.size(), model);
     }

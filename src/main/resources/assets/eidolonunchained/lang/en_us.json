@@ -70,5 +70,7 @@
   "eidolonunchained.calling.unclear": "Answer yes or no.",
   "eidolonunchained.ritual.not_called": "%s has not called you",
   "eidolonunchained.patron.title.pledged": "is now your patron",
-  "eidolonunchained.patron.title.revoked": "no longer answers you"
+  "eidolonunchained.patron.title.revoked": "no longer answers you",
+  "command.eidolonunchained.damage.debug_on": "Divine damage readout on: each divine hit you deal or take is shown here",
+  "command.eidolonunchained.damage.debug_off": "Divine damage readout off"
 }

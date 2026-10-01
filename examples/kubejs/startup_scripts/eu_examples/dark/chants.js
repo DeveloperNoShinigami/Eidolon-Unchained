@@ -10,10 +10,10 @@ EidolonUnchained.chant('eu_examples:dark_rebuke')
     .protectionCost(1)
     .cast((level, pos, player) => {
         const hit = player.rayTrace(12)
-        if (hit.entity) { hit.entity.attack(4); hit.entity.potionEffects.add('minecraft:blindness', 60, 0) }
+        if (hit.entity) { hit.entity.hurt(EidolonUnchained.damageSource('eu_examples:umbral', player), 4); hit.entity.potionEffects.add('minecraft:blindness', 60, 0) }   // Phase 5: umbral damage
     })
     .targetCast((level, caster, target) => {
-        target.attack(4)
+        target.hurt(EidolonUnchained.damageSource('eu_examples:umbral', caster), 4)
         target.potionEffects.add('minecraft:blindness', 60, 0)
         level.spawnParticles('minecraft:smoke', true, target.x, target.y + 1, target.z, 0.3, 0.5, 0.3, 10, 0.02)
     })

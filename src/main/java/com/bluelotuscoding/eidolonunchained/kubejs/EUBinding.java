@@ -112,6 +112,21 @@ public final class EUBinding {
         return EUApi.player(player);
     }
 
+    @Info("Declare a divine damage (startup): .deity(god) required, .name(text); creates its damage type and <id>_damage / <id>_resistance attributes")
+    public com.bluelotuscoding.eidolonunchained.api.DivineDamageBuilder divineDamage(String id) {
+        return EUApi.divineDamage(id);
+    }
+
+    @Info("A damage source of any damage type id caused by an entity, for KubeJS's entity.hurt(source, amount); divine damages get EU's divine handling")
+    public net.minecraft.world.damagesource.DamageSource damageSource(String typeId, net.minecraft.world.entity.Entity attacker) {
+        return com.bluelotuscoding.eidolonunchained.damage.DivineDamages.source(com.bluelotuscoding.eidolonunchained.api.Ids.of(typeId, "damage type"), attacker.level(), attacker);
+    }
+
+    @Info("The same with no attacker (environmental)")
+    public net.minecraft.world.damagesource.DamageSource damageSource(String typeId, net.minecraft.world.level.Level level) {
+        return com.bluelotuscoding.eidolonunchained.damage.DivineDamages.source(com.bluelotuscoding.eidolonunchained.api.Ids.of(typeId, "damage type"), level, null);
+    }
+
     @dev.latvian.mods.kubejs.typings.Info("The patron of a player or mob ('ns:id'), or null (D55)")
     public String patronOf(net.minecraft.world.entity.Entity entity) {
         var id = com.bluelotuscoding.eidolonunchained.patron.Patrons.patronOf(entity);
