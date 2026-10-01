@@ -18,7 +18,7 @@ import java.util.function.Consumer;
  *   <li>{@code textures/item/<name>_geo.png}, plus {@code <name>_geo_glowmask.png} when parts glow;</li>
  *   <li>{@code models/item/<name>_geo.json}: the hand/world display transforms ({@code parent: builtin/entity}).</li>
  * </ul>
- * The item's own {@code texture(...)} stays the flat icon in GUI slots.
+ * The model is drawn in every view, GUI slots included ({@code gui} in the display transforms; {@code gui_light: front}).
  */
 public final class HexbladeGeo {
     private HexbladeGeo() {

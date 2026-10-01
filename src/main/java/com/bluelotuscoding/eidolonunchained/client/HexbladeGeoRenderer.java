@@ -16,6 +16,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.RegistryObject;
 import org.joml.Quaternionf;
@@ -38,7 +39,7 @@ import java.util.Map;
 
 /**
  * Renders a scripted hexblade that has {@code .geoModel(...)} in hand, on the ground, in item frames and on other
- * players and mobs. GUI slots never reach it: the generated item model shows the flat icon there (see
+ * players and mobs, and in GUI slots (the generated item model is the display model, see
  * {@code HexbladeItemBuilder#generateAssetJsons}). Parts in {@code <name>_geo_glowmask.png} glow when that file exists.
  * <p>
  * Soul-fire: the model's locators (bone {@code "locators"} in the geo file) are placed in the world every render, and
@@ -142,7 +143,7 @@ public class HexbladeGeoRenderer extends GeoItemRenderer<HexbladeItem> {
     public void renderFinal(PoseStack poseStack, HexbladeItem animatable, BakedGeoModel model, MultiBufferSource bufferSource, VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
         super.renderFinal(poseStack, animatable, model, bufferSource, buffer, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
         ClientLevel level = Minecraft.getInstance().level;
-        if (level != null && !Minecraft.getInstance().isPaused()) {
+        if (level != null && !Minecraft.getInstance().isPaused() && renderPerspective != ItemDisplayContext.GUI) {   // slots: no world particles
             Vec3 up = tipward();
             for (ParticleKeyframeData data : PENDING) {
                 Vec3 at = located.get(data.getLocator());

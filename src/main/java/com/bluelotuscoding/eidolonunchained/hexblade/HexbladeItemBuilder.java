@@ -26,7 +26,7 @@ public class HexbladeItemBuilder extends HandheldItemBuilder {
     }
 
     @Info("""
-            GeckoLib look 'ns:name': a 3D model in hand, on the ground and in frames; texture() stays the flat icon in GUI slots.
+            GeckoLib look 'ns:name': the 3D model everywhere, GUI slots included (texture() is then only the break particle).
             Files: geo/item/name.geo.json, animations/item/name.animation.json (clips awaken, awakened, sleep, dormant),
             textures/item/name_geo.png (+ name_geo_glowmask.png to glow), models/item/name_geo.json (display transforms)""")
     public HexbladeItemBuilder geoModel(String id) {
@@ -34,29 +34,19 @@ public class HexbladeItemBuilder extends HandheldItemBuilder {
         return this;
     }
 
-    /** With geoModel: GUI slots show the flat texture (forge:item_layers), every other view the GeckoLib renderer. */
+    /** With geoModel: the item model is the display model (builtin/entity), so the GeckoLib renderer draws every view, GUI included. */
     @Override
     public void generateAssetJsons(AssetJsonGenerator generator) {
         if (settings.geoModel == null || modelJson != null) {
             super.generateAssetJsons(generator);
             return;
         }
-        if (textureJson.size() == 0) texture(newID("item/", "").toString());
-        var gui = new JsonObject();
-        gui.addProperty("loader", "forge:item_layers");
-        gui.add("textures", textureJson.deepCopy());
-        var perspectives = new JsonObject();
-        perspectives.add("gui", gui);
-        var base = new JsonObject();
-        base.addProperty("parent", HexbladeGeo.displayModel(settings.geoModel).toString());
         var model = new JsonObject();
-        model.addProperty("loader", "forge:separate_transforms");
-        model.addProperty("gui_light", "front");
+        model.addProperty("parent", HexbladeGeo.displayModel(settings.geoModel).toString());
         var particle = new JsonObject();
-        particle.add("particle", textureJson.get("layer0"));
+        particle.addProperty("particle", textureJson.has("layer0") ? textureJson.get("layer0").getAsString()
+                : settings.geoModel.getNamespace() + ":item/" + settings.geoModel.getPath() + "_geo");
         model.add("textures", particle);
-        model.add("base", base);
-        model.add("perspectives", perspectives);
         generator.json(AssetJsonGenerator.asItemModelLocation(id), model);
     }
 

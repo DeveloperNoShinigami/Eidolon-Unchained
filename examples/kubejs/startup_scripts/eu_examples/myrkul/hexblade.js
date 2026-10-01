@@ -4,8 +4,8 @@
 StartupEvents.registry('item', event => {
     event.create('eu_examples:bone_blade', 'eidolonunchained:hexblade')
         .displayName('Bone Blade of Myrkul')
-        .texture('eu_examples:item/bone_blade')     // the flat icon, shown in inventory and other GUI slots
-        // GeckoLib look everywhere else (hand, ground, item frames, other players and mobs): assets/eu_examples/
+        .texture('eu_examples:item/bone_blade')     // only the break particle: with geoModel the 3D model shows everywhere
+        // GeckoLib look in every view (inventory, hand, ground, item frames, other players and mobs): assets/eu_examples/
         // geo/item/bone_blade.geo.json, animations/item/bone_blade.animation.json, textures/item/bone_blade_geo.png
         // (+ _glowmask: the skull's eyes glow) and models/item/bone_blade_geo.json (hand/world display transforms).
         // Awakening plays the 'awaken' transformation (the spine spreads in bursts of teal soul-fire particles, barbs and horns grow, the skull's jaw drops and its
