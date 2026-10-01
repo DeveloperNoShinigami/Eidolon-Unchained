@@ -43,7 +43,9 @@ import java.util.Map;
  * <p>
  * Soul-fire: the model's locators (bone {@code "locators"} in the geo file) are placed in the world every render, and
  * the clip's particle keyframes spawn Eidolon's glowing particles there: {@code soul_burst}, {@code soul_flare},
- * {@code soul_puff}. While the blade is awakened a thin flame stream also rises from the {@code spine*} locators.
+ * {@code soul_puff}; spine keys also fire out to that segment's edge locators and its back-face locator. While the blade is awakened a wreath of
+ * teal flames and wisps covers the whole blade (random points between the {@code edge_l<k>}/{@code edge_r<k>} locators
+ * and along the tip, plus the {@code back<k>} locators on the blade's back face), drifting toward the tip.
  * In first person the hand is drawn in view space with its own projection, so the particles appear at the matching
  * point in the world: close to the drawn blade, not exactly on it.
  */
@@ -141,18 +143,16 @@ public class HexbladeGeoRenderer extends GeoItemRenderer<HexbladeItem> {
         super.renderFinal(poseStack, animatable, model, bufferSource, buffer, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
         ClientLevel level = Minecraft.getInstance().level;
         if (level != null && !Minecraft.getInstance().isPaused()) {
+            Vec3 up = tipward();
             for (ParticleKeyframeData data : PENDING) {
                 Vec3 at = located.get(data.getLocator());
-                if (at != null) effect(level, data.getEffect(), at);
+                if (at != null) effect(level, data.getEffect(), data.getLocator(), at, up);
             }
             if (currentItemStack != null && HexbladeItem.isAwakened(currentItemStack) && !spine.isEmpty()) {
                 long id = GeoItem.getId(currentItemStack);
                 long tick = level.getGameTime();
                 Long last = lastAmbientTick.put(id, tick);
-                if (last == null || last != tick) {
-                    Vec3 at = located.get(spine.get(level.random.nextInt(spine.size())));
-                    if (at != null) effect(level, "ambient", at);
-                }
+                if (last == null || last != tick) wreathe(level, up);
                 if (lastAmbientTick.size() > 64) lastAmbientTick.clear();
             }
         }
@@ -160,24 +160,80 @@ public class HexbladeGeoRenderer extends GeoItemRenderer<HexbladeItem> {
         located.clear();
     }
 
+    /** World direction from the guard toward the tip (straight up when the locators are missing). */
+    private Vec3 tipward() {
+        Vec3 a = located.get("spine0"), b = located.get("blade_tip");
+        if (a == null || b == null || a.distanceToSqr(b) < 1e-6) return new Vec3(0, 1, 0);
+        return b.subtract(a).normalize();
+    }
+
+    /**
+     * The awakened soul-fire wreath: a few short-lived flames and wisps per tick at random points across the blade,
+     * between its left and right edge locators ({@code edge_l<k>}, {@code edge_r<k>}, slightly past the edges) and
+     * along the leaf tip, drifting toward the tip.
+     */
+    private void wreathe(ClientLevel level, Vec3 up) {
+        var rnd = level.random;
+        for (int n = 0; n < 5; n++) {
+            Vec3 at;
+            int k = rnd.nextInt(spine.size());
+            Vec3 l = located.get("edge_l" + k), r = located.get("edge_r" + k);
+            Vec3 back = located.get("back" + k);
+            if (n == 3 && back != null) {
+                at = back;                                   // the back face: fire pours out where the processes were
+            } else if (n == 4 && located.containsKey("blade_tip") && located.containsKey("spine" + (spine.size() - 1))) {
+                at = located.get("spine" + (spine.size() - 1)).lerp(located.get("blade_tip"), rnd.nextDouble());
+            } else if (l != null && r != null) {
+                at = l.lerp(r, -0.1 + 1.2 * rnd.nextDouble());
+            } else {
+                at = located.get(spine.get(k));
+            }
+            if (at == null) continue;
+            double v = 0.015 + 0.025 * rnd.nextDouble();
+            float size = 0.08f + 0.14f * rnd.nextFloat();
+            float a = 0.25f + 0.35f * rnd.nextFloat();
+            var type = rnd.nextInt(3) == 0 ? EidolonParticles.WISP_PARTICLE : EidolonParticles.FLAME_PARTICLE;
+            teal(type, a, size, 8 + rnd.nextInt(9)).randomOffset(0.04).randomVelocity(0.006)
+                    .addVelocity(up.x * v, up.y * v, up.z * v).spawn(level, at.x, at.y, at.z);
+        }
+    }
+
     private static Particles.ParticleBuilder teal(RegistryObject<?> type, float alpha, float scale, int life) {
         return Particles.create(type).setColor(R, G, B, R2, G2, B2).setAlpha(alpha, 0f).setScale(scale, 0f).setLifetime(life).disableGravity();
     }
 
-    /** Effect names from the clips' particle keyframes; unknown names do nothing. */
-    private static void effect(ClientLevel level, String name, Vec3 at) {
-        switch (name) {
-            case "soul_burst" -> {
-                teal(EidolonParticles.WISP_PARTICLE, 0.6f, 0.3f, 20).randomOffset(0.05).randomVelocity(0.035).repeat(level, at.x, at.y, at.z, 6);
-                teal(EidolonParticles.SPARKLE_PARTICLE, 0.8f, 0.15f, 14).randomOffset(0.06).randomVelocity(0.05).repeat(level, at.x, at.y, at.z, 4);
+    /**
+     * Effect names from the clips' particle keyframes; unknown names do nothing. Keys on a {@code spine<k>} locator
+     * also fire across that segment, out to its {@code edge_l<k>} / {@code edge_r<k>} wing points, and at {@code back<k>}.
+     */
+    private void effect(ClientLevel level, String name, String locator, Vec3 at, Vec3 up) {
+        List<Vec3> points = new ArrayList<>();
+        points.add(at);
+        if (locator.startsWith("spine")) {
+            String k = locator.substring(5);
+            Vec3 l = located.get("edge_l" + k), r = located.get("edge_r" + k);
+            if (l != null && r != null) {
+                points.add(l);
+                points.add(r);
+                points.add(at.lerp(l, 0.5));
+                points.add(at.lerp(r, 0.5));
             }
-            case "soul_flare" -> {
-                teal(EidolonParticles.FLAME_PARTICLE, 0.7f, 0.25f, 16).randomOffset(0.05).randomVelocity(0.015).addVelocity(0, 0.02, 0).repeat(level, at.x, at.y, at.z, 4);
-                teal(EidolonParticles.SPARKLE_PARTICLE, 1f, 0.2f, 10).randomOffset(0.08).repeat(level, at.x, at.y, at.z, 3);
-            }
-            case "soul_puff" -> teal(EidolonParticles.WISP_PARTICLE, 0.45f, 0.18f, 24).randomOffset(0.04).randomVelocity(0.01).addVelocity(0, 0.012, 0).repeat(level, at.x, at.y, at.z, 2);
-            case "ambient" -> teal(EidolonParticles.FLAME_PARTICLE, 0.35f, 0.12f, 18).randomOffset(0.06).randomVelocity(0.005).addVelocity(0, 0.01, 0).spawn(level, at.x, at.y, at.z);
-            default -> {
+            Vec3 back = located.get("back" + k);
+            if (back != null) points.add(back);
+        }
+        for (Vec3 p : points) {
+            switch (name) {
+                case "soul_burst" -> {
+                    teal(EidolonParticles.WISP_PARTICLE, 0.6f, 0.28f, 18).randomOffset(0.05).randomVelocity(0.03).addVelocity(up.x * 0.02, up.y * 0.02, up.z * 0.02).repeat(level, p.x, p.y, p.z, 3);
+                    teal(EidolonParticles.SPARKLE_PARTICLE, 0.8f, 0.14f, 12).randomOffset(0.06).randomVelocity(0.045).repeat(level, p.x, p.y, p.z, 2);
+                }
+                case "soul_flare" -> {
+                    teal(EidolonParticles.FLAME_PARTICLE, 0.7f, 0.25f, 16).randomOffset(0.05).randomVelocity(0.015).addVelocity(0, 0.02, 0).repeat(level, p.x, p.y, p.z, 4);
+                    teal(EidolonParticles.SPARKLE_PARTICLE, 1f, 0.2f, 10).randomOffset(0.08).repeat(level, p.x, p.y, p.z, 3);
+                }
+                case "soul_puff" -> teal(EidolonParticles.WISP_PARTICLE, 0.45f, 0.18f, 22).randomOffset(0.04).randomVelocity(0.01).addVelocity(up.x * 0.015, up.y * 0.015, up.z * 0.015).spawn(level, p.x, p.y, p.z);
+                default -> {
+                }
             }
         }
     }
