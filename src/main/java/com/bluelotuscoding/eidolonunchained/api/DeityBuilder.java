@@ -1,6 +1,7 @@
 package com.bluelotuscoding.eidolonunchained.api;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
+import com.bluelotuscoding.eidolonunchained.patron.Patrons;
 import dev.latvian.mods.kubejs.typings.Info;
 import elucent.eidolon.api.deity.Deity;
 import elucent.eidolon.api.research.Research;
@@ -26,6 +27,8 @@ public final class DeityBuilder {
     Integer color;
     ResourceLocation model;
     Integer maxReputation;
+    Boolean patronRequired;
+    Boolean requiresCalling;
     final List<StageDecl> stages = new ArrayList<>();
     final List<BiConsumer<Player, String>> onUnlock = new ArrayList<>();
     final List<BiConsumer<Player, String>> onLock = new ArrayList<>();
@@ -41,6 +44,7 @@ public final class DeityBuilder {
         final boolean major;
         final List<Deity.StageRequirement> reqs = new ArrayList<>();
         final List<ResourceLocation> signReqs = new ArrayList<>();
+        Integer maxMana;
 
         StageDecl(ResourceLocation id, int rep, boolean major) {
             this.id = id;
@@ -105,6 +109,25 @@ public final class DeityBuilder {
         return require(com.bluelotuscoding.eidolonunchained.api.condition.Condition.of(fn));
     }
 
+    @Info("Max mana a pledged follower has while holding the last added .stage(...) (a floor under Eidolon's prayer value)")
+    public DeityBuilder maxMana(int mana) {
+        if (mana < 0) throw new IllegalArgumentException("Eidolon Unchained: deity '" + id + "': maxMana must be 0 or more, got " + mana);
+        lastStage().maxMana = mana;
+        return this;
+    }
+
+    @Info("Whether the deity gives reputation only after a pledge (default true: a major god, one at a time; false: a minor spirit anyone may follow)")
+    public DeityBuilder patronRequired(boolean required) {
+        this.patronRequired = required;
+        return this;
+    }
+
+    @Info("Whether the deity's pledge ritual is open only to players it has called (default false)")
+    public DeityBuilder requiresCalling(boolean calling) {
+        this.requiresCalling = calling;
+        return this;
+    }
+
     public DeityBuilder maxReputation(int max) {
         this.maxReputation = max;
         return this;
@@ -154,6 +177,11 @@ public final class DeityBuilder {
             deity.getProgression().add(stage);
         }
         if (maxReputation != null) deity.getProgression().setMax(maxReputation);
+        var stageMana = new java.util.HashMap<ResourceLocation, Integer>();
+        for (var s : stages) if (s.maxMana != null) stageMana.put(s.id, s.maxMana);
+        // D47: required unless the script says otherwise; an extension of Eidolon's own deities leaves it to the config.
+        Boolean required = patronRequired != null ? patronRequired : (extend ? null : Boolean.TRUE);
+        Patrons.declare(deity.getId(), required, requiresCalling, stageMana);
         DeityHooks.register(deity.getId(), model, onUnlock, onLock, onChange);
         EidolonUnchained.LOGGER.debug("deity '{}': {} stage(s), model {}", id, stages.size(), model);
     }

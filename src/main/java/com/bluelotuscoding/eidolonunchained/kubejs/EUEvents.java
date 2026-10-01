@@ -33,6 +33,7 @@ import net.minecraftforge.fml.common.Mod;
  *   <li>{@code codexPreInit / codexPostInit} (client): Eidolon's {@code CodexEvents}.</li>
  *   <li>{@code reputationChanged / stageUnlocked / stageLocked} (server): Eidolon's {@link ReputationEvent}s; the
  *   optional extra id is a deity id, e.g. {@code stageUnlocked('eidolon:dark', e => …)}.</li>
+ *   <li>{@code patronChanged} (server): a pledge was made or revoked (D47); extra id = the deity id.</li>
  * </ul>
  */
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MOD_ID)
@@ -70,6 +71,7 @@ public final class EUEvents {
     public static final EventHandler CODEX_POST_INIT = GROUP.client("codexPostInit", () -> CodexEventJS.class);
 
     public static final EventHandler IMBUE_CAST = GROUP.server("imbueCast", () -> WeaponChantEventJS.class).extra(Extra.ID).hasResult();
+    public static final EventHandler PATRON_CHANGED = GROUP.server("patronChanged", () -> PatronEventJS.class).extra(Extra.ID);
     public static final EventHandler PROTECTION_TRIGGERED = GROUP.server("protectionTriggered", () -> WeaponChantEventJS.class).extra(Extra.ID).hasResult();
 
     private EUEvents() {
@@ -109,6 +111,13 @@ public final class EUEvents {
     @SubscribeEvent
     public static void onDatapackSync(net.minecraftforge.event.OnDatapackSyncEvent event) {
         if (event.getPlayer() == null) postDiscoveries(event.getPlayerList().getServer());   // /reload
+    }
+
+    /** Phase 5: pledges and revokes (Patrons) to {@code patronChanged}. */
+    static void hookPatrons() {
+        com.bluelotuscoding.eidolonunchained.patron.Patrons.onChanged = (player, deity, previous, granted) -> {
+            if (PATRON_CHANGED.hasListeners()) PATRON_CHANGED.post(ScriptType.SERVER, deity, new PatronEventJS(player, deity, previous, granted));
+        };
     }
 
     static void hookWeapons() {
