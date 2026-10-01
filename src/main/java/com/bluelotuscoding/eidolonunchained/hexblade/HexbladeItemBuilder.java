@@ -74,7 +74,7 @@ public class HexbladeItemBuilder extends HandheldItemBuilder {
         return this;
     }
 
-    @Info("Awakened hits deal the blade's elemental power as this divine damage (D56: opt-in), e.g. 'eu_examples:necrotic'")
+    @Info("Awakened, the whole hit (weapon damage plus elemental power) is this divine damage (D56: opt-in), e.g. 'eu_examples:necrotic'; dormant hits stay physical")
     public HexbladeItemBuilder divineDamage(String damageId) {
         settings.divineDamage = Ids.of(damageId, "divine damage");
         return this;

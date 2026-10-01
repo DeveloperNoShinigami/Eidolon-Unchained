@@ -43,13 +43,18 @@ import java.util.List;
 
 /**
  * Client side of imbued weapons (D35): right-click on an imbued weapon casts its active chant (the item's own
- * right-click use moves to sneak + right-click), the view key + right-click cycles the chant, and the tooltip says
- * "Hold [key] to view imbued chants" until the key is held, when it lists the chants with their signs.
+ * right-click use moves to sneak + right-click), the "next chant" key cycles the chant, the "awaken" key awakens or
+ * puts to sleep a held hexblade, and the tooltip says "Hold [key] to view imbued chants" until the key is held, when it
+ * lists the chants with their signs. Every key is rebindable in Controls.
  */
 @Mod.EventBusSubscriber(modid = EidolonUnchained.MOD_ID, value = Dist.CLIENT)
 public final class ImbueClient {
     public static final KeyMapping VIEW = new KeyMapping("key." + EidolonUnchained.MOD_ID + ".imbued", KeyConflictContext.UNIVERSAL,
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, ChantClient.CATEGORY);
+    public static final KeyMapping NEXT_CHANT = new KeyMapping("key." + EidolonUnchained.MOD_ID + ".next_chant", KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_G, ChantClient.CATEGORY);
+    public static final KeyMapping AWAKEN = new KeyMapping("key." + EidolonUnchained.MOD_ID + ".awaken", KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, ChantClient.CATEGORY);
 
     private ImbueClient() {
     }
@@ -66,19 +71,30 @@ public final class ImbueClient {
         var stack = event.getItemStack();
         var chants = ImbueNbt.chants(stack);
         if (chants.isEmpty()) return;
-        if (event.getEntity().isShiftKeyDown()) {
-            if (chants.size() < 2) return;                                            // one chant: sneak is the weapon's own use
-            EUNetwork.sendToServer(new ImbueInputPacket(ImbueInputPacket.Action.CYCLE));  // sneak + right-click: next chant
-        } else {
-            EUNetwork.sendToServer(new ImbueInputPacket(ImbueInputPacket.Action.CAST));   // right-click: cast
-        }
+        if (event.getEntity().isShiftKeyDown()) return;                               // sneak + right-click: the weapon's own use
+        EUNetwork.sendToServer(new ImbueInputPacket(ImbueInputPacket.Action.CAST));   // right-click: cast
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.SUCCESS);
     }
 
     @SubscribeEvent
+    public static void onClientTick(net.minecraftforge.event.TickEvent.ClientTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) return;
+        var player = Minecraft.getInstance().player;
+        while (NEXT_CHANT.consumeClick()) {
+            if (player != null && ImbueNbt.chants(player.getMainHandItem()).size() > 1)
+                EUNetwork.sendToServer(new ImbueInputPacket(ImbueInputPacket.Action.CYCLE));
+        }
+        while (AWAKEN.consumeClick()) {
+            if (player != null && player.getMainHandItem().getItem() instanceof com.bluelotuscoding.eidolonunchained.hexblade.HexbladeItem)
+                EUNetwork.sendToServer(new ImbueInputPacket(ImbueInputPacket.Action.AWAKEN));
+        }
+    }
+
+    @SubscribeEvent
     public static void onTooltip(ItemTooltipEvent event) {
         var stack = event.getItemStack();
+        if (stack.getItem() instanceof com.bluelotuscoding.eidolonunchained.hexblade.HexbladeItem hb) divineAttackLine(hb, stack, event.getToolTip());
         var chants = ImbueNbt.chants(stack);
         var lines = event.getToolTip();
         if (!chants.isEmpty()) {
@@ -93,7 +109,7 @@ public final class ImbueClient {
                     if (spell != null) line.append(Component.literal("  " + spell.getCost() + " mana").withStyle(ChatFormatting.DARK_AQUA));
                     lines.add(line);
                 }
-                lines.add(Component.translatable("eidolonunchained.imbue.tooltip.how").withStyle(ChatFormatting.DARK_GRAY));
+                lines.add(Component.translatable("eidolonunchained.imbue.tooltip.how", NEXT_CHANT.getTranslatedKeyMessage()).withStyle(ChatFormatting.DARK_GRAY));
             } else {
                 lines.add(Component.translatable("eidolonunchained.imbue.tooltip.hold", VIEW.getTranslatedKeyMessage()).withStyle(ChatFormatting.DARK_GRAY));
             }
@@ -103,6 +119,25 @@ public final class ImbueClient {
             lines.add(Component.translatable("eidolonunchained.protection.tooltip.bound", ImbueNbt.chantName(protection)).withStyle(ChatFormatting.AQUA));
         } else if (ImbueNbt.protectionLevel(stack) > 0) {
             lines.add(Component.translatable("eidolonunchained.protection.tooltip.unbound").withStyle(ChatFormatting.DARK_GRAY));
+        }
+    }
+
+    /** An awakened divine hexblade's hit is wholly divine: its " N Attack Damage" line reads " N Necrotic Damage" in its god's colour. */
+    private static void divineAttackLine(com.bluelotuscoding.eidolonunchained.hexblade.HexbladeItem hb, net.minecraft.world.item.ItemStack stack, List<Component> lines) {
+        var d = com.bluelotuscoding.eidolonunchained.damage.DivineDamages.get(hb.awakenedDivineDamage(stack));
+        if (d == null || d.damageAttribute() == null) return;
+        int color = com.bluelotuscoding.eidolonunchained.patron.Patrons.deityColor(d.owner);
+        for (int i = 0; i < lines.size(); i++) {
+            var line = lines.get(i);                       // vanilla: literal " " + translatable("attribute.modifier.equals.0", value, name)
+            var part = line.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents ? line
+                    : line.getSiblings().size() == 1 ? line.getSiblings().get(0) : null;
+            if (part == null || !(part.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t) || !t.getKey().startsWith("attribute.modifier.")) continue;
+            var args = t.getArgs();
+            if (args.length == 2 && args[1] instanceof Component name && name.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents n
+                    && n.getKey().equals(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE.getDescriptionId())) {
+                var renamed = Component.translatable(t.getKey(), args[0], Component.translatable(d.damageAttribute().getDescriptionId()));
+                lines.set(i, (part == line ? renamed : Component.literal(" ").append(renamed)).withStyle(st -> st.withColor(color)));
+            }
         }
     }
 
@@ -181,6 +216,8 @@ public final class ImbueClient {
         @SubscribeEvent
         public static void onRegisterKeys(RegisterKeyMappingsEvent event) {
             event.register(VIEW);
+            event.register(NEXT_CHANT);
+            event.register(AWAKEN);
         }
 
         @SubscribeEvent

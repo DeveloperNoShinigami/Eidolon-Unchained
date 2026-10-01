@@ -18,7 +18,7 @@ StartupEvents.registry('item', event => {
         .deity('eu_examples:myrkul')             // devotion with Myrkul scales the awakened powers
         .rechargePerTick(5).drainPerTick(2).hitEnergy(10)
         .elementalRatio(10)                      // elemental power = devotion / 10
-        .divineDamage('eu_examples:necrotic')   // Phase 5 (opt-in): awakened hits deal the elemental power as Myrkul's necrotic damage
+        .divineDamage('eu_examples:necrotic')   // Phase 5 (opt-in): awakened, the whole hit (damage + elemental power) is Myrkul's necrotic damage
         .awakenedDamage(devotion => 2 + devotion / 10)
         .awakenedSpeed(devotion => 0.2)
         .onHit((stack, target, attacker, awakened) => {

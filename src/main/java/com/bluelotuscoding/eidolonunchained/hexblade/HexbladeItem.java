@@ -154,6 +154,16 @@ public class HexbladeItem extends SwordItem implements GeoItem {
         return state(stack).getDouble("speed");
     }
 
+    /** The divine damage an awakened hit becomes as a whole (D56), or null: dormant, or no {@code .divineDamage}. */
+    public @org.jetbrains.annotations.Nullable ResourceLocation awakenedDivineDamage(ItemStack stack) {
+        return isAwakened(stack) ? s.divineDamage : null;
+    }
+
+    /** What awakening adds to the weapon's attack damage; a divine blade's elemental power is part of its (wholly divine) hit. */
+    public double awakenedBonus(ItemStack stack) {
+        return awakenedDamage(stack) + (s.divineDamage != null ? elementalPower(stack) : 0);
+    }
+
     public static float elementalPower(ItemStack stack) {
         return state(stack).getFloat("elemental");
     }
@@ -208,15 +218,6 @@ public class HexbladeItem extends SwordItem implements GeoItem {
     // ---- behaviour ----
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        var stack = player.getItemInHand(hand);
-        if (!level.isClientSide() && !(player.getItemInHand(InteractionHand.OFF_HAND).getItem() instanceof ShieldItem)) {
-            toggle(stack, player);
-        }
-        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
-    }
-
-    @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
         if (s.geoModel != null && level instanceof ServerLevel sl) GeoItem.getOrAssignId(stack, sl);   // each blade animates on its own
         if (level.isClientSide() || !(entity instanceof Player player)) return;
@@ -250,8 +251,6 @@ public class HexbladeItem extends SwordItem implements GeoItem {
                 EidolonUnchained.LOGGER.error("hexblade onHit threw: {}", e.toString());
             }
         }
-        if (awakened && s.divineDamage != null && !attacker.level().isClientSide())   // D56: opt-in divine element
-            com.bluelotuscoding.eidolonunchained.damage.DivineDamages.queueHit(target, attacker, s.divineDamage, elementalPower(stack));
         stack.setDamageValue(Math.max(stack.getDamageValue() - s.hitEnergy, 0));   // a hit feeds the blade
         return true;
     }
@@ -266,7 +265,7 @@ public class HexbladeItem extends SwordItem implements GeoItem {
         if (slot != EquipmentSlot.MAINHAND) return super.getAttributeModifiers(slot, stack);
         Multimap<Attribute, AttributeModifier> map = HashMultimap.create();
         boolean awakened = isAwakened(stack);
-        map.put(Attributes.ATTACK_DAMAGE, new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Weapon modifier", baseAttack + (awakened ? awakenedDamage(stack) : 0), AttributeModifier.Operation.ADDITION));
+        map.put(Attributes.ATTACK_DAMAGE, new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Weapon modifier", baseAttack + (awakened ? awakenedBonus(stack) : 0), AttributeModifier.Operation.ADDITION));
         map.put(Attributes.ATTACK_SPEED, new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Weapon modifier", baseSpeed + (awakened ? awakenedSpeed(stack) : 0), AttributeModifier.Operation.ADDITION));
         return map;
     }
@@ -283,9 +282,10 @@ public class HexbladeItem extends SwordItem implements GeoItem {
         if (s.deity != null) tooltip.add(Component.translatable("eidolonunchained.hexblade.bound", prettify(s.deity)).withStyle(ChatFormatting.GOLD));
         boolean awakened = isAwakened(stack);
         tooltip.add(Component.translatable(awakened ? "eidolonunchained.hexblade.awakened" : "eidolonunchained.hexblade.dormant").withStyle(awakened ? ChatFormatting.AQUA : ChatFormatting.DARK_GRAY));
+        var divine = com.bluelotuscoding.eidolonunchained.damage.DivineDamages.get(s.divineDamage);
         if (Screen.hasShiftDown()) {
-            tooltip.add(Component.translatable("eidolonunchained.hexblade.awakened_damage", String.format("%.1f", awakenedDamage(stack))).withStyle(ChatFormatting.BLUE));
-            if (s.elementalRatio > 0) tooltip.add(Component.translatable("eidolonunchained.hexblade.elemental", String.format("%.1f", elementalPower(stack))).withStyle(ChatFormatting.BLUE));
+            tooltip.add(Component.translatable("eidolonunchained.hexblade.awakened_damage", String.format("%.1f", awakenedBonus(stack))).withStyle(ChatFormatting.BLUE));
+            if (s.elementalRatio > 0 && divine == null) tooltip.add(Component.translatable("eidolonunchained.hexblade.elemental", String.format("%.1f", elementalPower(stack))).withStyle(ChatFormatting.BLUE));
             tooltip.add(Component.translatable("eidolonunchained.hexblade.energy", energyLeft(stack), getMaxDamage(stack)).withStyle(ChatFormatting.BLUE));
             for (var line : s.awakenedTooltip) tooltip.add(line.copy().withStyle(ChatFormatting.BLUE));
         } else {

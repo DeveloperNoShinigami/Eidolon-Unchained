@@ -60,6 +60,11 @@ public final class DivineDamages {
             return ResourceKey.create(Registries.DAMAGE_TYPE, id);
         }
 
+        /** The generated {@code <id>_damage} attribute (null before attributes register). */
+        public Attribute damageAttribute() {
+            return damage;
+        }
+
         /** "Necrotic" for eu_examples:necrotic unless the script named it. */
         public String displayName() {
             if (name != null) return name;
@@ -98,7 +103,7 @@ public final class DivineDamages {
         return new ArrayList<>(DECLARED.values());
     }
 
-    public static @Nullable Declared get(ResourceLocation id) {
+    public static @Nullable Declared get(@Nullable ResourceLocation id) {
         return DECLARED.get(id);
     }
 
@@ -197,8 +202,15 @@ public final class DivineDamages {
         var d = typeId == null ? null : DECLARED.get(typeId);
         var attacker = source.getEntity() instanceof LivingEntity l ? l : null;
         if (d == null) {
-            if (attacker != null && source.getDirectEntity() == attacker && (source.is(DamageTypes.PLAYER_ATTACK) || source.is(DamageTypes.MOB_ATTACK)))
+            if (attacker != null && source.getDirectEntity() == attacker && (source.is(DamageTypes.PLAYER_ATTACK) || source.is(DamageTypes.MOB_ATTACK))) {
+                var held = attacker.getMainHandItem();
+                var whole = held.getItem() instanceof com.bluelotuscoding.eidolonunchained.hexblade.HexbladeItem hb ? DECLARED.get(hb.awakenedDivineDamage(held)) : null;
+                if (whole != null && whole.owner != null && Patrons.isFollower(attacker, whole.owner)) {   // awakened hexblade: the whole hit is divine
+                    QUEUE.add(new Hit(target, attacker, whole, event.getAmount()));   // the elemental power is already in the attack damage
+                    event.setCanceled(true);
+                }
                 queueMeleeBonus(target, attacker);
+            }
             return;
         }
         if (d.owner == null || (attacker != null && !Patrons.isFollower(attacker, d.owner))) return;   // not the god's power: plain magic

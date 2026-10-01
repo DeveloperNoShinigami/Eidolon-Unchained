@@ -419,10 +419,15 @@ public final class Patrons {
         }
     }
 
+    /** A god's colour as 0xRRGGBB (white when unknown). */
+    public static int deityColor(ResourceLocation deity) {
+        var d = deity == null ? null : Deities.find(deity);
+        return d == null ? 0xFFFFFF : ((int) (d.getRed() * 255) << 16) | ((int) (d.getGreen() * 255) << 8) | (int) (d.getBlue() * 255);
+    }
+
     /** The moment on screen: the god's name as a title in its colour, and what changed beneath it. */
     private static void announce(ServerPlayer player, ResourceLocation deity, boolean granted) {
-        var d = Deities.find(deity);
-        int color = d == null ? 0xFFFFFF : ((int) (d.getRed() * 255) << 16) | ((int) (d.getGreen() * 255) << 8) | (int) (d.getBlue() * 255);
+        int color = deityColor(deity);
         player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket(10, 60, 20));
         player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket(
                 Component.translatable(granted ? "eidolonunchained.patron.title.pledged" : "eidolonunchained.patron.title.revoked").withStyle(s -> s.withColor(0xDDDDDD))));
