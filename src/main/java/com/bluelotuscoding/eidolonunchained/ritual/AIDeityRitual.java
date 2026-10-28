@@ -1,6 +1,9 @@
 package com.bluelotuscoding.eidolonunchained.ritual;
 
+import com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig;
+import com.bluelotuscoding.eidolonunchained.ai.AIDeityManager;
 import com.bluelotuscoding.eidolonunchained.chat.DeityChat;
+import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
 import elucent.eidolon.api.ritual.Ritual;
@@ -12,6 +15,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Ritual entry point for AI deity conversations.
@@ -27,23 +33,24 @@ public class AIDeityRitual extends Ritual {
     /** The ai_deity resource location this ritual invokes. */
     private final ResourceLocation deityId;
 
-    /**
-     * @param ritualId The registered ritual ID
-     * @param symbol   Eidolon particle symbol resource (e.g. {@code eidolon:particle/daylight_ritual})
-     * @param r        Ritual circle red component (0–1)
-     * @param g        Ritual circle green component (0–1)
-     * @param b        Ritual circle blue component (0–1)
-     * @param deityId The deity to start a conversation with
-     */
+    /** Deterministic fallback commands when AI is unavailable */
+    private final List<String> fallbackEffects;
+
     public AIDeityRitual(ResourceLocation ritualId, ResourceLocation symbol, float r, float g, float b, ResourceLocation deityId) {
+        this(ritualId, symbol, r, g, b, deityId, new ArrayList<>());
+    }
+
+    public AIDeityRitual(ResourceLocation ritualId, ResourceLocation symbol, float r, float g, float b,
+                         ResourceLocation deityId, List<String> fallbackEffects) {
         super(symbol, r, g, b);
         this.ritualId = ritualId;
         this.deityId = deityId;
+        this.fallbackEffects = fallbackEffects != null ? fallbackEffects : new ArrayList<>();
     }
 
     @Override
     public Ritual cloneRitual() {
-        return new AIDeityRitual(ritualId, getSymbol(), getRed(), getGreen(), getBlue(), deityId);
+        return new AIDeityRitual(ritualId, getSymbol(), getRed(), getGreen(), getBlue(), deityId, fallbackEffects);
     }
 
     @Override
@@ -71,11 +78,38 @@ public class AIDeityRitual extends Ritual {
         DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
         String deityName = deity != null ? deity.getDisplayName() : deityId.toString();
 
-        DeityChat.startConversation(nearest, deityId);
-        nearest.sendSystemMessage(Component.translatable("eidolonunchained.ritual.deity_listening", deityName));
+        // Check if AI is available
+        boolean aiAvailable = EidolonUnchainedConfig.COMMON.enableAIDeities.get();
+        if (aiAvailable) {
+            AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(deityId);
+            if (aiConfig != null && !aiConfig.ai_enabled) {
+                aiAvailable = false;
+            }
+        }
 
-        LOGGER.debug("AIDeityRitual started conversation with {} for player {}", deityId, nearest.getName().getString());
-        return RitualResult.TERMINATE; // conversation is async; ritual completes immediately
+        if (aiAvailable) {
+            DeityChat.startConversation(nearest, deityId);
+            nearest.sendSystemMessage(Component.translatable("eidolonunchained.ritual.deity_listening", deityName));
+            LOGGER.debug("AIDeityRitual started conversation with {} for player {}", deityId, nearest.getName().getString());
+        } else if (!fallbackEffects.isEmpty()) {
+            // Execute deterministic fallback commands
+            for (String cmd : fallbackEffects) {
+                try {
+                    String resolved = cmd.replace("{player}", nearest.getName().getString());
+                    nearest.getServer().getCommands().performPrefixedCommand(
+                        nearest.getServer().createCommandSourceStack(), resolved);
+                } catch (Exception e) {
+                    LOGGER.warn("Failed executing ritual fallback command '{}': {}", cmd, e.getMessage());
+                }
+            }
+            nearest.sendSystemMessage(Component.literal(
+                "\u00A76\u27E6 " + deityName + " \u27E7 \u00A7aThe ritual channels divine power."));
+            LOGGER.debug("AIDeityRitual executed fallback effects for deity {} (AI unavailable)", deityId);
+        } else {
+            nearest.sendSystemMessage(Component.translatable("eidolonunchained.prayer.no_response", deityName));
+        }
+
+        return RitualResult.TERMINATE;
     }
 
     @Override

@@ -1,7 +1,7 @@
 package com.bluelotuscoding.eidolonunchained.keybind;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
-import com.bluelotuscoding.eidolonunchained.chant.ActiveChantingSystem;
+
 import com.bluelotuscoding.eidolonunchained.config.ChantCastingConfig;
 import com.bluelotuscoding.eidolonunchained.network.ActiveChantSignPacket;
 import com.bluelotuscoding.eidolonunchained.network.EidolonUnchainedNetworking;

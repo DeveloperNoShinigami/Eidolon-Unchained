@@ -170,6 +170,12 @@ public class DatapackChantSpell extends PrayerSpell {
             LOGGER.warn("Failed to record chant for AI context: {}", e.getMessage());
         }
         
+        // Avoid double conversation starts when chant effects already include start_conversation.
+        boolean hasExplicitConversationEffect = chantData.getEffects().stream().anyMatch(effect -> {
+            String type = effect.getType();
+            return "start_conversation".equals(type) || "communication".equals(type);
+        });
+
         // 🔥 Only trigger deity conversation if prayer_effect_type is specified
         // This allows chants to be linked to deities for lore/context without auto-triggering conversations
         if (chantData.hasLinkedDeity() && chantData.getPrayerEffectType() != null && !chantData.getPrayerEffectType().isEmpty()) {
@@ -181,8 +187,13 @@ public class DatapackChantSpell extends PrayerSpell {
                 com.bluelotuscoding.eidolonunchained.integration.ai.EnhancedCommandExtractor
                     .setLastPerformedChant(serverPlayer, chantData);
 
-                // Then trigger deity conversation using the prayer_effect_type
-                com.bluelotuscoding.eidolonunchained.chat.DeityChat.startConversation(serverPlayer, chantData.getLinkedDeity());
+                // Then trigger deity conversation using the prayer_effect_type unless already handled by effects.
+                if (!hasExplicitConversationEffect) {
+                    com.bluelotuscoding.eidolonunchained.chat.DeityChat.startConversation(serverPlayer, chantData.getLinkedDeity());
+                } else {
+                    LOGGER.debug("Skipping auto conversation start for {} because chant effects already include a conversation trigger",
+                            chantData.getId());
+                }
 
             } catch (Exception e) {
                 LOGGER.error("Failed to trigger deity conversation for chant: {}", chantData.getId(), e);

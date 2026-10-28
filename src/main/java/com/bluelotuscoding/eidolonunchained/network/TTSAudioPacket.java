@@ -1,5 +1,7 @@
 package com.bluelotuscoding.eidolonunchained.network;
 
+import com.bluelotuscoding.eidolonunchained.integration.http.HttpTransport;
+
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
@@ -11,10 +13,12 @@ import org.apache.logging.log4j.Logger;
 import java.util.function.Supplier;
 import java.util.concurrent.CompletableFuture;
 import java.io.*;
-import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Network packet to send TTS audio data to clients
@@ -22,15 +26,40 @@ import java.nio.file.Path;
  */
 public class TTSAudioPacket {
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final long CHUNK_ASSEMBLY_TIMEOUT_MS = 60_000L;
 
     private final String audioUrl;
     private final byte[] audioData;
+    private final boolean audioDataCompressed;
+    private final boolean chunked;
+    private final String transferId;
+    private final int chunkIndex;
+    private final int totalChunks;
     private final float volume;
     private final float speed;
+
+    private static final Map<String, ChunkAssembly> CHUNK_ASSEMBLIES = new ConcurrentHashMap<>();
 
     public TTSAudioPacket(String audioUrl, byte[] audioData, float volume, float speed) {
         this.audioUrl = audioUrl;
         this.audioData = audioData;
+        this.audioDataCompressed = false;
+        this.chunked = false;
+        this.transferId = null;
+        this.chunkIndex = 0;
+        this.totalChunks = 0;
+        this.volume = volume;
+        this.speed = speed;
+    }
+
+    public TTSAudioPacket(String transferId, int chunkIndex, int totalChunks, byte[] audioData, float volume, float speed) {
+        this.audioUrl = null;
+        this.audioData = audioData;
+        this.audioDataCompressed = false;
+        this.chunked = true;
+        this.transferId = transferId;
+        this.chunkIndex = chunkIndex;
+        this.totalChunks = totalChunks;
         this.volume = volume;
         this.speed = speed;
     }
@@ -41,15 +70,38 @@ public class TTSAudioPacket {
         if (hasUrl) {
             this.audioUrl = buffer.readUtf();
             this.audioData = null;
+            this.audioDataCompressed = false;
+            this.chunked = false;
+            this.transferId = null;
+            this.chunkIndex = 0;
+            this.totalChunks = 0;
         } else {
             this.audioUrl = null;
             boolean hasData = buffer.readBoolean();
             if (hasData) {
+                this.chunked = buffer.readBoolean();
+                if (this.chunked) {
+                    this.transferId = buffer.readUtf();
+                    this.chunkIndex = buffer.readInt();
+                    this.totalChunks = buffer.readInt();
+                } else {
+                    this.transferId = null;
+                    this.chunkIndex = 0;
+                    this.totalChunks = 0;
+                }
+                boolean isCompressed = buffer.readBoolean();
                 int dataLength = buffer.readInt();
-                this.audioData = new byte[dataLength];
-                buffer.readBytes(this.audioData);
+                byte[] networkData = new byte[dataLength];
+                buffer.readBytes(networkData);
+                this.audioDataCompressed = isCompressed;
+                this.audioData = isCompressed ? gunzip(networkData) : networkData;
             } else {
                 this.audioData = null;
+                this.audioDataCompressed = false;
+                this.chunked = false;
+                this.transferId = null;
+                this.chunkIndex = 0;
+                this.totalChunks = 0;
             }
         }
 
@@ -66,9 +118,26 @@ public class TTSAudioPacket {
             buffer.writeBoolean(false);
             // Write audio data if present
             if (audioData != null) {
+                buffer.writeBoolean(chunked);
+                if (chunked) {
+                    buffer.writeUtf(transferId != null ? transferId : "");
+                    buffer.writeInt(chunkIndex);
+                    buffer.writeInt(totalChunks);
+                }
+
+                byte[] payload = audioData;
+                boolean compressed = false;
+
+                byte[] gzipped = gzip(audioData);
+                if (gzipped != null && gzipped.length > 0 && gzipped.length < audioData.length) {
+                    payload = gzipped;
+                    compressed = true;
+                }
+
                 buffer.writeBoolean(true);
-                buffer.writeInt(audioData.length);
-                buffer.writeBytes(audioData);
+                buffer.writeBoolean(compressed);
+                buffer.writeInt(payload.length);
+                buffer.writeBytes(payload);
             } else {
                 buffer.writeBoolean(false);
             }
@@ -76,6 +145,39 @@ public class TTSAudioPacket {
 
         buffer.writeFloat(volume);
         buffer.writeFloat(speed);
+    }
+
+    private static byte[] gzip(byte[] source) {
+        if (source == null || source.length == 0) {
+            return source;
+        }
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             GZIPOutputStream gos = new GZIPOutputStream(baos)) {
+            gos.write(source);
+            gos.finish();
+            return baos.toByteArray();
+        } catch (Exception e) {
+            LOGGER.debug("Failed to gzip audio payload: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private static byte[] gunzip(byte[] source) {
+        if (source == null || source.length == 0) {
+            return source;
+        }
+        try (GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(source));
+             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = gis.read(buffer)) != -1) {
+                baos.write(buffer, 0, read);
+            }
+            return baos.toByteArray();
+        } catch (Exception e) {
+            LOGGER.warn("Failed to gunzip audio payload: {}", e.getMessage());
+            return new byte[0];
+        }
     }
 
     public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
@@ -97,14 +199,106 @@ public class TTSAudioPacket {
                 // Play audio from URL
                 playTTSFromUrl(audioUrl, volume, speed);
             } else if (audioData != null) {
-                LOGGER.debug("Received TTS audio data: {} bytes", audioData.length);
-                // Play audio from data
-                playTTSFromData(audioData, volume, speed);
+                if (chunked) {
+                    LOGGER.debug("Received TTS audio chunk {}/{} for transfer {} ({} bytes)",
+                        chunkIndex + 1, totalChunks, transferId, audioData.length);
+                    handleChunkedAudioData();
+                } else {
+                    LOGGER.debug("Received TTS audio data: {} bytes", audioData.length);
+                    // Play audio from data
+                    playTTSFromData(audioData, volume, speed);
+                }
             } else {
                 LOGGER.warn("Received TTS packet with no audio URL or data");
             }
         } catch (Exception e) {
             LOGGER.error("Failed to handle TTS audio packet: {}", e.getMessage());
+        }
+    }
+
+    private void handleChunkedAudioData() {
+        if (transferId == null || transferId.isEmpty() || totalChunks <= 0 || chunkIndex < 0 || chunkIndex >= totalChunks) {
+            LOGGER.warn("Invalid chunked TTS packet metadata: transferId={}, chunkIndex={}, totalChunks={}",
+                transferId, chunkIndex, totalChunks);
+            return;
+        }
+
+        cleanupStaleAssemblies();
+
+        ChunkAssembly assembly = CHUNK_ASSEMBLIES.computeIfAbsent(transferId,
+            id -> new ChunkAssembly(totalChunks, volume, speed));
+
+        if (assembly.totalChunks != totalChunks) {
+            LOGGER.warn("Chunk assembly size mismatch for transfer {} (existing {}, incoming {})",
+                transferId, assembly.totalChunks, totalChunks);
+            CHUNK_ASSEMBLIES.remove(transferId);
+            assembly = CHUNK_ASSEMBLIES.computeIfAbsent(transferId,
+                id -> new ChunkAssembly(totalChunks, volume, speed));
+        }
+
+        if (assembly.addChunk(chunkIndex, audioData)) {
+            byte[] fullAudio = assembly.combine();
+            CHUNK_ASSEMBLIES.remove(transferId);
+            if (fullAudio == null || fullAudio.length == 0) {
+                LOGGER.warn("Failed to assemble chunked TTS audio for transfer {}", transferId);
+                return;
+            }
+
+            LOGGER.info("Assembled chunked TTS audio transfer {}: {} bytes ({} chunks)",
+                transferId, fullAudio.length, totalChunks);
+            playTTSFromData(fullAudio, assembly.volume, assembly.speed);
+        }
+    }
+
+    private void cleanupStaleAssemblies() {
+        long now = System.currentTimeMillis();
+        CHUNK_ASSEMBLIES.entrySet().removeIf(entry -> now - entry.getValue().createdAt > CHUNK_ASSEMBLY_TIMEOUT_MS);
+    }
+
+    private static final class ChunkAssembly {
+        private final int totalChunks;
+        private final byte[][] chunks;
+        private final float volume;
+        private final float speed;
+        private final long createdAt;
+        private int receivedCount;
+
+        private ChunkAssembly(int totalChunks, float volume, float speed) {
+            this.totalChunks = totalChunks;
+            this.chunks = new byte[totalChunks][];
+            this.volume = volume;
+            this.speed = speed;
+            this.createdAt = System.currentTimeMillis();
+            this.receivedCount = 0;
+        }
+
+        private synchronized boolean addChunk(int index, byte[] data) {
+            if (index < 0 || index >= totalChunks || data == null) {
+                return false;
+            }
+            if (chunks[index] == null) {
+                chunks[index] = data;
+                receivedCount++;
+            }
+            return receivedCount == totalChunks;
+        }
+
+        private synchronized byte[] combine() {
+            int totalSize = 0;
+            for (byte[] chunk : chunks) {
+                if (chunk == null) {
+                    return null;
+                }
+                totalSize += chunk.length;
+            }
+
+            byte[] merged = new byte[totalSize];
+            int offset = 0;
+            for (byte[] chunk : chunks) {
+                System.arraycopy(chunk, 0, merged, offset, chunk.length);
+                offset += chunk.length;
+            }
+            return merged;
         }
     }
 
@@ -160,6 +354,11 @@ public class TTSAudioPacket {
 
         CompletableFuture.runAsync(() -> {
             try {
+                if (isLikelyRawLinear16Pcm(data) && playRawLinear16(data, volume, speed)) {
+                    LOGGER.debug("TTS audio played as raw LINEAR16 PCM");
+                    return;
+                }
+
                 // Java Sound API — handles MP3 (via SVC's decoder) and PCM/WAV
                 if (playWithJavaSound(data, volume, speed)) {
                     LOGGER.debug("TTS audio played via Java Sound API");
@@ -175,6 +374,164 @@ public class TTSAudioPacket {
                 showTTSNotification("Audio playback error");
             }
         });
+    }
+
+    private boolean isLikelyRawLinear16Pcm(byte[] data) {
+        if (data == null || data.length < 2048 || (data.length % 2 != 0)) {
+            return false;
+        }
+
+        // Exclude common container formats.
+        if ((data[0] == 'R' && data[1] == 'I' && data[2] == 'F' && data[3] == 'F')
+                || (data[0] == 'O' && data[1] == 'g' && data[2] == 'g' && data[3] == 'S')
+                || (data[0] == 'I' && data[1] == 'D' && data[2] == '3')
+                || (data[0] == (byte) 0xFF && (data[1] & (byte) 0xE0) == (byte) 0xE0)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean playRawLinear16(byte[] audioData, float volume, float speed) {
+        javax.sound.sampled.SourceDataLine line = null;
+        try {
+            // Gemini returns L16 at 24kHz. Detect endianness and normalize to 48kHz LE PCM.
+            short[] samples = decodeRawLinear16Samples(audioData);
+            short[] resampled = resamplePcm(samples, 24000.0f, 48000.0f);
+            byte[] playbackBytes = shortsToLittleEndianBytes(resampled);
+
+            float sampleRate = 48000.0f;
+            javax.sound.sampled.AudioFormat format = new javax.sound.sampled.AudioFormat(
+                    javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED,
+                    sampleRate,
+                    16,
+                    1,
+                    2,
+                    sampleRate,
+                false
+            );
+
+            javax.sound.sampled.DataLine.Info info = new javax.sound.sampled.DataLine.Info(
+                    javax.sound.sampled.SourceDataLine.class,
+                    format
+            );
+            if (!javax.sound.sampled.AudioSystem.isLineSupported(info)) {
+                LOGGER.warn("Raw LINEAR16 playback line not supported for format: {}", format);
+                return false;
+            }
+
+            line = (javax.sound.sampled.SourceDataLine) javax.sound.sampled.AudioSystem.getLine(info);
+            line.open(format);
+
+            if (line.isControlSupported(javax.sound.sampled.FloatControl.Type.MASTER_GAIN)) {
+                javax.sound.sampled.FloatControl gainControl =
+                        (javax.sound.sampled.FloatControl) line.getControl(javax.sound.sampled.FloatControl.Type.MASTER_GAIN);
+                float gain = 20f * (float) Math.log10(Math.max(0.05f, Math.min(2.0f, volume)));
+                gainControl.setValue(Math.max(gainControl.getMinimum(), Math.min(gainControl.getMaximum(), gain)));
+            }
+
+            if (Math.abs(speed - 1.0f) > 0.01f) {
+                LOGGER.debug("Raw LINEAR16 client playback currently ignores speed override (requested: {})", speed);
+            }
+
+            line.start();
+            line.write(playbackBytes, 0, playbackBytes.length);
+            line.drain();
+            showTTSNotification("🔊 Deity speaks...");
+            return true;
+
+        } catch (Exception e) {
+            LOGGER.warn("Raw LINEAR16 playback failed: {}", e.getMessage());
+            return false;
+        } finally {
+            if (line != null) {
+                try {
+                    line.stop();
+                    line.close();
+                } catch (Exception ignored) {
+                }
+            }
+        }
+    }
+
+    private short[] decodeRawLinear16Samples(byte[] data) {
+        short[] bigEndian = decodePcm16(data, true);
+        short[] littleEndian = decodePcm16(data, false);
+
+        double beClip = clippingRatio(bigEndian);
+        double leClip = clippingRatio(littleEndian);
+
+        if (beClip > 0.40d && leClip < beClip * 0.60d) {
+            LOGGER.info("Raw PCM decode selected little-endian fallback (clip BE: {}, LE: {})",
+                    String.format(java.util.Locale.ROOT, "%.3f", beClip),
+                    String.format(java.util.Locale.ROOT, "%.3f", leClip));
+            return littleEndian;
+        }
+
+        LOGGER.info("Raw PCM decode selected big-endian (clip ratio: {})",
+                String.format(java.util.Locale.ROOT, "%.3f", beClip));
+        return bigEndian;
+    }
+
+    private short[] decodePcm16(byte[] data, boolean bigEndian) {
+        short[] pcm = new short[data.length / 2];
+        int p = 0;
+        for (int i = 0; i < pcm.length; i++) {
+            int b0 = data[p] & 0xFF;
+            int b1 = data[p + 1] & 0xFF;
+            pcm[i] = bigEndian
+                    ? (short) ((b0 << 8) | b1)
+                    : (short) (b0 | (b1 << 8));
+            p += 2;
+        }
+        return pcm;
+    }
+
+    private double clippingRatio(short[] samples) {
+        if (samples == null || samples.length == 0) {
+            return 0.0d;
+        }
+        int clipped = 0;
+        for (short sample : samples) {
+            if (sample >= 32000 || sample <= -32000) {
+                clipped++;
+            }
+        }
+        return clipped / (double) samples.length;
+    }
+
+    private short[] resamplePcm(short[] input, float sourceRate, float targetRate) {
+        if (input == null || input.length == 0 || Math.abs(sourceRate - targetRate) < 1.0f) {
+            return input;
+        }
+
+        double ratio = sourceRate / targetRate;
+        int outputLength = (int) (input.length / ratio);
+        short[] output = new short[outputLength];
+        for (int i = 0; i < outputLength; i++) {
+            double sourceIndex = i * ratio;
+            int index = (int) sourceIndex;
+            if (index + 1 < input.length) {
+                double fraction = sourceIndex - index;
+                output[i] = (short) (input[index] + fraction * (input[index + 1] - input[index]));
+            } else if (index < input.length) {
+                output[i] = input[index];
+            }
+        }
+        return output;
+    }
+
+    private byte[] shortsToLittleEndianBytes(short[] samples) {
+        if (samples == null) {
+            return new byte[0];
+        }
+        byte[] bytes = new byte[samples.length * 2];
+        int p = 0;
+        for (short sample : samples) {
+            bytes[p++] = (byte) (sample & 0xFF);
+            bytes[p++] = (byte) ((sample >> 8) & 0xFF);
+        }
+        return bytes;
     }
 
     /**
@@ -343,22 +700,12 @@ public class TTSAudioPacket {
 
     private byte[] downloadAudioData(String url) {
         try {
-            URL audioUrl = new URL(url);
-            URLConnection connection = audioUrl.openConnection();
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(30000);
-            
-            try (InputStream is = connection.getInputStream();
-                 ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                
-                byte[] buffer = new byte[8192];
-                int bytesRead;
-                while ((bytesRead = is.read(buffer)) != -1) {
-                    baos.write(buffer, 0, bytesRead);
-                }
-                
-                return baos.toByteArray();
+            HttpTransport.BinaryResponse response = HttpTransport.getBytes(url, null, 30);
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                return response.body();
             }
+            LOGGER.debug("Failed to download audio from URL (status={}): {}", response.statusCode(), url);
+            return null;
         } catch (Exception e) {
             LOGGER.debug("Failed to download audio from URL: {}", e.getMessage());
             return null;

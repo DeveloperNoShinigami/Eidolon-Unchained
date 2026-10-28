@@ -3,7 +3,7 @@ package com.bluelotuscoding.eidolonunchained.integration.player2ai;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.net.HttpURLConnection;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -26,17 +26,15 @@ public final class Player2SharedConfig {
     private Player2SharedConfig() {}
 
     /**
-     * Apply standard game headers for Player2 APIs.
-     * Adds X-Game-Client-ID and X-Player-UUID (when provided).
+     * Apply standard game headers to a generic headers map.
      */
-    public static void applyGameHeaders(HttpURLConnection conn, UUID playerUuid) {
-        try {
-            conn.setRequestProperty(HEADER_GAME_CLIENT_ID, GAME_CLIENT_ID);
-            if (playerUuid != null) {
-                conn.setRequestProperty(HEADER_PLAYER_UUID, playerUuid.toString());
-            }
-        } catch (Exception e) {
-            LOGGER.debug("Failed to set Player2 game headers: {}", e.getMessage());
+    public static void applyGameHeaders(Map<String, String> headers, UUID playerUuid) {
+        if (headers == null) {
+            return;
+        }
+        headers.put(HEADER_GAME_CLIENT_ID, GAME_CLIENT_ID);
+        if (playerUuid != null) {
+            headers.put(HEADER_PLAYER_UUID, playerUuid.toString());
         }
     }
 }

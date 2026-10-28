@@ -110,41 +110,38 @@ public class PrayerSystem {
      */
     private static void sendPatronPrayerRejection(ServerPlayer player, DatapackDeity deity, AIDeityConfig aiConfig, String prayerType) {
         try {
-            player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
-                .ifPresent(patronData -> {
-                    ResourceLocation playerPatron = patronData.getPatron(player);
-                    AIDeityConfig.PatronRelationship relationship = aiConfig.determinePatronRelationship(playerPatron);
-                    
-                    switch (relationship) {
-                        case NO_PATRON:
-                            player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.godless_ignored", deity.getDisplayName()));
-                            player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.dedicate_patron"));
-                            break;
-                        case ENEMY:
-                            player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.corrupt_rejected", deity.getDisplayName()));
-                            
-                            // Check for auto-punish prayer attempts
-                            if (aiConfig.patron_config.conversationRules.containsKey("enemy_restrictions")) {
-                                Map<String, Object> rules = (Map<String, Object>) aiConfig.patron_config.conversationRules.get("enemy_restrictions");
-                                if (rules.containsKey("reputation_penalty_on_contact")) {
-                                    int penalty = (Integer) rules.get("reputation_penalty_on_contact");
-                                    // IReputation is a player capability — get it from the player, not the level
-                                    player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE)
-                                        .ifPresent(reputation -> {
-                                            reputation.subtractReputation(player, aiConfig.deity_id, Math.abs(penalty));
-                                            player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.boldness_angers", deity.getDisplayName(), penalty + " reputation"));
-                                        });
-                                }
-                            }
-                            break;
-                        case NEUTRAL:
-                            if (aiConfig.patron_config.requiresPatronStatus.equals("follower_only")) {
-                                player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.faithful_only", deity.getDisplayName()));
-                                player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.become_follower"));
-                            }
-                            break;
+            ResourceLocation playerPatron = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(player);
+            AIDeityConfig.PatronRelationship relationship = aiConfig.determinePatronRelationship(playerPatron);
+
+            switch (relationship) {
+                case NO_PATRON:
+                    player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.godless_ignored", deity.getDisplayName()));
+                    player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.dedicate_patron"));
+                    break;
+                case ENEMY:
+                    player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.corrupt_rejected", deity.getDisplayName()));
+
+                    // Check for auto-punish prayer attempts
+                    if (aiConfig.patron_config.conversationRules.containsKey("enemy_restrictions")) {
+                        Map<String, Object> rules = (Map<String, Object>) aiConfig.patron_config.conversationRules.get("enemy_restrictions");
+                        if (rules.containsKey("reputation_penalty_on_contact")) {
+                            int penalty = (Integer) rules.get("reputation_penalty_on_contact");
+                            // IReputation is a player capability — get it from the player, not the level
+                            player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE)
+                                .ifPresent(reputation -> {
+                                    reputation.subtractReputation(player, aiConfig.deity_id, Math.abs(penalty));
+                                    player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.boldness_angers", deity.getDisplayName(), penalty + " reputation"));
+                                });
+                        }
                     }
-                });
+                    break;
+                case NEUTRAL:
+                    if (aiConfig.patron_config.requiresPatronStatus.equals("follower_only")) {
+                        player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.faithful_only", deity.getDisplayName()));
+                        player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.become_follower"));
+                    }
+                    break;
+            }
         } catch (Exception e) {
             player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.not_heard", deity.getDisplayName()));
         }
@@ -184,6 +181,23 @@ public class PrayerSystem {
             return;
         }
         
+        // Check if AI is globally disabled or per-deity disabled — use fallback only
+        boolean aiDisabled = !EidolonUnchainedConfig.COMMON.enableAIDeities.get() || !aiConfig.ai_enabled;
+        if (aiDisabled) {
+            if (prayerConfig.hasFallback()) {
+                String cooldownKey = deityId.toString() + ":" + prayerType;
+                if (!isOnCooldown(player.getUUID(), cooldownKey, prayerConfig.cooldown_seconds)) {
+                    executeFallbackResponse(player, deity, prayerConfig, cooldownKey);
+                } else {
+                    long remaining = getCooldownRemaining(player.getUUID(), cooldownKey, prayerConfig.cooldown_seconds);
+                    player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.cooldown_wait", remaining, deity.getDisplayName()));
+                }
+            } else {
+                player.sendSystemMessage(Component.translatable("eidolonunchained.prayer.no_response", deity.getDisplayName()));
+            }
+            return;
+        }
+
         // Check reputation requirement
         int playerReputation = (int) Math.round(deity.getPlayerReputation(player));
         if (playerReputation < prayerConfig.reputation_required) {
@@ -228,8 +242,13 @@ public class PrayerSystem {
             (apiKey != null ? apiKey.length() : 0));
         
         if (apiKey == null || apiKey.isEmpty()) {
-            sendDeityMessage(player, deity.getDisplayName(), "The deity remains silent... (API key not configured)", false);
-            LOGGER.error("No Gemini API key configured for deity interaction. Expected format: gemini.api_key=YOUR_KEY in config/eidolonunchained/server-api-keys.properties");
+            // Try deterministic fallback before giving up
+            if (prayerConfig.hasFallback()) {
+                executeFallbackResponse(player, deity, prayerConfig, cooldownKey);
+                return;
+            }
+            sendDeityMessage(player, deity.getDisplayName(), "The deity remains silent... (no AI configured and no fallback defined)", false);
+            LOGGER.warn("No API key and no fallback_messages/fallback_commands for deity {} prayer type {}", deityId, prayerType);
             return;
         }
         
@@ -284,11 +303,14 @@ public class PrayerSystem {
                         
                         // Use Player-based overload so considerChange() fires → Deity.onReputationChange() → ReputationEvent
                         reputation.addReputation(player, deity.getId(), prayerGain);
-                        
-                        // Trigger immediate title update for reputation change
-                        com.bluelotuscoding.eidolonunchained.events.ReputationChangeHandler.forceUpdatePlayer(player);
                     });
+
+                    // Fire deity scripts for on_prayer event
+                    com.bluelotuscoding.eidolonunchained.data.DeityScriptManager.fireEvent(player, deityId, "on_prayer");
                     
+                    // Fire rules-based event (Phase 3a)
+                    com.bluelotuscoding.eidolonunchained.data.DeityScriptManager.fireRuleEvent(player, deityId, "on_prayer");
+
                 } else {
                     sendDeityMessage(player, deity.getDisplayName(), "does not respond to your prayer.", true);
                 }
@@ -343,8 +365,8 @@ public class PrayerSystem {
         // Add context using Universal AI Context Builder (for ALL providers)
         String context;
         try {
-            context = com.bluelotuscoding.eidolonunchained.ai.UniversalAIContextBuilder
-                .buildCompleteContext(player, aiConfig, prayerConfig);
+            context = com.bluelotuscoding.eidolonunchained.ai.UniversalAIContext
+                .buildFullContext(player, aiConfig);
         } catch (Exception e) {
             LOGGER.warn("Failed to build universal context, using fallback: {}", e.getMessage());
             context = "Player: " + player.getName().getString() + "\nHealth: " + player.getHealth() + "/" + player.getMaxHealth();
@@ -720,6 +742,41 @@ public class PrayerSystem {
         return status;
     }
     
+    /**
+     * Execute deterministic fallback response when AI is unavailable.
+     * Picks a random message from fallback_messages and runs fallback_commands.
+     */
+    private static void executeFallbackResponse(ServerPlayer player, DatapackDeity deity,
+                                                 PrayerAIConfig prayerConfig, String cooldownKey) {
+        LOGGER.info("Executing deterministic fallback for deity {} (no AI available)", deity.getId());
+
+        // Pick a random message
+        if (!prayerConfig.fallback_messages.isEmpty()) {
+            String message = prayerConfig.fallback_messages.get(
+                new java.util.Random().nextInt(prayerConfig.fallback_messages.size()));
+            sendDeityMessage(player, deity.getDisplayName(), message, false);
+        }
+
+        // Execute fallback commands
+        if (!prayerConfig.fallback_commands.isEmpty()) {
+            executeCommands(player, prayerConfig.fallback_commands, prayerConfig);
+        }
+
+        // Fire deity scripts for on_prayer event
+        com.bluelotuscoding.eidolonunchained.data.DeityScriptManager.fireEvent(player, deity.getId(), "on_prayer");
+        
+        // Fire rules-based event (Phase 3a)
+        com.bluelotuscoding.eidolonunchained.data.DeityScriptManager.fireRuleEvent(player, deity.getId(), "on_prayer");
+
+        // Award small reputation for fallback prayer
+        player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE).ifPresent(reputation -> {
+            reputation.addReputation(player, deity.getId(), 0.5);
+        });
+
+        // Set cooldown
+        setCooldown(player.getUUID(), cooldownKey);
+    }
+
     /**
      * Send deity message with configurable display mode using improved system
      */

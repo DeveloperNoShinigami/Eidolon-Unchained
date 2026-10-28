@@ -1,22 +1,18 @@
 package com.bluelotuscoding.eidolonunchained.integration.webtts;
 
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
+import com.bluelotuscoding.eidolonunchained.integration.http.HttpTransport;
 import com.google.gson.*;
 import net.minecraft.server.level.ServerPlayer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.net.ssl.HttpsURLConnection;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -84,30 +80,24 @@ public class WebTTSClient {
             List<VoiceInfo> voices = new ArrayList<>();
             try {
                 String urlStr = getBaseUrl() + "/tts/voices";
-                URL url = URI.create(urlStr).toURL();
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
+                Map<String, String> headers = new HashMap<>();
                 String apiKey = getApiKey();
                 if (apiKey != null && !apiKey.isEmpty()) {
-                    conn.setRequestProperty("Authorization", "Bearer " + apiKey);
+                    headers.put("Authorization", "Bearer " + apiKey);
                 }
-                conn.setConnectTimeout(10000);
-                conn.setReadTimeout(30000);
-                int code = conn.getResponseCode();
+                HttpTransport.Response response = HttpTransport.get(urlStr, headers, 30);
+                int code = response.statusCode();
                 if (code == 200) {
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-                        String body = reader.lines().reduce("", (a,b) -> a + b);
-                        JsonObject json = JsonParser.parseString(body).getAsJsonObject();
-                        JsonArray arr = json.getAsJsonArray("voices");
-                        if (arr != null) {
-                            for (JsonElement el : arr) {
-                                if (el.isJsonObject()) {
-                                    JsonObject v = el.getAsJsonObject();
-                                    String id = v.has("id") ? v.get("id").getAsString() : v.toString();
-                                    voices.add(new VoiceInfo(id));
-                                } else {
-                                    voices.add(new VoiceInfo(el.getAsString()));
-                                }
+                    JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
+                    JsonArray arr = json.getAsJsonArray("voices");
+                    if (arr != null) {
+                        for (JsonElement el : arr) {
+                            if (el.isJsonObject()) {
+                                JsonObject v = el.getAsJsonObject();
+                                String id = v.has("id") ? v.get("id").getAsString() : v.toString();
+                                voices.add(new VoiceInfo(id));
+                            } else {
+                                voices.add(new VoiceInfo(el.getAsString()));
                             }
                         }
                     }
@@ -125,17 +115,12 @@ public class WebTTSClient {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 String urlStr = getBaseUrl() + "/tts/speak";
-                URL url = URI.create(urlStr).toURL();
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/json");
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Content-Type", "application/json");
                 String apiKey = getApiKey();
                 if (apiKey != null && !apiKey.isEmpty()) {
-                    conn.setRequestProperty("Authorization", "Bearer " + apiKey);
+                    headers.put("Authorization", "Bearer " + apiKey);
                 }
-                conn.setDoOutput(true);
-                conn.setConnectTimeout(10000);
-                conn.setReadTimeout(60000);
 
                 JsonObject payload = new JsonObject();
                 payload.addProperty("text", req.text);
@@ -149,37 +134,27 @@ public class WebTTSClient {
                 if (req.voiceGender != null) payload.addProperty("voice_gender", req.voiceGender);
                 if (req.voiceLanguage != null) payload.addProperty("voice_language", req.voiceLanguage);
 
-                try (OutputStreamWriter w = new OutputStreamWriter(conn.getOutputStream(), StandardCharsets.UTF_8)) {
-                    w.write(payload.toString());
-                    w.flush();
-                }
-
-                int code = conn.getResponseCode();
+                HttpTransport.Response response = HttpTransport.postJson(urlStr, headers, payload.toString(), 60);
+                int code = response.statusCode();
                 if (code == 200) {
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-                        String body = reader.lines().reduce("", (a,b) -> a + b);
-                        JsonObject json = JsonParser.parseString(body).getAsJsonObject();
-                        if (json.has("data")) {
-                            String data = json.get("data").getAsString();
-                            // Assume base64 audio data string
-                            byte[] audio = Base64.getDecoder().decode(data);
-                            return TTSResponse.successData(audio);
-                        }
-                        // Fallback: maybe returned a URL
-                        if (json.has("url")) {
-                            return TTSResponse.successUrl(json.get("url").getAsString());
-                        }
-                        return TTSResponse.failure("No audio data in response");
+                    JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
+                    if (json.has("data")) {
+                        String data = json.get("data").getAsString();
+                        // Assume base64 audio data string
+                        byte[] audio = Base64.getDecoder().decode(data);
+                        return TTSResponse.successData(audio);
                     }
+                    // Fallback: maybe returned a URL
+                    if (json.has("url")) {
+                        return TTSResponse.successUrl(json.get("url").getAsString());
+                    }
+                    return TTSResponse.failure("No audio data in response");
                 } else if (code == 401) {
                     return TTSResponse.failure("Unauthorized (401) - check API key");
                 } else if (code == 402) {
                     return TTSResponse.failure("Insufficient credits (402)");
                 } else if (code == 400) {
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getErrorStream(), StandardCharsets.UTF_8))) {
-                        String body = reader.lines().reduce("", (a,b) -> a + b);
-                        return TTSResponse.failure("Invalid request (400): " + body);
-                    }
+                    return TTSResponse.failure("Invalid request (400): " + response.body());
                 } else {
                     return TTSResponse.failure("TTS server error: " + code);
                 }

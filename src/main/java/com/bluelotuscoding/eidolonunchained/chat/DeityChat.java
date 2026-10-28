@@ -111,41 +111,38 @@ public class DeityChat {
      */
     private static void sendPatronRejectionMessage(ServerPlayer player, DatapackDeity deity, AIDeityConfig aiConfig) {
         try {
-            player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
-                .ifPresent(patronData -> {
-                    ResourceLocation playerPatron = patronData.getPatron(player);
-                    AIDeityConfig.PatronRelationship relationship = aiConfig.determinePatronRelationship(playerPatron);
-                    
-                    switch (relationship) {
-                        case NO_PATRON:
-                            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.godless_rejected", deity.getName()));
-                            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.choose_patron"));
-                            break;
-                        case ENEMY:
-                            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.corrupted_presence", deity.getName()));
-                            player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.enemy_allegiance"));
-                            // Apply reputation penalty for daring to contact enemy
-                            if (aiConfig.patron_config.conversationRules.containsKey("enemy_restrictions")) {
-                                Map<String, Object> rules = (Map<String, Object>) aiConfig.patron_config.conversationRules.get("enemy_restrictions");
-                                if (rules.containsKey("reputation_penalty_on_contact")) {
-                                    int penalty = (Integer) rules.get("reputation_penalty_on_contact");
-                                    // Apply penalty through Eidolon's reputation system
-                                    player.level().getCapability(elucent.eidolon.capability.IReputation.INSTANCE)
-                                        .ifPresent(reputation -> {
-                                            double currentRep = reputation.getReputation(player, aiConfig.deity_id);
-                                            reputation.setReputation(player, aiConfig.deity_id, currentRep + penalty);
-                                        });
-                                }
-                            }
-                            break;
-                        case NEUTRAL:
-                            if (aiConfig.patron_config.requiresPatronStatus.equals("follower_only")) {
-                                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.faithful_only", deity.getName()));
-                                player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.prove_devotion"));
-                            }
-                            break;
+            ResourceLocation playerPatron = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(player);
+            AIDeityConfig.PatronRelationship relationship = aiConfig.determinePatronRelationship(playerPatron);
+
+            switch (relationship) {
+                case NO_PATRON:
+                    player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.godless_rejected", deity.getName()));
+                    player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.choose_patron"));
+                    break;
+                case ENEMY:
+                    player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.corrupted_presence", deity.getName()));
+                    player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.enemy_allegiance"));
+                    // Apply reputation penalty for daring to contact enemy
+                    if (aiConfig.patron_config.conversationRules.containsKey("enemy_restrictions")) {
+                        Map<String, Object> rules = (Map<String, Object>) aiConfig.patron_config.conversationRules.get("enemy_restrictions");
+                        if (rules.containsKey("reputation_penalty_on_contact")) {
+                            int penalty = (Integer) rules.get("reputation_penalty_on_contact");
+                            // Apply penalty through Eidolon's reputation system
+                            player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE)
+                                .ifPresent(reputation -> {
+                                    double currentRep = reputation.getReputation(player, aiConfig.deity_id);
+                                    reputation.setReputation(player, aiConfig.deity_id, currentRep + penalty);
+                                });
+                        }
                     }
-                });
+                    break;
+                case NEUTRAL:
+                    if (aiConfig.patron_config.requiresPatronStatus.equals("follower_only")) {
+                        player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.faithful_only", deity.getName()));
+                        player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.prove_devotion"));
+                    }
+                    break;
+            }
         } catch (Exception e) {
             player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.is_silent", deity.getName()));
         }
@@ -405,6 +402,7 @@ public class DeityChat {
     private static void handleTTSOnlyMode(ServerPlayer player, DatapackDeity deity, String conversationPrompt, 
                                           String personality, String context, ResourceLocation deityId, UUID playerId, 
                                           List<String> history, Runnable onComplete) {
+        final long ttsOnlyStartNanos = System.nanoTime();
         // Check if TTS is enabled for this player
         com.bluelotuscoding.eidolonunchained.ai.TTSManager ttsManager = com.bluelotuscoding.eidolonunchained.ai.TTSManager.getInstance();
         boolean isTTSEnabled = ttsManager.getPlayerSettings(player).enabled;
@@ -423,15 +421,16 @@ public class DeityChat {
         LOGGER.info("🎙️ TTS-Only Mode: Sending prompt directly to TTS for player {}", player.getName().getString());
         ttsManager.generateAndSendTTS(player, ttsPrompt, deityId.getPath())
             .thenAccept(success -> {
+                LOGGER.info("TTS-only pipeline for {} finished in {} ms (success={})",
+                    player.getName().getString(),
+                    java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - ttsOnlyStartNanos),
+                    success);
                 if (success) {
                     // Add to conversation history
                     if (history != null) {
                         history.add("Player: " + conversationPrompt);
                         history.add("Deity: [TTS Response Generated]");
                     }
-                    
-                    // Send minimal visual feedback
-                    player.sendSystemMessage(Component.literal("§6⟦ " + deity.getName() + " ⟧ §7[Speaking via TTS...]"));
                     
                     if (onComplete != null) {
                         onComplete.run();
@@ -490,6 +489,7 @@ public class DeityChat {
                                          String conversationPrompt, String personality, String context, AIDeityConfig aiConfig,
                                          ServerPlayer player, DatapackDeity deity, ResourceLocation deityId, UUID playerId, 
                                          List<String> history, Runnable onComplete) {
+        final long hybridStartNanos = System.nanoTime();
         // Generate AI response asynchronously (original behavior)
         provider.generateResponse(
                 conversationPrompt, 
@@ -498,6 +498,9 @@ public class DeityChat {
                 aiConfig.api_settings.generationConfig, 
                 aiConfig.api_settings.safetySettings
             ).thenAccept(aiResponse -> {
+                LOGGER.info("AI response stage for {} finished in {} ms",
+                    player.getName().getString(),
+                    java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - hybridStartNanos));
                 if (aiResponse == null) {
                     player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.no_response"));
                     return;
@@ -513,6 +516,8 @@ public class DeityChat {
                 
                 String rawResponse = aiResponse.dialogue;
                 LOGGER.info("🔥 DEBUG: AI Response received: '{}'", rawResponse);
+                LOGGER.info("AI response size for {}: {} chars",
+                    player.getName().getString(), rawResponse != null ? rawResponse.length() : 0);
                 
                 // Continue with original hybrid processing (includes both AI commands and TTS)
                 processHybridResponse(player, deity, rawResponse, history, playerId, deityId, conversationPrompt, onComplete);
@@ -641,10 +646,30 @@ public class DeityChat {
                 }
                 if (!match) continue;
 
+                // Check if AI is available for actions that need it
+                boolean aiAvailable = aiConfig.ai_enabled
+                    && com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.enableAIDeities.get();
+
+                // Determine effective action: use deterministic fallback when AI unavailable
+                String effectiveAction = trig.action;
+                if (!aiAvailable && "start_conversation".equalsIgnoreCase(trig.action)
+                        && trig.deterministicAction != null) {
+                    effectiveAction = trig.deterministicAction;
+                }
+
                 // Perform action
-                if ("offer_fate".equalsIgnoreCase(trig.action)) {
+                if ("start_conversation".equalsIgnoreCase(effectiveAction)) {
+                    if (aiAvailable) {
+                        // Let normal AI conversation flow handle it (don't consume)
+                        ctx.triggerCooldowns.put(key, System.currentTimeMillis());
+                        return false;
+                    } else if (!trig.deterministicCommands.isEmpty()) {
+                        // AI unavailable, run deterministic commands as fallback
+                        executeCommands(player, deityId, trig.deterministicCommands);
+                    }
+                } else if ("offer_fate".equalsIgnoreCase(effectiveAction)) {
                     tryOfferFateToPlayer(player, deityId, message);
-                } else if ("run_commands".equalsIgnoreCase(trig.action)) {
+                } else if ("run_commands".equalsIgnoreCase(effectiveAction)) {
                     java.util.List<String> cmds = new java.util.ArrayList<>();
                     if (trig.params != null && trig.params.has("commands")) {
                         com.google.gson.JsonArray arr = trig.params.getAsJsonArray("commands");
@@ -676,12 +701,12 @@ public class DeityChat {
                     } else {
                         if (!cmds.isEmpty()) executeCommands(player, deityId, cmds);
                     }
-                } else if ("send_message".equalsIgnoreCase(trig.action)) {
+                } else if ("send_message".equalsIgnoreCase(effectiveAction)) {
                     String text = trig.params != null && trig.params.has("text") ? trig.params.get("text").getAsString() : null;
                     if (text != null && !text.isEmpty()) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(text));
                     }
-                } else if ("curse_target".equalsIgnoreCase(trig.action)) {
+                } else if ("curse_target".equalsIgnoreCase(effectiveAction)) {
                     // Apply configured curse effects to nearby opposing entities (by team/tag)
                     try {
                         double radius = 10.0;
@@ -853,6 +878,11 @@ public class DeityChat {
         com.bluelotuscoding.eidolonunchained.ai.PlayerContextTracker.assignTask(player, tpl.taskId, tpl.description, cfg.deity_id, tpl.reputationReward);
         player.sendSystemMessage(Component.translatable("eidolonunchained.fate.assigned", tpl.description));
         player.sendSystemMessage(Component.translatable("eidolonunchained.fate.reward", tpl.reputationReward));
+        
+        // Fire on_fate_assigned event (Phase 3a)
+        java.util.HashMap<String, String> eventFilters = new java.util.HashMap<>();
+        eventFilters.put("fate_id", tpl.taskId);
+        com.bluelotuscoding.eidolonunchained.data.DeityScriptManager.fireRuleEvent(player, cfg.deity_id, "on_fate_assigned", 0, eventFilters);
 
         // Cooldown stamp
         ctx.lastFateOfferByDeity.put(cfg.deity_id.toString(), System.currentTimeMillis());
@@ -1083,9 +1113,6 @@ public class DeityChat {
                 
                 reputation.addReputation(player.getUUID(), deity.getId(), baseGain);
                 
-                // Trigger immediate title update for reputation change
-                com.bluelotuscoding.eidolonunchained.events.ReputationChangeHandler.forceUpdatePlayer(player);
-                
                 // Notify player of reputation gain with proper localization
                 player.sendSystemMessage(Component.translatable("eidolonunchained.ui.deity.reputation_gained", 
                     deity.getDisplayName(), String.format("%.1f", baseGain)));
@@ -1229,30 +1256,27 @@ public class DeityChat {
         
         // 🎯 ENHANCED PATRON & TITLE TRACKING
         try {
-            player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
-                .ifPresent(patronData -> {
-                    ResourceLocation playerPatron = patronData.getPatron(player);
-                    String title = patronData.getTitle(player);
-                    
-                    prompt.append("\n\n=== PLAYER PATRON STATUS ===\n");
-                    if (playerPatron != null) {
-                        prompt.append("Current Patron: ").append(playerPatron.toString()).append("\n");
-                        if (playerPatron.equals(deityId)) {
-                            prompt.append("This player is YOUR devoted follower!\n");
-                        } else {
-                            prompt.append("This player follows another deity. Act accordingly.\n");
-                        }
-                    } else {
-                        prompt.append("This player has no patron deity (godless).\n");
-                    }
-                    
-                    if (title != null && !title.isEmpty()) {
-                        prompt.append("Player Title: ").append(title).append("\n");
-                        prompt.append("IMPORTANT: Acknowledge this player's title (").append(title).append(") in your greeting - they have earned recognition!\n");
-                    } else {
-                        prompt.append("Player has no special title.\n");
-                    }
-                });
+            ResourceLocation playerPatron = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(player);
+            String title = com.bluelotuscoding.eidolonunchained.patron.PatronState.getTitle(player);
+
+            prompt.append("\n\n=== PLAYER PATRON STATUS ===\n");
+            if (playerPatron != null) {
+                prompt.append("Current Patron: ").append(playerPatron.toString()).append("\n");
+                if (playerPatron.equals(deityId)) {
+                    prompt.append("This player is YOUR devoted follower!\n");
+                } else {
+                    prompt.append("This player follows another deity. Act accordingly.\n");
+                }
+            } else {
+                prompt.append("This player has no patron deity (godless).\n");
+            }
+
+            if (title != null && !title.isEmpty()) {
+                prompt.append("Player Title: ").append(title).append("\n");
+                prompt.append("IMPORTANT: Acknowledge this player's title (").append(title).append(") in your greeting - they have earned recognition!\n");
+            } else {
+                prompt.append("Player has no special title.\n");
+            }
         } catch (Exception e) {
             LOGGER.warn("Failed to get patron capability: {}", e.getMessage());
             prompt.append("\n\n=== PLAYER PATRON STATUS ===\n");
@@ -1316,8 +1340,8 @@ public class DeityChat {
 
         // Add detailed player context using Universal AI Context Builder (for ALL providers)
         try {
-            String playerContext = com.bluelotuscoding.eidolonunchained.ai.UniversalAIContextBuilder
-                .buildCompleteContext(player, aiConfig, null);
+            String playerContext = com.bluelotuscoding.eidolonunchained.ai.UniversalAIContext
+                .buildFullContext(player, aiConfig);
             prompt.append("\n\nPlayer Current State & World Knowledge:\n").append(playerContext);
         } catch (Exception e) {
             LOGGER.warn("Failed to build universal context: {}", e.getMessage());
@@ -1688,10 +1712,12 @@ public class DeityChat {
             }
         }
 
-        // Visual display always runs — TTS audio layers on top of text, not instead of it.
-        // This ensures the player always sees the response even if TTS fails or is slow.
-        if (false) {
-            // (unused branch — kept to preserve else-if structure below)
+        // In TTS mode, keep deity output voice-only (no on-screen text).
+        if (currentDeityId != null && isTTSEnabled) {
+            if (onComplete != null) {
+                onComplete.run();
+            }
+            return;
         } else {
             // No TTS Mode: Full visual display with typing animation
             // Get display configuration
@@ -2897,7 +2923,7 @@ public class DeityChat {
             PrayerAIConfig prayerConfig = aiConfig.getPrayerConfig(prayerType);
             if (prayerConfig != null) {
                 // Use the configured max_commands from JSON
-                int configuredMax = com.bluelotuscoding.eidolonunchained.ai.EffectiveAIConfig
+                int configuredMax = com.bluelotuscoding.eidolonunchained.ai.AIConfigResolver
                     .getMaxCommands(deityId, prayerType, prayerConfig);
                 
                 LOGGER.debug("Using configured max commands for {}/{}: {}", 

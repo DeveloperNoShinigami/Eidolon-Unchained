@@ -3,7 +3,6 @@ package com.bluelotuscoding.eidolonunchained.ai;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
-import com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler;
 import com.google.gson.JsonObject;
 import java.util.*;
 
@@ -14,6 +13,7 @@ import java.util.*;
 public class AIDeityConfig {
     // Basic AI settings - must be set by JSON loading or commands
     public ResourceLocation deity_id;
+    public boolean ai_enabled = true; // When false, only deterministic fallbacks are used (no AI calls)
     public String ai_provider; // No default - must come from JSON/command
     public String model; // No default - must come from JSON/command  
     public String personality; // No default - must come from JSON/command
@@ -232,17 +232,17 @@ public class AIDeityConfig {
         
         // Check patron status and modify personality accordingly
         try {
-            player.level().getCapability(CapabilityHandler.PATRON_DATA_CAPABILITY)
-                .ifPresent(patronData -> {
-                    ResourceLocation playerPatron = patronData.getPatron(player);
-                    PatronRelationship relationship = determinePatronRelationship(playerPatron);
-                    
-                    // Apply patron-specific personality modifiers
-                    String patronModifier = getPatronPersonalityModifier(relationship, patronData.getTitle(player));
-                    if (patronModifier != null) {
-                        personality.append(" ").append(patronModifier);
-                    }
-                });
+            ResourceLocation playerPatron = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(player);
+            PatronRelationship relationship = determinePatronRelationship(playerPatron);
+
+            // Apply patron-specific personality modifiers
+            String patronModifier = getPatronPersonalityModifier(
+                relationship,
+                com.bluelotuscoding.eidolonunchained.patron.PatronState.getTitle(player)
+            );
+            if (patronModifier != null) {
+                personality.append(" ").append(patronModifier);
+            }
         } catch (Exception e) {
             // Fallback to basic personality if patron system fails
         }
@@ -331,22 +331,19 @@ public class AIDeityConfig {
         }
         
         try {
-            return player.level().getCapability(CapabilityHandler.PATRON_DATA_CAPABILITY)
-                .map(patronData -> {
-                    ResourceLocation playerPatron = patronData.getPatron(player);
-                    PatronRelationship relationship = determinePatronRelationship(playerPatron);
-                    
-                    switch (patron_config.requiresPatronStatus) {
-                        case "follower_only":
-                            return relationship == PatronRelationship.FOLLOWER;
-                        case "no_enemies":
-                            return relationship != PatronRelationship.ENEMY;
-                        case "any":
-                            return true;
-                        default:
-                            return true;
-                    }
-                }).orElse(true);
+            ResourceLocation playerPatron = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(player);
+            PatronRelationship relationship = determinePatronRelationship(playerPatron);
+
+            switch (patron_config.requiresPatronStatus) {
+                case "follower_only":
+                    return relationship == PatronRelationship.FOLLOWER;
+                case "no_enemies":
+                    return relationship != PatronRelationship.ENEMY;
+                case "any":
+                    return true;
+                default:
+                    return true;
+            }
         } catch (Exception e) {
             return true; // Default to allowing response if patron system fails
         }
@@ -416,8 +413,11 @@ public class AIDeityConfig {
         public List<String> regex = new ArrayList<>(); // optional regex patterns
         public int minReputation = 0; // optional
         public long cooldownSeconds = 0; // optional
-        public String action; // e.g., "offer_fate", "run_commands", "send_message"
+        public String action; // e.g., "offer_fate", "run_commands", "send_message", "start_conversation"
         public JsonObject params; // action-specific parameters
+        // Deterministic fallback when AI is unavailable
+        public String deterministicAction; // fallback action (e.g., "run_commands")
+        public List<String> deterministicCommands = new ArrayList<>(); // fallback commands to execute
     }
 
     /**
@@ -550,11 +550,9 @@ public class AIDeityConfig {
                 return local;
             }
             
-            // Global registry fallback
+            // Global registry fallback (via TTSManager)
             try {
-                String global = com.bluelotuscoding.eidolonunchained.integration.tts.TTSVoiceRegistry
-                    .getInstance()
-                    .resolve(voiceId);
+                String global = TTSManager.getInstance().resolveVoiceAlias(voiceId);
                 logger.info("🎵 global alias resolved: {} -> {}", voiceId, global);
                 return global;
             } catch (Exception e) {

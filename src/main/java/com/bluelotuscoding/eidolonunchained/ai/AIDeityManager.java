@@ -161,6 +161,7 @@ public class AIDeityManager extends UnifiedDynamicSystemLoader {
         // Parse AI configuration
         AIDeityConfig config = new AIDeityConfig();
         config.deity_id = deityId;
+        if (json.has("ai_enabled")) config.ai_enabled = json.get("ai_enabled").getAsBoolean();
         config.ai_provider = json.get("ai_provider").getAsString();
         config.model = json.get("model").getAsString();
         config.personality = json.get("personality").getAsString();
@@ -248,6 +249,7 @@ public class AIDeityManager extends UnifiedDynamicSystemLoader {
                 // Parse and store AI configuration
                 AIDeityConfig config = new AIDeityConfig();
                 config.deity_id = deityId;
+                if (json.has("ai_enabled")) config.ai_enabled = json.get("ai_enabled").getAsBoolean();
                 config.ai_provider = json.get("ai_provider").getAsString();
                 // Model field is optional - some providers like Player2AI don't need it
                 config.model = json.has("model") ? json.get("model").getAsString() : null;
@@ -313,6 +315,12 @@ public class AIDeityManager extends UnifiedDynamicSystemLoader {
                                 trig.action = t.get("action").getAsString();
                             if (t.has("params"))
                                 trig.params = t.getAsJsonObject("params");
+                            if (t.has("deterministic_action"))
+                                trig.deterministicAction = t.get("deterministic_action").getAsString();
+                            if (t.has("deterministic_commands")) {
+                                for (JsonElement dc : t.getAsJsonArray("deterministic_commands"))
+                                    trig.deterministicCommands.add(dc.getAsString());
+                            }
                             config.naturalLanguageTriggers.add(trig);
                         }
                     } catch (Exception ex) {
@@ -1181,6 +1189,7 @@ public class AIDeityManager extends UnifiedDynamicSystemLoader {
         try {
             AIDeityConfig config = new AIDeityConfig();
             config.deity_id = deityId;
+            if (json.has("ai_enabled")) config.ai_enabled = json.get("ai_enabled").getAsBoolean();
             if (json.has("ai_provider")) config.ai_provider = json.get("ai_provider").getAsString();
             if (json.has("model")) config.model = json.has("model") ? json.get("model").getAsString() : null;
             if (json.has("personality")) config.personality = json.get("personality").getAsString();

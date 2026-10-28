@@ -406,9 +406,9 @@ public class EffigyEffectsManager {
         net.minecraft.world.phys.Vec3 entityPos = player.getEyePosition().add(-Math.sin(rad) / 2, -0.75, Math.cos(rad) / 2);
         BlockPos searchPos = new BlockPos((int)entityPos.x, (int)entityPos.y, (int)entityPos.z);
         
-        LOGGER.info("🔍 Searching for effigy using ChantCasterEntity position calculation", 
+        LOGGER.debug("Searching for effigy using ChantCasterEntity position calculation", 
             player.getName().getString());
-        LOGGER.info("🔍 Player at: {} → ChantCaster equivalent at: {}", 
+        LOGGER.debug("Player at: {} -> ChantCaster equivalent at: {}", 
             player.blockPosition(), searchPos);
         
         // Use Eidolon's proven method - create AABB search area from ChantCaster position
@@ -418,35 +418,36 @@ public class EffigyEffectsManager {
             searchPos.offset(range + 1, range + 1, range + 1)
         );
         
-        LOGGER.info("🔎 Search area: {} to {} (range: {})", 
+        LOGGER.debug("Search area: {} to {} (range: {})", 
             searchPos.offset(-range, -range, -range),
             searchPos.offset(range + 1, range + 1, range + 1), range);
         
         try {
-            // Debug chunk loading and tile entity registration
-            LOGGER.info("🔍 Checking chunk loading status around player...");
-            for (int chunkX = (int)Math.floor(searchArea.minX / 16.0); chunkX <= (int)Math.ceil(searchArea.maxX / 16.0); chunkX++) {
-                for (int chunkZ = (int)Math.floor(searchArea.minZ / 16.0); chunkZ <= (int)Math.ceil(searchArea.maxZ / 16.0); chunkZ++) {
-                    net.minecraft.world.level.ChunkPos chunkPos = new net.minecraft.world.level.ChunkPos(chunkX, chunkZ);
-                    boolean isLoaded = world.hasChunk(chunkX, chunkZ);
-                    LOGGER.info("🔍 Chunk {} loaded: {}", chunkPos, isLoaded);
-                    
-                    if (isLoaded) {
-                        net.minecraft.world.level.chunk.ChunkAccess chunk = world.getChunk(chunkX, chunkZ);
-                        java.util.Set<BlockPos> tilePositions = chunk.getBlockEntitiesPos();
-                        LOGGER.info("🔍 Chunk {} has {} tile entities: {}", chunkPos, tilePositions.size(), 
-                            tilePositions.stream().limit(5).map(BlockPos::toString).collect(java.util.stream.Collectors.joining(", ")));
-                        
-                        // Check if any are effigies
-                        int effigyCount = 0;
-                        for (BlockPos tilePos : tilePositions) {
-                            net.minecraft.world.level.block.entity.BlockEntity te = world.getBlockEntity(tilePos);
-                            if (te instanceof EffigyTileEntity) {
-                                effigyCount++;
-                                LOGGER.info("🎆 Found effigy in chunk at {}: {}", tilePos, te.getClass().getSimpleName());
+            // Expensive chunk diagnostics are only useful during active debugging sessions.
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Checking chunk loading status around player...");
+                for (int chunkX = (int)Math.floor(searchArea.minX / 16.0); chunkX <= (int)Math.ceil(searchArea.maxX / 16.0); chunkX++) {
+                    for (int chunkZ = (int)Math.floor(searchArea.minZ / 16.0); chunkZ <= (int)Math.ceil(searchArea.maxZ / 16.0); chunkZ++) {
+                        net.minecraft.world.level.ChunkPos chunkPos = new net.minecraft.world.level.ChunkPos(chunkX, chunkZ);
+                        boolean isLoaded = world.hasChunk(chunkX, chunkZ);
+                        LOGGER.debug("Chunk {} loaded: {}", chunkPos, isLoaded);
+
+                        if (isLoaded) {
+                            net.minecraft.world.level.chunk.ChunkAccess chunk = world.getChunk(chunkX, chunkZ);
+                            java.util.Set<BlockPos> tilePositions = chunk.getBlockEntitiesPos();
+                            LOGGER.debug("Chunk {} has {} tile entities: {}", chunkPos, tilePositions.size(),
+                                tilePositions.stream().limit(5).map(BlockPos::toString).collect(java.util.stream.Collectors.joining(", ")));
+
+                            int effigyCount = 0;
+                            for (BlockPos tilePos : tilePositions) {
+                                net.minecraft.world.level.block.entity.BlockEntity te = world.getBlockEntity(tilePos);
+                                if (te instanceof EffigyTileEntity) {
+                                    effigyCount++;
+                                    LOGGER.debug("Found effigy in chunk at {}: {}", tilePos, te.getClass().getSimpleName());
+                                }
                             }
+                            LOGGER.debug("Chunk {} has {} effigy tile entities", chunkPos, effigyCount);
                         }
-                        LOGGER.info("🔍 Chunk {} has {} effigy tile entities", chunkPos, effigyCount);
                     }
                 }
             }
@@ -455,10 +456,10 @@ public class EffigyEffectsManager {
             java.util.List<EffigyTileEntity> effigies = elucent.eidolon.api.ritual.Ritual.getTilesWithinAABB(
                 EffigyTileEntity.class, world, searchArea);
             
-            LOGGER.info("🔎 Eidolon's getTilesWithinAABB found {} effigies in search area", effigies.size());
+            LOGGER.debug("Eidolon's getTilesWithinAABB found {} effigies in search area", effigies.size());
             
             if (effigies.isEmpty()) {
-                LOGGER.warn("🔮 No effigy found with Eidolon's method. Attempting manual search as fallback...");
+                LOGGER.debug("No effigy found with Eidolon's method. Attempting manual search fallback...");
                 
                 // Fallback: Manual search to see what's actually in the area
                 for (int x = (int) searchArea.minX; x <= searchArea.maxX; x++) {
@@ -472,12 +473,12 @@ public class EffigyEffectsManager {
                                 // Log interesting blocks
                                 if (!blockState.isAir() && (blockState.getBlock().getName().getString().toLowerCase().contains("effigy") || 
                                     blockEntity instanceof EffigyTileEntity)) {
-                                    LOGGER.info("🔍 Found block at {}: {} (BlockEntity: {})", 
+                                    LOGGER.debug("Found block at {}: {} (BlockEntity: {})", 
                                         pos, blockState.getBlock().getName().getString(), 
                                         blockEntity != null ? blockEntity.getClass().getSimpleName() : "null");
                                     
                                     if (blockEntity instanceof EffigyTileEntity effigy) {
-                                        LOGGER.info("🎆 MANUAL SEARCH: Found effigy at {} (distance: {:.1f} blocks)", 
+                                        LOGGER.debug("Manual search found effigy at {} (distance: {})", 
                                             pos, Math.sqrt(searchPos.distSqr(pos)));
                                         return effigy;
                                     }
@@ -487,7 +488,7 @@ public class EffigyEffectsManager {
                     }
                 }
                 
-                LOGGER.warn("🔮 No effigy found within {} blocks of player {} at search pos {} (both methods failed)", 
+                LOGGER.debug("No effigy found within {} blocks of player {} at search pos {} (both methods failed)", 
                     maxDistance, player.getName().getString(), searchPos);
                 return null;
             }
@@ -501,22 +502,22 @@ public class EffigyEffectsManager {
                     boolean isReady = effigy.ready();
                     
                     if (!hasAltar) {
-                        LOGGER.warn("🚫 Effigy at {} not on altar (below: {})", 
+                        LOGGER.debug("Effigy at {} not on altar (below: {})", 
                             effigy.getBlockPos(), below.getBlock().getName().getString());
                     }
                     if (!isReady) {
-                        LOGGER.warn("🚫 Effigy at {} not ready (cooldown)", effigy.getBlockPos());
+                        LOGGER.debug("Effigy at {} not ready (cooldown)", effigy.getBlockPos());
                     }
                     
                     return hasAltar && isReady;
                 })
                 .collect(java.util.stream.Collectors.toList());
             
-            LOGGER.info("🔍 Found {} total effigies, {} valid (on altar + ready)", 
+            LOGGER.debug("Found {} total effigies, {} valid (on altar + ready)", 
                 effigies.size(), validEffigies.size());
             
             if (validEffigies.isEmpty()) {
-                LOGGER.warn("🔮 No valid effigy found (must be placed on altar and ready)");
+                LOGGER.debug("No valid effigy found (must be placed on altar and ready)");
                 return null;
             }
             
@@ -527,7 +528,7 @@ public class EffigyEffectsManager {
             
             if (closestEffigy != null) {
                 double distance = Math.sqrt(closestEffigy.getBlockPos().distSqr(searchPos));
-                LOGGER.info("🎆 Found effigy at {} (distance: {:.1f} blocks) using ChantCaster position", 
+                LOGGER.debug("Found effigy at {} (distance: {}) using ChantCaster position", 
                     closestEffigy.getBlockPos(), distance);
             }
             

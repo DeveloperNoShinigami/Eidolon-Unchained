@@ -19,9 +19,17 @@ public class PrayerAIConfig {
     // Enhanced configuration options - no defaults
     public List<String> additional_prompts = new ArrayList<>(); // Initialize empty, populate from JSON
     public List<String> reference_commands = new ArrayList<>(); // Initialize empty, populate from JSON
-    
+
+    // Deterministic fallback when AI is unavailable
+    public List<String> fallback_messages = new ArrayList<>(); // Random message picked when AI not available
+    public List<String> fallback_commands = new ArrayList<>(); // Commands to execute as fallback
+
     public PrayerAIConfig() {
         // No defaults - all configuration must come from JSON
         // Initialize collections to prevent null pointer exceptions
+    }
+
+    public boolean hasFallback() {
+        return !fallback_messages.isEmpty() || !fallback_commands.isEmpty();
     }
 }

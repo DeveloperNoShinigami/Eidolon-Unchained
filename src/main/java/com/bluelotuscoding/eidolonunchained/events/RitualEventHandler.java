@@ -42,6 +42,12 @@ public class RitualEventHandler {
                     "§6[Ritual Complete] §e" + event.getRitualId().getPath().replace("_", " ") + " §6completed!"
                 )
             );
+            
+            // Fire on_ritual_complete event (Phase 3a)
+            net.minecraft.resources.ResourceLocation patron = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(event.getPlayer());
+            if (patron != null) {
+                com.bluelotuscoding.eidolonunchained.data.DeityScriptManager.fireRuleEvent(event.getPlayer(), patron, "on_ritual_complete");
+            }
         }
     }
 

@@ -4,6 +4,7 @@ import com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig;
 import com.bluelotuscoding.eidolonunchained.ai.GenerationConfig;
 import com.bluelotuscoding.eidolonunchained.ai.PrayerAIConfig;
 import com.bluelotuscoding.eidolonunchained.ai.SafetySettings;
+import com.bluelotuscoding.eidolonunchained.integration.http.HttpTransport;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonArray;
@@ -15,11 +16,10 @@ import net.minecraft.world.level.biome.Biome;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.net.ssl.HttpsURLConnection;
-import java.io.*;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -216,6 +216,15 @@ public class GeminiAPIClient {
         generationConfig.addProperty("maxOutputTokens", genConfig.max_output_tokens);
         generationConfig.addProperty("topP", 0.8);
         generationConfig.addProperty("topK", 10);
+
+        // Keep token budget focused on user-visible output rather than internal reasoning.
+        if (model.startsWith("gemini-2.5") || model.startsWith("gemini-3")) {
+            JsonObject thinkingConfig = new JsonObject();
+            thinkingConfig.addProperty("includeThoughts", false);
+            thinkingConfig.addProperty("thinkingBudget", 0);
+            generationConfig.add("thinkingConfig", thinkingConfig);
+        }
+
         request.add("generationConfig", generationConfig);
         
         // Safety settings - use proper Gemini format
@@ -238,45 +247,28 @@ public class GeminiAPIClient {
     
     private String sendRequest(JsonObject requestBody) throws IOException {
         String urlString = GEMINI_API_BASE + model + ":generateContent?key=" + apiKey;
-        @SuppressWarnings("deprecation")
-        URL url = new URL(urlString);
-        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-        
+
         // API call logging - use INFO level for production visibility
         String maskedUrl = urlString.replaceAll("key=[^&]*", "key=***");
         LOGGER.info("🔥 GEMINI API CALL: Making request to: {}", maskedUrl);
         LOGGER.info("🔥 GEMINI REQUEST: {}", requestBody.toString());
-        
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-        connection.setRequestProperty("Accept", "application/json");
-        connection.setRequestProperty("User-Agent", "EidolonUnchained/1.0");
-        connection.setDoOutput(true);
-        connection.setConnectTimeout(timeoutSeconds * 1000);
-        connection.setReadTimeout(timeoutSeconds * 1000);
-        
+
         // Send request
         String requestBodyStr = requestBody.toString();
-        try (OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8)) {
-            writer.write(requestBodyStr);
-            writer.flush();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "application/json; charset=UTF-8");
+        headers.put("Accept", "application/json");
+        headers.put("User-Agent", "EidolonUnchained/1.0");
+
+        HttpTransport.Response httpResponse;
+        try {
+            httpResponse = HttpTransport.postJson(urlString, headers, requestBodyStr, timeoutSeconds);
+        } catch (Exception e) {
+            throw new IOException("Failed to call Gemini API", e);
         }
-        
-        // Read response
-        int responseCode = connection.getResponseCode();
-        InputStream inputStream = responseCode >= 200 && responseCode < 300 
-            ? connection.getInputStream() 
-            : connection.getErrorStream();
-            
-        StringBuilder response = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
-            }
-        }
-        
-        String responseBody = response.toString();
+
+        int responseCode = httpResponse.statusCode();
+        String responseBody = httpResponse.body() != null ? httpResponse.body() : "";
 
         // Log successful responses too
         if (responseCode >= 200 && responseCode < 300) {
@@ -331,17 +323,10 @@ public class GeminiAPIClient {
             if (response.has("candidates") && response.getAsJsonArray("candidates").size() > 0) {
                 JsonObject candidate = response.getAsJsonArray("candidates").get(0).getAsJsonObject();
                 
-                // Check for finish reason issues
-                if (candidate.has("finishReason")) {
-                    String finishReason = candidate.get("finishReason").getAsString();
-                    if ("MAX_TOKENS".equals(finishReason)) {
-                        LOGGER.warn("AI response truncated due to token limit");
-                        return new AIResponse(false, "The deity's message was too complex. Please try a simpler prayer.", List.of());
-                    }
-                    if ("SAFETY".equals(finishReason)) {
-                        LOGGER.warn("AI response blocked by safety filters");
-                        return new AIResponse(false, "The deity does not wish to discuss such matters.", List.of());
-                    }
+                String finishReason = candidate.has("finishReason") ? candidate.get("finishReason").getAsString() : "";
+                if ("SAFETY".equals(finishReason)) {
+                    LOGGER.warn("AI response blocked by safety filters");
+                    return new AIResponse(false, "The deity does not wish to discuss such matters.", List.of());
                 }
                 
                 if (candidate.has("content")) {
@@ -350,6 +335,9 @@ public class GeminiAPIClient {
                         JsonObject part = content.getAsJsonArray("parts").get(0).getAsJsonObject();
                         if (part.has("text")) {
                             String text = part.get("text").getAsString();
+                            if ("MAX_TOKENS".equals(finishReason)) {
+                                LOGGER.warn("AI response truncated due to token limit; returning partial response text");
+                            }
                             return parseAIResponseText(text);
                         }
                     }
@@ -521,9 +509,9 @@ public class GeminiAPIClient {
             // Create a basic AI config for context building if none provided
             AIDeityConfig contextConfig = new AIDeityConfig();
             
-            // Use the universal context builder for consistency across all providers
-            return com.bluelotuscoding.eidolonunchained.ai.UniversalAIContextBuilder
-                .buildProviderSpecificContext(player, contextConfig, prayerConfig, "gemini");
+            // Use the universal context for consistency across all providers
+            return com.bluelotuscoding.eidolonunchained.ai.UniversalAIContext
+                .buildProviderSpecificContext(player, contextConfig, "gemini");
                 
         } catch (Exception e) {
             LOGGER.error("Failed to build universal context for Gemini, using fallback: {}", e.getMessage());

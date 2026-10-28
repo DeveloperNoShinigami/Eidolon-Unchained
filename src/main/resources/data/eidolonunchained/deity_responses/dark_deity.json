@@ -1,0 +1,775 @@
+{
+  "on_prayer": [
+    {
+      "id": "greeting_newcomer",
+      "enabled": true,
+      "priority": 100,
+      "stop_on_match": true,
+      "cooldown_ticks": 24000,
+      "max_triggers_per_player": null,
+      "max_triggers_global": null,
+      "tags": ["greeting", "first_contact", "basic"],
+      
+      "conditions": {
+        "min_reputation": 0,
+        "max_reputation": 10,
+        "time_of_day": "any",
+        "near_altar": true
+      },
+      
+      "base_actions": [
+        {
+          "type": "title",
+          "value": "Welcome, Initiate",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "subtitle": "The shadow sees your devotion",
+            "fade_in": 10,
+            "duration": 50,
+            "fade_out": 10
+          }
+        },
+        {
+          "type": "sound",
+          "value": "eidolon:deity.whisper",
+          "delay_ticks": 5,
+          "chance": 1.0,
+          "args": {
+            "volume": 1.0,
+            "pitch": 0.9,
+            "source": "AMBIENT"
+          }
+        },
+        {
+          "type": "message",
+          "value": "You have caught the attention of the dark powers.",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "translation_key": false
+          }
+        },
+        {
+          "type": "particle",
+          "value": "minecraft:enchant",
+          "count": 20,
+          "delay_ticks": 10,
+          "chance": 0.8,
+          "args": {
+            "spread": 0.5,
+            "speed": 0.1
+          }
+        }
+      ],
+      
+      "ai_enhancement": {
+        "enabled": false
+      }
+    },
+    {
+      "id": "midnight_prayer_amplified",
+      "enabled": true,
+      "priority": 90,
+      "stop_on_match": false,
+      "cooldown_ticks": 12000,
+      "max_triggers_per_player": 3,
+      "max_triggers_global": null,
+      "tags": ["time_dependent", "midnight", "power_surge"],
+      
+      "conditions": {
+        "min_reputation": 20,
+        "max_reputation": 999,
+        "time_of_day": "night",
+        "near_altar": {
+          "required": true,
+          "altar_block": ["eidolon:wooden_altar"],
+          "radius": 8
+        }
+      },
+      
+      "base_actions": [
+        {
+          "type": "message",
+          "value": "Your midnight prayer reaches deeper into the void.",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "translation_key": false
+          }
+        },
+        {
+          "type": "effect",
+          "value": "minecraft:speed",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "amplifier": 1,
+            "duration_ticks": 300,
+            "hide_particles": false
+          }
+        },
+        {
+          "type": "command",
+          "value": "particle minecraft:soul ~ ~1 ~ 1 0.5 1 0.1 10",
+          "delay_ticks": 5,
+          "chance": 1.0,
+          "args": {
+            "run_as": "@s",
+            "permission_level": 4
+          }
+        }
+      ],
+      
+      "ai_enhancement": {
+        "enabled": true
+      }
+    },
+    {
+      "id": "prayer_with_sacrifice",
+      "enabled": true,
+      "priority": 95,
+      "stop_on_match": true,
+      "cooldown_ticks": 18000,
+      "max_triggers_per_player": null,
+      "max_triggers_global": null,
+      "tags": ["offering", "sacrifice", "ritual_context"],
+      
+      "conditions": {
+        "min_reputation": 50,
+        "max_reputation": 999,
+        "time_of_day": "any",
+        "near_altar": true,
+        "offering_present": {
+          "mode": "item",
+          "item_any": ["minecraft:redstone", "minecraft:ink_sac"],
+          "item_tags_any": ["eu:offering"],
+          "entity_any": [],
+          "entity_tags_any": [],
+          "min_count": 1,
+          "max_distance": 8,
+          "consume_on_match": false,
+          "nbt_predicate": {}
+        }
+      },
+      
+      "base_actions": [
+        {
+          "type": "title",
+          "value": "Offering Received",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "subtitle": "Power flows from sacrifice",
+            "fade_in": 5,
+            "duration": 40,
+            "fade_out": 5
+          }
+        },
+        {
+          "type": "particle",
+          "value": "minecraft:soul",
+          "count": 30,
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "spread": 1.0,
+            "speed": 0.3
+          }
+        },
+        {
+          "type": "command",
+          "value": "give {player} minecraft:diamond 1",
+          "delay_ticks": 10,
+          "chance": 0.5,
+          "args": {
+            "run_as": "@s",
+            "permission_level": 4
+          }
+        },
+        {
+          "type": "emit_event",
+          "value": "eu:sacrifice_accepted",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "event": "eu:sacrifice_accepted",
+            "event_args": {
+              "offering_type": "redstone",
+              "ritual_tier": "basic"
+            },
+            "require_allowlist": true
+          }
+        }
+      ],
+      
+      "ai_enhancement": {
+        "enabled": true
+      }
+    }
+  ],
+
+  "on_reputation_milestone": [
+    {
+      "id": "stage_initiate_welcome",
+      "enabled": true,
+      "priority": 100,
+      "stop_on_match": true,
+      "cooldown_ticks": 0,
+      "max_triggers_per_player": 1,
+      "max_triggers_global": null,
+      "tags": ["progression", "stage_specific", "milestone"],
+      
+      "conditions": {
+        "min_reputation": 0,
+        "max_reputation": 50,
+        "time_of_day": "any",
+        "stage_id": "eidolonunchained:initiate"
+      },
+      
+      "base_actions": [
+        {
+          "type": "title",
+          "value": "You are an Initiate",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "subtitle": "The shadows welcome you",
+            "duration": 60
+          }
+        },
+        {
+          "type": "sound",
+          "value": "eidolon:deity.power",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "volume": 1.2,
+            "pitch": 1.0
+          }
+        }
+      ],
+      
+      "ai_enhancement": {
+        "enabled": false
+      }
+    },
+    {
+      "id": "stage_acolyte_power",
+      "enabled": true,
+      "priority": 100,
+      "stop_on_match": true,
+      "cooldown_ticks": 0,
+      "max_triggers_per_player": 1,
+      "max_triggers_global": null,
+      "tags": ["progression", "stage_specific", "milestone"],
+      
+      "conditions": {
+        "min_reputation": 50,
+        "max_reputation": 100,
+        "time_of_day": "any",
+        "stage_id": "eidolonunchained:acolyte"
+      },
+      
+      "base_actions": [
+        {
+          "type": "title",
+          "value": "You are an Acolyte",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "subtitle": "Dark power flows through you",
+            "duration": 60
+          }
+        },
+        {
+          "type": "message",
+          "value": "§4You have grown in dark devotion. New mysteries await.",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {}
+        },
+        {
+          "type": "effect",
+          "value": "minecraft:darkness",
+          "delay_ticks": 5,
+          "chance": 1.0,
+          "args": {
+            "amplifier": 0,
+            "duration_ticks": 100,
+            "hide_particles": false
+          }
+        }
+      ],
+      
+      "ai_enhancement": {
+        "enabled": true
+      }
+    }
+  ],
+
+  "on_kill": [
+    {
+      "id": "kill_acknowledgment_base",
+      "enabled": true,
+      "priority": 100,
+      "stop_on_match": false,
+      "cooldown_ticks": 6000,
+      "max_triggers_per_player": null,
+      "max_triggers_global": null,
+      "tags": ["combat", "acknowledgment"],
+      
+      "conditions": {
+        "min_reputation": 0,
+        "max_reputation": 999,
+        "time_of_day": "any"
+      },
+      
+      "base_actions": [
+        {
+          "type": "message",
+          "value": "Death serves a purpose.",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {}
+        },
+        {
+          "type": "sound",
+          "value": "eidolon:deity.laugh",
+          "delay_ticks": 0,
+          "chance": 0.6,
+          "args": {
+            "volume": 0.8,
+            "pitch": 0.8
+          }
+        }
+      ],
+      
+      "ai_enhancement": {
+        "enabled": false
+      }
+    },
+    {
+      "id": "kill_high_reputation_praise",
+      "enabled": true,
+      "priority": 90,
+      "stop_on_match": true,
+      "cooldown_ticks": 12000,
+      "max_triggers_per_player": null,
+      "max_triggers_global": null,
+      "tags": ["combat", "high_devotion", "praise"],
+      
+      "conditions": {
+        "min_reputation": 75,
+        "max_reputation": 999,
+        "time_of_day": "any",
+        "entity_near_altar": {
+          "entity_types_any": [],
+          "entity_tags_any": ["eu:thrall"],
+          "max_distance": 16,
+          "min_count": 1
+        }
+      },
+      
+      "base_actions": [
+        {
+          "type": "title",
+          "value": "Excellent Work",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "subtitle": "Your devotion pleases the shadows",
+            "fade_in": 5,
+            "duration": 50,
+            "fade_out": 5
+          }
+        },
+        {
+          "type": "particle",
+          "value": "minecraft:soul_fire_flame",
+          "count": 25,
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "spread": 0.8,
+            "speed": 0.2
+          }
+        },
+        {
+          "type": "command",
+          "value": "effect give {player} minecraft:strength 120 0",
+          "delay_ticks": 5,
+          "chance": 0.7,
+          "args": {}
+        }
+      ],
+      
+      "ai_enhancement": {
+        "enabled": true
+      }
+    }
+  ],
+
+  "on_fate_assigned": [
+    {
+      "id": "fate_assignment_confirmation",
+      "enabled": true,
+      "priority": 100,
+      "stop_on_match": true,
+      "cooldown_ticks": 0,
+      "max_triggers_per_player": null,
+      "max_triggers_global": null,
+      "tags": ["fate", "assignment", "destiny"],
+      
+      "conditions": {
+        "min_reputation": 30,
+        "max_reputation": 999,
+        "time_of_day": "any"
+      },
+      
+      "base_actions": [
+        {
+          "type": "title",
+          "value": "Fate Assigned",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "subtitle": "Your destiny is sealed",
+            "duration": 60
+          }
+        },
+        {
+          "type": "sound",
+          "value": "eidolon:deity.chime",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "volume": 1.5,
+            "pitch": 0.8
+          }
+        },
+        {
+          "type": "message",
+          "value": "§5You have been chosen. Complete this fate to prove your worth.",
+          "delay_ticks": 10,
+          "chance": 1.0,
+          "args": {}
+        },
+        {
+          "type": "particle",
+          "value": "minecraft:witch",
+          "count": 40,
+          "delay_ticks": 5,
+          "chance": 1.0,
+          "args": {
+            "spread": 1.2,
+            "speed": 0.15
+          }
+        }
+      ],
+      
+      "ai_enhancement": {
+        "enabled": true
+      }
+    }
+  ],
+
+  "on_fate_completed": [
+    {
+      "id": "fate_completion_reward",
+      "enabled": true,
+      "priority": 100,
+      "stop_on_match": true,
+      "cooldown_ticks": 0,
+      "max_triggers_per_player": null,
+      "max_triggers_global": null,
+      "tags": ["fate", "completion", "reward"],
+      
+      "conditions": {
+        "min_reputation": 30,
+        "max_reputation": 999,
+        "time_of_day": "any",
+        "goblet_filled": {
+          "required": false,
+          "fluid_id": "minecraft:water",
+          "min_amount": 100,
+          "container_block_any": [],
+          "nbt_predicate": {}
+        }
+      },
+      
+      "base_actions": [
+        {
+          "type": "title",
+          "value": "Fate Completed!",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "subtitle": "The shadows are pleased",
+            "fade_in": 10,
+            "duration": 70,
+            "fade_out": 10
+          }
+        },
+        {
+          "type": "sound",
+          "value": "eidolon:deity.laugh",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "volume": 1.3,
+            "pitch": 0.9
+          }
+        },
+        {
+          "type": "particle",
+          "value": "minecraft:soul",
+          "count": 50,
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "spread": 1.5,
+            "speed": 0.25
+          }
+        },
+        {
+          "type": "command",
+          "value": "give {player} minecraft:amethyst_shard 1",
+          "delay_ticks": 10,
+          "chance": 0.8,
+          "args": {}
+        },
+        {
+          "type": "emit_event",
+          "value": "eu:fate_milestone_reached",
+          "delay_ticks": 5,
+          "chance": 1.0,
+          "args": {
+            "event": "eu:fate_milestone_reached",
+            "event_args": {
+              "completion_tier": "major",
+              "reward_quality": "epic"
+            },
+            "require_allowlist": true
+          }
+        }
+      ],
+      
+      "ai_enhancement": {
+        "enabled": true
+      }
+    }
+  ],
+
+  "on_ritual_complete": [
+    {
+      "id": "ritual_success_acknowledgment",
+      "enabled": true,
+      "priority": 100,
+      "stop_on_match": false,
+      "cooldown_ticks": 8000,
+      "max_triggers_per_player": null,
+      "max_triggers_global": null,
+      "tags": ["ritual", "success", "acknowledgment"],
+      
+      "conditions": {
+        "min_reputation": 20,
+        "max_reputation": 999,
+        "time_of_day": "any",
+        "near_altar": true
+      },
+      
+      "base_actions": [
+        {
+          "type": "title",
+          "value": "Ritual Success",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "subtitle": "The ritual is complete",
+            "duration": 50
+          }
+        },
+        {
+          "type": "sound",
+          "value": "eidolon:deity.power",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "volume": 1.5,
+            "pitch": 1.2
+          }
+        }
+      ],
+      
+      "ai_enhancement": {
+        "enabled": false
+      }
+    },
+    {
+      "id": "ritual_with_incense_enhanced",
+      "enabled": true,
+      "priority": 95,
+      "stop_on_match": true,
+      "cooldown_ticks": 18000,
+      "max_triggers_per_player": null,
+      "max_triggers_global": null,
+      "tags": ["ritual", "incense", "premium"],
+      
+      "conditions": {
+        "min_reputation": 50,
+        "max_reputation": 999,
+        "time_of_day": "night",
+        "near_altar": true,
+        "incense_lit": {
+          "required": true,
+          "incense_item_any": ["eu:sacred_incense"],
+          "incense_tag_any": ["eu:ritual_incense"],
+          "lit_state_required": true,
+          "max_distance": 10
+        }
+      },
+      
+      "base_actions": [
+        {
+          "type": "message",
+          "value": "§5The incense carries your prayer beyond the veil.",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {}
+        },
+        {
+          "type": "particle",
+          "value": "minecraft:soul_fire_flame",
+          "count": 60,
+          "delay_ticks": 5,
+          "chance": 1.0,
+          "args": {
+            "spread": 2.0,
+            "speed": 0.3
+          }
+        },
+        {
+          "type": "effect",
+          "value": "minecraft:night_vision",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "amplifier": 0,
+            "duration_ticks": 400,
+            "hide_particles": false
+          }
+        },
+        {
+          "type": "command",
+          "value": "give {player} minecraft:experience_bottle 3",
+          "delay_ticks": 10,
+          "chance": 0.9,
+          "args": {}
+        }
+      ],
+      
+      "ai_enhancement": {
+        "enabled": true
+      }
+    }
+  ],
+
+  "on_research_gained": [
+    {
+      "id": "research_discovery_basic",
+      "enabled": true,
+      "priority": 100,
+      "stop_on_match": false,
+      "cooldown_ticks": 6000,
+      "max_triggers_per_player": null,
+      "max_triggers_global": null,
+      "tags": ["knowledge", "discovery", "basic"],
+      
+      "conditions": {
+        "min_reputation": 10,
+        "max_reputation": 999,
+        "time_of_day": "any"
+      },
+      
+      "base_actions": [
+        {
+          "type": "message",
+          "value": "Knowledge gained. The shadows approve.",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {}
+        },
+        {
+          "type": "sound",
+          "value": "eidolon:deity.whisper",
+          "delay_ticks": 0,
+          "chance": 0.7,
+          "args": {
+            "volume": 0.9,
+            "pitch": 1.1
+          }
+        }
+      ],
+      
+      "ai_enhancement": {
+        "enabled": false
+      }
+    },
+    {
+      "id": "research_discovery_high_tier",
+      "enabled": true,
+      "priority": 90,
+      "stop_on_match": true,
+      "cooldown_ticks": 12000,
+      "max_triggers_per_player": 5,
+      "max_triggers_global": null,
+      "tags": ["knowledge", "discovery", "high_tier"],
+      
+      "conditions": {
+        "min_reputation": 60,
+        "max_reputation": 999,
+        "time_of_day": "night"
+      },
+      
+      "base_actions": [
+        {
+          "type": "title",
+          "value": "Dark Knowledge",
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "subtitle": "Forbidden secrets revealed",
+            "duration": 50
+          }
+        },
+        {
+          "type": "effect",
+          "value": "minecraft:blindness",
+          "delay_ticks": 0,
+          "chance": 0.3,
+          "args": {
+            "amplifier": 0,
+            "duration_ticks": 60,
+            "hide_particles": false
+          }
+        },
+        {
+          "type": "particle",
+          "value": "minecraft:ambient_entity_effect",
+          "count": 30,
+          "delay_ticks": 0,
+          "chance": 1.0,
+          "args": {
+            "spread": 1.0,
+            "speed": 0.2
+          }
+        }
+      ],
+      
+      "ai_enhancement": {
+        "enabled": true
+      }
+    }
+  ]
+}

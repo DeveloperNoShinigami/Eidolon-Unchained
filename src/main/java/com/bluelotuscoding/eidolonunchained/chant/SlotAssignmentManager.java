@@ -7,10 +7,12 @@ import com.bluelotuscoding.eidolonunchained.network.EidolonUnchainedNetworking;
 import com.mojang.logging.LogUtils;
 import elucent.eidolon.api.spells.Sign;
 import elucent.eidolon.registries.Signs;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import org.slf4j.Logger;
 
 /**
@@ -222,16 +224,52 @@ public class SlotAssignmentManager {
             player.sendSystemMessage(Component.literal("§cChant no longer exists: " + assignment.id));
             return false;
         }
-        
+
         // Check requirements before casting
         if (!chant.canPerform(player)) {
             player.sendSystemMessage(Component.literal("§cYou don't meet the requirements to cast this chant."));
             player.sendSystemMessage(Component.literal("§7Requirements: " + String.join(", ", chant.getRequirements())));
             return false;
         }
-        
-        // Use the existing ChantSlotManager logic for full chant casting
-        return ChantSlotManager.executeFullChant(player, chant);
+
+        // Check if chant requires effigy (deity-linked chants)
+        if (chant.getLinkedDeity() != null) {
+            if (!isNearEffigy(player)) {
+                player.sendSystemMessage(Component.literal("§cYou must be near an effigy to cast deity chants!"));
+                return false;
+            }
+        }
+
+        player.sendSystemMessage(Component.literal("§6Casting full chant: " + chant.getName()));
+
+        CompoundTag playerData = player.getPersistentData();
+        CompoundTag modData = playerData.getCompound(EidolonUnchained.MODID);
+        modData.putString("active_chant", chant.getId().toString());
+        modData.putString("casting_mode", "FULL_CHANT");
+        modData.putLong("chant_start_time", System.currentTimeMillis());
+        playerData.put(EidolonUnchained.MODID, modData);
+
+        player.sendSystemMessage(Component.literal("§a✅ Full chant sequence completed!"));
+        return true;
+    }
+
+    private static boolean isNearEffigy(ServerPlayer player) {
+        Level world = player.level();
+        BlockPos origin = player.blockPosition();
+        for (int dx = -8; dx <= 8; dx++) {
+            for (int dy = -8; dy <= 8; dy++) {
+                for (int dz = -8; dz <= 8; dz++) {
+                    BlockPos pos = origin.offset(dx, dy, dz);
+                    var be = world.getBlockEntity(pos);
+                    if (be instanceof elucent.eidolon.common.tile.EffigyTileEntity effigy) {
+                        var below = world.getBlockState(pos.below());
+                        boolean hasAltar = below.getBlock() instanceof elucent.eidolon.common.block.TableBlockBase;
+                        if (hasAltar && effigy.ready()) return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
     
     private static String getSignDisplayName(ResourceLocation signId) {

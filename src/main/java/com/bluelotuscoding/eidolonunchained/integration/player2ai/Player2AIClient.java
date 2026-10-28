@@ -4,19 +4,12 @@ import com.bluelotuscoding.eidolonunchained.ai.GenerationConfig;
 import com.bluelotuscoding.eidolonunchained.ai.SafetySettings;
 import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
 import com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiAPIClient;
+import com.bluelotuscoding.eidolonunchained.integration.http.HttpTransport;
 import com.google.gson.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.net.ssl.HttpsURLConnection;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -59,36 +52,27 @@ public class Player2AIClient {
     public static String authenticateWithPlayer2App() {
         try {
             String authUrl = PLAYER2_AUTH_BASE + Player2SharedConfig.GAME_CLIENT_ID;
-            URL url = URI.create(authUrl).toURL();
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty("Accept", "application/json");
-            connection.setConnectTimeout(5000); // 5 second timeout for local app
-            connection.setReadTimeout(5000);
-            
-            int responseCode = connection.getResponseCode();
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Content-Type", "application/json");
+            headers.put("Accept", "application/json");
+            HttpTransport.Response httpResponse = HttpTransport.postJson(authUrl, headers, "{}", 5);
+            int responseCode = httpResponse.statusCode();
             if (responseCode == 200) {
-                try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
-                    String response = reader.lines().collect(Collectors.joining("\n"));
-                    
-                    // Parse {"p2Key": "<api-key>"}
-                    JsonObject responseObj = JsonParser.parseString(response).getAsJsonObject();
-                    if (responseObj.has("p2Key")) {
-                        String apiKey = responseObj.get("p2Key").getAsString();
-                        LOGGER.info("Successfully authenticated with Player2 App, got API key: {}...", 
-                            apiKey.substring(0, Math.min(8, apiKey.length())));
-                        return apiKey;
-                    } else {
-                        LOGGER.warn("Player2 App authentication response missing p2Key: {}", response);
-                        return null;
-                    }
+                String response = httpResponse.body();
+
+                // Parse {"p2Key": "<api-key>"}
+                JsonObject responseObj = JsonParser.parseString(response).getAsJsonObject();
+                if (responseObj.has("p2Key")) {
+                    String apiKey = responseObj.get("p2Key").getAsString();
+                    LOGGER.info("Successfully authenticated with Player2 App, got API key: {}...",
+                        apiKey.substring(0, Math.min(8, apiKey.length())));
+                    return apiKey;
+                } else {
+                    LOGGER.warn("Player2 App authentication response missing p2Key: {}", response);
+                    return null;
                 }
             } else {
-                LOGGER.warn("Player2 App authentication failed with status: {} - {}", 
-                    responseCode, connection.getResponseMessage());
+                LOGGER.warn("Player2 App authentication failed with status: {}", responseCode);
                 return null;
             }
         } catch (Exception e) {
@@ -112,24 +96,14 @@ public class Player2AIClient {
             StringBuilder results = new StringBuilder();
             
             try {
-                URL testUrl = URI.create("http://127.0.0.1:4315/v1/chat/completions").toURL();
-                HttpURLConnection testConn = (HttpURLConnection) testUrl.openConnection();
-                testConn.setRequestMethod("POST");
-                testConn.setRequestProperty("Content-Type", "application/json");
-                // Prefer standard game headers for local app
-                Player2SharedConfig.applyGameHeaders(testConn, null);
-                testConn.setConnectTimeout(3000);
-                testConn.setReadTimeout(3000);
-                testConn.setDoOutput(true);
-                
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Content-Type", "application/json");
+                Player2SharedConfig.applyGameHeaders(headers, null);
+
                 // Send minimal test payload
                 String testPayload = "{\"model\":\"player2\",\"messages\":[{\"role\":\"user\",\"content\":\"test\"}]}";
-                try (OutputStreamWriter writer = new OutputStreamWriter(testConn.getOutputStream())) {
-                    writer.write(testPayload);
-                    writer.flush();
-                }
-                
-                int responseCode = testConn.getResponseCode();
+                HttpTransport.Response httpResponse = HttpTransport.postJson("http://127.0.0.1:4315/v1/chat/completions", headers, testPayload, 3);
+                int responseCode = httpResponse.statusCode();
                 results.append("Player2 App Chat API (4315): ").append(responseCode);
                 
                 if (responseCode == 200) {
@@ -147,15 +121,15 @@ public class Player2AIClient {
             
             // Test authentication endpoint (different port)
             try {
-                URL authUrl = URI.create("http://127.0.0.1:4316/v1/login/web/" + Player2SharedConfig.GAME_CLIENT_ID).toURL();
-                HttpURLConnection authConn = (HttpURLConnection) authUrl.openConnection();
-                authConn.setRequestMethod("POST");
-                authConn.setRequestProperty("Content-Type", "application/json");
-                authConn.setConnectTimeout(3000);
-                authConn.setReadTimeout(3000);
-                authConn.setDoOutput(true);
-                
-                int authCode = authConn.getResponseCode();
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Content-Type", "application/json");
+                HttpTransport.Response authResponse = HttpTransport.postJson(
+                    "http://127.0.0.1:4316/v1/login/web/" + Player2SharedConfig.GAME_CLIENT_ID,
+                    headers,
+                    "{}",
+                    3
+                );
+                int authCode = authResponse.statusCode();
                 results.append("Player2 Auth API (4316): ").append(authCode);
                 
                 if (authCode == 200) {
@@ -172,14 +146,10 @@ public class Player2AIClient {
             
             // Also test health endpoint
             try {
-                URL healthUrl = URI.create("http://127.0.0.1:4315/v1/health").toURL();
-                HttpURLConnection healthConn = (HttpURLConnection) healthUrl.openConnection();
-                healthConn.setRequestMethod("GET");
-                Player2SharedConfig.applyGameHeaders(healthConn, null);
-                healthConn.setConnectTimeout(3000);
-                healthConn.setReadTimeout(3000);
-                
-                int healthCode = healthConn.getResponseCode();
+                Map<String, String> headers = new HashMap<>();
+                Player2SharedConfig.applyGameHeaders(headers, null);
+                HttpTransport.Response healthResponse = HttpTransport.get("http://127.0.0.1:4315/v1/health", headers, 3);
+                int healthCode = healthResponse.statusCode();
                 results.append("Player2 Health Check (4315): ").append(healthCode);
                 
                 if (healthCode == 200) {
@@ -204,14 +174,10 @@ public class Player2AIClient {
      */
     public static boolean isPlayer2AppAvailable() {
         try {
-            URL testUrl = URI.create("http://127.0.0.1:4315/v1/health").toURL();
-            HttpURLConnection testConn = (HttpURLConnection) testUrl.openConnection();
-            testConn.setRequestMethod("GET");
-            Player2SharedConfig.applyGameHeaders(testConn, null);
-            testConn.setConnectTimeout(3000);
-            testConn.setReadTimeout(3000);
-            
-            int responseCode = testConn.getResponseCode();
+            Map<String, String> headers = new HashMap<>();
+            Player2SharedConfig.applyGameHeaders(headers, null);
+            HttpTransport.Response testResponse = HttpTransport.get("http://127.0.0.1:4315/v1/health", headers, 3);
+            int responseCode = testResponse.statusCode();
             return responseCode == 200 || responseCode == 400 || responseCode == 422; // Any response means it's running
         } catch (Exception e) {
             return false; // Connection failed
@@ -440,35 +406,25 @@ public class Player2AIClient {
      * Send HTTP request to Player2AI API (OpenAI-compatible format)
      */
     private String sendLocalChatRequest(String urlString, String jsonBody, String playerUUID) throws IOException {
-        URL url = URI.create(urlString).toURL();
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/json");
-        connection.setRequestProperty("Accept", "application/json");
-        Player2SharedConfig.applyGameHeaders(connection, safeParseUUID(playerUUID));
-    connection.setDoOutput(true);
-    // Scale timeouts from configured timeoutSeconds while keeping sane bounds
-    connection.setConnectTimeout(Math.min(15000, Math.max(3000, (timeoutSeconds * 1000) / 2)));
-    connection.setReadTimeout(Math.min(30000, Math.max(5000, timeoutSeconds * 1000)));
-
-        try (OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8)) {
-            writer.write(jsonBody);
-            writer.flush();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "application/json");
+        headers.put("Accept", "application/json");
+        Player2SharedConfig.applyGameHeaders(headers, safeParseUUID(playerUUID));
+        int timeout = Math.max(5, timeoutSeconds);
+        HttpTransport.Response httpResponse;
+        try {
+            httpResponse = HttpTransport.postJson(urlString, headers, jsonBody, timeout);
+        } catch (Exception e) {
+            throw new IOException("Player2AI local chat request failed", e);
         }
 
-        int responseCode = connection.getResponseCode();
-        StringBuilder response = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                responseCode >= 200 && responseCode < 300 ? connection.getInputStream() : connection.getErrorStream(),
-                StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) response.append(line);
-        }
+        int responseCode = httpResponse.statusCode();
+        String response = httpResponse.body() != null ? httpResponse.body() : "";
         if (responseCode < 200 || responseCode >= 300) {
             LOGGER.warn("Player2AI local error {}: {}", responseCode, response);
             throw new IOException("Player2AI local error: " + responseCode + " - " + response);
         }
-        return response.toString();
+        return response;
     }
 
     private static java.util.UUID safeParseUUID(String uuidStr) {
@@ -487,72 +443,57 @@ public class Player2AIClient {
             resolved = "http://127.0.0.1:4315/" + pathOrUrl;
         }
 
-        URL url = URI.create(resolved).toURL();
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod(method);
-        connection.setRequestProperty("Content-Type", "application/json");
-        connection.setRequestProperty("Accept", "application/json");
-        Player2SharedConfig.applyGameHeaders(connection, null);
-    connection.setDoOutput(true);
-    connection.setConnectTimeout(Math.min(15000, Math.max(3000, (timeoutSeconds * 1000) / 2)));
-    connection.setReadTimeout(Math.min(30000, Math.max(5000, timeoutSeconds * 1000)));
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "application/json");
+        headers.put("Accept", "application/json");
+        Player2SharedConfig.applyGameHeaders(headers, null);
 
-        if (jsonBody != null && !jsonBody.isEmpty()) {
-            try (OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8)) {
-                writer.write(jsonBody);
-                writer.flush();
+        int timeout = Math.max(5, timeoutSeconds);
+        HttpTransport.Response httpResponse;
+        try {
+            if ("GET".equalsIgnoreCase(method)) {
+                httpResponse = HttpTransport.get(resolved, headers, timeout);
+            } else if ("POST".equalsIgnoreCase(method)) {
+                httpResponse = HttpTransport.postJson(resolved, headers, jsonBody != null ? jsonBody : "{}", timeout);
+            } else {
+                throw new IOException("Unsupported HTTP method for Player2 request: " + method);
             }
+        } catch (Exception e) {
+            throw new IOException("Player2AI local request failed", e);
         }
 
-        int responseCode = connection.getResponseCode();
-        StringBuilder response = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                responseCode >= 200 && responseCode < 300 ? connection.getInputStream() : connection.getErrorStream(),
-                StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) response.append(line);
-        }
+        int responseCode = httpResponse.statusCode();
+        String response = httpResponse.body() != null ? httpResponse.body() : "";
         if (responseCode < 200 || responseCode >= 300) {
             LOGGER.warn("Player2AI local request error {}: {}", responseCode, response);
             throw new IOException("Player2AI local request error: " + responseCode + " - " + response);
         }
-        return response.toString();
+        return response;
     }
 
     /**
      * Send OpenAI-compatible chat completion to Player2 Web API using p2Key.
      */
     private String sendWebChatRequest(String urlString, String jsonBody, String p2Key) throws IOException {
-        URL url = URI.create(urlString).toURL();
-        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/json");
-        connection.setRequestProperty("Accept", "application/json");
-        connection.setRequestProperty("Authorization", "Bearer " + p2Key);
-        connection.setDoOutput(true);
-        connection.setConnectTimeout(10000);
-        connection.setReadTimeout(15000);
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "application/json");
+        headers.put("Accept", "application/json");
+        headers.put("Authorization", "Bearer " + p2Key);
 
-        try (OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8)) {
-            writer.write(jsonBody);
-            writer.flush();
+        HttpTransport.Response httpResponse;
+        try {
+            httpResponse = HttpTransport.postJson(urlString, headers, jsonBody, 15);
+        } catch (Exception e) {
+            throw new IOException("Player2 web chat request failed", e);
         }
 
-        int responseCode = connection.getResponseCode();
-        StringBuilder response = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                responseCode >= 200 && responseCode < 300 ? connection.getInputStream() : connection.getErrorStream(),
-                StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
-            }
-        }
+        int responseCode = httpResponse.statusCode();
+        String response = httpResponse.body() != null ? httpResponse.body() : "";
         if (responseCode < 200 || responseCode >= 300) {
-            LOGGER.warn("Player2 Web Chat API error {}: {}", responseCode, response.toString());
-            throw new IOException("Player2 Web Chat API error: " + responseCode + " - " + response.toString());
+            LOGGER.warn("Player2 Web Chat API error {}: {}", responseCode, response);
+            throw new IOException("Player2 Web Chat API error: " + responseCode + " - " + response);
         }
-        return response.toString();
+        return response;
     }
     
     /**

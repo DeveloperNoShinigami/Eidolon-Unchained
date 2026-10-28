@@ -161,6 +161,35 @@ public class FateDataLoader extends UnifiedDynamicSystemLoader {
             task.aiAssignmentContext = json.getAsJsonObject("ai_assignment_context").toString();
         }
 
+        // Assignment mode: ai (default), deterministic, both, manual
+        if (json.has("assignment_mode")) {
+            try {
+                task.assignmentMode = TaskSystemConfig.AssignmentMode.valueOf(
+                    json.get("assignment_mode").getAsString().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                LOGGER.warn("Unknown assignment_mode '{}' for fate {}, defaulting to AI",
+                    json.get("assignment_mode").getAsString(), task.taskId);
+            }
+        }
+
+        // Deterministic assignment conditions
+        if (json.has("deterministic_assign") && json.get("deterministic_assign").isJsonObject()) {
+            JsonObject da = json.getAsJsonObject("deterministic_assign");
+            TaskSystemConfig.DeterministicAssign det = new TaskSystemConfig.DeterministicAssign();
+            if (da.has("reputation_min")) det.reputationMin = da.get("reputation_min").getAsInt();
+            if (da.has("reputation_max")) det.reputationMax = da.get("reputation_max").getAsInt();
+            if (da.has("probability")) det.probability = da.get("probability").getAsDouble();
+            if (da.has("trigger")) det.trigger = da.get("trigger").getAsString();
+            if (da.has("time_of_day")) det.timeOfDay = da.get("time_of_day").getAsString();
+            if (da.has("min_stage")) det.minStage = da.get("min_stage").getAsString();
+            if (da.has("completed_fates") && da.get("completed_fates").isJsonArray()) {
+                for (JsonElement el : da.getAsJsonArray("completed_fates")) {
+                    det.completedFates.add(el.getAsString());
+                }
+            }
+            task.deterministicAssign = det;
+        }
+
         return task;
     }
 

@@ -66,7 +66,8 @@ public class DebugCommands {
             SuggestionProvider<CommandSourceStack> factSuggestions) {
 
         return Commands.literal("debug")
-            .requires(cs -> cs.hasPermission(2))
+            .requires(cs -> cs.hasPermission(2)
+                && com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig.COMMON.enableDebugMode.get())
 
             // ── ai subtree ───────────────────────────────────────────────────────
             .then(Commands.literal("ai")

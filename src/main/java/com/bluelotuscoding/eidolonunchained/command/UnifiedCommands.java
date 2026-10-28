@@ -9,7 +9,6 @@ import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
 import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
 import com.bluelotuscoding.eidolonunchained.chat.ConversationHistoryManager;
 import com.bluelotuscoding.eidolonunchained.chat.ConversationMessage;
-// import com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
 import com.bluelotuscoding.eidolonunchained.events.RitualCompleteEvent;
 import com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AIClient;
@@ -322,7 +321,7 @@ public class UnifiedCommands {
             // -- tts ---------------------------------------------------------------
             .then(TTSCommands.buildNode())
 
-            // -- debug (op only) ---------------------------------------------------
+            // -- debug (op only, requires enableDebugMode config) -------------------
             .then(DebugCommands.buildNode(PLAYER_SUGGESTIONS, DEITY_SUGGESTIONS, RITUAL_SUGGESTIONS, FACT_SUGGESTIONS)));
 
         // /eu alias
@@ -1292,22 +1291,17 @@ public class UnifiedCommands {
                 context.getSource().sendFailure(Component.literal("§cThis command can only be used by players"));
                 return 0;
             }
-            
-            player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
-                .ifPresent(
-                    patronData -> {
-                        ResourceLocation currentPatron = patronData.getPatron(player);
-                        if (currentPatron == null) {
-                            context.getSource().sendFailure(Component.literal("§cYou don't have a patron deity"));
-                        } else {
-                            patronData.setPatron(player, null);
-                            context.getSource().sendSuccess(
-                                () -> Component.literal("§6You have abandoned your patron deity: " + currentPatron), 
-                                false
-                            );
-                        }
-                    }
+
+            ResourceLocation currentPatron = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(player);
+            if (currentPatron == null) {
+                context.getSource().sendFailure(Component.literal("§cYou don't have a patron deity"));
+            } else {
+                com.bluelotuscoding.eidolonunchained.patron.PatronState.setPatron(player, null);
+                context.getSource().sendSuccess(
+                    () -> Component.literal("§6You have abandoned your patron deity: " + currentPatron),
+                    false
                 );
+            }
             
             return 1;
             
@@ -1323,42 +1317,37 @@ public class UnifiedCommands {
                 context.getSource().sendFailure(Component.literal("§cThis command can only be used by players"));
                 return 0;
             }
-            
-            player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
-                .ifPresent(
-                    patronData -> {
-                        ResourceLocation patron = patronData.getPatron(player);
-                        String title = patronData.getTitle(player);
-                        
-                        if (patron == null) {
-                            context.getSource().sendSuccess(
-                                () -> Component.literal("§eYou have no patron deity"), 
-                                false
-                            );
-                        } else {
-                            String statusText = "§6Patron Deity: §f" + patron;
-                            if (title != null && !title.isEmpty()) {
-                                statusText += "\n§6Current Title: §f" + title;
-                            }
-                            
-                            // Show reputation with patron
-                            try {
-                                double reputation = player.level().getCapability(elucent.eidolon.capability.IReputation.INSTANCE)
-                                    .map(rep -> rep.getReputation(player, patron))
-                                    .orElse(0.0);
-                                statusText += "\n§6Reputation: §f" + String.format("%.1f", reputation);
-                            } catch (Exception e) {
-                                // Ignore reputation errors
-                            }
-                            
-                            final String finalStatusText = statusText;
-                            context.getSource().sendSuccess(
-                                () -> Component.literal(finalStatusText), 
-                                false
-                            );
-                        }
-                    }
+
+            ResourceLocation patron = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(player);
+            String title = com.bluelotuscoding.eidolonunchained.patron.PatronState.getTitle(player);
+
+            if (patron == null) {
+                context.getSource().sendSuccess(
+                    () -> Component.literal("§eYou have no patron deity"),
+                    false
                 );
+            } else {
+                String statusText = "§6Patron Deity: §f" + patron;
+                if (title != null && !title.isEmpty()) {
+                    statusText += "\n§6Current Title: §f" + title;
+                }
+
+                // Show reputation with patron
+                try {
+                    double reputation = player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE)
+                        .map(rep -> rep.getReputation(player, patron))
+                        .orElse(0.0);
+                    statusText += "\n§6Reputation: §f" + String.format("%.1f", reputation);
+                } catch (Exception e) {
+                    // Ignore reputation errors
+                }
+
+                final String finalStatusText = statusText;
+                context.getSource().sendSuccess(
+                    () -> Component.literal(finalStatusText),
+                    false
+                );
+            }
             
             return 1;
             
@@ -1374,48 +1363,43 @@ public class UnifiedCommands {
                 context.getSource().sendFailure(Component.literal("§cThis command can only be used by players"));
                 return 0;
             }
-            
-            player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
-                .ifPresent(
-                    patronData -> {
-                        ResourceLocation patron = patronData.getPatron(player);
-                        if (patron == null) {
-                            context.getSource().sendFailure(Component.literal("§cYou don't have a patron deity"));
-                            return;
+
+            ResourceLocation patron = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(player);
+            if (patron == null) {
+                context.getSource().sendFailure(Component.literal("§cYou don't have a patron deity"));
+                return 0;
+            }
+
+            // Get deity and show available titles
+            DatapackDeity deity = DatapackDeityManager.getDeity(patron);
+            if (deity != null) {
+                StringBuilder titleList = new StringBuilder("§6Available Titles for " + deity.getName() + ":\n");
+
+                Map<String, Object> stages = deity.getProgressionStages();
+                if (stages != null && !stages.isEmpty()) {
+                    stages.forEach((stageName, stageData) -> {
+                        String displayName = deity.getStageDisplayName(stageName);
+                        if (stageData instanceof Map<?, ?> stageMap) {
+                            Object repReq = stageMap.get("reputationRequired");
+                            int reputation = repReq instanceof Number ? ((Number) repReq).intValue() : 0;
+                            titleList.append("§e- ").append(displayName)
+                                    .append(" §7(").append(reputation).append(" reputation)\n");
                         }
-                        
-                        // Get deity and show available titles
-                        DatapackDeity deity = DatapackDeityManager.getDeity(patron);
-                        if (deity != null) {
-                            StringBuilder titleList = new StringBuilder("§6Available Titles for " + deity.getName() + ":\n");
-                            
-                            Map<String, Object> stages = deity.getProgressionStages();
-                            if (stages != null && !stages.isEmpty()) {
-                                stages.forEach((stageName, stageData) -> {
-                                    String displayName = deity.getStageDisplayName(stageName);
-                                    if (stageData instanceof Map<?, ?> stageMap) {
-                                        Object repReq = stageMap.get("reputationRequired");
-                                        int reputation = repReq instanceof Number ? ((Number) repReq).intValue() : 0;
-                                        titleList.append("§e- ").append(displayName)
-                                                .append(" §7(").append(reputation).append(" reputation)\n");
-                                    }
-                                });
-                            }
-                            
-                            String currentTitle = patronData.getTitle(player);
-                            if (currentTitle != null && !currentTitle.isEmpty()) {
-                                titleList.append("§6Current Title: §f").append(currentTitle);
-                            }
-                            
-                            context.getSource().sendSuccess(
-                                () -> Component.literal(titleList.toString()), 
-                                false
-                            );
-                        } else {
-                            context.getSource().sendFailure(Component.literal("§cPatron deity configuration not found"));
-                        }
-                    }
+                    });
+                }
+
+                String currentTitle = com.bluelotuscoding.eidolonunchained.patron.PatronState.getTitle(player);
+                if (currentTitle != null && !currentTitle.isEmpty()) {
+                    titleList.append("§6Current Title: §f").append(currentTitle);
+                }
+
+                context.getSource().sendSuccess(
+                    () -> Component.literal(titleList.toString()),
+                    false
                 );
+            } else {
+                context.getSource().sendFailure(Component.literal("§cPatron deity configuration not found"));
+            }
             
             return 1;
             
@@ -1565,9 +1549,12 @@ public class UnifiedCommands {
                 return 0;
             }
             
-            // Trigger manual progression check
-            com.bluelotuscoding.eidolonunchained.events.ReputationEventBridge.triggerProgressionCheck(player);
-            
+            // Progression checks fire automatically via DatapackDeity.onReputationChange()
+            // Manual trigger forces patron title re-evaluation for all deities
+            for (var deity : com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getAllDeities().values()) {
+                deity.updatePatronTitle(player);
+            }
+
             context.getSource().sendSuccess(() -> Component.literal(
                 "§6Forced progression check for " + playerName), false);
             

@@ -32,7 +32,15 @@
       "reputation_required": 0,
       "cooldown_seconds": 300,
       "max_commands": 2,
-      "allowed_commands": ["effect", "give", "tellraw"]
+      "allowed_commands": ["effect", "give", "tellraw"],
+      "fallback_messages": [
+        "The shadows stir in acknowledgment of your presence...",
+        "A cold whisper passes through you, carrying fragments of dark knowledge.",
+        "Nyxathel's gaze lingers upon you. The darkness approves."
+      ],
+      "fallback_commands": [
+        "effect give {player} minecraft:night_vision 200 0"
+      ]
     },
     "knowledge": {
       "base_prompt": "Your devotee asks for forbidden knowledge. Answer with ominous clarity. Grant 0-1 command only if the lesson merits a gift.",
@@ -48,7 +56,15 @@
       "reputation_required": 10,
       "cooldown_seconds": 600,
       "max_commands": 1,
-      "allowed_commands": ["give", "tellraw"]
+      "allowed_commands": ["give", "tellraw"],
+      "fallback_messages": [
+        "The dark yields only to those who remain when others flee.",
+        "Seek the places where light fears to tread. There, knowledge awaits.",
+        "Every shadow holds a secret. Learn to listen."
+      ],
+      "fallback_commands": [
+        "give {player} minecraft:book 1"
+      ]
     },
     "blessing": {
       "base_prompt": "A faithful servant requests a shadow blessing. Use 1-2 effect commands themed around stealth, endurance, or perception.",
@@ -63,7 +79,16 @@
       "reputation_required": 15,
       "cooldown_seconds": 720,
       "max_commands": 2,
-      "allowed_commands": ["effect"]
+      "allowed_commands": ["effect"],
+      "fallback_messages": [
+        "Shadow wraps around you like armor forged from midnight.",
+        "The darkness grants its favor. Move unseen.",
+        "Nyxathel's blessing settles over you — cold, certain, enduring."
+      ],
+      "fallback_commands": [
+        "effect give {player} minecraft:night_vision 600 0",
+        "effect give {player} minecraft:resistance 300 0"
+      ]
     },
     "curse": {
       "base_prompt": "One who has offended the shadow seeks judgment or stands condemned. Use 1-2 effect commands that hinder without trivializing the moment.",
@@ -78,7 +103,16 @@
       "reputation_required": 0,
       "cooldown_seconds": 900,
       "max_commands": 2,
-      "allowed_commands": ["effect", "tellraw"]
+      "allowed_commands": ["effect", "tellraw"],
+      "fallback_messages": [
+        "The shadow's displeasure is swift and exact.",
+        "Nyxathel's judgment falls — cold, measured, inescapable.",
+        "You have drawn the attention of something that does not forgive easily."
+      ],
+      "fallback_commands": [
+        "effect give {player} minecraft:weakness 180 0",
+        "effect give {player} minecraft:slowness 120 0"
+      ]
     }
   },
   "api_settings": {
@@ -87,7 +121,7 @@
       "temperature": 0.8,
       "top_k": 40,
       "top_p": 0.95,
-      "max_output_tokens": 512
+      "max_output_tokens": 160
     },
     "safety_settings": {
       "harassment": "block_none",

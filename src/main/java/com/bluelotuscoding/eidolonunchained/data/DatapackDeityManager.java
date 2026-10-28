@@ -162,19 +162,37 @@ public class DatapackDeityManager extends UnifiedDynamicSystemLoader {
             }
         }
         
-        // Extract and register AI configuration if present
+        // Extract and register AI configuration if present (deprecated — use ai_deities/ files instead)
         if (json.has("ai_configuration")) {
             try {
+                LOGGER.warn("Deity {} uses inline 'ai_configuration'. Move to a separate ai_deities/ file for clarity.", deityId);
                 loadAIConfiguration(deityId, json.getAsJsonObject("ai_configuration"));
-                LOGGER.debug("Loaded AI configuration for deity: {}", deityId);
             } catch (Exception e) {
                 LOGGER.error("Failed to load AI configuration for deity {}", deityId, e);
             }
         }
         
+        // Load deity scripts if present (deterministic event-response system)
+        if (json.has("deity_scripts")) {
+            try {
+                DeityScriptManager.loadScriptsForDeity(deityId, json.getAsJsonObject("deity_scripts"));
+            } catch (Exception e) {
+                LOGGER.error("Failed to load deity scripts for deity {}", deityId, e);
+            }
+        }
+        
+        // Load deity responses if present (Phase 3a rule-based event system)
+        if (json.has("deity_responses")) {
+            try {
+                DeityScriptManager.loadRulesForDeity(deityId, json.getAsJsonObject("deity_responses"));
+            } catch (Exception e) {
+                LOGGER.error("Failed to load deity responses for deity {}", deityId, e);
+            }
+        }
+
         // Store in our static map for easy access
         deities.put(deityId, deity);
-        
+
         // Register with Eidolon's deity system IMMEDIATELY
         // This ensures the deity is available in Deities.find() before DatapackDeitiesLoadedEvent fires
         Deities.register(deity);

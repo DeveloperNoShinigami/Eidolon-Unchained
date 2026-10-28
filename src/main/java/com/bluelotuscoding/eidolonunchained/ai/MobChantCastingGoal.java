@@ -1,8 +1,6 @@
 package com.bluelotuscoding.eidolonunchained.ai;
 
 import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
-import com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler;
-import com.bluelotuscoding.eidolonunchained.capability.IPatronData;
 import com.bluelotuscoding.eidolonunchained.chant.ChantableMobManager;
 import com.bluelotuscoding.eidolonunchained.chant.DatapackChant;
 import com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager;
@@ -995,20 +993,13 @@ public class MobChantCastingGoal extends Goal {
 
         profile.ownerPlayer = ownerPlayer;
 
-        IPatronData patronData = ownerPlayer.level()
-            .getCapability(CapabilityHandler.PATRON_DATA_CAPABILITY)
-            .orElse(null);
-        if (patronData == null) {
-            return profile;
-        }
-
-        ResourceLocation patronId = patronData.getPatron(ownerPlayer);
-        if (patronId == null || IPatronData.NO_PATRON.equals(patronId)) {
+        ResourceLocation patronId = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(ownerPlayer);
+        if (patronId == null) {
             return profile;
         }
 
         profile.patronId = patronId;
-        profile.ownerTitle = patronData.getTitle(ownerPlayer);
+        profile.ownerTitle = com.bluelotuscoding.eidolonunchained.patron.PatronState.getTitle(ownerPlayer);
 
         AIDeityConfig aiConfig = AIDeityManager.getInstance().getAIConfig(patronId);
         applyPatronResourceProfile(profile, aiConfig, profile.ownerTitle);

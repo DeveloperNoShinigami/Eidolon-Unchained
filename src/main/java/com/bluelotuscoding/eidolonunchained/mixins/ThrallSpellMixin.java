@@ -2,8 +2,6 @@ package com.bluelotuscoding.eidolonunchained.mixins;
 
 import com.bluelotuscoding.eidolonunchained.ai.AIDeityConfig;
 import com.bluelotuscoding.eidolonunchained.ai.AIDeityManager;
-import com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler;
-import com.bluelotuscoding.eidolonunchained.capability.IPatronData;
 import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
 import com.mojang.logging.LogUtils;
@@ -62,12 +60,7 @@ public class ThrallSpellMixin {
         String targetMobId = getMobId(living);
         if (targetMobId == null) return;
 
-        IPatronData patronData = player.level()
-                .getCapability(CapabilityHandler.PATRON_DATA_CAPABILITY)
-                .orElse(null);
-        if (patronData == null) return;
-
-        ResourceLocation patronDeityId = patronData.getPatron(serverPlayer);
+        ResourceLocation patronDeityId = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(serverPlayer);
         if (patronDeityId == null) return;
 
         try {
@@ -94,7 +87,7 @@ public class ThrallSpellMixin {
             if (currentDeityWhitelist.contains(targetMobId)) {
                 String requiredStage = patronAiConfig.patron_config.stageRequiredForEntrall;
                 if (requiredStage != null && !requiredStage.isEmpty()) {
-                    String playerTitle = patronData.getTitle(serverPlayer);
+                    String playerTitle = com.bluelotuscoding.eidolonunchained.patron.PatronState.getTitle(serverPlayer);
                     if (!titleMeetsRequirement(patronDeityId, playerTitle, requiredStage)) {
                         serverPlayer.sendSystemMessage(Component.literal(
                                 "\u00a7cYour faith is not yet deep enough to bind these creatures. "

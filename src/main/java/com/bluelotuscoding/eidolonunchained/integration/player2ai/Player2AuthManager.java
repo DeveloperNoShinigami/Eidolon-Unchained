@@ -1,18 +1,15 @@
 package com.bluelotuscoding.eidolonunchained.integration.player2ai;
 
+import com.bluelotuscoding.eidolonunchained.integration.http.HttpTransport;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.server.level.ServerPlayer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.net.ssl.HttpsURLConnection;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.URI;
-import java.net.URL;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
 
@@ -108,35 +105,20 @@ public class Player2AuthManager {
      */
     public static DeviceStart startDeviceFlow(ServerPlayer player) {
         try {
-            URL url = URI.create(DEVICE_NEW_URL).toURL();
-            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setDoOutput(true);
-            conn.setConnectTimeout(10000);
-            conn.setReadTimeout(15000);
-
             JsonObject req = new JsonObject();
             req.addProperty("client_id", GAME_CLIENT_ID);
 
-            try (OutputStreamWriter w = new OutputStreamWriter(conn.getOutputStream())) {
-                w.write(req.toString());
-                w.flush();
-            }
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Content-Type", "application/json");
+            HttpTransport.Response response = HttpTransport.postJson(DEVICE_NEW_URL, headers, req.toString(), 15);
 
-            int code = conn.getResponseCode();
+            int code = response.statusCode();
             if (code != 200) {
-                String err;
-                try (BufferedReader r = new BufferedReader(new InputStreamReader(conn.getErrorStream()))) {
-                    err = r.lines().reduce("", (a, b) -> a + b);
-                }
+                String err = response.body() != null ? response.body() : "";
                 return DeviceStart.fail("Device flow start failed (" + code + "): " + err);
             }
 
-            String body;
-            try (BufferedReader r = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-                body = r.lines().reduce("", (a, b) -> a + b);
-            }
+            String body = response.body();
             JsonObject json = JsonParser.parseString(body).getAsJsonObject();
 
             String deviceCode = getString(json, "deviceCode", getString(json, "device_code", null));
@@ -180,14 +162,6 @@ public class Player2AuthManager {
                 return null;
             }
 
-            URL url = URI.create(DEVICE_TOKEN_URL).toURL();
-            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setDoOutput(true);
-            conn.setConnectTimeout(10000);
-            conn.setReadTimeout(15000);
-
             JsonObject req = new JsonObject();
             req.addProperty("client_id", GAME_CLIENT_ID);
             // Use standard OAuth 2.0 Device Authorization Grant type
@@ -197,25 +171,19 @@ public class Player2AuthManager {
             req.addProperty("deviceCode", state.deviceCode);
             req.addProperty("device_code", state.deviceCode);
 
-            try (OutputStreamWriter w = new OutputStreamWriter(conn.getOutputStream())) {
-                w.write(req.toString());
-                w.flush();
-            }
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Content-Type", "application/json");
+            HttpTransport.Response response = HttpTransport.postJson(DEVICE_TOKEN_URL, headers, req.toString(), 15);
 
-            int code = conn.getResponseCode();
+            int code = response.statusCode();
             if (code != 200) {
                 // Pending or error. Treat 400/428 as pending; others log.
-                try (BufferedReader r = new BufferedReader(new InputStreamReader(conn.getErrorStream()))) {
-                    String err = r.lines().reduce("", (a, b) -> a + b);
-                    LOGGER.debug("Device token poll non-200 ({}): {}", code, err);
-                } catch (Exception ignored) {}
+                String err = response.body() != null ? response.body() : "";
+                LOGGER.debug("Device token poll non-200 ({}): {}", code, err);
                 return null;
             }
 
-            String body;
-            try (BufferedReader r = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-                body = r.lines().reduce("", (a, b) -> a + b);
-            }
+            String body = response.body();
             JsonObject json = JsonParser.parseString(body).getAsJsonObject();
             // Accept multiple potential token field names per API variants
             String p2Key = getString(json, "p2Key",

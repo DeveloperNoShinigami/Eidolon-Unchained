@@ -582,7 +582,7 @@ public class ConversationHistoryManager extends SavedData {
     }
     
     /**
-     * Get deity AI provider (for EffectiveAIConfig compatibility)
+     * Get deity AI provider (for AIConfigResolver compatibility)
      */
     public String getDeityAIProvider(ResourceLocation deityId) {
         Map<String, Object> config = deityAIConfig.get(deityId);
@@ -593,7 +593,7 @@ public class ConversationHistoryManager extends SavedData {
     }
     
     /**
-     * Get deity AI model (for EffectiveAIConfig compatibility)
+     * Get deity AI model (for AIConfigResolver compatibility)
      */
     public String getDeityAIModel(ResourceLocation deityId) {
         Map<String, Object> config = deityAIConfig.get(deityId);

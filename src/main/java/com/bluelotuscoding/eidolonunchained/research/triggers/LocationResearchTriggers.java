@@ -93,7 +93,7 @@ public class LocationResearchTriggers {
         }
         
         // Check if player has notetaking tools (required for research discovery)
-        if (!hasNotetakingTools(player)) {
+        if (!ResearchItemUtil.hasNotetakingTools(player)) {
             return; // No tools, no research discovery
         }
         
@@ -107,7 +107,7 @@ public class LocationResearchTriggers {
 
                     if (currentCount < trigger.getMaxFound()) {
                         // Consume notetaking tool before giving research
-                        if (consumeNotetakingTool(player)) {
+                        if (ResearchItemUtil.consumeNotetakingTool(player)) {
                             giveResearchNote(player, researchId);
 
                             // Track this trigger using persistent system
@@ -199,6 +199,14 @@ public class LocationResearchTriggers {
             
             LOGGER.info("Gave research note for '{}' to player {}", namespacedId, player.getName().getString());
             
+            // Fire on_research_gained event (Phase 3a)
+            net.minecraft.resources.ResourceLocation patron = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(player);
+            if (patron != null) {
+                java.util.HashMap<String, String> eventFilters = new java.util.HashMap<>();
+                eventFilters.put("research_id", namespacedId);
+                com.bluelotuscoding.eidolonunchained.data.DeityScriptManager.fireRuleEvent(player, patron, "on_research_gained", 0, eventFilters);
+            }
+            
         } catch (Exception e) {
             LOGGER.error("Failed to give research note for '{}': {}", researchId, e.getMessage());
         }
@@ -272,7 +280,7 @@ public class LocationResearchTriggers {
     private static void checkBiomeTriggersForPlayer(ServerPlayer player, String currentBiome) {
         Map<String, List<ResearchTrigger>> allTriggers = ResearchTriggerLoader.getTriggersForAllResearch();
         
-        if (allTriggers.isEmpty() || !hasNotetakingTools(player)) {
+        if (allTriggers.isEmpty() || !ResearchItemUtil.hasNotetakingTools(player)) {
             return;
         }
         
@@ -291,7 +299,7 @@ public class LocationResearchTriggers {
 
                     if (currentCount < trigger.getMaxFound()) {
                         // Consume notetaking tool before giving research
-                        if (consumeNotetakingTool(player)) {
+                        if (ResearchItemUtil.consumeNotetakingTool(player)) {
                             giveResearchNote(player, researchId);
 
                             // Track this trigger using persistent system
@@ -306,50 +314,6 @@ public class LocationResearchTriggers {
                     }
                 }
             }
-        }
-    }
-
-    /**
-     * Check if player has notetaking tools required for research discovery
-     */
-    private static boolean hasNotetakingTools(ServerPlayer player) {
-        try {
-            // Check for Eidolon notetaking tools only
-            return player.getInventory().hasAnyMatching(stack -> {
-                String itemName = stack.getItem().toString().toLowerCase();
-                return itemName.contains("notetaking");
-            });
-        } catch (Exception e) {
-            LOGGER.error("Failed to check notetaking tools: {}", e.getMessage());
-            return false; // Default to no tools if check fails
-        }
-    }
-    
-    /**
-     * Consume one notetaking tool from player's inventory
-     */
-    private static boolean consumeNotetakingTool(ServerPlayer player) {
-        try {
-            var inventory = player.getInventory();
-            
-            // Find and consume one notetaking tool
-            for (int i = 0; i < inventory.getContainerSize(); i++) {
-                ItemStack stack = inventory.getItem(i);
-                if (!stack.isEmpty()) {
-                    String itemName = stack.getItem().toString().toLowerCase();
-                    if (itemName.contains("notetaking")) {
-                        stack.shrink(1); // Remove 1 count
-                        LOGGER.debug("Consumed 1 notetaking tool from player {}", player.getName().getString());
-                        return true;
-                    }
-                }
-            }
-            
-            LOGGER.warn("Failed to find notetaking tool to consume for player {}", player.getName().getString());
-            return false;
-        } catch (Exception e) {
-            LOGGER.error("Failed to consume notetaking tool: {}", e.getMessage());
-            return false;
         }
     }
 }

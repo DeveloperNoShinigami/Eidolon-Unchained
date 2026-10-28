@@ -4,7 +4,7 @@ import com.bluelotuscoding.eidolonunchained.command.UnifiedCommands;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
 import com.bluelotuscoding.eidolonunchained.data.CodexDataManager;
 import com.bluelotuscoding.eidolonunchained.data.ResearchDataManager;
-import com.bluelotuscoding.eidolonunchained.data.EidolonResearchDataManager;
+
 import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
 import com.bluelotuscoding.eidolonunchained.chant.DatapackChantManager;
 import com.bluelotuscoding.eidolonunchained.integration.ModIntegration;

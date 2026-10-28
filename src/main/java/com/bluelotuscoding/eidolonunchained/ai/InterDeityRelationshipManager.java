@@ -97,34 +97,26 @@ public class InterDeityRelationshipManager {
             }
             
             // Add player's patron deity context
-            var patronCapability = player.level().getCapability(
-                com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY);
-            
-            if (patronCapability.isPresent()) {
-                var patronData = patronCapability.orElse(null);
-                if (patronData != null) {
-                    ResourceLocation playerPatron = patronData.getPatron(player);
-                    if (playerPatron != null && !playerPatron.equals(currentDeityId)) {
-                        var patronDeity = deityManager.getDeity(playerPatron);
-                        if (patronDeity != null) {
-                            context.append("\nPlayer's Current Patron: ").append(patronDeity.getName());
-                            context.append(" (").append(playerPatron.getPath()).append(")\n");
-                            
-                            // Add your opinion about player's patron
-                            if (currentConfig.patron_config.alliedDeities.contains(playerPatron.toString())) {
-                                context.append("This pleases you - they follow your ally.\n");
-                            } else if (currentConfig.patron_config.opposingDeities.contains(playerPatron.toString())) {
-                                context.append("This concerns you - they follow your enemy.\n");
-                            } else {
-                                context.append("You acknowledge their choice neutrally.\n");
-                            }
-                        }
-                    } else if (playerPatron != null && playerPatron.equals(currentDeityId)) {
-                        context.append("\nThis player is YOUR devoted follower.\n");
+            ResourceLocation playerPatron = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(player);
+            if (playerPatron != null && !playerPatron.equals(currentDeityId)) {
+                var patronDeity = deityManager.getDeity(playerPatron);
+                if (patronDeity != null) {
+                    context.append("\nPlayer's Current Patron: ").append(patronDeity.getName());
+                    context.append(" (").append(playerPatron.getPath()).append(")\n");
+
+                    // Add your opinion about player's patron
+                    if (currentConfig.patron_config.alliedDeities.contains(playerPatron.toString())) {
+                        context.append("This pleases you - they follow your ally.\n");
+                    } else if (currentConfig.patron_config.opposingDeities.contains(playerPatron.toString())) {
+                        context.append("This concerns you - they follow your enemy.\n");
                     } else {
-                        context.append("\nThis player has no patron deity (godless).\n");
+                        context.append("You acknowledge their choice neutrally.\n");
                     }
                 }
+            } else if (playerPatron != null && playerPatron.equals(currentDeityId)) {
+                context.append("\nThis player is YOUR devoted follower.\n");
+            } else {
+                context.append("\nThis player has no patron deity (godless).\n");
             }
             
         } catch (Exception e) {

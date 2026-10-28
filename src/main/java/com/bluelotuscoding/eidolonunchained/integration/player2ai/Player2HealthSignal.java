@@ -1,12 +1,12 @@
 package com.bluelotuscoding.eidolonunchained.integration.player2ai;
 
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
+import com.bluelotuscoding.eidolonunchained.integration.http.HttpTransport;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -114,28 +114,21 @@ public class Player2HealthSignal {
      */
     private static void sendHealthSignal() {
         try {
-            URL url = URI.create(HEALTH_ENDPOINT).toURL();
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            
-            // Configure request - Use GET for health endpoints (most common pattern)
-            connection.setRequestMethod("GET");
-            connection.setRequestProperty("Accept", "application/json");
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Accept", "application/json");
             // Apply standard game headers (X-Game-Client-ID, optional X-Player-UUID)
-            Player2SharedConfig.applyGameHeaders(connection, null);
-            connection.setConnectTimeout(10000); // 10 second timeout
-            connection.setReadTimeout(10000);
-            
+            Player2SharedConfig.applyGameHeaders(headers, null);
+
             // Add API key if we have one
             String apiKey = com.bluelotuscoding.eidolonunchained.config.APIKeyManager.getAPIKey("player2ai");
             if (apiKey != null && !apiKey.trim().isEmpty() && 
                 !apiKey.contains("localhost") && !apiKey.contains("127.0.0.1")) {
-                connection.setRequestProperty("X-API-Key", apiKey);
+                headers.put("X-API-Key", apiKey);
             }
-            
-            // For GET request, no body is needed - just connect
-            
+            HttpTransport.Response response = HttpTransport.get(HEALTH_ENDPOINT, headers, 10);
+
             // Check response
-            int responseCode = connection.getResponseCode();
+            int responseCode = response.statusCode();
             if (responseCode >= 200 && responseCode < 300) {
                 LOGGER.debug("Health signal sent successfully (response: {})", responseCode);
                 // Reset failure tracking on success

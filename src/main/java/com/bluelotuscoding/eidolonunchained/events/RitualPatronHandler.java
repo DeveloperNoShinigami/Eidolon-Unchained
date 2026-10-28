@@ -5,7 +5,6 @@ import com.bluelotuscoding.eidolonunchained.ai.AIDeityManager;
 import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
 import com.bluelotuscoding.eidolonunchained.patron.PatronSystem;
-import com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler;
 import elucent.eidolon.capability.IReputation;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
@@ -170,30 +169,24 @@ public class RitualPatronHandler {
         
         // Check cooldown
         if (requirements.containsKey("cooldown_hours")) {
-            return player.level().getCapability(CapabilityHandler.PATRON_DATA_CAPABILITY)
-                .map(patronData -> {
-                    if (patronData.getPatron(player) != null) {
-                        // TODO: Check patron switch cooldown
-                        return true; // For now, allow switching
-                    }
-                    return true;
-                }).orElse(false);
+            if (com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(player) != null) {
+                // TODO: Check patron switch cooldown
+                return true; // For now, allow switching
+            }
+            return true;
         }
         
         // Check forbidden patrons
         if (requirements.containsKey("forbidden_patrons")) {
-            return player.level().getCapability(CapabilityHandler.PATRON_DATA_CAPABILITY)
-                .map(patronData -> {
-                    ResourceLocation currentPatron = patronData.getPatron(player);
-                    if (currentPatron != null) {
-                        List<String> forbidden = (List<String>) requirements.get("forbidden_patrons");
-                        if (forbidden.contains(currentPatron.toString())) {
-                            player.sendSystemMessage(Component.literal("§cYou cannot serve this deity while following " + currentPatron));
-                            return false;
-                        }
-                    }
-                    return true;
-                }).orElse(true);
+            ResourceLocation currentPatron = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(player);
+            if (currentPatron != null) {
+                List<String> forbidden = (List<String>) requirements.get("forbidden_patrons");
+                if (forbidden.contains(currentPatron.toString())) {
+                    player.sendSystemMessage(Component.literal("§cYou cannot serve this deity while following " + currentPatron));
+                    return false;
+                }
+            }
+            return true;
         }
         
         return true;

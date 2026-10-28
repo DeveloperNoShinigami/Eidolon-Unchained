@@ -493,6 +493,14 @@ public class PlayerContextTracker {
             EnhancedPlayerContext context = getOrCreateContext(player.getUUID(), player);
             String id = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(event.getEntity().getType()).toString();
             context.killsByEntity.put(id, context.killsByEntity.getOrDefault(id, 0) + 1);
+
+            // Fire deity script on_kill for player's patron deity
+            net.minecraft.resources.ResourceLocation patron = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(player);
+            if (patron != null) {
+                com.bluelotuscoding.eidolonunchained.data.DeityScriptManager.fireEvent(player, patron, "on_kill");
+                // Fire rules-based event (Phase 3a)
+                com.bluelotuscoding.eidolonunchained.data.DeityScriptManager.fireRuleEvent(player, patron, "on_kill");
+            }
         }
     }
 

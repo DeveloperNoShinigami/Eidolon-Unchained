@@ -67,6 +67,49 @@ public class WorldContextProvider {
             return "Player in world at " + player.getX() + ", " + player.getY() + ", " + player.getZ();
         }
     }
+
+    private static String generateLocationContext(ServerPlayer player) {
+        StringBuilder context = new StringBuilder();
+        BlockPos pos = player.blockPosition();
+
+        context.append("--- LOCATION ---\n");
+        context.append("Coordinates: ")
+            .append(pos.getX()).append(", ")
+            .append(pos.getY()).append(", ")
+            .append(pos.getZ()).append("\n");
+        context.append("Dimension: ").append(player.level().dimension().location()).append("\n");
+
+        ResourceLocation biomeId = player.level().getBiome(pos)
+            .unwrapKey()
+            .map(key -> key.location())
+            .orElse(null);
+        if (biomeId != null) {
+            context.append("Biome: ").append(biomeId).append("\n");
+        }
+
+        return context.toString();
+    }
+
+    private static String generateNearbyEntitiesContext(ServerPlayer player) {
+        StringBuilder context = new StringBuilder();
+        context.append("\n--- NEARBY ENTITIES ---\n");
+
+        AABB area = player.getBoundingBox().inflate(16.0D, 8.0D, 16.0D);
+        List<Entity> entities = player.level().getEntities(player, area);
+
+        long living = entities.stream().filter(e -> e instanceof LivingEntity).count();
+        long hostiles = entities.stream().filter(e -> e instanceof net.minecraft.world.entity.monster.Monster).count();
+        long passives = entities.stream().filter(e -> e instanceof net.minecraft.world.entity.animal.Animal).count();
+        long players = entities.stream().filter(e -> e instanceof ServerPlayer).count();
+
+        context.append("Total nearby: ").append(entities.size()).append("\n");
+        context.append("Living: ").append(living).append("\n");
+        context.append("Hostile: ").append(hostiles).append("\n");
+        context.append("Passive: ").append(passives).append("\n");
+        context.append("Players: ").append(players).append("\n");
+
+        return context.toString();
+    }
     
     /**
      * Generate deity relationship context from ai_deities configurations
@@ -77,67 +120,56 @@ public class WorldContextProvider {
         context.append("\n=== DEITY RELATIONSHIPS ===\n");
         
         try {
-            // Get patron capability data
-            var capability = player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY);
-            if (capability.isPresent()) {
-                var patronData = capability.orElse(null);
-                if (patronData != null) {
-                    ResourceLocation playerPatron = patronData.getPatron(player);
-                    String title = patronData.getTitle(player);
-                    
-                    if (playerPatron != null) {
-                        context.append("Chosen Patron: ").append(playerPatron.toString()).append("\n");
-                        
-                        // Get the deity data for reputation
-                        var deityManager = com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getInstance();
-                        var deity = deityManager.getDeity(playerPatron);
-                        if (deity != null) {
-                            double reputation = deity.getPlayerReputation(player);
-                            context.append("Patron Reputation: ").append((int)reputation).append("\n");
-                            
-                            // Get progression level
-                            String progressionLevel = getDynamicProgressionLevel(deity, player);
-                            context.append("Patron Rank: ").append(progressionLevel).append("\n");
-                        }
-                        
-                        // Get AI deity configuration for additional context
-                        var aiManager = com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance();
-                        var aiConfig = aiManager.getAIConfig(playerPatron);
-                        if (aiConfig != null) {
-                            if (!aiConfig.patron_config.alliedDeities.isEmpty()) {
-                                context.append("Patron Allies: ").append(String.join(", ", aiConfig.patron_config.alliedDeities)).append("\n");
-                            }
-                            if (!aiConfig.patron_config.opposingDeities.isEmpty()) {
-                                context.append("Patron Enemies: ").append(String.join(", ", aiConfig.patron_config.opposingDeities)).append("\n");
-                            }
-                        }
-                    } else {
-                        context.append("No Patron: Player is godless\n");
+            ResourceLocation playerPatron = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(player);
+            String title = com.bluelotuscoding.eidolonunchained.patron.PatronState.getTitle(player);
+
+            if (playerPatron != null) {
+                context.append("Chosen Patron: ").append(playerPatron).append("\n");
+
+                // Get the deity data for reputation
+                var deityManager = com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getInstance();
+                var deity = deityManager.getDeity(playerPatron);
+                if (deity != null) {
+                    double reputation = deity.getPlayerReputation(player);
+                    context.append("Patron Reputation: ").append((int) reputation).append("\n");
+
+                    // Get progression level
+                    String progressionLevel = getDynamicProgressionLevel(deity, player);
+                    context.append("Patron Rank: ").append(progressionLevel).append("\n");
+                }
+
+                // Get AI deity configuration for additional context
+                var aiManager = com.bluelotuscoding.eidolonunchained.ai.AIDeityManager.getInstance();
+                var aiConfig = aiManager.getAIConfig(playerPatron);
+                if (aiConfig != null) {
+                    if (!aiConfig.patron_config.alliedDeities.isEmpty()) {
+                        context.append("Patron Allies: ").append(String.join(", ", aiConfig.patron_config.alliedDeities)).append("\n");
                     }
-                    
-                    if (title != null && !title.isEmpty()) {
-                        context.append("Player Title: ").append(title).append("\n");
-                    } else {
-                        context.append("No Special Title\n");
+                    if (!aiConfig.patron_config.opposingDeities.isEmpty()) {
+                        context.append("Patron Enemies: ").append(String.join(", ", aiConfig.patron_config.opposingDeities)).append("\n");
                     }
-                    
-                    // Check relationships with ALL deities
-                    var allDeities = com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getAllDeities();
-                    context.append("Deity Reputations: ");
-                    for (var deityEntry : allDeities.entrySet()) {
-                        var deity = deityEntry.getValue();
-                        double rep = deity.getPlayerReputation(player);
-                        if (rep != 0) { // Only show non-zero reputations
-                            context.append(deityEntry.getKey().getPath()).append("(").append((int)rep).append(") ");
-                        }
-                    }
-                    context.append("\n");
-                } else {
-                    context.append("No patron data available\n");
                 }
             } else {
-                context.append("Patron capability not available\n");
+                context.append("No Patron: Player is godless\n");
             }
+
+            if (title != null && !title.isEmpty()) {
+                context.append("Player Title: ").append(title).append("\n");
+            } else {
+                context.append("No Special Title\n");
+            }
+
+            // Check relationships with ALL deities
+            var allDeities = com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager.getAllDeities();
+            context.append("Deity Reputations: ");
+            for (var deityEntry : allDeities.entrySet()) {
+                var deity = deityEntry.getValue();
+                double rep = deity.getPlayerReputation(player);
+                if (rep != 0) { // Only show non-zero reputations
+                    context.append(deityEntry.getKey().getPath()).append("(").append((int) rep).append(") ");
+                }
+            }
+            context.append("\n");
             
         } catch (Exception e) {
             LOGGER.warn("Failed to generate deity relationship context: {}", e.getMessage());
@@ -196,73 +228,30 @@ public class WorldContextProvider {
      */
     private static String generatePlayerStateContext(ServerPlayer player) {
         StringBuilder context = new StringBuilder();
-        
+
         context.append("\n--- PLAYER STATE ---\n");
         context.append("Name: ").append(player.getName().getString()).append("\n");
         context.append("Health: ").append(String.format("%.1f/%.1f", player.getHealth(), player.getMaxHealth())).append("\n");
         context.append("Food: ").append(player.getFoodData().getFoodLevel()).append("/20\n");
         context.append("Experience Level: ").append(player.experienceLevel).append("\n");
         context.append("Game Mode: ").append(player.gameMode.getGameModeForPlayer().getName()).append("\n");
-        
+
         // Active effects
         Collection<MobEffectInstance> effects = player.getActiveEffects();
-        if (!effects.isEmpty()) {
+        if (effects.isEmpty()) {
+            context.append("Active Effects: None\n");
+        } else {
             context.append("Active Effects: ");
-            for (MobEffectInstance effect : effects) {
-                // Get the ResourceLocation by doing reverse lookup in the registry
-                ResourceLocation effectId = BuiltInRegistries.MOB_EFFECT.getKey(effect.getEffect());
-                if (effectId != null) {
-                    context.append(effectId.toString()).append("(").append(effect.getAmplifier() + 1).append(") ");
-                }
-            }
-            context.append("\n");
+            String joined = effects.stream()
+                .map(effect -> {
+                    ResourceLocation id = BuiltInRegistries.MOB_EFFECT.getKey(effect.getEffect());
+                    int amplifier = effect.getAmplifier() + 1;
+                    return id + " " + amplifier;
+                })
+                .collect(Collectors.joining(", "));
+            context.append(joined).append("\n");
         }
-        
-        return context.toString();
-    }
-    
-    /**
-     * Generate location and dimensional context
-     */
-    private static String generateLocationContext(ServerPlayer player) {
-        StringBuilder context = new StringBuilder();
-        
-        context.append("\n--- LOCATION ---\n");
-        
-        // Coordinates
-        BlockPos pos = player.blockPosition();
-        context.append("Coordinates: ").append(pos.getX()).append(", ").append(pos.getY()).append(", ").append(pos.getZ()).append("\n");
-        
-        // Dimension
-        ResourceKey<Level> dimension = player.level().dimension();
-        context.append("Dimension: ").append(dimension.location()).append("\n");
-        
-        // Biome
-        Biome biome = player.level().getBiome(pos).value();
-        ResourceLocation biomeId = player.level().registryAccess()
-            .registryOrThrow(Registries.BIOME)
-            .getKey(biome);
-        if (biomeId != null) {
-            context.append("Biome: ").append(biomeId.toString()).append("\n");
-        }
-        
-        // Time and weather (for overworld)
-        if (player.level() instanceof ServerLevel serverLevel) {
-            long timeOfDay = serverLevel.getDayTime() % 24000;
-            String timeDescription = getTimeDescription(timeOfDay);
-            context.append("Time: ").append(timeDescription).append(" (").append(timeOfDay).append("/24000)\n");
-            
-            if (dimension.equals(Level.OVERWORLD)) {
-                boolean isRaining = serverLevel.isRaining();
-                boolean isThundering = serverLevel.isThundering();
-                context.append("Weather: ");
-                if (isThundering) context.append("Thunderstorm");
-                else if (isRaining) context.append("Rain");
-                else context.append("Clear");
-                context.append("\n");
-            }
-        }
-        
+
         return context.toString();
     }
     
@@ -271,15 +260,43 @@ public class WorldContextProvider {
      */
     private static String generateEnvironmentalContext(ServerPlayer player) {
         StringBuilder context = new StringBuilder();
-        
+
         context.append("\n--- ENVIRONMENT ---\n");
-        
+
         BlockPos pos = player.blockPosition();
-        
+
+        // Dimension and biome
+        ResourceKey<Level> dimension = player.level().dimension();
+        context.append("Dimension: ").append(dimension.location()).append("\n");
+
+        ResourceLocation biomeId = player.level().getBiome(pos)
+            .unwrapKey()
+            .map(key -> key.location())
+            .orElse(new ResourceLocation("minecraft", "unknown"));
+        context.append("Biome: ").append(biomeId).append("\n");
+
+        if (player.level() instanceof ServerLevel serverLevel) {
+            long timeOfDay = serverLevel.getDayTime() % 24000;
+            context.append("Time: ").append(getTimeDescription(timeOfDay))
+                .append(" (").append(timeOfDay).append("/24000)\n");
+
+            if (dimension.equals(Level.OVERWORLD)) {
+                context.append("Weather: ");
+                if (serverLevel.isThundering()) {
+                    context.append("Thunderstorm");
+                } else if (serverLevel.isRaining()) {
+                    context.append("Rain");
+                } else {
+                    context.append("Clear");
+                }
+                context.append("\n");
+            }
+        }
+
         // Light level
         int lightLevel = player.level().getMaxLocalRawBrightness(pos);
         context.append("Light Level: ").append(lightLevel).append("/15\n");
-        
+
         // Underground/surface
         boolean isUnderground = pos.getY() < 50;
         boolean isInCave = isUnderground && lightLevel < 8;
@@ -288,46 +305,20 @@ public class WorldContextProvider {
         else if (isUnderground) context.append("Underground");
         else context.append("Surface");
         context.append("\n");
-        
+
         // In water/lava
-        if (player.isInWater()) context.append("Player is in water\n");
-        if (player.isInLava()) context.append("Player is in lava\n");
-        if (player.isOnFire()) context.append("Player is on fire\n");
-        
-        return context.toString();
-    }
-    
-    /**
-     * Generate nearby entities/mobs context
-     */
-    private static String generateNearbyEntitiesContext(ServerPlayer player) {
-        StringBuilder context = new StringBuilder();
-        
-        context.append("\n--- NEARBY ENTITIES (16 block radius) ---\n");
-        
-        AABB searchArea = new AABB(player.blockPosition()).inflate(16.0);
-        List<Entity> nearbyEntities = player.level().getEntitiesOfClass(Entity.class, searchArea);
-        
-        Map<String, Integer> entityCounts = new HashMap<>();
-        
-        for (Entity entity : nearbyEntities) {
-            if (entity == player) continue; // Skip the player themselves
-            
-            ResourceLocation entityType = entity.getType().builtInRegistryHolder().key().location();
-            String entityName = entityType.toString();
-            
-            entityCounts.merge(entityName, 1, Integer::sum);
+        if (player.isInWater()) {
+            context.append("Player is currently in water\n");
         }
-        
-        if (entityCounts.isEmpty()) {
-            context.append("No nearby entities\n");
-        } else {
-            entityCounts.entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                .limit(10) // Show top 10 most common
-                .forEach(entry -> context.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n"));
+        if (player.isInLava()) {
+            context.append("Player is currently in lava\n");
         }
-        
+
+        context.append("Coordinates: ")
+            .append(pos.getX()).append(", ")
+            .append(pos.getY()).append(", ")
+            .append(pos.getZ()).append("\n");
+
         return context.toString();
     }
     

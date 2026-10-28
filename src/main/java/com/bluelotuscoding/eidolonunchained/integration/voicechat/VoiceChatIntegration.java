@@ -1,6 +1,9 @@
 package com.bluelotuscoding.eidolonunchained.integration.voicechat;
 
+import com.bluelotuscoding.eidolonunchained.integration.http.HttpTransport;
+
 import de.maxhenkel.voicechat.api.VoicechatServerApi;
+import de.maxhenkel.voicechat.api.VoicechatConnection;
 import de.maxhenkel.voicechat.api.ServerLevel;
 import de.maxhenkel.voicechat.api.Position;
 import de.maxhenkel.voicechat.api.audiochannel.LocationalAudioChannel;
@@ -18,6 +21,8 @@ public class VoiceChatIntegration {
     private static volatile boolean available = false;
     private static volatile Object api; // Common VoiceChatApi (for builders, etc.)
     private static volatile Object serverApi; // VoicechatServerApi for audio channels
+    private static final java.util.Map<java.util.UUID, Long> LAST_DISABLED_NOTICE_MS = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final long DISABLED_NOTICE_COOLDOWN_MS = 5_000L;
 
     public static void setAvailable(boolean flag) {
         available = flag;
@@ -69,6 +74,10 @@ public class VoiceChatIntegration {
         VoicechatServerApi svcApi = (VoicechatServerApi) serverApi;
 
         try {
+            if (!ensureVoiceChatCanReceiveAudio(svcApi, player)) {
+                return false;
+            }
+
             // If we have URL but no data, try to download it first
             if (audioUrl != null && (audioData == null || audioData.length == 0)) {
                 LOGGER.info("Attempting to download audio from URL for spatial playback: {}", audioUrl);
@@ -92,9 +101,27 @@ public class VoiceChatIntegration {
                 return false;
             }
 
-            final double x = player.getX();
-            final double y = player.getY();
-            final double z = player.getZ();
+            net.minecraft.core.BlockPos effigyPos =
+                com.bluelotuscoding.eidolonunchained.effects.EffigyEffectsManager.findNearbyEffigyPos(player, 10.0);
+
+            final double x;
+            final double y;
+            final double z;
+
+            if (effigyPos != null) {
+                // Emit spatial voice from the effigy center so deity speech clearly originates there.
+                x = effigyPos.getX() + 0.5d;
+                y = effigyPos.getY() + 1.0d;
+                z = effigyPos.getZ() + 0.5d;
+                LOGGER.debug("Using effigy spatial source at ({}, {}, {}) for player {}",
+                    x, y, z, player.getGameProfile().getName());
+            } else {
+                x = player.getX();
+                y = player.getY();
+                z = player.getZ();
+                LOGGER.warn("No nearby effigy found for {}, falling back to player position for spatial source",
+                    player.getGameProfile().getName());
+            }
 
             LOGGER.debug("Creating SVC locational audio channel at ({}, {}, {}) for player: {}",
                         x, y, z, player.getGameProfile().getName());
@@ -167,6 +194,74 @@ public class VoiceChatIntegration {
     }
 
     /**
+     * Validate and, where possible, auto-fix the receiver voice chat state before sending audio.
+     */
+    private static boolean ensureVoiceChatCanReceiveAudio(VoicechatServerApi svcApi,
+                                                          net.minecraft.server.level.ServerPlayer player) {
+        try {
+            de.maxhenkel.voicechat.api.ServerPlayer vcPlayer = svcApi.fromServerPlayer(player);
+            if (vcPlayer == null) {
+                LOGGER.warn("SVC spatial: fromServerPlayer returned null for {}", player.getGameProfile().getName());
+                return false;
+            }
+
+            VoicechatConnection connection = svcApi.getConnectionOf(vcPlayer);
+            if (connection == null) {
+                LOGGER.warn("SVC spatial: no voice chat connection for {}", player.getGameProfile().getName());
+                return false;
+            }
+
+            if (!connection.isConnected()) {
+                LOGGER.warn("SVC spatial: voice chat is disconnected for {}", player.getGameProfile().getName());
+                maybeNotifyVoiceDisabled(player, "Voice chat is disconnected. Open the Voice Chat menu and reconnect.");
+                return false;
+            }
+
+            if (!connection.isDisabled()) {
+                return true;
+            }
+
+            if (!connection.isInstalled()) {
+                LOGGER.info("SVC spatial: player {} has no compatible VC client; forcing disabled=false", player.getGameProfile().getName());
+                connection.setDisabled(false);
+
+                // Re-fetch since connection snapshots may be stale.
+                VoicechatConnection refreshed = svcApi.getConnectionOf(vcPlayer);
+                boolean stillDisabled = refreshed != null && refreshed.isDisabled();
+                if (!stillDisabled) {
+                    LOGGER.info("SVC spatial: successfully forced voice enabled for {}", player.getGameProfile().getName());
+                    return true;
+                }
+
+                LOGGER.warn("SVC spatial: force-enable attempt did not clear disabled state for {}", player.getGameProfile().getName());
+                maybeNotifyVoiceDisabled(player, "Voice chat is disabled and could not be auto-enabled.");
+                return false;
+            }
+
+            LOGGER.warn("SVC spatial: {} has VC installed but client reports disabled=true; this cannot be overridden server-side",
+                player.getGameProfile().getName());
+            maybeNotifyVoiceDisabled(player,
+                "Voice chat is disabled client-side. Enable speaker/voice chat in the Voice Chat menu.");
+            return false;
+        } catch (Throwable t) {
+            LOGGER.warn("SVC spatial: failed to validate voice chat state for {}: {}",
+                player.getGameProfile().getName(), t.getMessage());
+            return false;
+        }
+    }
+
+    private static void maybeNotifyVoiceDisabled(net.minecraft.server.level.ServerPlayer player, String text) {
+        long now = System.currentTimeMillis();
+        java.util.UUID playerId = player.getUUID();
+        long last = LAST_DISABLED_NOTICE_MS.getOrDefault(playerId, 0L);
+        if (now - last < DISABLED_NOTICE_COOLDOWN_MS) {
+            return;
+        }
+        LAST_DISABLED_NOTICE_MS.put(playerId, now);
+        player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§c[TTS] " + text));
+    }
+
+    /**
      * Pad PCM array to a multiple of frameSize so the supplier never gets a short frame.
      */
     private static short[] padToFrameBoundary(short[] pcm, int frameSize) {
@@ -182,25 +277,17 @@ public class VoiceChatIntegration {
      */
     private static byte[] downloadAudioForSpatialPlayback(String url) {
         try {
-            java.net.URL audioUrl = new java.net.URL(url);
-            java.net.URLConnection connection = audioUrl.openConnection();
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(15000);
-            connection.setRequestProperty("User-Agent", "EidolonUnchained/1.0");
-            
-            try (java.io.InputStream is = connection.getInputStream();
-                 java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream()) {
-                
-                byte[] buffer = new byte[8192];
-                int bytesRead;
-                while ((bytesRead = is.read(buffer)) != -1) {
-                    baos.write(buffer, 0, bytesRead);
-                }
-                
-                byte[] data = baos.toByteArray();
-                LOGGER.debug("Downloaded {} bytes from audio URL", data.length);
-                return data;
+            java.util.Map<String, String> headers = new java.util.HashMap<>();
+            headers.put("User-Agent", "EidolonUnchained/1.0");
+            HttpTransport.BinaryResponse response = HttpTransport.getBytes(url, headers, 15);
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                LOGGER.debug("Failed to download audio from URL {}: status {}", url, response.statusCode());
+                return null;
             }
+
+            byte[] data = response.body();
+            LOGGER.debug("Downloaded {} bytes from audio URL", data.length);
+            return data;
         } catch (Exception e) {
             LOGGER.debug("Failed to download audio from URL {}: {}", url, e.getMessage());
             return null;
@@ -215,14 +302,14 @@ public class VoiceChatIntegration {
         // Gemini returns raw PCM at 24kHz with no headers when requested as LINEAR16
         if (!hasAudioHeaders(data) && data.length > 1000 && data.length % 2 == 0) {
             LOGGER.info("Detected raw LINEAR16 PCM data (no headers), assuming 24kHz from Gemini TTS");
-            // Convert bytes to short array (16-bit samples, little endian)
-            short[] samples = new short[data.length / 2];
-            for (int i = 0; i < samples.length; i++) {
-                int byteIndex = i * 2;
-                // Little endian: low byte first, high byte second
-                samples[i] = (short) ((data[byteIndex] & 0xFF) | ((data[byteIndex + 1] & 0xFF) << 8));
+
+            // RFC-style L16 streams are big-endian. Keep a little-endian fallback for robustness.
+            short[] samples = decodeRawLinear16(data);
+            if (samples == null) {
+                LOGGER.warn("Failed to decode raw LINEAR16 PCM payload");
+                return null;
             }
-            
+
             // Resample from 24kHz to 48kHz for Simple Voice Chat
             LOGGER.info("Resampling raw LINEAR16 from 24kHz to 48kHz: {} samples", samples.length);
             short[] resampled = resampleAudio(samples, 24000.0f, 48000.0f, 1); // Assume mono
@@ -706,6 +793,61 @@ public class VoiceChatIntegration {
             p += 2;
         }
         return pcm;
+    }
+
+    private static short[] decodeRawLinear16(byte[] data) {
+        if (data == null || data.length % 2 != 0) {
+            return null;
+        }
+
+        short[] bigEndian = decodePcm16(data, true);
+        short[] littleEndian = decodePcm16(data, false);
+
+        double bigEndianClipping = calculateClippingRatio(bigEndian);
+        double littleEndianClipping = calculateClippingRatio(littleEndian);
+
+        // Gemini's published examples write the returned PCM bytes directly into a WAV file,
+        // which implies little-endian PCM in practice even when the MIME type says audio/L16.
+        // Keep a guarded big-endian fallback for unexpected providers.
+        if (littleEndianClipping <= 0.40d || bigEndianClipping >= littleEndianClipping * 1.25d) {
+            LOGGER.info("Decoded raw LINEAR16 as little-endian PCM (clip LE: {}, BE: {})",
+                    String.format(java.util.Locale.ROOT, "%.3f", littleEndianClipping),
+                    String.format(java.util.Locale.ROOT, "%.3f", bigEndianClipping));
+            return littleEndian;
+        }
+
+        LOGGER.warn("Raw LINEAR16 favored big-endian fallback (clip LE: {}, BE: {})",
+                String.format(java.util.Locale.ROOT, "%.3f", littleEndianClipping),
+                String.format(java.util.Locale.ROOT, "%.3f", bigEndianClipping));
+        return bigEndian;
+    }
+
+    private static short[] decodePcm16(byte[] data, boolean bigEndian) {
+        short[] pcm = new short[data.length / 2];
+        int p = 0;
+        for (int i = 0; i < pcm.length; i++) {
+            int b0 = data[p] & 0xFF;
+            int b1 = data[p + 1] & 0xFF;
+            pcm[i] = bigEndian
+                    ? (short) ((b0 << 8) | b1)
+                    : (short) (b0 | (b1 << 8));
+            p += 2;
+        }
+        return pcm;
+    }
+
+    private static double calculateClippingRatio(short[] samples) {
+        if (samples == null || samples.length == 0) {
+            return 0.0d;
+        }
+
+        int clipped = 0;
+        for (short sample : samples) {
+            if (sample >= 32000 || sample <= -32000) {
+                clipped++;
+            }
+        }
+        return clipped / (double) samples.length;
     }
 
     private static int toIntLE(byte[] b, int off) {

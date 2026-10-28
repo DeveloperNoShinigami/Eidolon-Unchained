@@ -1,6 +1,5 @@
 package com.bluelotuscoding.eidolonunchained.patron;
 
-import com.bluelotuscoding.eidolonunchained.capability.IPatronData;
 import com.bluelotuscoding.eidolonunchained.data.DatapackDeityManager;
 import com.bluelotuscoding.eidolonunchained.deity.DatapackDeity;
 import com.bluelotuscoding.eidolonunchained.ai.AIDeityManager;
@@ -27,13 +26,6 @@ public class PatronSystem {
      */
     public static boolean choosePatron(ServerPlayer player, ResourceLocation deityId) {
         try {
-            // Get player's patron data from level capability (like other systems)
-            IPatronData patronData = player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY).orElse(null);
-            if (patronData == null) {
-                sendError(player, "Failed to access patron data");
-                return false;
-            }
-            
             // Validate deity exists in base configuration
             DatapackDeity deity = DatapackDeityManager.getDeity(deityId);
             if (deity == null) {
@@ -42,17 +34,17 @@ public class PatronSystem {
             }
             
             // Check if already patron of this deity
-            ResourceLocation currentPatron = patronData.getPatron(player);
+            ResourceLocation currentPatron = PatronState.getPatron(player);
             if (deityId.equals(currentPatron)) {
                 sendInfo(player, "You are already a follower of " + deity.getDisplayName());
                 return true;
             }
             
             // Get reputation capability for potential initial grant
-            IReputation reputation = player.level().getCapability(IReputation.INSTANCE).orElse(null);
+            IReputation reputation = player.getCapability(IReputation.INSTANCE).orElse(null);
             
             // Apply patron switch
-            patronData.setPatron(player, deityId);
+            PatronState.setPatron(player, deityId);
             
             // 🎁 DYNAMIC INITIAL REPUTATION - Use deity's minimum requirement
             if (reputation != null) {
@@ -92,13 +84,7 @@ public class PatronSystem {
      */
     public static boolean abandonPatron(ServerPlayer player) {
         try {
-            IPatronData patronData = player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY).orElse(null);
-            if (patronData == null) {
-                sendError(player, "Failed to access patron data");
-                return false;
-            }
-            
-            ResourceLocation currentPatron = patronData.getPatron(player);
+            ResourceLocation currentPatron = PatronState.getPatron(player);
             if (currentPatron == null) {
                 sendInfo(player, "You don't have a patron to abandon");
                 return false;
@@ -107,7 +93,7 @@ public class PatronSystem {
             DatapackDeity deity = DatapackDeityManager.getDeity(currentPatron);
             if (deity != null) {
                 // 🎯 DYNAMIC ABANDON BEHAVIOR - Use deity configuration
-                IReputation reputation = player.level().getCapability(IReputation.INSTANCE).orElse(null);
+                IReputation reputation = player.getCapability(IReputation.INSTANCE).orElse(null);
                 if (reputation != null) {
                     double currentRep = reputation.getReputation(player.getUUID(), currentPatron);
                     
@@ -134,7 +120,7 @@ public class PatronSystem {
             // 🏰 REMOVE FROM DEITY TEAM
             removePlayerFromDeityTeam(player, currentPatron);
 
-            patronData.setPatron(player, null);
+            PatronState.setPatron(player, null);
 
             return true;
             
@@ -150,13 +136,7 @@ public class PatronSystem {
      */
     public static void getPatronStatus(ServerPlayer player) {
         try {
-            IPatronData patronData = player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY).orElse(null);
-            if (patronData == null) {
-                sendError(player, "Failed to access patron data");
-                return;
-            }
-            
-            ResourceLocation currentPatron = patronData.getPatron(player);
+            ResourceLocation currentPatron = PatronState.getPatron(player);
             if (currentPatron == null) {
                 sendInfo(player, "You don't have a patron deity");
                 return;
@@ -164,7 +144,7 @@ public class PatronSystem {
             
             DatapackDeity deity = DatapackDeityManager.getDeity(currentPatron);
             if (deity != null) {
-                String title = patronData.getTitle(player);
+                String title = PatronState.getTitle(player);
                 sendInfo(player, "Patron: " + deity.getDisplayName());
                 if (title != null && !title.isEmpty()) {
                     sendInfo(player, "Title: " + title);
@@ -184,18 +164,15 @@ public class PatronSystem {
         if (!(player instanceof ServerPlayer serverPlayer)) return;
         
         try {
-            IPatronData patronData = serverPlayer.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY).orElse(null);
-            if (patronData == null) return;
-            
-            ResourceLocation patronDeity = patronData.getPatron(serverPlayer);
+            ResourceLocation patronDeity = PatronState.getPatron(serverPlayer);
             if (patronDeity == null) return;
             
             // Check for conflicts with patron deity
             if (!patronDeity.equals(gainedRepDeity) && 
-                patronData.areOpposingDeities(patronDeity, gainedRepDeity)) {
+                PatronState.areOpposingDeities(patronDeity, gainedRepDeity)) {
                 
                 // Apply penalty to patron relationship
-                IReputation reputation = serverPlayer.level().getCapability(IReputation.INSTANCE).orElse(null);
+                IReputation reputation = serverPlayer.getCapability(IReputation.INSTANCE).orElse(null);
                 if (reputation != null) {
                     double penalty = amount * 0.5; // 50% of gained reputation as penalty
                     reputation.subtractReputation(serverPlayer.getUUID(), patronDeity, penalty);

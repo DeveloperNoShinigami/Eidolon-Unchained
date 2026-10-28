@@ -4,6 +4,7 @@ import com.bluelotuscoding.eidolonunchained.EidolonUnchained;
 import com.bluelotuscoding.eidolonunchained.ritual.AIDeityRitual;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import elucent.eidolon.registries.RitualRegistry;
@@ -125,7 +126,16 @@ public class RitualDataManager extends UnifiedDynamicSystemLoader {
                     if (parsed != null) symbol = parsed;
                 }
 
-                AIDeityRitual ritual = new AIDeityRitual(ritualId, symbol, r, g, b, deityId);
+                // Parse fallback_effects for deterministic fallback when AI unavailable
+                java.util.List<String> fallbackEffects = new java.util.ArrayList<>();
+                if (json.has("fallback_effects")) {
+                    JsonArray fbArr = json.getAsJsonArray("fallback_effects");
+                    for (JsonElement fbEl : fbArr) {
+                        fallbackEffects.add(fbEl.getAsString());
+                    }
+                }
+
+                AIDeityRitual ritual = new AIDeityRitual(ritualId, symbol, r, g, b, deityId, fallbackEffects);
                 RitualRegistry.register(ritualId, ritual);
                 registered++;
                 LOGGER.info("Registered AIDeityRitual {} for deity {}", ritualId, deityId);

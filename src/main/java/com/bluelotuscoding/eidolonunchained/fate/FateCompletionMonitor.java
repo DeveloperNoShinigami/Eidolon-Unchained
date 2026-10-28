@@ -286,6 +286,19 @@ public class FateCompletionMonitor {
                     processCompletionRewards(player, fateData.getAsJsonObject("rewards"));
                 }
 
+                // Fire deity script on_fate_completed
+                if (fateData != null && fateData.has("linked_deity")) {
+                    ResourceLocation deityId = ResourceLocation.tryParse(fateData.get("linked_deity").getAsString());
+                    if (deityId != null) {
+                        com.bluelotuscoding.eidolonunchained.data.DeityScriptManager.fireEvent(player, deityId, "on_fate_completed");
+                        
+                        // Fire rules-based event (Phase 3a) with fate_id context
+                        java.util.HashMap<String, String> eventFilters = new java.util.HashMap<>();
+                        eventFilters.put("fate_id", taskId);
+                        com.bluelotuscoding.eidolonunchained.data.DeityScriptManager.fireRuleEvent(player, deityId, "on_fate_completed", 0, eventFilters);
+                    }
+                }
+
                 // Trigger AI deity conversation for completion confirmation
                 triggerAICompletionResponse(player, taskId, fateData);
             }

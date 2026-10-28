@@ -33,7 +33,15 @@
       "reputation_required": 0,
       "cooldown_seconds": 300,
       "max_commands": 2,
-      "allowed_commands": ["effect", "give", "tellraw"]
+      "allowed_commands": ["effect", "give", "tellraw"],
+      "fallback_messages": [
+        "A warm light settles around you, filling you with quiet certainty.",
+        "The radiance acknowledges your devotion with gentle warmth.",
+        "Solarael's presence brushes against your spirit — brief, but unmistakable."
+      ],
+      "fallback_commands": [
+        "effect give {player} minecraft:regeneration 100 0"
+      ]
     },
     "knowledge": {
       "base_prompt": "Your devotee seeks sacred knowledge. Answer with clarity and purpose. Grant 0-1 command only if the lesson merits a gift.",
@@ -49,7 +57,15 @@
       "reputation_required": 10,
       "cooldown_seconds": 600,
       "max_commands": 1,
-      "allowed_commands": ["give", "tellraw"]
+      "allowed_commands": ["give", "tellraw"],
+      "fallback_messages": [
+        "The light reveals what was hidden. Look with renewed eyes.",
+        "Truth burns away falsehood. Seek the sacred places.",
+        "Every dawn brings a lesson. Be ready to receive it."
+      ],
+      "fallback_commands": [
+        "give {player} minecraft:book 1"
+      ]
     },
     "blessing": {
       "base_prompt": "A faithful servant requests a radiant blessing. Use 1-2 effect commands themed around healing, endurance, or protection.",
@@ -64,7 +80,16 @@
       "reputation_required": 15,
       "cooldown_seconds": 720,
       "max_commands": 2,
-      "allowed_commands": ["effect"]
+      "allowed_commands": ["effect"],
+      "fallback_messages": [
+        "Radiance pours through you, mending what was broken.",
+        "The dawn's blessing wraps around you like golden armor.",
+        "Solarael's light fills you with renewed purpose and strength."
+      ],
+      "fallback_commands": [
+        "effect give {player} minecraft:regeneration 300 1",
+        "effect give {player} minecraft:resistance 200 0"
+      ]
     },
     "curse": {
       "base_prompt": "One who has betrayed the light faces judgment. Use 1-2 effect commands that hinder without being cruel beyond purpose.",
@@ -79,7 +104,16 @@
       "reputation_required": 0,
       "cooldown_seconds": 900,
       "max_commands": 2,
-      "allowed_commands": ["effect", "tellraw"]
+      "allowed_commands": ["effect", "tellraw"],
+      "fallback_messages": [
+        "The light withdraws, leaving you exposed to your own failings.",
+        "Solarael's judgment is not cruel — but it is absolute.",
+        "The radiance dims around you. Reflect upon what brought you here."
+      ],
+      "fallback_commands": [
+        "effect give {player} minecraft:weakness 180 0",
+        "effect give {player} minecraft:mining_fatigue 120 0"
+      ]
     }
   },
   "api_settings": {
@@ -88,7 +122,7 @@
       "temperature": 0.75,
       "top_k": 40,
       "top_p": 0.93,
-      "max_output_tokens": 512
+      "max_output_tokens": 160
     },
     "safety_settings": {
       "harassment": "block_medium_and_above",

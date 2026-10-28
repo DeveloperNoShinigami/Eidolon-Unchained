@@ -75,5 +75,396 @@
   },
   "deity_damage_type": "eidolonunchained:dark_divine_power",
   "prayer_types": ["conversation", "knowledge", "blessing", "curse"],
-  "linked_eidolon_deity": "eidolon:dark"
+  "linked_eidolon_deity": "eidolon:dark",
+  "deity_responses": {
+    "on_prayer": [
+      {
+        "id": "prayer_greeting_priority",
+        "enabled": true,
+        "priority": 120,
+        "stop_on_match": true,
+        "cooldown_ticks": 6000,
+        "max_triggers_per_player": 5,
+        "max_triggers_global": 500,
+        "tags": ["example", "core_fields", "priority", "stop_on_match"],
+        "conditions": {
+          "min_reputation": 0,
+          "max_reputation": 20,
+          "time_of_day": "any"
+        },
+        "base_actions": [
+          {
+            "type": "title",
+            "value": "Shadow Listens",
+            "delay_ticks": 0,
+            "chance": 1.0,
+            "args": {
+              "subtitle": "Your prayer reaches the veil",
+              "fade_in": 10,
+              "duration": 50,
+              "fade_out": 10
+            }
+          },
+          {
+            "type": "message",
+            "value": "The shadow hears your prayer.",
+            "delay_ticks": 0,
+            "chance": 1.0,
+            "args": {
+              "translation_key": false
+            }
+          },
+          {
+            "type": "sound",
+            "value": "minecraft:entity.wither.ambient",
+            "delay_ticks": 4,
+            "chance": 1.0,
+            "args": {
+              "volume": 0.9,
+              "pitch": 0.8,
+              "source": "AMBIENT"
+            }
+          },
+          {
+            "type": "particle",
+            "value": "minecraft:witch",
+            "count": 20,
+            "delay_ticks": 6,
+            "chance": 0.9,
+            "args": {
+              "spread": 0.6,
+              "speed": 0.1
+            }
+          }
+        ],
+        "ai_enhancement": {
+          "enabled": false
+        }
+      },
+      {
+        "id": "prayer_night_boon_chain",
+        "enabled": true,
+        "priority": 90,
+        "stop_on_match": false,
+        "cooldown_ticks": 12000,
+        "max_triggers_per_player": null,
+        "max_triggers_global": null,
+        "tags": ["example", "chance", "delay", "emit_event"],
+        "conditions": {
+          "min_reputation": 21,
+          "max_reputation": 999,
+          "time_of_day": "night"
+        },
+        "base_actions": [
+          {
+            "type": "effect",
+            "value": "minecraft:night_vision",
+            "delay_ticks": 0,
+            "chance": 1.0,
+            "args": {
+              "amplifier": 0,
+              "duration_ticks": 300,
+              "hide_particles": false
+            }
+          },
+          {
+            "type": "command",
+            "value": "effect give {player} minecraft:speed 6 0",
+            "delay_ticks": 2,
+            "chance": 0.5,
+            "args": {
+              "run_as": "@s",
+              "permission_level": 4
+            }
+          },
+          {
+            "type": "emit_event",
+            "value": "eidolonunchained:dark_prayer_processed",
+            "delay_ticks": 0,
+            "chance": 1.0,
+            "args": {
+              "event": "eidolonunchained:dark_prayer_processed",
+              "event_args": {
+                "source": "on_prayer",
+                "tier": "night"
+              },
+              "require_allowlist": true
+            }
+          }
+        ],
+        "ai_enhancement": {
+          "enabled": true
+        }
+      },
+      {
+        "id": "disabled_rule_example",
+        "enabled": false,
+        "priority": 1,
+        "stop_on_match": true,
+        "cooldown_ticks": 0,
+        "max_triggers_per_player": null,
+        "max_triggers_global": null,
+        "tags": ["example", "disabled"],
+        "conditions": {
+          "min_reputation": 0,
+          "max_reputation": 999,
+          "time_of_day": "any"
+        },
+        "base_actions": [
+          {
+            "type": "message",
+            "value": "You should never see this.",
+            "delay_ticks": 0,
+            "chance": 1.0,
+            "args": {}
+          }
+        ],
+        "ai_enhancement": {
+          "enabled": false
+        }
+      }
+    ],
+    "on_reputation_milestone": [
+      {
+        "id": "stage_gate_example",
+        "enabled": true,
+        "priority": 100,
+        "stop_on_match": true,
+        "cooldown_ticks": 0,
+        "max_triggers_per_player": 1,
+        "max_triggers_global": null,
+        "tags": ["example", "stage_filter"],
+        "conditions": {
+          "min_reputation": 25,
+          "max_reputation": 100,
+          "time_of_day": "any",
+          "stage_id": "shadow_priest"
+        },
+        "base_actions": [
+          {
+            "type": "message",
+            "value": "You stand as Shadow Priest.",
+            "delay_ticks": 0,
+            "chance": 1.0,
+            "args": {}
+          }
+        ],
+        "ai_enhancement": {
+          "enabled": false
+        }
+      }
+    ],
+    "on_kill": [
+      {
+        "id": "kill_feedback_example",
+        "enabled": true,
+        "priority": 100,
+        "stop_on_match": false,
+        "cooldown_ticks": 8000,
+        "max_triggers_per_player": null,
+        "max_triggers_global": null,
+        "tags": ["example", "combat"],
+        "conditions": {
+          "min_reputation": 0,
+          "max_reputation": 999,
+          "time_of_day": "any"
+        },
+        "base_actions": [
+          {
+            "type": "message",
+            "value": "Another life fades into shadow.",
+            "delay_ticks": 0,
+            "chance": 1.0,
+            "args": {}
+          }
+        ],
+        "ai_enhancement": {
+          "enabled": false
+        }
+      }
+    ],
+    "on_fate_assigned": [
+      {
+        "id": "fate_assigned_filter_example",
+        "enabled": true,
+        "priority": 100,
+        "stop_on_match": true,
+        "cooldown_ticks": 0,
+        "max_triggers_per_player": null,
+        "max_triggers_global": null,
+        "tags": ["example", "fate_filter"],
+        "conditions": {
+          "min_reputation": 0,
+          "max_reputation": 999,
+          "time_of_day": "any",
+          "fate_id": "sample_fate_id"
+        },
+        "base_actions": [
+          {
+            "type": "message",
+            "value": "A fate has been bound to you.",
+            "delay_ticks": 0,
+            "chance": 1.0,
+            "args": {}
+          }
+        ],
+        "ai_enhancement": {
+          "enabled": true
+        }
+      }
+    ],
+    "on_fate_completed": [
+      {
+        "id": "fate_completed_limits_example",
+        "enabled": true,
+        "priority": 100,
+        "stop_on_match": true,
+        "cooldown_ticks": 0,
+        "max_triggers_per_player": 10,
+        "max_triggers_global": 1000,
+        "tags": ["example", "trigger_limits"],
+        "conditions": {
+          "min_reputation": 0,
+          "max_reputation": 999,
+          "time_of_day": "any",
+          "fate_id": "sample_fate_id"
+        },
+        "base_actions": [
+          {
+            "type": "command",
+            "value": "give {player} minecraft:amethyst_shard 1",
+            "delay_ticks": 0,
+            "chance": 1.0,
+            "args": {}
+          }
+        ],
+        "ai_enhancement": {
+          "enabled": true
+        }
+      }
+    ],
+    "on_research_gained": [
+      {
+        "id": "research_filter_example",
+        "enabled": true,
+        "priority": 100,
+        "stop_on_match": true,
+        "cooldown_ticks": 0,
+        "max_triggers_per_player": null,
+        "max_triggers_global": null,
+        "tags": ["example", "research_filter"],
+        "conditions": {
+          "min_reputation": 0,
+          "max_reputation": 999,
+          "time_of_day": "any",
+          "research_id": "eidolonunchained:sample_research"
+        },
+        "base_actions": [
+          {
+            "type": "message",
+            "value": "Knowledge has been etched into your memory.",
+            "delay_ticks": 0,
+            "chance": 1.0,
+            "args": {}
+          }
+        ],
+        "ai_enhancement": {
+          "enabled": false
+        }
+      }
+    ],
+    "on_ritual_complete": [
+      {
+        "id": "ritual_complete_example",
+        "enabled": true,
+        "priority": 100,
+        "stop_on_match": true,
+        "cooldown_ticks": 4000,
+        "max_triggers_per_player": null,
+        "max_triggers_global": null,
+        "tags": ["example", "ritual"],
+        "conditions": {
+          "min_reputation": 0,
+          "max_reputation": 999,
+          "time_of_day": "any"
+        },
+        "base_actions": [
+          {
+            "type": "sound",
+            "value": "minecraft:block.beacon.activate",
+            "delay_ticks": 0,
+            "chance": 1.0,
+            "args": {
+              "volume": 1.0,
+              "pitch": 0.9,
+              "source": "AMBIENT"
+            }
+          }
+        ],
+        "ai_enhancement": {
+          "enabled": true
+        }
+      }
+    ],
+    "on_research_completed": [
+      {
+        "id": "research_completed_schema_example",
+        "enabled": true,
+        "priority": 50,
+        "stop_on_match": true,
+        "cooldown_ticks": 0,
+        "max_triggers_per_player": null,
+        "max_triggers_global": null,
+        "tags": ["example", "schema_event"],
+        "conditions": {
+          "min_reputation": 0,
+          "max_reputation": 999,
+          "time_of_day": "any",
+          "research_id": "eidolonunchained:sample_research"
+        },
+        "base_actions": [
+          {
+            "type": "message",
+            "value": "A chapter closes and another opens.",
+            "delay_ticks": 0,
+            "chance": 1.0,
+            "args": {}
+          }
+        ],
+        "ai_enhancement": {
+          "enabled": false
+        }
+      }
+    ],
+    "on_fact_gained": [
+      {
+        "id": "fact_filter_schema_example",
+        "enabled": true,
+        "priority": 50,
+        "stop_on_match": true,
+        "cooldown_ticks": 0,
+        "max_triggers_per_player": null,
+        "max_triggers_global": null,
+        "tags": ["example", "fact_filter"],
+        "conditions": {
+          "min_reputation": 0,
+          "max_reputation": 999,
+          "time_of_day": "any",
+          "fact_id": "eidolonunchained:sample_fact"
+        },
+        "base_actions": [
+          {
+            "type": "message",
+            "value": "A truth has been taken into shadow.",
+            "delay_ticks": 0,
+            "chance": 1.0,
+            "args": {}
+          }
+        ],
+        "ai_enhancement": {
+          "enabled": false
+        }
+      }
+    ]
+  }
 }

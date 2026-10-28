@@ -2,19 +2,15 @@ package com.bluelotuscoding.eidolonunchained.integration.player2ai;
 
 import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
+import com.bluelotuscoding.eidolonunchained.integration.http.HttpTransport;
 import com.google.gson.*;
 import net.minecraft.server.level.ServerPlayer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.net.ssl.HttpsURLConnection;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URI;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -223,40 +219,25 @@ public class Player2TTSClient {
             metadata.addProperty("character", request.deityId);
             ttsRequest.add("metadata", metadata);
 
-            URL url = URI.create(PLAYER2_LOCAL_TTS).toURL();
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            Player2SharedConfig.applyGameHeaders(conn, request.player.getUUID());
-            conn.setDoOutput(true);
-            conn.setConnectTimeout(10000);
-            conn.setReadTimeout(30000);
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Content-Type", "application/json");
+            Player2SharedConfig.applyGameHeaders(headers, request.player.getUUID());
 
-            try (OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream())) {
-                writer.write(ttsRequest.toString());
-                writer.flush();
-            }
-
-            int responseCode = conn.getResponseCode();
+            HttpTransport.Response response = HttpTransport.postJson(PLAYER2_LOCAL_TTS, headers, ttsRequest.toString(), 30);
+            int responseCode = response.statusCode();
             if (responseCode == 200) {
                 // Read audio data or URL response
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-                    String response = reader.lines().reduce("", (a, b) -> a + b);
-                    JsonObject json = JsonParser.parseString(response).getAsJsonObject();
+                JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
 
-                    if (json.has("audio_url")) {
-                        return TTSResponse.successWithPath(json.get("audio_url").getAsString(), null, true, "player2-local");
-                    } else if (json.has("audio_data")) {
-                        String base64Audio = json.get("audio_data").getAsString();
-                        byte[] audioData = Base64.getDecoder().decode(base64Audio);
-                        return TTSResponse.successWithPath(null, audioData, true, "player2-local");
-                    }
+                if (json.has("audio_url")) {
+                    return TTSResponse.successWithPath(json.get("audio_url").getAsString(), null, true, "player2-local");
+                } else if (json.has("audio_data")) {
+                    String base64Audio = json.get("audio_data").getAsString();
+                    byte[] audioData = Base64.getDecoder().decode(base64Audio);
+                    return TTSResponse.successWithPath(null, audioData, true, "player2-local");
                 }
             } else {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getErrorStream()))) {
-                    String error = reader.lines().reduce("", (a, b) -> a + b);
-                    return TTSResponse.failure("Player TTS failed: " + error);
-                }
+                return TTSResponse.failure("Player TTS failed: " + response.body());
             }
         } catch (Exception e) {
             return TTSResponse.failure("Player TTS error: " + e.getMessage());
@@ -395,76 +376,58 @@ public class Player2TTSClient {
                 }
             }
 
-            URL url = URI.create(PLAYER2_TTS_SPEAK).toURL();
-            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setRequestProperty("Authorization", "Bearer " + p2Key);
-            conn.setDoOutput(true);
-            conn.setConnectTimeout(10000);
-            conn.setReadTimeout(30000);
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Content-Type", "application/json");
+            headers.put("Authorization", "Bearer " + p2Key);
 
             // Log the request for debugging
             LOGGER.info("Player2 TTS API Request: {}", ttsRequest.toString());
-            LOGGER.info("Request URL: {}", url);
+            LOGGER.info("Request URL: {}", PLAYER2_TTS_SPEAK);
             LOGGER.info("Request headers: Authorization=Bearer [REDACTED], Content-Type=application/json");
 
-            try (OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream())) {
-                writer.write(ttsRequest.toString());
-                writer.flush();
-            }
-
-            int responseCode = conn.getResponseCode();
+            HttpTransport.Response response = HttpTransport.postJson(PLAYER2_TTS_SPEAK, headers, ttsRequest.toString(), 30);
+            int responseCode = response.statusCode();
             LOGGER.info("Player2 TTS API Response Code: {}", responseCode);
             if (responseCode == 200) {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-                    String response = reader.lines().reduce("", (a, b) -> a + b);
-                    JsonObject json = JsonParser.parseString(response).getAsJsonObject();
-                    // Spec: TTSSpeakResponse { data: base64 } or data URL format
-                    if (json.has("data") && !json.get("data").isJsonNull()) {
-                        String audioData = json.get("data").getAsString();
+                JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
+                // Spec: TTSSpeakResponse { data: base64 } or data URL format
+                if (json.has("data") && !json.get("data").isJsonNull()) {
+                    String audioData = json.get("data").getAsString();
 
-                        // Handle data URL format: data:audio/mp3;base64,actual_base64_data
-                        if (audioData.startsWith("data:")) {
-                            int commaIndex = audioData.indexOf(',');
-                            if (commaIndex != -1) {
-                                audioData = audioData.substring(commaIndex + 1);
-                            }
+                    // Handle data URL format: data:audio/mp3;base64,actual_base64_data
+                    if (audioData.startsWith("data:")) {
+                        int commaIndex = audioData.indexOf(',');
+                        if (commaIndex != -1) {
+                            audioData = audioData.substring(commaIndex + 1);
                         }
+                    }
 
-                        byte[] decodedAudio = Base64.getDecoder().decode(audioData);
-                        // Using Player2 Web API with p2Key — still player-funded
-                        return TTSResponse.successWithPath(null, decodedAudio, true, "player2-web");
-                    }
-                    // Fallbacks observed on some implementations
-                    if (json.has("url")) {
-                        // Using Player2 Web API with p2Key — still player-funded
-                        return TTSResponse.successWithPath(json.get("url").getAsString(), null, true, "player2-web");
-                    }
-                    if (json.has("audio_url")) {
-                        return TTSResponse.successWithPath(json.get("audio_url").getAsString(), null, true, "player2-web");
-                    }
-                    if (json.has("audio_data")) {
-                        String base64Audio = json.get("audio_data").getAsString();
-                        byte[] audioData = Base64.getDecoder().decode(base64Audio);
-                        return TTSResponse.successWithPath(null, audioData, true, "player2-web");
-                    }
+                    byte[] decodedAudio = Base64.getDecoder().decode(audioData);
+                    // Using Player2 Web API with p2Key — still player-funded
+                    return TTSResponse.successWithPath(null, decodedAudio, true, "player2-web");
+                }
+                // Fallbacks observed on some implementations
+                if (json.has("url")) {
+                    // Using Player2 Web API with p2Key — still player-funded
+                    return TTSResponse.successWithPath(json.get("url").getAsString(), null, true, "player2-web");
+                }
+                if (json.has("audio_url")) {
+                    return TTSResponse.successWithPath(json.get("audio_url").getAsString(), null, true, "player2-web");
+                }
+                if (json.has("audio_data")) {
+                    String base64Audio = json.get("audio_data").getAsString();
+                    byte[] audioData = Base64.getDecoder().decode(base64Audio);
+                    return TTSResponse.successWithPath(null, audioData, true, "player2-web");
                 }
         } else if (responseCode == 401) {
                 return TTSResponse.failure("Unauthorized (401) - Token invalid/expired. Use /eidolon-unchained player2ai login device to refresh.");
             } else if (responseCode == 402) {
                 return TTSResponse.failure("Insufficient credits (402)");
             } else if (responseCode == 400) {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getErrorStream()))) {
-                    String error = reader.lines().reduce("", (a, b) -> a + b);
             // Surface common schema issues to help debugging
-            return TTSResponse.failure("Invalid request (400): " + error + " | payload=" + ttsRequest.toString());
-                }
+            return TTSResponse.failure("Invalid request (400): " + response.body() + " | payload=" + ttsRequest.toString());
             } else {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getErrorStream()))) {
-                    String error = reader.lines().reduce("", (a, b) -> a + b);
-            return TTSResponse.failure("Server TTS failed (" + responseCode + "): " + error + " | payload=" + ttsRequest.toString());
-                }
+            return TTSResponse.failure("Server TTS failed (" + responseCode + "): " + response.body() + " | payload=" + ttsRequest.toString());
             }
         } catch (Exception e) {
             return TTSResponse.failure("Server TTS error: " + e.getMessage());
@@ -493,23 +456,16 @@ public class Player2TTSClient {
             }
 
             // 3) Try local Player2 App quick auth (only works if app is running)
-            URL authUrl = URI.create(PLAYER2_LOCAL_AUTH).toURL();
-            HttpURLConnection conn = (HttpURLConnection) authUrl.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setConnectTimeout(5000);
-            conn.setReadTimeout(5000);
-
-            int responseCode = conn.getResponseCode();
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Content-Type", "application/json");
+            HttpTransport.Response response = HttpTransport.postJson(PLAYER2_LOCAL_AUTH, headers, "{}", 5);
+            int responseCode = response.statusCode();
             if (responseCode == 200) {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-                    String response = reader.lines().reduce("", (a, b) -> a + b);
-                    JsonObject json = JsonParser.parseString(response).getAsJsonObject();
-                    if (json.has("p2Key") && !json.get("p2Key").isJsonNull()) {
-                        String k = json.get("p2Key").getAsString();
-                        com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AuthManager.setCachedP2Key(player, k);
-                        return k;
-                    }
+                JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
+                if (json.has("p2Key") && !json.get("p2Key").isJsonNull()) {
+                    String k = json.get("p2Key").getAsString();
+                    com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2AuthManager.setCachedP2Key(player, k);
+                    return k;
                 }
             } else {
                 LOGGER.debug("Failed to get p2Key from Player2 App: HTTP {}", responseCode);

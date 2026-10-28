@@ -91,6 +91,7 @@ public class DatapackSyncPacket {
                                 // Create minimal JSON representation
                                 com.google.gson.JsonObject minimalConfig = new com.google.gson.JsonObject();
                                 minimalConfig.addProperty("deity", config.deity_id.toString());
+                                minimalConfig.addProperty("ai_enabled", config.ai_enabled);
                                 if (config.ai_provider != null) {
                                     minimalConfig.addProperty("ai_provider", config.ai_provider);
                                 }

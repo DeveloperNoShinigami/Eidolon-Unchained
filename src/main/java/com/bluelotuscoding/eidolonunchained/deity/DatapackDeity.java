@@ -289,28 +289,43 @@ public class DatapackDeity extends Deity {
                 }
                 
                 // Check if this deity is the player's patron
-                player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
-                    .ifPresent(patronData -> {
-                        ResourceLocation patron = patronData.getPatron(serverPlayer);
-                        if (getId().equals(patron)) {
-                            // This is the player's patron deity - update title immediately
-                            String oldTitle = patronData.getTitle(serverPlayer);
-                            updatePatronTitle(serverPlayer);
-                            String newTitle = patronData.getTitle(serverPlayer);
-                            
-                            // Notify player if title changed
-                            if (!Objects.equals(oldTitle, newTitle)) {
-                                LOGGER.info("🎭 Title updated for {} (reputation: {} → {}): '{}' → '{}'", 
-                                    serverPlayer.getName().getString(), prev, updated, oldTitle, newTitle);
-                                
-                                // Send notification to player
-                                if (newTitle != null && !newTitle.isEmpty()) {
-                                    serverPlayer.sendSystemMessage(Component.literal(
-                                        "§6✨ Your devotion has earned you a new title: §e" + newTitle));
-                                }
-                            }
+                ResourceLocation patron = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(serverPlayer);
+                if (getId().equals(patron)) {
+                    // This is the player's patron deity - update title immediately
+                    String oldTitle = com.bluelotuscoding.eidolonunchained.patron.PatronState.getTitle(serverPlayer);
+                    updatePatronTitle(serverPlayer);
+                    String newTitle = com.bluelotuscoding.eidolonunchained.patron.PatronState.getTitle(serverPlayer);
+
+                    // Notify player if title changed
+                    if (!Objects.equals(oldTitle, newTitle)) {
+                        LOGGER.info("🎭 Title updated for {} (reputation: {} → {}): '{}' → '{}'",
+                            serverPlayer.getName().getString(), prev, updated, oldTitle, newTitle);
+
+                        // Send notification to player
+                        if (newTitle != null && !newTitle.isEmpty()) {
+                            serverPlayer.sendSystemMessage(Component.literal(
+                                "§6✨ Your devotion has earned you a new title: §e" + newTitle));
                         }
-                    });
+
+                        // Fire deity script on_reputation_milestone (legacy) and rules
+                        int reputationInt = (int) Math.round(updated);
+                        
+                        // Get stage ID for event context
+                        String stageId = getStageIdForReputation(updated);
+                        java.util.HashMap<String, String> eventFilters = new java.util.HashMap<>();
+                        if (stageId != null && !stageId.isEmpty()) {
+                            eventFilters.put("stage_id", stageId);
+                        }
+                        
+                        // Fire legacy event (weighted random selection)
+                        com.bluelotuscoding.eidolonunchained.data.DeityScriptManager.fireEvent(
+                            serverPlayer, getId(), "on_reputation_milestone", reputationInt);
+                        
+                        // Fire new rule-based event (Phase 3a, priority-based with stop_on_match)
+                        com.bluelotuscoding.eidolonunchained.data.DeityScriptManager.fireRuleEvent(
+                            serverPlayer, getId(), "on_reputation_milestone", reputationInt, eventFilters);
+                    }
+                }
                 
                 // 🎉 CHECK FOR TIER PROGRESSION AND AUTO-CONGRATULATION
                 // This triggers automatic deity conversations when players advance in tier
@@ -549,29 +564,55 @@ public class DatapackDeity extends Deity {
      */
     public void updatePatronTitle(ServerPlayer player) {
         try {
-            player.level().getCapability(com.bluelotuscoding.eidolonunchained.capability.CapabilityHandler.PATRON_DATA_CAPABILITY)
-                .ifPresent(patronData -> {
-                    ResourceLocation patron = patronData.getPatron(player);
-                    if (getId().equals(patron)) {
-                        // Get current reputation to determine appropriate title
-                        try {
-                            player.level().getCapability(elucent.eidolon.capability.IReputation.INSTANCE)
-                                .ifPresent(reputation -> {
-                                    double rep = reputation.getReputation(player, getId());
-                                    
-                                    // Find the highest stage the player qualifies for
-                                    String stageTitle = getStageForReputation(rep);
-                                    patronData.setTitle(player, stageTitle);
-                                    LOGGER.debug("Updated patron title for {} to: {}", player.getName().getString(), stageTitle);
-                                });
-                        } catch (Exception e) {
-                            LOGGER.warn("Failed to get reputation for title update: {}", e.getMessage());
-                        }
-                    }
-                });
+            ResourceLocation patron = com.bluelotuscoding.eidolonunchained.patron.PatronState.getPatron(player);
+            if (getId().equals(patron)) {
+                // Get current reputation to determine appropriate title
+                try {
+                    player.getCapability(elucent.eidolon.capability.IReputation.INSTANCE)
+                        .ifPresent(reputation -> {
+                            double rep = reputation.getReputation(player, getId());
+
+                            // Find the highest stage the player qualifies for
+                            String stageTitle = getStageForReputation(rep);
+                            com.bluelotuscoding.eidolonunchained.patron.PatronState.setTitle(player, stageTitle);
+                            LOGGER.debug("Updated patron title for {} to: {}", player.getName().getString(), stageTitle);
+                        });
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to get reputation for title update: {}", e.getMessage());
+                }
+            }
         } catch (Exception e) {
             LOGGER.warn("Failed to update patron title for player {}: {}", player.getName().getString(), e.getMessage());
         }
+    }
+    
+    /**
+     * Gets the stage ID (resource location path) for a given reputation level.
+     * Used for Phase 3a rule event filtering.
+     */
+    private String getStageIdForReputation(double reputation) {
+        try {
+            Stage bestStage = null;
+            
+            // Find the highest stage the player qualifies for
+            for (Stage stage : this.progression.getSteps().values()) {
+                if (reputation >= stage.rep()) {
+                    bestStage = stage;
+                } else {
+                    break; // Stages should be ordered by reputation requirement
+                }
+            }
+            
+            if (bestStage != null) {
+                return bestStage.id().getPath();
+            } else if (!this.progression.getSteps().isEmpty()) {
+                Stage firstStage = this.progression.getSteps().values().iterator().next();
+                return firstStage.id().getPath();
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to determine stage ID for reputation {}: {}", reputation, e.getMessage());
+        }
+        return null;
     }
     
     /**

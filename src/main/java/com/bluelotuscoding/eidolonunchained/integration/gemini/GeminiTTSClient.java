@@ -1,4 +1,5 @@
 package com.bluelotuscoding.eidolonunchained.integration.gemini;
+import com.bluelotuscoding.eidolonunchained.integration.http.HttpTransport;
 import com.bluelotuscoding.eidolonunchained.integration.webtts.WebTTSClient;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -6,12 +7,8 @@ import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.HttpsURLConnection;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.URI;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -120,33 +117,14 @@ public class GeminiTTSClient {
                 LOGGER.info("Gemini TTS request - Model: {}, Voice: {}, Text length: {}",
                     ttsModel, geminiVoice.getVoiceName(), text.length());
 
-                HttpsURLConnection connection = (HttpsURLConnection) URI.create(url).toURL().openConnection();
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", "application/json");
-                connection.setDoOutput(true);
-                connection.setConnectTimeout(30000);
-                connection.setReadTimeout(60000);
-
-                // Send request
-                try (OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream())) {
-                    writer.write(jsonPayload);
-                    writer.flush();
-                }
-
-                int responseCode = connection.getResponseCode();
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Content-Type", "application/json");
+                HttpTransport.Response response = HttpTransport.postJson(url, headers, jsonPayload, 60);
+                int responseCode = response.statusCode();
 
                 if (responseCode == 200) {
-                    // Read response
-                    StringBuilder response = new StringBuilder();
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            response.append(line);
-                        }
-                    }
-
                     // Parse Gemini response and extract audio
-                    byte[] audioData = parseGeminiResponse(response.toString());
+                    byte[] audioData = parseGeminiResponse(response.body());
                     if (audioData != null) {
                         LOGGER.info("Gemini TTS success - Audio size: {} bytes", audioData.length);
                         return WebTTSClient.TTSResponse.successData(audioData);
@@ -155,18 +133,7 @@ public class GeminiTTSClient {
                         return WebTTSClient.TTSResponse.failure("Failed to parse audio from response");
                     }
                 } else {
-                    // Read error response
-                    String errorResponse = "";
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getErrorStream()))) {
-                        String line;
-                        StringBuilder errorBuilder = new StringBuilder();
-                        while ((line = reader.readLine()) != null) {
-                            errorBuilder.append(line);
-                        }
-                        errorResponse = errorBuilder.toString();
-                    } catch (Exception e) {
-                        // Ignore error reading error stream
-                    }
+                    String errorResponse = response.body() != null ? response.body() : "";
 
                     LOGGER.error("Gemini TTS failed - HTTP {}: {}", responseCode, errorResponse);
                     return WebTTSClient.TTSResponse.failure("HTTP " + responseCode + ": " + errorResponse);

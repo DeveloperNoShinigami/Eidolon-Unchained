@@ -3,8 +3,10 @@ package com.bluelotuscoding.eidolonunchained.ai;
 import com.bluelotuscoding.eidolonunchained.integration.player2ai.Player2TTSClient;
 import com.bluelotuscoding.eidolonunchained.integration.webtts.WebTTSClient;
 import com.bluelotuscoding.eidolonunchained.integration.gemini.GeminiTTSClient;
-import com.bluelotuscoding.eidolonunchained.integration.tts.TTSVoiceRegistry;
 import com.bluelotuscoding.eidolonunchained.config.EidolonUnchainedConfig;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.bluelotuscoding.eidolonunchained.network.EidolonUnchainedNetworking;
 import com.bluelotuscoding.eidolonunchained.network.TTSAudioPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -14,6 +16,9 @@ import org.apache.logging.log4j.Logger;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
+import java.io.ByteArrayOutputStream;
+import java.util.UUID;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Manages TTS (Text-To-Speech) for AI deity interactions
@@ -21,11 +26,20 @@ import java.util.concurrent.CompletableFuture;
  */
 public class TTSManager {
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final int MAX_NETWORK_PAYLOAD_BYTES = 1_048_576;
+    // Leave overhead headroom for packet framing and metadata.
+    private static final int MAX_AUDIO_PACKET_BYTES = 1_000_000;
+    private static final int AUDIO_CHUNK_SIZE_BYTES = 220_000;
+    private static final int MAX_TTS_CHARACTERS = 220;
 
     private static TTSManager instance;
     private final Player2TTSClient player2Client;
     private final WebTTSClient webClient;
     private final GeminiTTSClient geminiClient;
+
+    // Voice alias registry (merged from TTSVoiceRegistry)
+    private final Map<String, String> voiceAliases = new ConcurrentHashMap<>();
+    private boolean voiceAliasesLoaded = false;
 
     // Cache TTS requests to avoid duplicate processing
     private final Map<String, CompletableFuture<Object>> activeRequests = new ConcurrentHashMap<>();
@@ -57,14 +71,8 @@ public class TTSManager {
         this.player2Client = new Player2TTSClient();
         this.webClient = new WebTTSClient();
         this.geminiClient = new GeminiTTSClient();
-        // Preload global TTS voice aliases once at startup using the game directory
-        try {
-            java.io.File gameDir = net.minecraftforge.fml.loading.FMLPaths.GAMEDIR.get().toFile();
-            TTSVoiceRegistry.getInstance().loadIfNeeded(gameDir);
-            LOGGER.info("Loaded TTS voice aliases at startup");
-        } catch (Throwable t) {
-            LOGGER.debug("Could not preload TTS voice aliases: {}", t.getMessage());
-        }
+        // Preload global TTS voice aliases once at startup
+        loadVoiceAliases();
     }
 
     public static TTSManager getInstance() {
@@ -79,6 +87,7 @@ public class TTSManager {
      * This is the main method called by DeityChat
      */
     public CompletableFuture<Boolean> generateAndSendTTS(ServerPlayer player, String text, String deityId) {
+        final long ttsStartNanos = System.nanoTime();
         // Per-player opt-in is the sole gate. The global TOML flag (tts.enabled) is intentionally
         // NOT checked here — /eu tts enable sets the per-player flag, not the TOML.
         TTSSettings settings = getPlayerSettings(player);
@@ -88,8 +97,14 @@ public class TTSManager {
             return CompletableFuture.completedFuture(false);
         }
 
+        String spokenText = clampTtsText(text);
+        if (!spokenText.equals(text)) {
+            LOGGER.info("TTS text capped for {}: {} -> {} chars",
+                player.getName().getString(), text.length(), spokenText.length());
+        }
+
         // Create cache key to avoid duplicate requests
-        String cacheKey = player.getUUID().toString() + ":" + text.hashCode();
+        String cacheKey = player.getUUID().toString() + ":" + spokenText.hashCode();
 
         // Check if we're already processing this request
         CompletableFuture<Object> activeRequest = activeRequests.get(cacheKey);
@@ -165,9 +180,7 @@ public class TTSManager {
                 if (deityTTS != null) {
                     voice = deityTTS.resolveVoiceAlias(voice);
                 } else {
-                    try {
-                        voice = TTSVoiceRegistry.getInstance().resolve(voice);
-                    } catch (Exception ignored) {}
+                    voice = resolveVoiceAlias(voice);
                 }
                 LOGGER.info("🎵 TTS Voice Resolution (player preference): {} -> {}", originalVoice, voice);
             }
@@ -217,10 +230,11 @@ public class TTSManager {
             String lang = deityTTS != null && deityTTS.voice_language != null && !deityTTS.voice_language.isEmpty()
                 ? deityTTS.voice_language
                 : EidolonUnchainedConfig.TTS_DEFAULT_LANGUAGE.get();
-            final WebTTSClient.TTSRequest req = new WebTTSClient.TTSRequest(text, voiceIds, speed, fmt, gender, lang, player, deityId);
+            final WebTTSClient.TTSRequest req = new WebTTSClient.TTSRequest(spokenText, voiceIds, speed, fmt, gender, lang, player, deityId);
             future = webClient.speak(req)
                 .thenApply(response -> {
                     activeRequests.remove(cacheKey);
+                    logTtsStageDuration("webapi", player, spokenText, ttsStartNanos, response.success);
                     if (response.success) {
                         // Send with effective playback parameters
                         sendTTSToPlayer(player, response, sendVolume, sendSpeed);
@@ -263,9 +277,10 @@ public class TTSManager {
                 LOGGER.debug("Could not get player context for TTS: {}", e.getMessage());
             }
             
-            future = geminiClient.generateTTS(text, voice, geminiModel, deityTTS, playerReputationRef[0], playerBiomeRef[0])
+            future = geminiClient.generateTTS(spokenText, voice, geminiModel, deityTTS, playerReputationRef[0], playerBiomeRef[0])
                 .thenApply(response -> {
                     activeRequests.remove(cacheKey);
+                    logTtsStageDuration("gemini", player, spokenText, ttsStartNanos, response.success);
                     if (response.success) {
                         // Send with effective playback parameters
                         sendTTSToPlayer(player, response, sendVolume, sendSpeed);
@@ -303,10 +318,11 @@ public class TTSManager {
                 }
             }
 
-            final Player2TTSClient.TTSRequest request = new Player2TTSClient.TTSRequest(text, voice, deityId, player, usePlayerFunding, allowServerFallback);
+            final Player2TTSClient.TTSRequest request = new Player2TTSClient.TTSRequest(spokenText, voice, deityId, player, usePlayerFunding, allowServerFallback);
             future = player2Client.generateTTS(request)
                 .thenApply(response -> {
                     activeRequests.remove(cacheKey);
+                    logTtsStageDuration("player2", player, spokenText, ttsStartNanos, response.success);
                     if (response.success) {
                         // Send with effective playback parameters
                         sendTTSToPlayer(player, response, sendVolume, sendSpeed);
@@ -344,6 +360,7 @@ public class TTSManager {
      */
     private void sendTTSToPlayer(ServerPlayer player, Object responseObj, float volume, float speed) {
         try {
+            long playbackStartNanos = System.nanoTime();
             LOGGER.info("sendTTSToPlayer called for player: {} with volume: {}, speed: {}",
                     player.getName().getString(), volume, speed);
 
@@ -360,48 +377,40 @@ public class TTSManager {
 
             if (audioUrl != null) {
                 LOGGER.info("Attempting VoiceChat spatial playback with URL for player: {}", player.getName().getString());
-                // Try spatial playback first (Simple Voice Chat), fall back to packet
                 try {
                     boolean played = com.bluelotuscoding.eidolonunchained.integration.voicechat.VoiceChatIntegration
                         .tryPlaySpatial(player, audioUrl, null, volume, speed);
                     if (played) {
+                        LOGGER.info("TTS playback start latency for {}: {} ms",
+                            player.getName().getString(), elapsedMillis(playbackStartNanos));
                         LOGGER.info("SUCCESS: Played TTS audio via VoiceChat (URL) for player: {}", player.getName().getString());
-                        // Brief toast to indicate path used (client-side chat)
                         trySendPathToast(player);
                         return;
                     } else {
-                        LOGGER.warn("VoiceChat spatial playback failed, falling back to packet for player: {}", player.getName().getString());
+                        LOGGER.error("VoiceChat spatial playback failed for URL audio on player: {}", player.getName().getString());
                     }
                 } catch (Throwable t) {
                     LOGGER.error("Exception during VoiceChat spatial playback: {}", t.getMessage(), t);
                 }
-                // Send URL for client to download and play
-                TTSAudioPacket packet = new TTSAudioPacket(audioUrl, null, volume, speed);
-                EidolonUnchainedNetworking.sendToPlayer(player, packet);
-                LOGGER.info("Sent TTS audio URL packet to player: {}", player.getName().getString());
-                trySendPathToast(player);
 
             } else if (audioData != null) {
                 LOGGER.info("Attempting VoiceChat spatial playback with audio data for player: {}", player.getName().getString());
-                // Try spatial playback first (Simple Voice Chat), fall back to packet
+
                 try {
                     boolean played = com.bluelotuscoding.eidolonunchained.integration.voicechat.VoiceChatIntegration
                         .tryPlaySpatial(player, null, audioData, volume, speed);
                     if (played) {
+                        LOGGER.info("TTS playback start latency for {}: {} ms",
+                            player.getName().getString(), elapsedMillis(playbackStartNanos));
                         LOGGER.info("SUCCESS: Played TTS audio via VoiceChat (bytes) for player: {}", player.getName().getString());
                         trySendPathToast(player);
                         return;
                     } else {
-                        LOGGER.warn("VoiceChat spatial playback failed, falling back to packet for player: {}", player.getName().getString());
+                        LOGGER.error("VoiceChat spatial playback failed for raw audio on player: {}", player.getName().getString());
                     }
                 } catch (Throwable t) {
                     LOGGER.error("Exception during VoiceChat spatial playback: {}", t.getMessage(), t);
                 }
-                // Send audio data directly
-                TTSAudioPacket packet = new TTSAudioPacket(null, audioData, volume, speed);
-                EidolonUnchainedNetworking.sendToPlayer(player, packet);
-                LOGGER.info("Sent TTS audio data packet to player: {}", player.getName().getString());
-                trySendPathToast(player);
 
             } else {
                 LOGGER.error("TTS response has no audio URL or data for player: {}", player.getName().getString());
@@ -428,6 +437,73 @@ public class TTSManager {
         } catch (Throwable t) {
             LOGGER.debug("Failed to send path toast: {}", t.getMessage());
         }
+    }
+
+    private boolean shouldMirrorRawPcmToClient(ServerPlayer player, byte[] audioData) {
+        return false;
+    }
+
+    private static String clampTtsText(String text) {
+        if (text == null) {
+            return "";
+        }
+
+        String normalized = text.trim().replaceAll("\\s+", " ");
+        if (normalized.length() <= MAX_TTS_CHARACTERS) {
+            return normalized;
+        }
+
+        int punctuationCutoff = -1;
+        for (int i = Math.min(MAX_TTS_CHARACTERS, normalized.length()) - 1; i >= 0; i--) {
+            char current = normalized.charAt(i);
+            if (current == '.' || current == '!' || current == '?' || current == ',' || current == ';') {
+                punctuationCutoff = i + 1;
+                break;
+            }
+        }
+
+        if (punctuationCutoff >= 80) {
+            return normalized.substring(0, punctuationCutoff).trim();
+        }
+
+        return normalized.substring(0, MAX_TTS_CHARACTERS).trim();
+    }
+
+    private static void logTtsStageDuration(String provider, ServerPlayer player, String text, long startNanos, boolean success) {
+        LOGGER.info("TTS generation [{}] for {} completed in {} ms (success={}, chars={})",
+            provider,
+            player.getName().getString(),
+            elapsedMillis(startNanos),
+            success,
+            text.length());
+    }
+
+    private static long elapsedMillis(long startNanos) {
+        return java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+    }
+
+    private boolean hasContainerAudioHeader(byte[] data) {
+        if (data == null || data.length < 4) {
+            return false;
+        }
+
+        // WAV: RIFF
+        if (data[0] == 'R' && data[1] == 'I' && data[2] == 'F' && data[3] == 'F') {
+            return true;
+        }
+
+        // OGG: OggS
+        if (data[0] == 'O' && data[1] == 'g' && data[2] == 'g' && data[3] == 'S') {
+            return true;
+        }
+
+        // MP3 frame sync or ID3 header
+        if ((data[0] == (byte) 0xFF && (data[1] & (byte) 0xE0) == (byte) 0xE0)
+                || (data[0] == 'I' && data[1] == 'D' && data[2] == '3')) {
+            return true;
+        }
+
+        return false;
     }
 
     public String getLastUsedPath(ServerPlayer player) {
@@ -651,5 +727,37 @@ public class TTSManager {
         stats.serverFundedRequests = 0;
         stats.failedRequests = 0;
         stats.totalCharacters = 0;
+    }
+
+    // ========== Voice Alias Registry (merged from TTSVoiceRegistry) ==========
+
+    private synchronized void loadVoiceAliases() {
+        if (voiceAliasesLoaded) return;
+        voiceAliasesLoaded = true;
+        try {
+            java.io.File gameDir = net.minecraftforge.fml.loading.FMLPaths.GAMEDIR.get().toFile();
+            java.io.File file = new java.io.File(new java.io.File(gameDir, "config/eidolon-unchained"), "tts_voices.json");
+            if (!file.exists()) return;
+            try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader(file, java.nio.charset.StandardCharsets.UTF_8))) {
+                String json = r.lines().reduce("", (a, b) -> a + b);
+                JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+                if (root.has("aliases") && root.get("aliases").isJsonObject()) {
+                    for (Map.Entry<String, JsonElement> e : root.getAsJsonObject("aliases").entrySet()) {
+                        voiceAliases.put(e.getKey(), e.getValue().getAsString());
+                    }
+                }
+                LOGGER.info("Loaded {} TTS voice aliases", voiceAliases.size());
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to load TTS voice aliases: {}", e.getMessage());
+        }
+    }
+
+    public String resolveVoiceAlias(String voiceId) {
+        return voiceAliases.getOrDefault(voiceId, voiceId);
+    }
+
+    public Map<String, String> getVoiceAliases() {
+        return java.util.Collections.unmodifiableMap(voiceAliases);
     }
 }

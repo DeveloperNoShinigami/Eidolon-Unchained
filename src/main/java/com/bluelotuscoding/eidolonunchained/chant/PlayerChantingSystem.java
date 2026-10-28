@@ -558,8 +558,49 @@ public class PlayerChantingSystem {
     }
     
     /**
-     * Execute a complete chant sequence by adding signs and auto-completing
-     * Used when ActiveChantingSystem delegates to PlayerChantingSystem
+     * Add a sign to the player's active chant by slot number.
+     * Resolves the slot assignment to get the actual sign.
+     */
+    public static void addSignToChant(ServerPlayer player, int slot) {
+        SlotAssignmentManager.SlotAssignment assignment = SlotAssignmentManager.getSlotAssignment(player, slot);
+
+        if (assignment == null || assignment.type != SlotAssignmentManager.SlotType.SIGN) {
+            player.sendSystemMessage(Component.literal("§cNo sign assigned to slot " + slot + ". Use /chant assign-sign " + slot + " <sign_id>"));
+            return;
+        }
+
+        ResourceLocation signId = assignment.id;
+        Sign sign = Signs.find(signId);
+        if (sign == null) {
+            player.sendSystemMessage(Component.literal("§cInvalid sign assigned to slot " + slot + ": " + signId));
+            return;
+        }
+
+        addSignToActiveChant(player, sign, assignment.displayName);
+        LOGGER.info("Player {} added sign {} from slot {}", player.getName().getString(), signId, slot);
+    }
+
+    /**
+     * Clear the player's active chant sequence (alias for clearPlayerChant).
+     */
+    public static void clearActiveChant(ServerPlayer player) {
+        clearPlayerChant(player);
+    }
+
+    /**
+     * Get configured sign for a slot (for UI display).
+     */
+    public static Sign getSignForSlot(ServerPlayer player, int slotNumber) {
+        SlotAssignmentManager.SlotAssignment assignment = SlotAssignmentManager.getSlotAssignment(player, slotNumber);
+        if (assignment != null && assignment.type == SlotAssignmentManager.SlotType.SIGN) {
+            return Signs.find(assignment.id);
+        }
+        return null;
+    }
+
+    /**
+     * Execute a complete chant sequence by adding signs and auto-completing.
+     * Used for programmatic chant execution (e.g. mob chanting, commands).
      */
     public static void executeChantFromSequence(ServerPlayer player, List<ResourceLocation> signSequence) {
         // Clear any existing chant first

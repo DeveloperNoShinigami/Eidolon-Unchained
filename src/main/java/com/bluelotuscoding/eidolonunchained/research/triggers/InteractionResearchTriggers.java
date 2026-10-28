@@ -54,7 +54,7 @@ public class InteractionResearchTriggers {
         }
         
         // Check if player has notetaking tools (required for research discovery)
-        if (!hasNotetakingTools(player)) {
+        if (!ResearchItemUtil.hasNotetakingTools(player)) {
             LOGGER.debug("Player {} interacted with block but has no notetaking tools", 
                 player.getName().getString());
             return; // No tools, no research discovery
@@ -84,7 +84,7 @@ public class InteractionResearchTriggers {
                     }
                     
                     // Consume notetaking tool before creating research
-                    if (!consumeNotetakingTool(player)) {
+                    if (!ResearchItemUtil.consumeNotetakingTool(player)) {
                         LOGGER.warn("Failed to consume notetaking tool for player {}, research discovery cancelled", 
                             player.getName().getString());
                         continue;
@@ -167,48 +167,5 @@ public class InteractionResearchTriggers {
         
         return true;
     }
-    
-    /**
-     * Check if player has notetaking tools required for research discovery
-     */
-    private static boolean hasNotetakingTools(ServerPlayer player) {
-        try {
-            // Check for Eidolon notetaking tools only
-            return player.getInventory().hasAnyMatching(stack -> {
-                String itemName = stack.getItem().toString().toLowerCase();
-                return itemName.contains("notetaking");
-            });
-        } catch (Exception e) {
-            LOGGER.error("Failed to check notetaking tools: {}", e.getMessage());
-            return false; // Default to no tools if check fails
-        }
-    }
-    
-    /**
-     * Consume one notetaking tool from player's inventory
-     */
-    private static boolean consumeNotetakingTool(ServerPlayer player) {
-        try {
-            var inventory = player.getInventory();
-            
-            // Find and consume one notetaking tool
-            for (int i = 0; i < inventory.getContainerSize(); i++) {
-                ItemStack stack = inventory.getItem(i);
-                if (!stack.isEmpty()) {
-                    String itemName = stack.getItem().toString().toLowerCase();
-                    if (itemName.contains("notetaking")) {
-                        stack.shrink(1); // Remove 1 count
-                        LOGGER.debug("Consumed 1 notetaking tool from player {}", player.getName().getString());
-                        return true;
-                    }
-                }
-            }
-            
-            LOGGER.warn("Failed to find notetaking tool to consume for player {}", player.getName().getString());
-            return false;
-        } catch (Exception e) {
-            LOGGER.error("Failed to consume notetaking tool: {}", e.getMessage());
-            return false;
-        }
-    }
+
 }

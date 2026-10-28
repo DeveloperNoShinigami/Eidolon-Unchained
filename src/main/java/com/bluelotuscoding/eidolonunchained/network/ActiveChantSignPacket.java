@@ -1,6 +1,6 @@
 package com.bluelotuscoding.eidolonunchained.network;
 
-import com.bluelotuscoding.eidolonunchained.chant.ActiveChantingSystem;
+import com.bluelotuscoding.eidolonunchained.chant.PlayerChantingSystem;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
@@ -44,12 +44,10 @@ public class ActiveChantSignPacket {
             
             switch (packet.action) {
                 case ADD_SIGN -> {
-                    // Add sign to player's active chant sequence
-                    ActiveChantingSystem.addSignToChant(player, packet.signSlot);
+                    PlayerChantingSystem.addSignToChant(player, packet.signSlot);
                 }
                 case CLEAR_CHANT -> {
-                    // Clear player's active chant sequence
-                    ActiveChantingSystem.clearActiveChant(player);
+                    PlayerChantingSystem.clearActiveChant(player);
                 }
             }
         });

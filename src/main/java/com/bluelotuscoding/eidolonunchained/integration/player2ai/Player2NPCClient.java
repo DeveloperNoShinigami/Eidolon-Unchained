@@ -1,18 +1,13 @@
 package com.bluelotuscoding.eidolonunchained.integration.player2ai;
 
 import com.bluelotuscoding.eidolonunchained.config.APIKeyManager;
+import com.bluelotuscoding.eidolonunchained.integration.http.HttpTransport;
 import com.google.gson.*;
 import net.minecraft.server.level.ServerPlayer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.net.ssl.HttpsURLConnection;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.URI;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -136,31 +131,20 @@ public class Player2NPCClient {
         String p2Key = getP2Key(playerUUID);
 
         // For now, implement simple polling - in production could use streaming
-        URL url = URI.create(PLAYER2_NPC_RESPONSES_API).toURL();
-        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
-        connection.setRequestProperty("Authorization", "Bearer " + p2Key);
-        connection.setRequestProperty("Accept", "application/json");
-        connection.setConnectTimeout(10000);
-        connection.setReadTimeout(30000);
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Authorization", "Bearer " + p2Key);
+        headers.put("Accept", "application/json");
+        HttpTransport.Response httpResponse = HttpTransport.get(PLAYER2_NPC_RESPONSES_API, headers, 30);
 
-        int responseCode = connection.getResponseCode();
-        StringBuilder response = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                responseCode >= 200 && responseCode < 300 ? connection.getInputStream() : connection.getErrorStream(),
-                StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
-            }
-        }
+        int responseCode = httpResponse.statusCode();
+        String response = httpResponse.body() != null ? httpResponse.body() : "";
 
         if (responseCode < 200 || responseCode >= 300) {
-            throw new Exception("NPC responses API error: " + responseCode + " - " + response.toString());
+            throw new Exception("NPC responses API error: " + responseCode + " - " + response);
         }
 
         // Parse response and extract message for our NPC
-        JsonObject responseObj = JsonParser.parseString(response.toString()).getAsJsonObject();
+        JsonObject responseObj = JsonParser.parseString(response).getAsJsonObject();
         if (responseObj.has("message")) {
             return responseObj.get("message").getAsString();
         }
@@ -207,37 +191,20 @@ public class Player2NPCClient {
      * Send HTTP request to Player2 API
      */
     private String sendHttpRequest(String urlString, String jsonBody, String p2Key) throws Exception {
-        URL url = URI.create(urlString).toURL();
-        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/json");
-        connection.setRequestProperty("Authorization", "Bearer " + p2Key);
-        connection.setDoOutput(true);
-        connection.setConnectTimeout(10000);
-        connection.setReadTimeout(15000);
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "application/json");
+        headers.put("Authorization", "Bearer " + p2Key);
+        HttpTransport.Response httpResponse = HttpTransport.postJson(urlString, headers, jsonBody, 15);
 
-        try (OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8)) {
-            writer.write(jsonBody);
-            writer.flush();
-        }
-
-        int responseCode = connection.getResponseCode();
-        StringBuilder response = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                responseCode >= 200 && responseCode < 300 ? connection.getInputStream() : connection.getErrorStream(),
-                StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
-            }
-        }
+        int responseCode = httpResponse.statusCode();
+        String response = httpResponse.body() != null ? httpResponse.body() : "";
 
         if (responseCode < 200 || responseCode >= 300) {
-            LOGGER.warn("Player2 API error {}: {}", responseCode, response.toString());
-            throw new Exception("Player2 API error: " + responseCode + " - " + response.toString());
+            LOGGER.warn("Player2 API error {}: {}", responseCode, response);
+            throw new Exception("Player2 API error: " + responseCode + " - " + response);
         }
 
-        return response.toString();
+        return response;
     }
 
     /**
